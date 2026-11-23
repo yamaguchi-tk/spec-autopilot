@@ -1,0 +1,15 @@
+- commit: 63e17e25a157804c15195b498d20444561e05bff
+
+2 つの文書の該当の行を読んだ。
+
+$ python3 .autopilot-qa/check.py
+[R7] 文書の行
+  R7 ok: autopilot.md の行に 手戻り元 の書き方
+  CLAUDE.md 最後の項目: - この進め方は、`/autopilot` で回した最初の 5 本で、`SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-au…
+  R7 ok: CLAUDE.md の最後の項目に runs.jsonl
+R7 pass
+
+$ grep -n -o '「## 制約」に `- 手戻り元: <元の spec のディレクトリ名>` を書く（手戻りの PR の数を `runs.jsonl` で数えるため）' plugins/spec-autopilot/commands/autopilot.md
+110:「## 制約」に `- 手戻り元: <元の spec のディレクトリ名>` を書く（手戻りの PR の数を `runs.jsonl` で数えるため）
+$ grep -n -o '`SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-autopilot`）の `runs.jsonl` を読んで決める' CLAUDE.md
+18:`SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-autopilot`）の `runs.jsonl` を読んで決める

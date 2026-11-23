@@ -1,0 +1,15 @@
+- commit: 63e17e25a157804c15195b498d20444561e05bff
+
+一時の git repo（.autopilot-qa/work/r6*）で、runs.jsonl の場所にディレクトリを置いて CLI done・CLI block・lineup.py next（着手の block）を、SPEC_AUTOPILOT_HOME を 0500 にして CLI block を実際に回した。
+
+$ python3 .autopilot-qa/check.py
+[R6] runs.jsonl の場所がディレクトリ・書き込み権が無い
+  dir done: exit=0 ["NOTE: runs.jsonl に書けなかった（IsADirectoryError: [Errno 21] Is a directory: '<wt>/.autopilot-qa/work/r6done/.autopilot-home/runs.jsonl'）。この回の記録は残らない"]
+  R6 ok: ディレクトリのとき done が 0 で NOTE 1 行
+  dir block: exit=0 ["NOTE: runs.jsonl に書けなかった（IsADirectoryError: [Errno 21] Is a directory: '<wt>/.autopilot-qa/work/r6block/.autopilot-home/runs.jsonl'）。この回の記録は残らない"]
+  R6 ok: ディレクトリのとき block が 0 で NOTE 1 行
+  dir next: exit=0 ["NOTE: runs.jsonl に書けなかった（IsADirectoryError: [Errno 21] Is a directory: '<wt>/.autopilot-qa/work/r6next/.autopilot-home/runs.jsonl'）。この回の記録は残らない"]
+  R6 ok: ディレクトリのとき next が 0 で NOTE 1 行
+  perm block: exit=0 ["NOTE: runs.jsonl に書けなかった（PermissionError: [Errno 13] Permission denied: '<wt>/.autopilot-qa/work/r6perm/.autopilot-home/runs.jsonl'）。この回の記録は残らない"] stderr=
+  R6 ok: 書き込み権が無いとき block が 0 で NOTE 1 行
+R6 pass
