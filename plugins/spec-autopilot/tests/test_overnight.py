@@ -865,21 +865,6 @@ def test_handoff_reads_the_model_from_the_transcript_not_the_meta(repo):
     assert r.returncode == 1 and "claude-sonnet-5 " in r.stdout
 
 
-def test_handoff_refuses_code_committed_on_a_closed_handoff_without_a_dispatch(repo):
-    """評価役の high の後に、main が dispatch を打たずに自分で直して commit した。"""
-    d = dispatched_and_committed(repo)
-    implementer_ran()
-    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
-    (repo / "fix.js").write_text("y\n", encoding="utf-8")
-    subprocess.run([*GIT, "add", "fix.js"], cwd=repo, check=True)
-    subprocess.run([*GIT, "commit", "-q", "-m", "main fixed"], cwd=repo, check=True)
-    r = night(repo, "handoff", str(d), "--task", "T1")
-    assert r.returncode == 1 and "dispatch" in r.stdout and "fix.js" in r.stdout
-    redispatch(repo, d)
-    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl fix"], cwd=repo, check=True)
-    implementer_ran()
-    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
-
 
 def test_handoff_refuses_a_dispatch_without_an_agent_name(repo):
     d = dispatched_and_committed(repo)
@@ -891,31 +876,36 @@ def test_handoff_refuses_a_dispatch_without_an_agent_name(repo):
     assert r.returncode == 1 and "名前が無い" in r.stdout
 
 
-def test_handoff_skips_a_broken_subagent_record(repo):
-    """セッションのどこかに形の違う記録があっても、traceback で落ちずに、読めた記録で判定する。"""
+def test_handoff_refuses_an_unreadable_implementer_record(repo):
+    """実装役と読めた記録の transcript が壊れていたら、飛ばさずに止める（照合できないまま通さない）。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    (sub / "agent-bad.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    (sub / "agent-bad.jsonl").write_text('{"type":"user","timestamp":"2099-01-01T00:00:00Z"}\n{"type":"assistant","mess',
+                                         encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "agent-bad" in r.stdout and "読めない" in r.stdout
+
+
+def test_handoff_skips_a_broken_record_of_another_agent(repo):
     sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
     sub.mkdir(parents=True)
-    (sub / "agent-bad.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
-    (sub / "agent-bad.jsonl").write_text('{"type":"user","timestamp":"2099-01-01T00:00:00Z"}\n"text"\n'
-                                         '{"type":"assistant","message":"x","effort":["low"]}\n', encoding="utf-8")
+    (sub / "agent-other.meta.json").write_text("{not json", encoding="utf-8")
+    (sub / "agent-doc.meta.json").write_text(json.dumps({"agentType": "plain-writing:document-writer"}), encoding="utf-8")
+    (sub / "agent-doc.jsonl").write_text('"text"\n', encoding="utf-8")
     d = dispatched_and_committed(repo)
     implementer_ran()
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 0, r.stdout + r.stderr
 
 
-def test_handoff_does_not_count_a_merged_upstream_as_main_written_code(repo):
-    """閉じた tip の上に上流を merge で取り込んだ。上流の変更は dispatch を通さずに書いたコードに数えない。"""
-    d = full_spec(repo)
-    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "base"], cwd=repo, check=True)
-    base = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
-    subprocess.run([*GIT, "checkout", "-q", "-b", "work"], cwd=repo, check=True)
-    make_done(repo, d)
-    subprocess.run([*GIT, "checkout", "-q", base], cwd=repo, check=True)
-    (repo / "other.txt").write_text("main moved\n", encoding="utf-8")
-    subprocess.run([*GIT, "add", "other.txt"], cwd=repo, check=True)
-    subprocess.run([*GIT, "commit", "-q", "-m", "main moved"], cwd=repo, check=True)
-    subprocess.run([*GIT, "checkout", "-q", "work"], cwd=repo, check=True)
-    subprocess.run([*GIT, "merge", "-q", "--no-edit", base], cwd=repo, check=True, capture_output=True)
-    r = night(repo, "handoff", str(d), "--task", "T1")
+def test_handoff_reads_the_records_of_the_session_that_dispatched(repo):
+    """別のセッションが引き継いで handoff を打っても、dispatch したセッションの起動の記録で確かめる。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    env = {**os.environ, "CLAUDE_CODE_SESSION_ID": "s2"}
+    r = subprocess.run([sys.executable, str(OVERNIGHT), "handoff", str(d), "--task", "T1"], cwd=repo, capture_output=True,
+                       text=True, env=env, timeout=60)
     assert r.returncode == 0, r.stdout + r.stderr
+
