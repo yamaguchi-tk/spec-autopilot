@@ -840,11 +840,16 @@ def test_handoff_accepts_an_alias_model_of_the_definition(repo):
 
 
 def test_handoff_refuses_when_the_session_is_unknown(repo):
-    d = dispatched_and_committed(repo)
-    implementer_ran()
+    """dispatch のときも handoff のときもセッションが分からない（Claude Code の外で動かした）。"""
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
     env = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_SESSION_ID"}
-    r = subprocess.run([sys.executable, str(OVERNIGHT), "handoff", str(d), "--task", "T1"], cwd=repo, capture_output=True,
-                       text=True, env=env, timeout=60)
+    cli = [sys.executable, str(OVERNIGHT)]
+    assert subprocess.run([*cli, "dispatch", str(d), "--task", "T1"], cwd=repo, env=env, capture_output=True).returncode == 0
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    (d / "tasks.md").write_text("- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    implementer_ran()
+    r = subprocess.run([*cli, "handoff", str(d), "--task", "T1"], cwd=repo, capture_output=True, text=True, env=env, timeout=60)
     assert r.returncode == 1 and "CLAUDE_CODE_SESSION_ID" in r.stdout
 
 
