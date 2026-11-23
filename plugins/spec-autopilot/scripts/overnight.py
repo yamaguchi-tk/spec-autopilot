@@ -7,7 +7,9 @@
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
                                                     増えた・dispatch が指した実装役が定義の model と effort で動いた・commit していないコードが無い・タスクが [x]。
-                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は〔rebase に限らず〕増分も起動も見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
+                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は増分も起動も見ないが、閉じた後の 2 つの形は見分ける: 閉じたときの tip が読めない、
+                                                    spec のファイルの外で閉じた tip と中身が違い統合先が変えたのでもないファイル〔main が書いたコード〕があれば拒む。
+                                                    rebase・統合先の merge・spec のファイルだけの変更は通す。見分けない残り: 統合先も変えたファイルへの main の書き込み。dispatch を打たない実装役の起動は hooks/agent_gate.py が止める）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
   overnight.py await <dir> --kind ci --pr <n>       CI を待つ（background の Bash で 1 本だけ起動する）
   overnight.py await <dir> --kind deploy   最後のマージの commit で、spec の `- デプロイの確かめ:` の workflow を全部待つ
       1 本でも失敗したら、すぐに exit 1。失敗のログが flake の型（run の 1 回目）なら exit 3 で返し、再実行は main が打つ。
@@ -760,7 +762,7 @@ def launch_errors(dispatch):
     実装役でない agent だけに書かせた）・別の段の実装役を起動した・model を渡した・main の effort を継承した、を拒む。
     範囲: 起動した実装役の agent・model・effort が定義と合うかだけを見る。想定するのは事故（model の渡し間違い、
     effort の継承、段の取り違え）で、わざと避ける形は想定しない。やらないこと: main が自分で書いた commit・amend・merge
-    の見分け、dispatch を打たずに起動した実装役の見分け、定義と違う model が書いた commit の除去（戻すのは手順書の main の手順）。"""
+    の見分けのうち統合先も変えたファイルへの書き込み（rebase の衝突の解消と区別できない）、定義と違う model が書いた commit の除去（戻すのは手順書の main の手順）。"""
     name, session = dispatch.get("agent"), dispatch.get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
     if not name:
         return ["dispatch の記録に実装役の名前が無い（前の版の記録か、手で直した記録）。dispatch から打ち直す"]
@@ -817,7 +819,9 @@ def after_close_errors(root, tip, now):
 
 
 def cmd_handoff(a):
-    """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
+    """閉じた後の 2 つの形（dispatch を打たずに起動した実装役は hooks/agent_gate.py が起動で止める。閉じた後に main が書いた
+    コードは、閉じた tip と中身が違うファイルから統合先が変えたものを除いて見分ける）を拒む。見分けない残りは、統合先も変えた
+    ファイルへの main の書き込み。受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
     閉じていて HEAD が違う（マージの前の rebase を通すため。rebase に限らず受ける）: 増分も起動も見ず、commit していない
     コードと [x] だけを確かめる。"""
     d = Path(a.dir)
