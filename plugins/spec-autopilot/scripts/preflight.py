@@ -4,7 +4,9 @@
   ~/.aws/sso/cache の expiresAt で読む。承認から予算とマージ後の予算を足した時刻（見込みの夜の終わり）より前に切れるなら
   ERROR、その 2 倍（Stop hook が放す時点）より前なら NOTE。cache に refreshToken があれば expiresAt は延びるので、`aws sts get-caller-identity` が今通るなら NOTE、通らなければ ERROR。
   読めなければ止める側に倒す。
-- GDD: repo の `.claude/gdd-dev.local.md` の `active:` が false 以外（大文字・字下げ・注釈・読めない値を含む）なら ERROR（GDD の hook が自走を止める）。
+- GDD: repo の `.claude/gdd-dev.local.md` の `active:` が false 以外（大文字・字下げ・注釈・読めない値を含む）で、Claude Code の設定で
+  GDD の plugin が有効なら ERROR（GDD の hook が自走を止める）。有効でなければ、GDD を外した後に残った lock なので NOTE。
+  設定は user（CLAUDE_CONFIG_DIR か ~/.claude）・project・local の settings.json の順に後が勝つ。読めない設定は有効とみなす。
 - keep-awake: pmset があり、PreventUserIdleSystemSleep も PreventSystemSleep も 0 なら NOTE（承認のときに人に示す）。
   `pmset -g batt` がバッテリー駆動（'Battery Power'）なら NOTE（蓋を閉じるとバッテリーのまま眠り、keep-awake では止められない）。
 - macOS の更新: SoftwareUpdate の AutomaticallyInstallMacOSUpdates が 1 なら NOTE（夜に更新が入ると再起動しうる。システムの
@@ -12,6 +14,7 @@
 """
 import configparser
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -28,11 +31,30 @@ def check(text, now=None, cwd=None):
     root = git_root(cwd)
     gdd = (root / ".claude" / "gdd-dev.local.md") if root else None
     values = [v.lower() for v in GDD_ACTIVE.findall(gdd.read_text(encoding="utf-8", errors="replace"))] if gdd and gdd.is_file() else []
-    if values and values != ["false"]:  # false 以外（true・yes・読めない値・複数の行）は GDD が有効と読みうるので止める
-        errors.append("GDD のワークフローが有効（.claude/gdd-dev.local.md の active: true）。GDD の hook が自走を止めるので、"
-                      "/gdd-dev を終えるか active: false にしてから承認する")
+    if values and values != ["false"]:  # false 以外（true・yes・読めない値・複数の行）は GDD が有効と読みうる
+        if gdd_plugin_on(root):
+            errors.append("GDD のワークフローが有効（.claude/gdd-dev.local.md の active: true）。GDD の hook が自走を止めるので、"
+                          "/gdd-dev を終えるか active: false にしてから承認する")
+        else:
+            warnings.append(f"{gdd} が active: true のまま残っているが、GDD の plugin は有効でないので自走は止めない。"
+                            "GDD を使わないなら、このファイルは消してよい")
     warnings += keep_awake() + power() + auto_update() + watcher()
     return errors, warnings
+
+
+def gdd_plugin_on(root):
+    """Claude Code の設定（user → project → local の順に後が勝つ）で GDD の plugin が有効か。読めない設定は有効とみなす。"""
+    user = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    on = {}
+    for f in (user / "settings.json", root / ".claude" / "settings.json", root / ".claude" / "settings.local.json"):
+        if not f.is_file():
+            continue
+        try:
+            plugins = json.loads(f.read_text(encoding="utf-8")).get("enabledPlugins", {})
+            on.update({k: v for k, v in plugins.items() if k.startswith("gate-driven-development@")})
+        except (OSError, ValueError, AttributeError):
+            return True
+    return any(v is not False for v in on.values())
 
 
 def watcher():

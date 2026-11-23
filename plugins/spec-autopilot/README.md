@@ -47,6 +47,6 @@ LLM の多段レビューや人への中間確認ではなく、成果物の型�
 ## 前提と制限
 
 - Python 3 が要ります（標準ライブラリだけ）
-- GDD（gate-driven-development）が active な repo では、GDD の hook がこの流れを止めます。`/autopilot` は始める前に検出して知らせます
+- GDD（gate-driven-development）が active な repo では、GDD の hook がこの流れを止めます。`/autopilot` は始める前に検出して知らせます。GDD の plugin を外した後に `.claude/gdd-dev.local.md` が `active: true` のまま残っていても、止めずに NOTE で知らせます（plugin が有効かは、Claude Code の user・project・local の settings.json の `enabledPlugins` で決めます。読めない設定は有効とみなします）
 - 承認（approve）と再開（resume）は、transcript の人の発言の行（origin が human）で確かめます。headless の `claude -p` は origin を書かないので、そのままでは通りません。人の役を別の agent が演じる実験（`docs/experiments/spec-autopilot-existing-repo/drive.sh`）だけ、Claude Code を起動する環境に `SPEC_AUTOPILOT_TRUST_PROMPT_RECORD=1` を立て、hook の記録による確認を選びます。hook が自分の環境で読んで記録に印を書くので、agent が Bash で立てても効きません。agent が記録ファイルや settings を意図して書けば通るのは、ほかの記録と同じです
 - 設計の文書と ADR の判断は `docs/adr/2026-11-15-switch-harness-to-spec-autopilot.md` にあります
