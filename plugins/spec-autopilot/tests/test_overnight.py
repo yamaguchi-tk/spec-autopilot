@@ -916,16 +916,6 @@ def test_handoff_reads_the_records_of_the_session_that_dispatched(repo):
 
 
 
-def test_handoff_refuses_an_implementer_launched_after_a_closed_handoff_without_a_dispatch(repo):
-    """閉じた handoff の後に、dispatch を打たずに実装役を起動し直した（照合を通らない起動）。"""
-    d = dispatched_and_committed(repo)
-    implementer_ran()
-    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
-    implementer_ran(model="claude-opus-5-5")
-    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "fix"], cwd=repo, check=True)
-    r = night(repo, "handoff", str(d), "--task", "T1")
-    assert r.returncode == 1 and "dispatch" in r.stdout and "起動" in r.stdout
-
 
 def test_handoff_uses_the_meta_time_when_the_transcript_is_missing(repo):
     """transcript の無い実装役の記録は、meta.json の時刻で dispatch の前か後かを決める。"""

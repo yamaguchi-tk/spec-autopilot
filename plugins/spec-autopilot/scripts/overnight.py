@@ -7,8 +7,7 @@
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
                                                     増えた・dispatch が指した実装役が定義の model と effort で動いた・commit していないコードが無い・タスクが [x]。
-                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は増分を見ず、
-                                                    dispatch を打たずに実装役を起動していないかだけを見る）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
+                                                    閉じた後は同じ HEAD で記録済み、rebase の後は増分を見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
   overnight.py await <dir> --kind ci --pr <n>       CI を待つ（background の Bash で 1 本だけ起動する）
   overnight.py await <dir> --kind deploy   最後のマージの commit で、spec の `- デプロイの確かめ:` の workflow を全部待つ
       1 本でも失敗したら、すぐに exit 1。失敗のログが flake の型（run の 1 回目）なら exit 3 で返し、再実行は main が打つ。
@@ -761,7 +760,7 @@ def launch_errors(dispatch):
     実装役でない agent だけに書かせた）・別の段の実装役を起動した・model を渡した・main の effort を継承した、を拒む。
     範囲: 起動した実装役の agent・model・effort が定義と合うかだけを見る。想定するのは事故（model の渡し間違い、
     effort の継承、段の取り違え）で、わざと避ける形は想定しない。やらないこと: main が自分で書いた commit・amend・merge
-    の見分け、定義と違う model が書いた commit の除去。"""
+    の見分け、dispatch を打たずに起動した実装役の見分け、定義と違う model が書いた commit の除去（戻すのは手順書の main の手順）。"""
     name, session = dispatch.get("agent"), dispatch.get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
     if not name:
         return ["dispatch の記録に実装役の名前が無い（前の版の記録か、手で直した記録）。dispatch から打ち直す"]
@@ -785,8 +784,7 @@ def launch_errors(dispatch):
 
 def cmd_handoff(a):
     """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
-    閉じていて HEAD が違う: 増分は見ず、閉じた後に dispatch を打たずに実装役を起動していないか、commit していないコードと
-    [x] だけを確かめる（マージの前の rebase を通すため。main が自分で書いた commit は見分けない）。"""
+    閉じていて HEAD が違う（マージの前の rebase）: 増分も起動も見ず、commit していないコードと [x] だけを確かめる。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
     if s.get("phase") != "building":
@@ -810,13 +808,6 @@ def cmd_handoff(a):
         elif new_commits(root, base, now) == 0:
             errors.append(f"{(base or '着手の時点')[:8]} の後に commit が無い。実装役の「commit した」は事実と違う")
         errors += launch_errors(dispatches[-1])
-    elif now != closed[-1].get("tip"):  # 閉じた後に HEAD が動いた: dispatch を通さずに実装役を起動していないか
-        session = dispatches[-1].get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
-        if isinstance(session, str) and autopilot.SESSION_ID.fullmatch(session):
-            late = sorted({t for t, *_ in launches(session, float(closed[-1].get("at") or 0)) if t.startswith("autopilot-implementer")})
-            if late:
-                errors.append(f"最後の handoff の後に、dispatch を打たずに実装役（{', '.join(late)}）を起動した。"
-                              "overnight.py dispatch から打ち直す")
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")
