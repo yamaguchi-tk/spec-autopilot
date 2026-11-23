@@ -845,3 +845,20 @@ def test_handoff_refuses_when_the_session_is_unknown(repo):
     r = subprocess.run([sys.executable, str(OVERNIGHT), "handoff", str(d), "--task", "T1"], cwd=repo, capture_output=True,
                        text=True, env=env, timeout=60)
     assert r.returncode == 1 and "CLAUDE_CODE_SESSION_ID" in r.stdout
+
+
+def test_handoff_reads_the_model_from_the_transcript_not_the_meta(repo):
+    """host の meta.json には model が無いことがあり、transcript には host が足す <synthetic> の行が混ざる。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    meta = max(sub.glob("*.meta.json"), key=lambda p: p.name)
+    meta.write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    with meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl").open("a", encoding="utf-8") as h:
+        h.write(json.dumps({"type": "assistant", "message": {"model": "<synthetic>"}}) + "\n")
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+    redispatch(repo, d)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "fix"], cwd=repo, check=True)
+    implementer_ran(model="claude-sonnet-5")  # 定義の ID と違う版で動いた
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "claude-sonnet-5 " in r.stdout
