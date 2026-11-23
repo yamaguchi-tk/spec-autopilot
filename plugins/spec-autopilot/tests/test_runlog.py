@@ -130,7 +130,7 @@ def queue_one(repo, d):
 
 def change(d):
     p = d / "spec.md"
-    p.write_text(p.read_text(encoding="utf-8").replace("Enter", "Space"), encoding="utf-8")
+    p.write_text(p.read_text(encoding="utf-8") + "\n<!-- 変更 -->\n", encoding="utf-8")
 
 
 def test_lineup_next_block_at_start_appends_row_with_null_active_min_when_no_earlier_round(repo):
@@ -169,3 +169,47 @@ def test_lineup_next_block_at_start_is_a_note_when_runs_log_is_unwritable(repo):
     log_file().mkdir(parents=True)
     r = lineup_next(repo)
     assert r.returncode == 0 and "NOTE: runs.jsonl" in r.stdout
+
+
+def seed_blocked_round(repo, d):
+    s = state(d)
+    s.update(approved_at=1000.0, created_at=1000.0, paused_sec=0)
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    block(repo, d, "前")
+    s = state(d)
+    s["blocked"]["at"] = 1600.0
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+
+
+def test_block_at_start_then_reapproval_then_done_keeps_both_blocks_and_active_min(repo):
+    import time
+    d = approved(repo)
+    seed_blocked_round(repo, d)
+    queue_one(repo, d)
+    change(d)
+    assert lineup_next(repo).returncode == 0
+    queue_one(repo, d)
+    assert lineup_next(repo).returncode == 0 and state(d)["phase"] == "building"
+    from test_autopilot import make_done
+    s = state(d)
+    s["approved_at"] = time.time() - 1200
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    make_done(repo, d)
+    assert run(repo, "done", str(d)).returncode == 0
+    done = [r for r in rows() if r["kind"] == "done"][-1]
+    assert [b["req"] for b in done["blocks"]] == ["R1", "着手"]
+    assert abs(done["active_min"] - 30.0) < 0.3
+
+
+def test_two_blocks_at_start_in_a_row_keep_every_block(repo):
+    d = approved(repo)
+    seed_blocked_round(repo, d)
+    queue_one(repo, d)
+    change(d)
+    assert lineup_next(repo).returncode == 0
+    queue_one(repo, d)
+    change(d)
+    assert lineup_next(repo).returncode == 0
+    last = rows()[-1]
+    assert [b["req"] for b in last["blocks"]] == ["R1", "着手", "着手"]
+    assert last["active_min"] == 10.0

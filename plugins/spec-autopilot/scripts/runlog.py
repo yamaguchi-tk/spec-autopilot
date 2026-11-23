@@ -32,7 +32,7 @@ def active_min(s, top_end):
     return minutes(total) if found else None
 
 
-def record(d, s, kind, end, prev_blocked=None, top_end="same"):
+def record(d, s, kind, end, top_end="same"):
     """1 行を追記する。書けなければ NOTE を出す。top_end は今の巡の終わり（既定は end、None で今の巡を足さない）。"""
     import autopilot as ap
 
@@ -43,7 +43,7 @@ def record(d, s, kind, end, prev_blocked=None, top_end="same"):
         size = ap.stated_size(constraints)[0]
         rework = REWORK.search(constraints)
         history = s.get("history") or []
-        blocks = [r["blocked"] for r in history if r.get("blocked")] + ([prev_blocked] if prev_blocked else [])
+        blocks = [r["blocked"] for r in history if r.get("blocked")]
         if kind == "block" and s.get("blocked"):
             blocks.append(s["blocked"])
         prs = []
