@@ -6,8 +6,8 @@
   overnight.py agent <dir> --role impl|review [--task T<n>...]  今の段の agent の名前（実装役は受け持つ要件の段の最大）
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
-                                                    増えた・commit していないコードが無い・タスクが [x]。閉じた後は同じ HEAD で記録済み、rebase の後は
-                                                    増分を見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
+                                                    増えた・dispatch が指した実装役が定義の model と effort で動いた・commit していないコードが無い・タスクが [x]。
+                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は〔rebase に限らず〕増分も起動も見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
   overnight.py await <dir> --kind ci --pr <n>       CI を待つ（background の Bash で 1 本だけ起動する）
   overnight.py await <dir> --kind deploy   最後のマージの commit で、spec の `- デプロイの確かめ:` の workflow を全部待つ
       1 本でも失敗したら、すぐに exit 1。失敗のログが flake の型（run の 1 回目）なら exit 3 で返し、再実行は main が打つ。
@@ -34,6 +34,7 @@ import signal
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -674,7 +675,8 @@ def cmd_dispatch(a):
         print(stop)
         return 1
     base = head(autopilot.repo_root(d))
-    s.setdefault("dispatches", []).append({"base": base, "tasks": a.task, "reqs": reqs, "agent": name, "at": time.time()})
+    s.setdefault("dispatches", []).append({"base": base, "tasks": a.task, "reqs": reqs, "agent": name, "at": time.time(),
+                                           "session": os.environ.get("CLAUDE_CODE_SESSION_ID")})
     autopilot.save_state(d, s)
     print(f"dispatch: {', '.join(a.task)} を {(base or 'commit の無い repo')[:8]} から実装役に渡す。起動する agent:\n{name}")
     return 0
@@ -692,9 +694,98 @@ def new_commits(root, base, now):
         return 0
 
 
+AGENTS = Path(__file__).resolve().parent.parent / "agents"
+ALIASES = ("opus", "sonnet", "fable", "haiku")
+
+
+def defined(name):
+    """agent 定義の (model, effort)。読めなければ (None, None)。"""
+    try:
+        fm = dict(re.findall(r"^(model|effort): *(\S+)", (AGENTS / f"{name}.md").read_text(encoding="utf-8"), re.M))
+    except OSError:
+        return None, None
+    return fm.get("model"), fm.get("effort")
+
+
+def same_model(want, got):
+    """定義の model（別名か ID）と、動いた model の ID が合うか。"""
+    return isinstance(got, str) and (got == want or want in ALIASES and got.startswith(f"claude-{want}-"))
+
+
+def launches(session, since):
+    """session で since の後に起動した subagent の [(agent の名前, {model}, {effort}, 読めない記録の名前 or None)]。
+    host は subagent ごとに <config>/projects/<project>/<session>/subagents/agent-<id>.meta.json と .jsonl を書く。
+    meta.json が読めない記録は数えない。実装役と読めて transcript が読めない記録は、読めない記録として返す（照合できないまま通さない）。"""
+    home = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    out = []
+    for meta in home.glob(f"projects/*/{session}/subagents/*.meta.json"):
+        try:
+            name = json.loads(meta.read_text(encoding="utf-8"))["agentType"].split(":")[-1]
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            continue
+        log = meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl")
+        try:
+            launch = read_launch(name, log, since)
+        except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError):
+            try:  # transcript が無ければ meta.json の時刻で決める
+                late = (log if log.exists() else meta).stat().st_mtime >= since
+            except OSError:
+                late = True
+            launch = (name, set(), set(), log.stem) if late else None
+        if launch:
+            out.append(launch)
+    return out
+
+
+def read_launch(name, log, since):
+    """1 つの subagent の (名前, {model}, {effort}, None)。since より前に起動したものは None。形が違えば例外を投げる。
+    model は transcript から読む（meta.json に無いことがある。<synthetic> は host が足す行）。"""
+    lines = [line for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if datetime.fromisoformat(json.loads(lines[0])["timestamp"].replace("Z", "+00:00")).timestamp() < since:
+        return None
+    models, efforts = set(), set()
+    for row in map(json.loads, lines):
+        if row.get("type") != "assistant" or row["message"].get("model") == "<synthetic>":
+            continue
+        model, effort = row["message"].get("model"), row.get("effort")
+        if not isinstance(model, str) or not isinstance(effort, (str, type(None))):
+            raise TypeError("model・effort の形が違う")
+        models.add(model)
+        efforts.add(effort)
+    return name, models, efforts, None
+
+
+def launch_errors(dispatch):
+    """dispatch が指した実装役が、定義の model と effort で起動されたか。実装役を起動しなかった（main が書いた・
+    実装役でない agent だけに書かせた）・別の段の実装役を起動した・model を渡した・main の effort を継承した、を拒む。
+    範囲: 起動した実装役の agent・model・effort が定義と合うかだけを見る。想定するのは事故（model の渡し間違い、
+    effort の継承、段の取り違え）で、わざと避ける形は想定しない。やらないこと: main が自分で書いた commit・amend・merge
+    の見分け、dispatch を打たずに起動した実装役の見分け、定義と違う model が書いた commit の除去（戻すのは手順書の main の手順）。"""
+    name, session = dispatch.get("agent"), dispatch.get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if not name:
+        return ["dispatch の記録に実装役の名前が無い（前の版の記録か、手で直した記録）。dispatch から打ち直す"]
+    if not isinstance(session, str) or not autopilot.SESSION_ID.fullmatch(session):
+        return ["dispatch したセッションが分からない（CLAUDE_CODE_SESSION_ID が無い）ので、実装役の起動の記録を確かめられない"]
+    runs = [r for r in launches(session, float(dispatch.get("at") or 0)) if r[0].startswith("autopilot-implementer")]
+    errors = [f"{name} の起動の記録 {bad} が読めない（照合できない）" for t, _, _, bad in runs if bad and t == name]
+    errors += [f"dispatch は {name} を指したが、{t} を起動した" for t, _, _, _ in runs if t != name]
+    mine = [r for r in runs if r[0] == name and not r[3]]
+    if not mine and not errors:
+        return [f"dispatch の後に {name} を起動した記録が無い（main が書いた、または別の agent に書かせた）"]
+    model, effort = defined(name)
+    for _, models, efforts, _ in mine:
+        if not models or not all(same_model(model, m) for m in models):
+            errors.append(f"{name} が model {'・'.join(sorted(map(str, models))) or 'なし'} で動いた（定義は {model}）。"
+                          "起動のときに model を渡さない")
+        if efforts != {effort}:
+            errors.append(f"{name} が effort {'・'.join(sorted(map(str, efforts))) or 'なし'} で動いた（定義は {effort}）")
+    return errors
+
+
 def cmd_handoff(a):
     """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
-    閉じていて HEAD が違う（マージの前の rebase）: 増分は見ず、commit していないコードと [x] だけを確かめる。"""
+    閉じていて HEAD が違う（マージの前の rebase を通すため。rebase に限らず受ける）: 増分も起動も見ず、commit していない
+    コードと [x] だけを確かめる。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
     if s.get("phase") != "building":
@@ -717,6 +808,7 @@ def cmd_handoff(a):
             errors.append(f"dispatch の時点（{base[:8]}）が今の HEAD の祖先でない。実装役に渡している間に履歴が書き換わった")
         elif new_commits(root, base, now) == 0:
             errors.append(f"{(base or '着手の時点')[:8]} の後に commit が無い。実装役の「commit した」は事実と違う")
+        errors += launch_errors(dispatches[-1])
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")

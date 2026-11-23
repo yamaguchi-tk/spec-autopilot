@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from test_autopilot import (GOOD_SPEC, PLUGIN, approved, hand_off, init_spec, make_done, repo, run, state,  # noqa: F401
+from test_autopilot import (GOOD_SPEC, PLUGIN, approved, hand_off, implementer_ran, init_spec, make_done, repo, run, state,  # noqa: F401
                             stop_hook, user_says)
 
 OVERNIGHT = PLUGIN / "scripts" / "overnight.py"
@@ -552,6 +552,7 @@ def test_handoff_requires_a_new_commit_and_checked_tasks(repo):
     (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")  # dispatch は tasks.md にあるタスクだけを受ける
     subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "base"], cwd=repo, check=True)
     assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    implementer_ran()
     (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 1 and "commit" in r.stdout and "T1" in r.stdout
@@ -681,6 +682,7 @@ def test_a_park_before_the_last_merge_does_not_exempt_the_stages_after_it(repo, 
 
 def test_handoff_passes_after_a_rebase(repo):
     d = full_spec(repo)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "base"], cwd=repo, check=True)  # 枝を分ける元の commit
     base = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
     subprocess.run([*GIT, "checkout", "-q", "-b", "work"], cwd=repo, check=True)
     make_done(repo, d)
@@ -781,3 +783,153 @@ def test_a_parked_high_can_be_reviewed_again_at_the_same_head_without_a_dispatch
     assert night(repo, "park", str(d), "--kind", "other", "--op", "差分の外の直し", "--reason", "差分の外", "--req", "R1").returncode == 0
     r = run(repo, "review", str(d), "--high", "none")
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def dispatched_and_committed(repo):
+    """T1 を dispatch し、実装役の commit と [x] を作る（起動の記録だけはまだ書かない）。"""
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    (d / "tasks.md").write_text("- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    return d
+
+
+def test_handoff_refuses_when_no_implementer_ran_after_the_dispatch(repo):
+    implementer_ran()  # dispatch の前の起動は数えない
+    d = dispatched_and_committed(repo)
+    implementer_ran("autopilot-implementer", agent_type="general-purpose")  # 実装役でない agent に書かせた
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "autopilot-implementer" in r.stdout and "起動した記録が無い" in r.stdout
+    implementer_ran()
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+
+
+def test_handoff_refuses_an_implementer_of_another_rung(repo):
+    d = dispatched_and_committed(repo)
+    implementer_ran("autopilot-implementer-opus")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "autopilot-implementer-opus" in r.stdout
+
+
+def test_handoff_refuses_a_model_other_than_the_definition(repo):
+    d = dispatched_and_committed(repo)
+    implementer_ran(model="claude-opus-5-5")  # model を渡して定義の model より優先させた
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "claude-opus-5-5" in r.stdout and "claude-sonnet-5-5" in r.stdout
+
+
+def test_handoff_refuses_an_effort_other_than_the_definition(repo):
+    d = dispatched_and_committed(repo)
+    implementer_ran(effort="xhigh")  # main の effort を継承した
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "xhigh" in r.stdout and "low" in r.stdout
+
+
+def test_handoff_accepts_an_alias_model_of_the_definition(repo):
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
+    s["dispatches"][-1]["agent"] = "autopilot-implementer-opus"  # 定義の model は別名の opus
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    (d / "tasks.md").write_text("- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    implementer_ran("autopilot-implementer-opus", model="claude-opus-5-5")
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+
+
+def test_handoff_refuses_when_the_session_is_unknown(repo):
+    """dispatch のときも handoff のときもセッションが分からない（Claude Code の外で動かした）。"""
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_SESSION_ID"}
+    cli = [sys.executable, str(OVERNIGHT)]
+    assert subprocess.run([*cli, "dispatch", str(d), "--task", "T1"], cwd=repo, env=env, capture_output=True).returncode == 0
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    (d / "tasks.md").write_text("- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    implementer_ran()
+    r = subprocess.run([*cli, "handoff", str(d), "--task", "T1"], cwd=repo, capture_output=True, text=True, env=env, timeout=60)
+    assert r.returncode == 1 and "CLAUDE_CODE_SESSION_ID" in r.stdout
+
+
+def test_handoff_reads_the_model_from_the_transcript_not_the_meta(repo):
+    """host の meta.json には model が無いことがあり、transcript には host が足す <synthetic> の行が混ざる。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    meta = max(sub.glob("*.meta.json"), key=lambda p: p.name)
+    meta.write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    with meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl").open("a", encoding="utf-8") as h:
+        h.write(json.dumps({"type": "assistant", "message": {"model": "<synthetic>"}}) + "\n")
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+    redispatch(repo, d)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "fix"], cwd=repo, check=True)
+    implementer_ran(model="claude-sonnet-5")  # 定義の ID と違う版で動いた
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "claude-sonnet-5 " in r.stdout
+
+
+
+def test_handoff_refuses_a_dispatch_without_an_agent_name(repo):
+    d = dispatched_and_committed(repo)
+    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
+    del s["dispatches"][-1]["agent"]  # 前の版が書いた記録・手で直した記録
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    implementer_ran()
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "名前が無い" in r.stdout
+
+
+def test_handoff_refuses_an_unreadable_implementer_record(repo):
+    """実装役と読めた記録の transcript が壊れていたら、飛ばさずに止める（照合できないまま通さない）。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    (sub / "agent-bad.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    (sub / "agent-bad.jsonl").write_text('{"type":"user","timestamp":"2099-01-01T00:00:00Z"}\n{"type":"assistant","mess',
+                                         encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "agent-bad" in r.stdout and "読めない" in r.stdout
+
+
+def test_handoff_skips_a_broken_record_of_another_agent(repo):
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    sub.mkdir(parents=True)
+    (sub / "agent-other.meta.json").write_text("{not json", encoding="utf-8")
+    (sub / "agent-doc.meta.json").write_text(json.dumps({"agentType": "plain-writing:document-writer"}), encoding="utf-8")
+    (sub / "agent-doc.jsonl").write_text('"text"\n', encoding="utf-8")
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_handoff_reads_the_records_of_the_session_that_dispatched(repo):
+    """別のセッションが引き継いで handoff を打っても、dispatch したセッションの起動の記録で確かめる。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    env = {**os.environ, "CLAUDE_CODE_SESSION_ID": "s2"}
+    r = subprocess.run([sys.executable, str(OVERNIGHT), "handoff", str(d), "--task", "T1"], cwd=repo, capture_output=True,
+                       text=True, env=env, timeout=60)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+
+
+def test_handoff_uses_the_meta_time_when_the_transcript_is_missing(repo):
+    """transcript の無い実装役の記録は、meta.json の時刻で dispatch の前か後かを決める。"""
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    sub.mkdir(parents=True)
+    old = sub / "agent-old.meta.json"
+    old.write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    os.utime(old, (1, 1))
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+    redispatch(repo, d)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "fix"], cwd=repo, check=True)
+    implementer_ran()
+    (sub / "agent-new.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "agent-new" in r.stdout and "agent-old" not in r.stdout
