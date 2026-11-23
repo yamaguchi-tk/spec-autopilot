@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "record-for-reading",
+  "created_at": 1795435389.274176,
+  "existing": true,
+  "start": "251e0f7cdff2cc918110d281cc0e2ae7d6160a31",
+  "last_active_at": 1795435860.842017,
+  "approved_at": 1795435860.841215,
+  "approved_by": "OK（推奨のまま）",
+  "spec_sha256": "b74a2c5f60069a215c041f36ba660a9e91839538082940299084a27e8a3ab91d",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
