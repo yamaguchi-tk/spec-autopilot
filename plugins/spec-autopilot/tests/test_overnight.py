@@ -379,6 +379,47 @@ def start_await(repo, d, gh):
     raise AssertionError("await が await.json を書かなかった")
 
 
+NARROW_PS = """#!/bin/sh
+# 端末でない出力の command の列を切る ps（Linux の procps の形）。-ww を渡したときだけ切らない
+for a in "$@"; do [ "$a" = "-ww" ] && exec /bin/ps "$@"; done
+/bin/ps "$@" | cut -c1-60
+"""
+
+
+@pytest.fixture
+def narrow_ps(tmp_path, monkeypatch):
+    d = tmp_path / "narrowps"
+    d.mkdir()
+    (d / "ps").write_text(NARROW_PS, encoding="utf-8")
+    (d / "ps").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{d}{os.pathsep}{os.environ['PATH']}")
+
+
+def test_stop_hook_releases_the_await_when_ps_cuts_the_command(repo, gh, narrow_ps):
+    d = full_spec(repo)
+    p = start_await(repo, d, gh)
+    try:
+        time.sleep(1.1)
+        r = stop_hook(repo)
+        assert '"block"' not in r.stdout, r.stdout
+    finally:
+        p.kill()
+        p.wait()
+
+
+def test_watch_sees_the_await_when_ps_cuts_the_command(repo, gh, narrow_ps):
+    d = full_spec(repo)
+    p = start_await(repo, d, gh)
+    try:
+        code = ("import sys, overnight, watch; print(watch.awaiting(overnight, __import__('pathlib').Path(sys.argv[1])))")
+        r = subprocess.run([sys.executable, "-c", code, str(d)], capture_output=True, text=True,
+                           env={**os.environ, "PYTHONPATH": f"{PLUGIN / 'scripts'}{os.pathsep}{PLUGIN / 'hooks'}"})
+        assert r.stdout.strip() == "True", r.stdout + r.stderr
+    finally:
+        p.kill()
+        p.wait()
+
+
 def test_stop_hook_releases_while_the_await_process_lives(repo, gh):
     d = full_spec(repo)
     p = start_await(repo, d, gh)
