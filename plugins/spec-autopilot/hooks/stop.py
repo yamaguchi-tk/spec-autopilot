@@ -250,7 +250,7 @@ def _elapsed(text):
 def _processes(timeout=5):
     """pid → (ppid, 起きてからの秒, argv) を ps で読む。読めなければ None。"""
     try:
-        out = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,etime=,command="], capture_output=True, text=True,
+        out = subprocess.run(["ps", "-A", "-ww", "-o", "pid=,ppid=,etime=,command="], capture_output=True, text=True,
                              timeout=timeout, check=True).stdout
         procs = {}
         for line in out.splitlines():
