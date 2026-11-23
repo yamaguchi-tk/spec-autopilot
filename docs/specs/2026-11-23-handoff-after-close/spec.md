@@ -72,7 +72,7 @@
   - path: plugins/spec-autopilot/hooks/hooks.json:1-38
 
 ## 作り方
-この spec の ADR のとおり、dispatch の無い起動は Agent の PreToolUse hook（新しい `hooks/agent_gate.py`）で起動の入口で止め、閉じた後の main のコードは handoff の閉じた側の道で、ファイルの中身を閉じた tip と比べて見分ける。
+この spec の ADR のとおり、dispatch の無い起動は Agent の PreToolUse hook（新しい `hooks/agent_gate.py`）で起動の入口で止め、閉じた後の main のコードは handoff の閉じた側の道で、ファイルの中身を閉じた tip と比べて見分ける。prompt の spec のパスは、docs/adr/2026-11-24-spec-path-anchored-on-dir-name.md のとおり、`docs/specs/<日付>-<slug>` の名前を手がかりにして、その前の `/`・`~/` と payload の cwd から候補を作り、stat で確かめて引く。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |

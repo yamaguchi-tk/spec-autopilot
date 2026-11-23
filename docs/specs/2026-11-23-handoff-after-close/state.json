@@ -4,7 +4,7 @@
   "created_at": 1795440813.994286,
   "existing": true,
   "start": "1004eeeff8e06b2a53e1da6f37cd82786adb0f53",
-  "last_active_at": 1795444787.991714,
+  "last_active_at": 1795447801.702566,
   "approved_at": 1795444395.669418,
   "approved_by": "OK（推奨のままの spec を承認）",
   "spec_sha256": "23ed210873d1881537bec1cd1ff5928646db014309fbee2498de93ea8b29b606",
@@ -13,10 +13,63 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
-  "reworks": {},
+  "reviews": [
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795445587.631399,
+      "sha": "12c3b606b9dcdfa95eb9b12136560ca8eb083267"
+    },
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795446774.361842,
+      "sha": "dc34c69964181e17c38c7826f988e3bfd623bcf5"
+    },
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795447801.586992,
+      "sha": "82c09c0f4741773e6eff48250aee87dc41c4b355"
+    }
+  ],
+  "fails": {
+    "R3": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795445587.631395
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795446774.361841
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795447801.58699
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "R8": 0
+  },
+  "reworks": {
+    "R3": [
+      "docs/adr/2026-11-24-spec-path-anchored-on-dir-name.md"
+    ]
+  },
   "dispatches": [
     {
       "base": "64fe89df162cd76b053d9cb7d5fd9938b8d8dce6",
@@ -58,6 +111,36 @@
       "agent": "autopilot-implementer",
       "at": 1795444777.61982,
       "session": "5292ffd4-9a66-425b-9e7d-0da7149983e2"
+    },
+    {
+      "base": "bcf8e4e8822a000ab51b87f7b0ed114c11600876",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R8"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795445654.583332,
+      "session": "5292ffd4-9a66-425b-9e7d-0da7149983e2"
+    },
+    {
+      "base": "a1dabda2e29e04c708b6dbb815b7bec1c7b7404c",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R8"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795446774.6203651,
+      "session": "5292ffd4-9a66-425b-9e7d-0da7149983e2"
     }
   ],
   "handoffs": [
@@ -76,6 +159,71 @@
       ],
       "dispatch": 1,
       "at": 1795444777.481062
+    },
+    {
+      "tip": "12c3b606b9dcdfa95eb9b12136560ca8eb083267",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795444909.0992079
+    },
+    {
+      "tip": "dc34c69964181e17c38c7826f988e3bfd623bcf5",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 3,
+      "at": 1795446221.957429
+    },
+    {
+      "tip": "82c09c0f4741773e6eff48250aee87dc41c4b355",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 4,
+      "at": 1795447212.174142
+    }
+  ],
+  "lenses": [
+    {
+      "name": "なし",
+      "found": 3,
+      "reproduced": 3,
+      "fixed": 1,
+      "at": 1795445587.7271612
+    },
+    {
+      "name": "なし",
+      "found": 2,
+      "reproduced": 2,
+      "fixed": 0,
+      "at": 1795446774.449017
+    },
+    {
+      "name": "なし",
+      "found": 3,
+      "reproduced": 3,
+      "fixed": 0,
+      "at": 1795447801.4349241
+    }
+  ],
+  "raises": [
+    {
+      "role": "impl",
+      "req": "R3",
+      "reason": "原因調査",
+      "at": 1795446774.361842,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-high"
+    },
+    {
+      "role": "impl",
+      "req": "R3",
+      "reason": "作り直し",
+      "at": 1795447801.586992,
+      "from": "autopilot-implementer-high",
+      "to": "autopilot-implementer-opus"
     }
   ]
 }

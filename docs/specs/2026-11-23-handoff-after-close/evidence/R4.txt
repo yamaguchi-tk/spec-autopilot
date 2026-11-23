@@ -1,0 +1,13 @@
+- commit: 12c3b606b9dcdfa95eb9b12136560ca8eb083267
+$ python3 .autopilot-qa/check.py
+  R4 ok  閉じた後に spec の外へ commit: exit=1 out='ERROR: 閉じた後に、統合先が変えていないコードが変わっている: hack.js。閉じた tip（13e979fd）に戻して commit するか、dispatch から実装役に直させる'
+  R4 ok  閉じた後に実装役のファイルを amend で書き換え: exit=1 out='ERROR: 閉じた後に、統合先が変えていないコードが変わっている: core.test.js。...'
+  R4 ok  rebase の後に main が書いた: exit=1 out='ERROR: 閉じた後に、統合先が変えていないコードが変わっている: hack.js。...'（other.txt は出ない）
+  R4 ok  統合先の merge の後に main が書いた: exit=1 out='ERROR: ... hack.js。...'（other.txt は出ない）
+  R4 ok  取り込んでいない別のブランチが同じファイルを変えた: exit=1 out='ERROR: ... hack.js。...'
+  R4 ok  remote の統合先へ rebase の後に main が書いた: exit=1 out='ERROR: ... hack.js。...'（remote.txt は出ない）
+R4 pass
+$ git apply .autopilot-qa/mut-R4-1.patch && python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_refuses_code_written_by_main_after_close -q; git apply -R .autopilot-qa/mut-R4-1.patch
+>       assert r.returncode != 0 and "hack.js" in r.stdout
+E       AssertionError: assert (0 != 0)
+1 failed in 1.90s
