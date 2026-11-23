@@ -113,6 +113,7 @@ def user_says(cwd, session="s1", prompt="OK"):
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(tmp_path / ".autopilot-home"))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / ".claude-config"))
     tmp_path = tmp_path / "repo"
     tmp_path.mkdir()
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
@@ -154,6 +155,22 @@ def real_run(repo, d, rid):
                                                encoding="utf-8")
 
 
+def implementer_ran(name="autopilot-implementer", session="s1", agent_type=None, model=None, effort=None):
+    """host が subagent の記録（meta.json と transcript）を書く。agentType・model・effort の既定は agent 定義の値。"""
+    defined = dict(re.findall(r"^(model|effort): *(\S+)", (PLUGIN / "agents" / f"{name}.md").read_text(encoding="utf-8"), re.M))
+    model = model or {"opus": "claude-opus-5-5", "fable": "claude-fable-5-2"}.get(defined["model"], defined["model"])
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / session / "subagents"
+    sub.mkdir(parents=True, exist_ok=True)
+    time.sleep(0.01)
+    agent = f"agent-a{time.time_ns():x}"
+    (sub / f"{agent}.meta.json").write_text(json.dumps({"agentType": agent_type or f"spec-autopilot:{name}", "model": model}),
+                                            encoding="utf-8")
+    stamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    rows = [{"type": "user", "timestamp": stamp, "message": {"role": "user", "content": "T1"}},
+            {"type": "assistant", "timestamp": stamp, "effort": effort or defined["effort"], "message": {"model": model}}]
+    (sub / f"{agent}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+
 def hand_off(repo, d, tasks=("T1",)):
     """dispatch の後に実装役の commit を作り、overnight.py handoff を通す（review はこれが今の HEAD で通った後だけ受ける）。"""
     git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
@@ -161,6 +178,7 @@ def hand_off(repo, d, tasks=("T1",)):
     r = subprocess.run([sys.executable, str(PLUGIN / "scripts" / "overnight.py"), "dispatch", str(d), *args], cwd=repo,
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
+    implementer_ran(r.stdout.strip().splitlines()[-1])
     subprocess.run([*git, "add", "-A", "--", ".", ":(exclude)docs/specs"], cwd=repo, check=True)
     subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
     args = [arg for t in tasks for arg in ("--task", t)]
