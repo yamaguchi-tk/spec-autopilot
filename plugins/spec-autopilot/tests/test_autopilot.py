@@ -183,7 +183,7 @@ def hand_off(repo, d, tasks=("T1",)):
     subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
     args = [arg for t in tasks for arg in ("--task", t)]
     r = subprocess.run([sys.executable, str(PLUGIN / "scripts" / "overnight.py"), "handoff", str(d), *args], cwd=repo,
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, env={**os.environ, "CLAUDE_CODE_SESSION_ID": "s1"})
     assert r.returncode == 0, r.stdout + r.stderr
 
 
