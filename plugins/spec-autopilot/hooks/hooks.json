@@ -1,0 +1,38 @@
+{
+  "description": "自走中（承認済みで未完了の spec がある）は、完了の検査が通るか満たせない要件を記録するまで turn を終えさせない。人の発言の時刻を記録し、承認と再開はその後だけ受ける。起動・再開・compaction の後は、続きのある spec の状態を文脈に入れる",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/user_prompt.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/stop.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_start.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
