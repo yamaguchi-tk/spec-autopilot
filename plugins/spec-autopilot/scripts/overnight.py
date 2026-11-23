@@ -757,7 +757,10 @@ def read_launch(name, log, since):
 
 def launch_errors(dispatch):
     """dispatch が指した実装役が、定義の model と effort で起動されたか。実装役を起動しなかった（main が書いた・
-    実装役でない agent だけに書かせた）・別の段の実装役を起動した・model を渡した・main の effort を継承した、を拒む。"""
+    実装役でない agent だけに書かせた）・別の段の実装役を起動した・model を渡した・main の effort を継承した、を拒む。
+    範囲: 起動した実装役の agent・model・effort が定義と合うかだけを見る。想定するのは事故（model の渡し間違い、
+    effort の継承、段の取り違え）で、わざと避ける形は想定しない。やらないこと: main が自分で書いた commit・amend・merge
+    の見分け、定義と違う model が書いた commit の除去。"""
     name, session = dispatch.get("agent"), dispatch.get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
     if not name:
         return ["dispatch の記録に実装役の名前が無い（前の版の記録か、手で直した記録）。dispatch から打ち直す"]
