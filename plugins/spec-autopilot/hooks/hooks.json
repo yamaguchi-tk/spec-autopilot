@@ -1,6 +1,18 @@
 {
-  "description": "自走中（承認済みで未完了の spec がある）は、完了の検査が通るか満たせない要件を記録するまで turn を終えさせない。人の発言の時刻を記録し、承認と再開はその後だけ受ける。起動・再開・compaction の後は、続きのある spec の状態を文脈に入れる",
+  "description": "自走中（承認済みで未完了の spec がある）は、完了の検査が通るか満たせない要件を記録するまで turn を終えさせない。人の発言の時刻を記録し、承認と再開はその後だけ受ける。起動・再開・compaction の後は、続きのある spec の状態を文脈に入れる。実装役の起動は、開いた dispatch がある spec を prompt に書いたときだけ通す",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "out=$(python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/agent_gate.py\") && printf '%s\\n' \"$out\" || printf '%s\\n' '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"deny\", \"permissionDecisionReason\": \"spec-autopilot の agent_gate が答えを出さずに終わった。overnight.py dispatch <dir> --task T<n> を打ってから起動し直す\"}}'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [

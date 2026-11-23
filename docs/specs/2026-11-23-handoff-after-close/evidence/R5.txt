@@ -1,0 +1,10 @@
+- commit: 12c3b606b9dcdfa95eb9b12136560ca8eb083267
+$ python3 .autopilot-qa/check.py
+  R5 ok  手元の統合先の上へ rebase: exit=0 out='handoff: OK。評価役に進む'
+  R5 ok  remote の統合先の上へ rebase（手元の main は古い）: exit=0 out='handoff: OK。評価役に進む'
+  R5 ok  手元の統合先の merge: exit=0 out='handoff: OK。評価役に進む'
+  R5 ok  remote の統合先の merge: exit=0 out='handoff: OK。評価役に進む'
+  R5 ok  spec のファイルだけの amend: exit=0 out='handoff: OK。評価役に進む'
+  R5 ok  docs/adr だけの commit: exit=0 out='handoff: OK。評価役に進む'
+  R5 ok  rebase の後に spec のファイルだけの amend: exit=0 out='handoff: OK。評価役に進む'
+R5 pass

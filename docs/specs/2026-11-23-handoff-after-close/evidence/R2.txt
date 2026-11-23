@@ -1,0 +1,10 @@
+- commit: 4f55a1679d7b3909bc7dee7792241a17c8833963
+$ python3 .autopilot-qa/check.py
+  R2 ok  prompt に spec が無い: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R2 ok  state.json が壊れた: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R2 ok  JSON でない stdin（hooks.json の command）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.04s)
+  R2 ok  相対パスを payload の cwd から引く（プロセスの cwd は /）: want=empty（10s 未満） got=empty (0.03s)
+R2 pass
+（どれも終了コード 0。exit=1 は R3 の fail による。hooks.json の command の import 失敗・exit 3 の deny は、この巡の差分が触れていないので、test_agent_gate.py の 2 本と前の巡の変異で確かめたまま）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_agent_gate.py -q
+216 passed in 146.44s (0:02:26)
