@@ -7,7 +7,7 @@
 - GDD: repo の `.claude/gdd-dev.local.md` の `active:` が false 以外（大文字・字下げ・注釈・読めない値を含む）で、Claude Code の設定で
   GDD の plugin が有効なら ERROR（GDD の hook が自走を止める）。有効でなければ、GDD を外した後に残った lock なので NOTE。
   設定は user（CLAUDE_CONFIG_DIR か ~/.claude）・project・local の settings.json の順に後が勝つ。読めない設定は有効とみなす。
-  settings の外で読み込む GDD（--plugin-dir）と、読む scope を絞る起動（--setting-sources）は見えない。NOTE の文でそう知らせる。
+  この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる（NOTE の文でもそう知らせる）。
 - keep-awake: pmset があり、PreventUserIdleSystemSleep も PreventSystemSleep も 0 なら NOTE（承認のときに人に示す）。
   `pmset -g batt` がバッテリー駆動（'Battery Power'）なら NOTE（蓋を閉じるとバッテリーのまま眠り、keep-awake では止められない）。
 - macOS の更新: SoftwareUpdate の AutomaticallyInstallMacOSUpdates が 1 なら NOTE（夜に更新が入ると再起動しうる。システムの
@@ -38,7 +38,7 @@ def check(text, now=None, cwd=None):
                           "/gdd-dev を終えるか active: false にしてから承認する")
         else:
             warnings.append(f"{gdd} の active: が false 以外のまま残っているが、settings.json で GDD の plugin が有効でないので"
-                            "自走は止めない（--plugin-dir など settings の外で GDD を読み込んでいるなら、GDD の hook が止める）。"
+                            "自走は止めない（この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる）。"
                             "GDD を使わないなら、このファイルは消してよい")
     warnings += keep_awake() + power() + auto_update() + watcher()
     return errors, warnings
