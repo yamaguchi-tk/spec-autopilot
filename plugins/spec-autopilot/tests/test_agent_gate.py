@@ -224,7 +224,7 @@ def fresh_repo(tmp_path, monkeypatch, dirname):
     monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(tmp_path / ".autopilot-home"))
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / ".claude-config"))
     root = tmp_path / dirname
-    root.mkdir()
+    root.mkdir(parents=True)
     subprocess.run(GIT[:1] + ["init", "-q", str(root)], check=True)
     return root
 
@@ -270,3 +270,33 @@ def test_gate_takes_the_spec_dir_name_as_the_anchor_and_ignores_other_paths(repo
     link.symlink_to(d, target_is_directory=True)
     kind, why = decision(fire(repo, f"spec は {link} です"))
     assert kind == "deny" and "spec のディレクトリ" in why
+
+
+@pytest.mark.parametrize("cwd_rel, repo_rel, prompt", [
+    ("top", "top/sub", "spec は {rel} です。T1 を実装して"),
+    ("root", "root/.claude/worktrees/wt1", "{rel}を実装して"),
+    ("a", "b", "spec は「{rel}」の T1"),
+    ("a", "b", "{rel}/tasks.md の T1"),
+])
+def test_gate_resolves_a_relative_path_with_dirs_before_docs_specs_from_the_payload_cwd(tmp_path, monkeypatch, cwd_rel, repo_rel, prompt):
+    """prompt の相対パスの、docs/specs の前に付いたディレクトリ（sub/・.claude/worktrees/wt1/・../b/）も payload の cwd から引く。"""
+    root = fresh_repo(tmp_path, monkeypatch, repo_rel)
+    d = dispatched(root, building(root))
+    cwd = tmp_path / cwd_rel
+    cwd.mkdir(parents=True, exist_ok=True)
+    rel = os.path.relpath(d, cwd)
+    assert not rel.startswith("docs/")
+    assert decision(fire(cwd, prompt.format(rel=rel))) is None
+
+
+def test_gate_denies_a_relative_path_with_dirs_before_docs_specs_when_its_dispatch_is_closed(tmp_path, monkeypatch):
+    """cwd から引いた相対パスの spec に開いた dispatch が無ければ、cwd の下の同じ名前の開いた spec と取り違えず deny する。"""
+    top = fresh_repo(tmp_path, monkeypatch, "top")
+    opened = dispatched(top, building(top))
+    sub = top / "sub"
+    sub.mkdir()
+    subprocess.run(GIT[:1] + ["init", "-q", str(sub)], check=True)
+    closed = building(sub)
+    assert closed.name == opened.name
+    kind, _ = decision(fire(top, f"spec は {closed.relative_to(top)} です"))
+    assert kind == "deny"

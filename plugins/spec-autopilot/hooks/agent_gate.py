@@ -24,10 +24,17 @@ def is_spec(path):
     return os.path.isfile(os.path.join(path, "state.json"))
 
 
+# 相対パスの途中にある字（ここに続く位置は、相対パスの始まりの候補にしない）
+PATH_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-/~")
+
+
 def anchored(line, start, stop, cwd, home):
-    """line[start:stop] の手がかりで終わる spec のディレクトリ（無ければ None）。同じ行のその前の `/`・`~/` を始まりの候補にし、
-    いちばん前から始まる存在するものを採る（絶対パスの中の `/` から届く別の綴りは数えない）。どれも無いときだけ、
-    payload の cwd とその祖先の下の docs/specs/<名前> を候補にする（別の repo の絶対パスの途中を cwd の spec と取り違えない）。"""
+    """line[start:stop] の手がかりで終わる spec のディレクトリ（無ければ None）。候補を次の順に stat で確かめ、最初に存在するものを採る。
+    1. 同じ行のその前の `/`・`~/` から始まる絶対パス（いちばん前から。絶対パスの中の `/` から届く別の綴りは数えない）
+    2. その前の、行頭か、パスの字（英数字・`._-/~`）でない字の直後から始まる部分を、payload の cwd からの相対パスとしたもの
+       （`sub/`・`.claude/worktrees/wt1/`・`../b/` のように docs/specs の前にディレクトリが付いた形。いちばん前から）
+    3. payload の cwd とその祖先の下の docs/specs/<名前>
+    1・2 の後に 3 を試すので、別の repo の絶対パスや、cwd の下の別の repo の相対パスを、cwd の spec と取り違えない。"""
     for i in range(start):
         if line[i] == "~" and line[i + 1:i + 2] == "/":
             cand = home + line[i + 1:stop]
@@ -37,6 +44,11 @@ def anchored(line, start, stop, cwd, home):
             continue
         if is_spec(cand):
             return cand
+    for i in range(start):
+        if line[i] not in "/~" and (i == 0 or line[i - 1] not in PATH_CHARS):
+            cand = os.path.join(cwd, line[i:stop])
+            if is_spec(cand):
+                return cand
     rel, base = line[start:stop], cwd
     while True:
         cand = os.path.join(base, rel)
@@ -50,7 +62,7 @@ def anchored(line, start, stop, cwd, home):
 
 def spec_dirs(prompt, cwd):
     """prompt の各行の docs/specs/<日付>-<slug> ごとに spec のディレクトリを引き、realpath で重ねて同じ spec を 1 度だけ数える。
-    候補の数は、手がかりの数 × その前の `/` の数。"""
+    候補の数は、手がかりの数 × その前の字の数（`/` と、相対パスの始まりになる位置）。"""
     found, seen = [], set()
     cwd, home = os.path.abspath(cwd), os.path.expanduser("~")
     for line in prompt.splitlines():
