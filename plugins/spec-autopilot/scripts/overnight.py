@@ -7,7 +7,7 @@
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
                                                     増えた・dispatch が指した実装役が定義の model と effort で動いた・commit していないコードが無い・タスクが [x]。
-                                                    閉じた後は同じ HEAD で記録済み、rebase の後は増分を見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
+                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は〔rebase に限らず〕増分も起動も見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
   overnight.py await <dir> --kind ci --pr <n>       CI を待つ（background の Bash で 1 本だけ起動する）
   overnight.py await <dir> --kind deploy   最後のマージの commit で、spec の `- デプロイの確かめ:` の workflow を全部待つ
       1 本でも失敗したら、すぐに exit 1。失敗のログが flake の型（run の 1 回目）なら exit 3 で返し、再実行は main が打つ。
@@ -784,7 +784,8 @@ def launch_errors(dispatch):
 
 def cmd_handoff(a):
     """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
-    閉じていて HEAD が違う（マージの前の rebase）: 増分も起動も見ず、commit していないコードと [x] だけを確かめる。"""
+    閉じていて HEAD が違う（マージの前の rebase を通すため。rebase に限らず受ける）: 増分も起動も見ず、commit していない
+    コードと [x] だけを確かめる。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
     if s.get("phase") != "building":
