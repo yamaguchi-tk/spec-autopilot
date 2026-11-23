@@ -1,20 +1,19 @@
-- commit: 82c09c0f4741773e6eff48250aee87dc41c4b355
+- commit: 4f55a1679d7b3909bc7dee7792241a17c8833963
 $ python3 .autopilot-qa/check.py
+  R1 ok  dispatch の無い spec spec は {d} です: want=deny+dispatch（10s 未満） got=deny+dispatch (0.04s)
   R1 ok  dispatch の無い spec {d}を実装して: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  別の段の名前 {d}を実装して: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  dispatch の無い spec 「{d}」: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  別の段の名前 「{d}」: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  dispatch の無い spec spec: {d}: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  別の段の名前 spec: {d}: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  閉じた dispatch {d}を実装して: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  閉じた dispatch （{d}）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
-  R1 ok  閉じた spec の絶対パスだけ（cwd に開いた spec）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  dispatch の無い spec spec は「{d}」: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  閉じた dispatch spec は {d} です: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  閉じた dispatch {d}を実装して: want=deny+dispatch（10s 未満） got=deny+dispatch (0.04s)
+  R1 ok  閉じた dispatch spec は「{d}」: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  別の段の名前（-fable）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  閉じた別 repo の絶対パスだけ（cwd に同じ名前の開いた spec）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
 R1 pass
-（dispatch は本物の overnight.py dispatch で打った。別の段は -fable。deny+dispatch は permissionDecision が deny で、理由に overnight.py dispatch があること。exit=1 は R3 の fail による）
-$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_agent_gate.py -q -n auto
-209 passed in 16.26s
-$ git apply .autopilot-qa/mut-R1-3.patch && perl -e 'alarm 100; exec @ARGV' -- python3 -m pytest plugins/spec-autopilot/tests/test_agent_gate.py::test_gate_does_not_read_a_relative_path_out_of_the_middle_of_an_absolute_path -q; git apply -R .autopilot-qa/mut-R1-3.patch
-（変異の前: 1 passed in 1.72s。変異は、別のパスや語の途中から始まる相対パスを読まない条件を elif False にする）
+（deny+dispatch は permissionDecision が deny で、理由に overnight.py dispatch があること。exit=1 は R3 の fail による）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_agent_gate.py -q
+216 passed in 146.44s (0:02:26)
+$ git apply .autopilot-qa/mut-R1-1.patch && perl -e 'alarm 100; exec @ARGV' -- python3 -m pytest plugins/spec-autopilot/tests/test_agent_gate.py::test_gate_does_not_read_a_relative_path_out_of_the_middle_of_an_absolute_path -q; git apply -R .autopilot-qa/mut-R1-1.patch
+（変異の前: 1 passed in 1.62s。変異は anchored の絶対パスの候補の loop を range(0) にし、cwd の下の同じ名前の spec を先に引かせる）
 E       TypeError: cannot unpack non-iterable NoneType object
-1 failed in 7.45s
-（戻した後に git diff --quiet HEAD -- plugins/spec-autopilot/hooks/agent_gate.py が通り、印 .autopilot-qa/mut-R1-3.applied は消えた）
+1 failed in 2.45s
+（deny のはずの判定が空になり、kind, _ = decision(...) が落ちた。戻した後に git diff --quiet HEAD -- plugins/spec-autopilot/hooks/agent_gate.py が通り、印 .autopilot-qa/mut-R1-1.applied は消えた）

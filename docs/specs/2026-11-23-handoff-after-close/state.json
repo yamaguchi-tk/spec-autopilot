@@ -4,7 +4,7 @@
   "created_at": 1795440813.994286,
   "existing": true,
   "start": "1004eeeff8e06b2a53e1da6f37cd82786adb0f53",
-  "last_active_at": 1795447801.702566,
+  "last_active_at": 1795448985.626766,
   "approved_at": 1795444395.669418,
   "approved_by": "OK（推奨のままの spec を承認）",
   "spec_sha256": "23ed210873d1881537bec1cd1ff5928646db014309fbee2498de93ea8b29b606",
@@ -34,6 +34,18 @@
       ],
       "at": 1795447801.586992,
       "sha": "82c09c0f4741773e6eff48250aee87dc41c4b355"
+    },
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795448593.1695051,
+      "sha": "4f55a1679d7b3909bc7dee7792241a17c8833963"
+    },
+    {
+      "high": [],
+      "at": 1795448985.6267571,
+      "sha": "18baca74707a69a5f3f152ca7463b00fc715420e"
     }
   ],
   "fails": {
@@ -52,6 +64,11 @@
         "from": "review",
         "evidence": "最後のレビューの high",
         "at": 1795447801.58699
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795448593.169503
       }
     ]
   },
@@ -141,6 +158,36 @@
       "agent": "autopilot-implementer-high",
       "at": 1795446774.6203651,
       "session": "5292ffd4-9a66-425b-9e7d-0da7149983e2"
+    },
+    {
+      "base": "13fd7d49c2e978aea6b4d8559f5bd5e5bf81b8c0",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R8"
+      ],
+      "agent": "autopilot-implementer-opus",
+      "at": 1795447820.851056,
+      "session": "5292ffd4-9a66-425b-9e7d-0da7149983e2"
+    },
+    {
+      "base": "606170ccba2be19768de45733e5727d993b82fa9",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R8"
+      ],
+      "agent": "autopilot-implementer-opus",
+      "at": 1795448593.359009,
+      "session": "5292ffd4-9a66-425b-9e7d-0da7149983e2"
     }
   ],
   "handoffs": [
@@ -183,6 +230,22 @@
       ],
       "dispatch": 4,
       "at": 1795447212.174142
+    },
+    {
+      "tip": "4f55a1679d7b3909bc7dee7792241a17c8833963",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 5,
+      "at": 1795448092.3255942
+    },
+    {
+      "tip": "18baca74707a69a5f3f152ca7463b00fc715420e",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 6,
+      "at": 1795448917.31666
     }
   ],
   "lenses": [
@@ -206,6 +269,13 @@
       "reproduced": 3,
       "fixed": 0,
       "at": 1795447801.4349241
+    },
+    {
+      "name": "なし",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795448593.032856
     }
   ],
   "raises": [
