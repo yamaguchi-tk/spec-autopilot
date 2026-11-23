@@ -85,3 +85,87 @@ def test_unwritable_runs_log_is_a_note_and_exit_zero(repo, cmd):
         r = block(repo, d)
     assert r.returncode == 0, r.stderr
     assert re.search(r"NOTE: runs\.jsonl", r.stdout)
+
+
+# --- T2: 再承認をまたぐ active_min と、着手の時点の block ---
+
+def test_active_min_sums_rounds_minus_paused_sec_across_reapproval(repo):
+    from test_autopilot import user_says
+    d = approved(repo)
+    s = state(d)
+    s.update(approved_at=1000.0, created_at=1000.0, paused_sec=60)
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    assert block(repo, d).returncode == 0
+    s = state(d)
+    s["blocked"]["at"] = 1600.0
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+    assert state(d)["history"][-1]["paused_sec"] == 60 and state(d)["paused_sec"] == 0
+    import time
+    s = state(d)
+    s["approved_at"] = time.time() - 1200
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    make_done(repo, d)
+    assert run(repo, "done", str(d)).returncode == 0
+    done = [r for r in rows() if r["kind"] == "done"][0]
+    assert abs(done["active_min"] - 29.0) < 0.3  # (1600-1000-60)/60 + 20
+    assert done["blocks"] == [{"req": "R1", "reason": "x"}]
+
+
+def lineup_next(repo):
+    import subprocess
+    import sys
+    from test_lineup import LINEUP
+    env = {**os.environ, "CLAUDE_CODE_SESSION_ID": "s1"}
+    return subprocess.run([sys.executable, str(LINEUP), "next"], cwd=repo, capture_output=True, text=True, env=env, timeout=60)
+
+
+def queue_one(repo, d):
+    from test_autopilot import user_says
+    user_says(repo)
+    r = run(repo, "approve", str(d), "--by", "OK", "--queue")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def change(d):
+    p = d / "spec.md"
+    p.write_text(p.read_text(encoding="utf-8").replace("Enter", "Space"), encoding="utf-8")
+
+
+def test_lineup_next_block_at_start_appends_row_with_null_active_min_when_no_earlier_round(repo):
+    from test_autopilot import init_spec
+    d = init_spec(repo)
+    queue_one(repo, d)
+    change(d)
+    assert lineup_next(repo).returncode == 0
+    (row,) = rows()
+    assert row["kind"] == "block" and row["active_min"] is None and row["spec"] == d.name
+    assert len(row["blocks"]) == 1 and row["blocks"][0]["req"] == "着手"
+
+
+def test_lineup_next_block_at_start_keeps_earlier_round_active_min_and_block(repo):
+    d = approved(repo)
+    s = state(d)
+    s.update(approved_at=1000.0, created_at=1000.0, paused_sec=0)
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    block(repo, d, "前")
+    s = state(d)
+    s["blocked"]["at"] = 1600.0
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    queue_one(repo, d)
+    change(d)
+    assert lineup_next(repo).returncode == 0
+    last = rows()[-1]
+    assert last["kind"] == "block" and last["active_min"] == 10.0
+    assert [b["reason"] for b in last["blocks"]][0] == "前" and len(last["blocks"]) == 2
+
+
+def test_lineup_next_block_at_start_is_a_note_when_runs_log_is_unwritable(repo):
+    from test_autopilot import init_spec
+    d = init_spec(repo)
+    queue_one(repo, d)
+    change(d)
+    log_file().mkdir(parents=True)
+    r = lineup_next(repo)
+    assert r.returncode == 0 and "NOTE: runs.jsonl" in r.stdout
