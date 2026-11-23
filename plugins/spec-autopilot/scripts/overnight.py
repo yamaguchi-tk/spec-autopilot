@@ -782,6 +782,40 @@ def launch_errors(dispatch):
     return errors
 
 
+def after_close_errors(root, tip, now):
+    """閉じた tip の後に main が書いたコードの検査。spec のファイルの外で、tip と今の HEAD で中身が違うファイルから、統合先が
+    変えたファイル（rebase・merge で入る分）を除いて、残りを拒む。tip が読めなければ拒む。"""
+    def git(*args):
+        out = subprocess.run(["git", "-c", "core.quotePath=false", *args], cwd=root, capture_output=True, text=True)
+        return out.stdout.strip() if out.returncode == 0 else None
+    def names(a, b):
+        out = subprocess.run(["git", "-c", "core.quotePath=false", "diff", "-z", "--name-only", a, b], cwd=root, capture_output=True, text=True)
+        if out.returncode != 0:
+            raise RuntimeError(out.stderr.strip())
+        return {f for f in out.stdout.split("\0") if f}
+    if git("rev-parse", "--verify", "--quiet", f"{tip}^{{commit}}") is None:
+        return [f"閉じたときの tip（{str(tip)[:8]}）が repo に無い（読めない）ので、閉じた後の変更を確かめられない"]
+    try:
+        cur, up = git("symbolic-ref", "-q", "HEAD"), git("rev-parse", "--symbolic-full-name", "@{u}")
+        short = cur.removeprefix("refs/heads/") if cur else None
+        merged = set()
+        for ref in (git("for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes") or "").splitlines():
+            if ref in (cur, up) or ref.endswith("/HEAD") or (short and ref.startswith("refs/remotes/") and ref.endswith("/" + short)):
+                continue
+            if contains(root, tip, ref) or contains(root, now, ref):
+                continue
+            mb0, mb1 = git("merge-base", tip, ref), git("merge-base", now, ref)  # 統合先を merge した後は tip が今の HEAD の祖先で、tip と HEAD の merge-base は tip 自身になる。統合先から見た分岐点を使う
+            if mb0 and mb1 and contains(root, mb0, mb1):
+                merged |= names(mb0, mb1)
+        mine = sorted(f for f in names(tip, now) - merged if not autopilot.SPEC_FILES.search(f))
+    except (RuntimeError, OSError) as e:
+        return [f"閉じた後の変更を確かめられない: {e}"]
+    if mine:
+        return [f"閉じた後に、統合先が変えていないコードが変わっている: {', '.join(mine)}。閉じた tip（{tip[:8]}）に戻して commit するか、"
+                "dispatch から実装役に直させる"]
+    return []
+
+
 def cmd_handoff(a):
     """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
     閉じていて HEAD が違う（マージの前の rebase を通すため。rebase に限らず受ける）: 増分も起動も見ず、commit していない
@@ -809,6 +843,8 @@ def cmd_handoff(a):
         elif new_commits(root, base, now) == 0:
             errors.append(f"{(base or '着手の時点')[:8]} の後に commit が無い。実装役の「commit した」は事実と違う")
         errors += launch_errors(dispatches[-1])
+    elif closed[-1].get("tip") != now:  # 閉じた後に HEAD が動いた: main が書いたコードを見分ける
+        errors += after_close_errors(root, closed[-1].get("tip"), now)
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")
