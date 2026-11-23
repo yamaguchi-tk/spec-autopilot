@@ -1,0 +1,8 @@
+- commit: 12c3b606b9dcdfa95eb9b12136560ca8eb083267
+$ python3 .autopilot-qa/check.py
+  R7 ok  autopilot.md の C の 3 の handoff の項に 2 つの形と残り
+  R7 ok  overnight.py 冒頭の handoff の行に 2 つの形と残り
+  R7 ok  cmd_handoff の docstring に 2 つの形と残り
+  R7 ok  launch_errors の docstring から古い「見分けない」を外し残りを書く
+  R7 ok  README の hook の表に行
+R7 pass

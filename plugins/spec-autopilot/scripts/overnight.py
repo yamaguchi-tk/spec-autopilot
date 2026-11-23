@@ -7,7 +7,9 @@
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
                                                     増えた・dispatch が指した実装役が定義の model と effort で動いた・commit していないコードが無い・タスクが [x]。
-                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は〔rebase に限らず〕増分も起動も見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
+                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は増分も起動も見ないが、閉じた後の 2 つの形は見分ける: 閉じたときの tip が読めない、
+                                                    spec のファイルの外で閉じた tip と中身が違い統合先が変えたのでもないファイル〔main が書いたコード〕があれば拒む。
+                                                    rebase・統合先の merge・spec のファイルだけの変更は通す。見分けない残り: 統合先も変えたファイルへの main の書き込み。dispatch を打たない実装役の起動は hooks/agent_gate.py が止める）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
   overnight.py await <dir> --kind ci --pr <n>       CI を待つ（background の Bash で 1 本だけ起動する）
   overnight.py await <dir> --kind deploy   最後のマージの commit で、spec の `- デプロイの確かめ:` の workflow を全部待つ
       1 本でも失敗したら、すぐに exit 1。失敗のログが flake の型（run の 1 回目）なら exit 3 で返し、再実行は main が打つ。
@@ -760,7 +762,7 @@ def launch_errors(dispatch):
     実装役でない agent だけに書かせた）・別の段の実装役を起動した・model を渡した・main の effort を継承した、を拒む。
     範囲: 起動した実装役の agent・model・effort が定義と合うかだけを見る。想定するのは事故（model の渡し間違い、
     effort の継承、段の取り違え）で、わざと避ける形は想定しない。やらないこと: main が自分で書いた commit・amend・merge
-    の見分け、dispatch を打たずに起動した実装役の見分け、定義と違う model が書いた commit の除去（戻すのは手順書の main の手順）。"""
+    の見分けのうち統合先も変えたファイルへの書き込み（rebase の衝突の解消と区別できない）、定義と違う model が書いた commit の除去（戻すのは手順書の main の手順）。"""
     name, session = dispatch.get("agent"), dispatch.get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
     if not name:
         return ["dispatch の記録に実装役の名前が無い（前の版の記録か、手で直した記録）。dispatch から打ち直す"]
@@ -782,8 +784,44 @@ def launch_errors(dispatch):
     return errors
 
 
+def after_close_errors(root, tip, now):
+    """閉じた tip の後に main が書いたコードの検査。spec のファイルの外で、tip と今の HEAD で中身が違うファイルから、統合先が
+    変えたファイル（rebase・merge で入る分）を除いて、残りを拒む。tip が読めなければ拒む。"""
+    def git(*args):
+        out = subprocess.run(["git", "-c", "core.quotePath=false", *args], cwd=root, capture_output=True, text=True)
+        return out.stdout.strip() if out.returncode == 0 else None
+    def names(a, b):
+        out = subprocess.run(["git", "-c", "core.quotePath=false", "diff", "-z", "--name-only", a, b], cwd=root, capture_output=True, text=True)
+        if out.returncode != 0:
+            raise RuntimeError(out.stderr.strip())
+        return {f for f in out.stdout.split("\0") if f}
+    if git("rev-parse", "--verify", "--quiet", f"{tip}^{{commit}}") is None:
+        return [f"閉じたときの tip（{str(tip)[:8]}）が repo に無い（読めない）ので、閉じた後の変更を確かめられない"]
+    try:
+        cur, up = git("symbolic-ref", "-q", "HEAD"), git("rev-parse", "--symbolic-full-name", "@{u}")
+        short = cur.removeprefix("refs/heads/") if cur else None
+        merged = set()
+        for ref in (git("for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes") or "").splitlines():
+            if ref in (cur, up) or ref.endswith("/HEAD") or (short and ref.startswith("refs/remotes/") and ref.endswith("/" + short)):
+                continue
+            if contains(root, tip, ref) or contains(root, now, ref):
+                continue
+            mb0, mb1 = git("merge-base", tip, ref), git("merge-base", now, ref)  # 統合先を merge した後は tip が今の HEAD の祖先で、tip と HEAD の merge-base は tip 自身になる。統合先から見た分岐点を使う
+            if mb0 and mb1 and contains(root, mb0, mb1):
+                merged |= names(mb0, mb1)
+        mine = sorted(f for f in names(tip, now) - merged if not autopilot.SPEC_FILES.search(f))
+    except (RuntimeError, OSError) as e:
+        return [f"閉じた後の変更を確かめられない: {e}"]
+    if mine:
+        return [f"閉じた後に、統合先が変えていないコードが変わっている: {', '.join(mine)}。閉じた tip（{tip[:8]}）に戻して commit するか、"
+                "dispatch から実装役に直させる"]
+    return []
+
+
 def cmd_handoff(a):
-    """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
+    """閉じた後の 2 つの形（dispatch を打たずに起動した実装役は hooks/agent_gate.py が起動で止める。閉じた後に main が書いた
+    コードは、閉じた tip と中身が違うファイルから統合先が変えたものを除いて見分ける）を拒む。見分けない残りは、統合先も変えた
+    ファイルへの main の書き込み。受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
     閉じていて HEAD が違う（マージの前の rebase を通すため。rebase に限らず受ける）: 増分も起動も見ず、commit していない
     コードと [x] だけを確かめる。"""
     d = Path(a.dir)
@@ -809,6 +847,8 @@ def cmd_handoff(a):
         elif new_commits(root, base, now) == 0:
             errors.append(f"{(base or '着手の時点')[:8]} の後に commit が無い。実装役の「commit した」は事実と違う")
         errors += launch_errors(dispatches[-1])
+    elif closed[-1].get("tip") != now:  # 閉じた後に HEAD が動いた: main が書いたコードを見分ける
+        errors += after_close_errors(root, closed[-1].get("tip"), now)
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")

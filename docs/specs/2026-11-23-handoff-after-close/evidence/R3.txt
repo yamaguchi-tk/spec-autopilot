@@ -1,0 +1,37 @@
+- commit: 18baca74707a69a5f3f152ca7463b00fc715420e
+$ python3 .autopilot-qa/check.py && python3 -m pytest plugins/spec-autopilot/tests/test_agent_gate.py -q
+  R1 ok  dispatch の無い spec spec は {d} です: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  dispatch の無い spec {d}を実装して: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  dispatch の無い spec spec は「{d}」: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  閉じた dispatch spec は {d} です: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  閉じた dispatch {d}を実装して: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  閉じた dispatch spec は「{d}」: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  別の段の名前（-fable）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R1 ok  閉じた別 repo の絶対パスだけ（cwd に同じ名前の開いた spec）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R2 ok  prompt に spec が無い: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R2 ok  state.json が壊れた: want=deny+dispatch（10s 未満） got=deny+dispatch (0.03s)
+  R2 ok  JSON でない stdin（hooks.json の command）: want=deny+dispatch（10s 未満） got=deny+dispatch (0.04s)
+  R2 ok  相対パスを payload の cwd から引く（プロセスの cwd は /）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  NFD の名前の下・NFC で書く spec は {d} です: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  NFD の名前の下・NFC で書く {d}を実装して: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  NFD の名前の下・NFC で書く spec は「{d}」: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  NFD の名前の下・NFC で書く {d}/tasks.md の T1: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  祖先 docs が 0311（絶対パス）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  祖先 docs が 0311（相対パス）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  空白・日本語のパス spec のディレクトリ：{d}: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  空白・日本語のパス spec【{d}】: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  空白・日本語のパス T1。{d}。: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  空白・日本語のパス {d}/を実装: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  ./ の相対パス: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  ~/ のパス: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  lineup（閉じた spec と開いた別の spec）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  相対パス sub/docs/specs/...（cwd の下の repo）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  相対パス .claude/worktrees/wt1/docs/specs/...（cwd は root checkout）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  相対パス ../b/docs/specs/...（cwd は隣の dir）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  実装役でない agent（state.json が壊れていても読まない）: want=empty（10s 未満） got=empty (0.03s)
+  R3 ok  長い行（/ 2000 個と手がかり 200 個の後に開いた spec）hooks.json の command: want=empty（10s 未満） got=empty (0.65s)
+R1 pass
+R2 pass
+R3 pass
+...................................................................      [100%]
+67 passed in 38.64s

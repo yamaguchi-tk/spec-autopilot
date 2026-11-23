@@ -1,0 +1,9 @@
+- commit: 12c3b606b9dcdfa95eb9b12136560ca8eb083267
+$ python3 .autopilot-qa/check.py
+  R6 ok  閉じた tip が repo に無い: exit=1 out='ERROR: 閉じたときの tip（00000000）が repo に無い（読めない）ので、閉じた後の変更を確かめられない'
+  R6 ok  閉じた tip の記録が無い: exit=1 out='ERROR: 閉じたときの tip（None）が repo に無い（読めない）ので、閉じた後の変更を確かめられない'
+R6 pass
+$ git apply .autopilot-qa/mut-R6-1.patch && python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_refuses_when_the_closed_tip_is_unreadable -q; git apply -R .autopilot-qa/mut-R6-1.patch
+>       assert r.returncode != 0 and "読めない" in r.stdout
+E       AssertionError: assert (1 != 0 and '読めない' in 'ERROR: 閉じた後の変更を確かめられない: fatal: bad object 0000000000000000000000000000000000000000\n')
+1 failed in 1.76s
