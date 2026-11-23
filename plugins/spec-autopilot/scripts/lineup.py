@@ -89,14 +89,14 @@ def begin(d, s, by, prev):
 def block(d, s, reason):
     import overnight
 
-    earlier = dict(s, history=list(s.get("history") or []))  # 記録用: 前の巡（今の state の最上位）を history に移した写し
-    if s.get("queued_from", "discovery") != "discovery" and s.get("approved_at") is not None:
-        earlier["history"].append({k: s.get(k) for k in ("approved_at", "blocked", "done_at", "paused_sec", "merges")})
+    if s.get("queued_from", "discovery") != "discovery" and (s.get("approved_at") is not None or s.get("blocked")):
+        # 前の巡（最上位の approved_at・blocked・paused_sec）を history に移し、最上位は空ける。次の begin が同じ巡を移し直さない
+        s["history"] = list(s.get("history") or []) + [{k: s.get(k) for k in ("approved_at", "blocked", "done_at", "paused_sec", "merges")}]
+        s.update(approved_at=None, paused_sec=0, done_at=None)
     s.update(phase="blocked", blocked={"req": "着手", "reason": reason, "evidence": NEXT, "at": time.time()})
     ap.save_state(d, s)
     ap.release(d)
-    earlier.update(blocked=s["blocked"], phase="blocked")
-    __import__("runlog").record(d, earlier, "block", s["blocked"]["at"], top_end=None)
+    __import__("runlog").record(d, s, "block", s["blocked"]["at"], top_end=None)
     print(f"blocked: {d.name}（{reason}）")
     overnight.notify(d)
 
