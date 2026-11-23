@@ -558,7 +558,7 @@ def test_approve_refuses_while_a_gdd_workflow_is_active(repo):
     gdd_on(repo)
     gdd_marker(repo)
     _, r = approve_text(repo, scoped(FULL))
-    assert r.returncode == 1 and "GDD" in r.stdout
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
 
 
 def test_approve_takes_an_active_gdd_marker_left_after_gdd_was_removed(repo):
@@ -590,7 +590,10 @@ def test_approve_reads_the_gdd_plugin_with_the_later_scope_winning(repo, user, p
             gdd_on(repo, value, where)
     gdd_marker(repo)
     _, r = approve_text(repo, scoped(FULL))
-    assert (r.returncode == 1 and "GDD" in r.stdout) is refused, r.stdout + r.stderr
+    if refused:
+        assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout, r.stdout + r.stderr
+    else:
+        assert r.returncode == 0, r.stdout + r.stderr
 
 
 @pytest.mark.parametrize("body", ["{broken", "[]", '{"enabledPlugins": []}'])
@@ -600,7 +603,7 @@ def test_approve_refuses_an_active_gdd_marker_when_a_settings_file_cannot_be_rea
     f.write_text(body, encoding="utf-8")
     gdd_marker(repo)
     _, r = approve_text(repo, scoped(FULL))
-    assert r.returncode == 1 and "GDD" in r.stdout
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
 
 
 def test_lint_warns_when_nothing_keeps_the_mac_awake(repo, tmp_path, monkeypatch):
