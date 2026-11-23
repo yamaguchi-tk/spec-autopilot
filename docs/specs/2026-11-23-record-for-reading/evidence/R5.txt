@@ -1,0 +1,54 @@
+- commit: fa566bfbbdc0781312e522ac10f13e29e73a9be4
+$ python3 .autopilot-qa/check.py
+[R1] init・approve・done、done をもう一度
+  done exit=0 rows=[{"kind": "done", "at": 1795436935.0057862, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r1/repo", "active_min": 0.0, "total_min": 0.0, "size": "S", "blocks": [], "rework_of": null, "prs": []}]
+  R1 ok: 1 行・キー全部・kind done・spec 2026-11-23-game
+  R1 ok: 2 回目の done で行が増えない（rows=1）
+[R2] approve の後に block、wait のまま block
+  block exit=0 rows=[{"kind": "block", "at": 1795436935.764577, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r2/repo", "active_min": 0.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "壊れた"}], "rework_of": null, "prs": []}]
+  R2 ok: kind block の 1 行、blocks に今回の req と reason
+  wait のまま block exit=0 active_min=10.0
+  R2 ok: wait のまま block は待ちの始まりまで（期待 10.0）
+[R3] 承認の後に spec.md を変えて lineup.py next
+  next exit=0 rows=[{"kind": "block", "at": 1795436936.9941719, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r3/repo", "active_min": null, "total_min": 0.0, "size": "S", "blocks": [{"req": "着手", "reason": "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける"}], "rework_of": null, "prs": []}]
+  R3 ok: kind block の 1 行、active_min null、blocks は 着手
+[R3] block（前の巡 600 秒）→ queue → 着手で block → queue → 着手で block
+  rows=[{"kind": "block", "at": 1795436937.5797498, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r3chain/repo", "active_min": 0.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "前"}], "rework_of": null, "prs": []}, {"kind": "block", "at": 1795436937.983514, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r3chain/repo", "active_min": 10.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "前"}, {"req": "着手", "reason": "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける"}], "rework_of": null, "prs": []}, {"kind": "block", "at": 1795436938.373944, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r3chain/repo", "active_min": 10.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "前"}, {"req": "着手", "reason": "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける"}, {"req": "着手", "reason": "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける"}], "rework_of": null, "prs": []}]
+  R3 ok: 2 回目の着手の block の active_min は前の巡までの和（期待 10.0、実際 10.0）
+  R3 ok: 2 回目の着手の block の blocks（期待 R1・着手・着手、実際 ['R1', '着手', '着手']）
+[R4] 手戻り元あり・なしで done
+  r4a done exit=0 rework_of=x
+  R4 ok: rework_of が x
+  r4b done exit=0 rework_of=None
+  R4 ok: rework_of が None
+[R5] 承認 → wait・resume → block → 再承認 → done
+  paused_sec=300
+  done exit=0 rows=[{"kind": "block", "at": 1795436941.733304, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r5/repo", "active_min": 10.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "一巡目"}], "rework_of": null, "prs": []}, {"kind": "done", "at": 1795436942.789501, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r5/repo", "active_min": 30.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "一巡目"}], "rework_of": null, "prs": []}]
+  R5 ok: active_min = (900-300)/60 + 20 = 30
+[R5/R1] block → queue → 着手で block（spec を変えた）→ 再承認 → done
+  rows=[{"kind": "block", "at": 1795436943.350776, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r5chain/repo", "active_min": 0.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "前"}], "rework_of": null, "prs": []}, {"kind": "block", "at": 1795436943.785219, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r5chain/repo", "active_min": 10.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "前"}, {"req": "着手", "reason": "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける"}], "rework_of": null, "prs": []}, {"kind": "done", "at": 1795436944.836889, "spec": "2026-11-23-game", "repo": "<worktree>/.autopilot-qa/work/r5chain/repo", "active_min": 30.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "前"}, {"req": "着手", "reason": "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける"}], "rework_of": null, "prs": []}]
+  history=[{"phase": null, "approved_at": 1795432743.372616, "blocked": {"req": "R1", "reason": "前", "evidence": "y", "at": 1795433343.372616}}, {"phase": "blocked", "approved_at": null, "blocked": {"req": "着手", "reason": "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける", "evidence": "lineup.py next", "at": 1795436943.783304}}]
+  R1 ok: done の blocks にこれまでの block が全部（期待 前・着手、実際 ['前', '承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける']）
+  R5 ok: active_min = 10 + 20 = 30（実際 30.0）
+[R6] runs.jsonl の場所がディレクトリ・書き込み権が無い
+  dir done: exit=0 ["NOTE: runs.jsonl に書けなかった（IsADirectoryError: [Errno 21] Is a directory: '<worktree>/.autopilot-qa/work/r6done/.autopilot-home/runs.jsonl'）。この回の記録は残らない"]
+  R6 ok: ディレクトリのとき done が 0 で NOTE 1 行
+  dir block: exit=0 ["NOTE: runs.jsonl に書けなかった（IsADirectoryError: [Errno 21] Is a directory: '<worktree>/.autopilot-qa/work/r6block/.autopilot-home/runs.jsonl'）。この回の記録は残らない"]
+  R6 ok: ディレクトリのとき block が 0 で NOTE 1 行
+  dir next: exit=0 ["NOTE: runs.jsonl に書けなかった（IsADirectoryError: [Errno 21] Is a directory: '<worktree>/.autopilot-qa/work/r6next/.autopilot-home/runs.jsonl'）。この回の記録は残らない"]
+  R6 ok: ディレクトリのとき next が 0 で NOTE 1 行
+  perm block: exit=0 ["NOTE: runs.jsonl に書けなかった（PermissionError: [Errno 13] Permission denied: '<worktree>/.autopilot-qa/work/r6perm/.autopilot-home/runs.jsonl'）。この回の記録は残らない"] stderr=
+  R6 ok: 書き込み権が無いとき block が 0 で NOTE 1 行
+[R7] 文書の行
+  R7 ok: autopilot.md の行に 手戻り元 の書き方
+  CLAUDE.md 最後の項目: - この進め方は、`/autopilot` で回した最初の 5 本で、`SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-au…
+  R7 ok: CLAUDE.md の最後の項目に runs.jsonl
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass
+R6 pass
+R7 pass
+$ python3 -m pytest plugins/spec-autopilot/tests/test_runlog.py -q
+14 passed in 18.84s
