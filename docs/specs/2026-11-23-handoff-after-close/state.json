@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "handoff-after-close",
+  "created_at": 1795440813.994286,
+  "existing": true,
+  "start": "1004eeeff8e06b2a53e1da6f37cd82786adb0f53",
+  "last_active_at": 1795444395.6706612,
+  "approved_at": 1795444395.669418,
+  "approved_by": "OK（推奨のままの spec を承認）",
+  "spec_sha256": "23ed210873d1881537bec1cd1ff5928646db014309fbee2498de93ea8b29b606",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
