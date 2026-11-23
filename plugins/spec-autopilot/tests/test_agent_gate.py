@@ -1,0 +1,144 @@
+"""hooks/agent_gate.py（実装役の起動の入口で、開いた dispatch の無い起動を deny する PreToolUse hook）を、
+payload を stdin で渡す入口と、hooks.json の command（答えを出さずに終わったときの deny）から確かめる。"""
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+import pytest
+
+from test_autopilot import PLUGIN, implementer_ran, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
+from test_overnight import full_spec, night
+
+GATE = PLUGIN / "hooks" / "agent_gate.py"
+IMPL = "spec-autopilot:autopilot-implementer"
+GIT = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
+
+
+def fire(cwd, prompt, agent=IMPL, tool="Agent", stdin=None):
+    payload = stdin if stdin is not None else json.dumps(
+        {"tool_name": tool, "tool_input": {"subagent_type": agent, "prompt": prompt}, "cwd": str(cwd)})
+    return subprocess.run([sys.executable, str(GATE)], input=payload, capture_output=True, text=True, timeout=30)
+
+
+def decision(r):
+    assert r.returncode == 0, r.stdout + r.stderr
+    if not r.stdout.strip():
+        return None
+    out = json.loads(r.stdout)["hookSpecificOutput"]
+    assert out["hookEventName"] == "PreToolUse"
+    return out["permissionDecision"], out["permissionDecisionReason"]
+
+
+def building(repo):
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    assert state(d)["phase"] == "building"
+    return d
+
+
+def dispatched(repo, d):
+    r = night(repo, "dispatch", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    return d
+
+
+def test_gate_denies_an_implementer_when_no_dispatch_was_made(repo):
+    d = building(repo)
+    kind, why = decision(fire(repo, f"spec は {d} です。T1 を実装して"))
+    assert kind == "deny" and "overnight.py dispatch" in why
+
+
+def test_gate_allows_an_implementer_while_the_dispatch_is_open(repo):
+    d = dispatched(repo, building(repo))
+    assert decision(fire(repo, f"spec: {d}。T1")) is None
+
+
+def test_gate_denies_after_the_dispatch_was_closed_by_a_handoff(repo):
+    d = dispatched(repo, building(repo))
+    st = state(d)
+    st["handoffs"] = [{"tip": "x", "tasks": ["T1"], "dispatch": 0, "at": 1}]
+    (d / "state.json").write_text(json.dumps(st), encoding="utf-8")
+    kind, why = decision(fire(repo, f"{d}"))
+    assert kind == "deny" and "overnight.py dispatch" in why
+
+
+def test_gate_denies_an_implementer_of_another_rung(repo):
+    d = dispatched(repo, building(repo))
+    kind, _ = decision(fire(repo, f"{d}", agent="spec-autopilot:autopilot-implementer-fable"))
+    assert kind == "deny"
+
+
+def test_gate_allows_when_any_named_spec_has_an_open_dispatch(repo):
+    d = dispatched(repo, building(repo))
+    other = init_spec(repo, "other")
+    assert decision(fire(repo, f"{other} と {d}")) is None
+
+
+def test_gate_resolves_a_relative_spec_path_from_the_payload_cwd(repo):
+    d = dispatched(repo, building(repo))
+    assert decision(fire(repo, str(d.relative_to(repo)))) is None
+    assert decision(fire(repo, str(d.relative_to(repo)) + "/", agent="autopilot-implementer")) is None
+
+
+def test_gate_denies_when_the_prompt_names_no_spec_directory(repo):
+    building(repo)
+    kind, why = decision(fire(repo, "T1 を実装して"))
+    assert kind == "deny" and "spec" in why
+
+
+def test_gate_denies_when_state_json_is_broken(repo):
+    d = dispatched(repo, building(repo))
+    (d / "state.json").write_text("{broken", encoding="utf-8")
+    kind, why = decision(fire(repo, f"{d}"))
+    assert kind == "deny" and "state.json" in why
+
+
+def test_gate_denies_when_the_payload_is_not_json(repo):
+    kind, why = decision(fire(repo, "", stdin="not json"))
+    assert kind == "deny" and why
+
+
+def test_gate_stays_silent_for_an_agent_that_is_not_an_implementer(repo):
+    d = building(repo)
+    (d / "state.json").write_text("{broken", encoding="utf-8")  # 読めば deny になる状態でも、読まない
+    assert decision(fire(repo, f"{d}", agent="spec-autopilot:autopilot-reviewer")) is None
+    assert decision(fire(repo, "x", agent="general-purpose")) is None
+
+
+def test_hooks_json_registers_the_gate_on_agent_and_task():
+    pre = json.loads((PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"]
+    assert len(pre) == 1 and set(pre[0]["matcher"].split("|")) == {"Agent", "Task"}
+    assert "agent_gate.py" in pre[0]["hooks"][0]["command"]
+
+
+def hook_command(root):
+    pre = json.loads((PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"]
+    return pre[0]["hooks"][0]["command"], {**os.environ, "CLAUDE_PLUGIN_ROOT": str(root)}
+
+
+def test_hook_command_denies_when_the_script_cannot_be_imported(tmp_path):
+    root = tmp_path / "plugin"
+    (root / "hooks").mkdir(parents=True)
+    (root / "hooks" / "agent_gate.py").write_text("import no_such_module_xyz\n", encoding="utf-8")
+    cmd, env = hook_command(root)
+    r = subprocess.run(cmd, shell=True, input="{}", capture_output=True, text=True, env=env, timeout=30)
+    assert decision(r)[0] == "deny"
+
+
+def test_hook_command_denies_when_the_script_exits_nonzero(tmp_path):
+    root = tmp_path / "plugin"
+    (root / "hooks").mkdir(parents=True)
+    (root / "hooks" / "agent_gate.py").write_text("import sys; print('partial'); sys.exit(3)\n", encoding="utf-8")
+    cmd, env = hook_command(root)
+    r = subprocess.run(cmd, shell=True, input="{}", capture_output=True, text=True, env=env, timeout=30)
+    assert decision(r)[0] == "deny"
+
+
+def test_hook_command_passes_the_real_script_answer_through(repo):
+    d = dispatched(repo, building(repo))
+    cmd, env = hook_command(PLUGIN)
+    payload = json.dumps({"tool_name": "Agent", "tool_input": {"subagent_type": IMPL, "prompt": str(d)}, "cwd": str(repo)})
+    r = subprocess.run(cmd, shell=True, input=payload, capture_output=True, text=True, env=env, timeout=30)
+    assert decision(r) is None
