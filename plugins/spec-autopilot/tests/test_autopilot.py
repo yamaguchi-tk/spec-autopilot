@@ -176,7 +176,7 @@ def hand_off(repo, d, tasks=("T1",)):
     git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
     args = [arg for t in tasks for arg in ("--task", t)]
     r = subprocess.run([sys.executable, str(PLUGIN / "scripts" / "overnight.py"), "dispatch", str(d), *args], cwd=repo,
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, env={**os.environ, "CLAUDE_CODE_SESSION_ID": "s1"})
     assert r.returncode == 0, r.stdout + r.stderr
     implementer_ran(r.stdout.strip().splitlines()[-1])
     subprocess.run([*git, "add", "-A", "--", ".", ":(exclude)docs/specs"], cwd=repo, check=True)

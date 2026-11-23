@@ -7,8 +7,7 @@
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
                                                     増えた・dispatch が指した実装役が定義の model と effort で動いた・commit していないコードが無い・タスクが [x]。
-                                                    閉じた後は同じ HEAD で記録済み、閉じた tip の上に spec の外の commit を積んだら拒む、rebase の後は
-                                                    増分を見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
+                                                    閉じた後は同じ HEAD で記録済み、rebase の後は増分を見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
   overnight.py await <dir> --kind ci --pr <n>       CI を待つ（background の Bash で 1 本だけ起動する）
   overnight.py await <dir> --kind deploy   最後のマージの commit で、spec の `- デプロイの確かめ:` の workflow を全部待つ
       1 本でも失敗したら、すぐに exit 1。失敗のログが flake の型（run の 1 回目）なら exit 3 で返し、再実行は main が打つ。
@@ -444,7 +443,7 @@ def review_errors(d, s):
     if merges and merges[-1].get("rollback") and only_tests_and_docs(root, merges[-1].get("head"), now):
         return []  # 戻した PR は、spec のマージを戻したことを merged --rollback が git で確かめている
     return [f"最後のレビューの後に、テスト・文書の外のコードが変わった（{reviews[-1]['sha'][:8]}..{(now or '?')[:8]}）。"
-            "overnight.py dispatch から実装役に渡し直し、handoff を通して評価役を回し直す"]
+            "overnight.py handoff を通して評価役を回し直す"]
 
 
 def dirty_code(root):
@@ -676,7 +675,8 @@ def cmd_dispatch(a):
         print(stop)
         return 1
     base = head(autopilot.repo_root(d))
-    s.setdefault("dispatches", []).append({"base": base, "tasks": a.task, "reqs": reqs, "agent": name, "at": time.time()})
+    s.setdefault("dispatches", []).append({"base": base, "tasks": a.task, "reqs": reqs, "agent": name, "at": time.time(),
+                                           "session": os.environ.get("CLAUDE_CODE_SESSION_ID")})
     autopilot.save_state(d, s)
     print(f"dispatch: {', '.join(a.task)} を {(base or 'commit の無い repo')[:8]} から実装役に渡す。起動する agent:\n{name}")
     return 0
@@ -713,26 +713,34 @@ def same_model(want, got):
 
 
 def launches(session, since):
-    """このセッションで since の後に起動した subagent の [(agent の名前, {model}, {effort})]。読めない記録は数えない。
-    host は subagent ごとに <config>/projects/<project>/<session>/subagents/agent-<id>.meta.json と .jsonl を書く。"""
+    """このセッションで since の後に起動した subagent の [(agent の名前, {model}, {effort}, 読めない記録の名前 or None)]。
+    host は subagent ごとに <config>/projects/<project>/<session>/subagents/agent-<id>.meta.json と .jsonl を書く。
+    meta.json が読めない記録は数えない。実装役と読めて transcript が読めない記録は、読めない記録として返す（照合できないまま通さない）。"""
     home = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
     out = []
     for meta in home.glob(f"projects/*/{session}/subagents/*.meta.json"):
         try:
-            launch = read_launch(meta, since)
-        except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError):
+            name = json.loads(meta.read_text(encoding="utf-8"))["agentType"].split(":")[-1]
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
             continue
+        log = meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl")
+        try:
+            launch = read_launch(name, log, since)
+        except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError):
+            try:
+                late = log.stat().st_mtime >= since
+            except OSError:
+                late = True
+            launch = (name, set(), set(), log.stem) if late else None
         if launch:
             out.append(launch)
     return out
 
 
-def read_launch(meta, since):
-    """1 つの subagent の (agent の名前, {model}, {effort})。since より前に起動したものは None。形が違えば例外を投げる。
+def read_launch(name, log, since):
+    """1 つの subagent の (名前, {model}, {effort}, None)。since より前に起動したものは None。形が違えば例外を投げる。
     model は transcript から読む（meta.json に無いことがある。<synthetic> は host が足す行）。"""
-    name = json.loads(meta.read_text(encoding="utf-8"))["agentType"].split(":")[-1]
-    lines = [line for line in meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl").read_text(encoding="utf-8")
-             .splitlines() if line.strip()]
+    lines = [line for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
     if datetime.fromisoformat(json.loads(lines[0])["timestamp"].replace("Z", "+00:00")).timestamp() < since:
         return None
     models, efforts = set(), set()
@@ -744,24 +752,25 @@ def read_launch(meta, since):
             raise TypeError("model・effort の形が違う")
         models.add(model)
         efforts.add(effort)
-    return name, models, efforts
+    return name, models, efforts, None
 
 
 def launch_errors(dispatch):
     """dispatch が指した実装役が、定義の model と effort で起動されたか。実装役を起動しなかった（main が書いた・
     実装役でない agent だけに書かせた）・別の段の実装役を起動した・model を渡した・main の effort を継承した、を拒む。"""
-    name, session = dispatch.get("agent"), os.environ.get("CLAUDE_CODE_SESSION_ID")
+    name, session = dispatch.get("agent"), dispatch.get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
     if not name:
         return ["dispatch の記録に実装役の名前が無い（前の版の記録か、手で直した記録）。dispatch から打ち直す"]
     if not isinstance(session, str) or not autopilot.SESSION_ID.fullmatch(session):
-        return ["このセッションが分からない（CLAUDE_CODE_SESSION_ID が無い）ので、実装役の起動の記録を確かめられない"]
+        return ["dispatch したセッションが分からない（CLAUDE_CODE_SESSION_ID が無い）ので、実装役の起動の記録を確かめられない"]
     runs = [r for r in launches(session, float(dispatch.get("at") or 0)) if r[0].startswith("autopilot-implementer")]
-    errors = [f"dispatch は {name} を指したが、{t} を起動した" for t, _, _ in runs if t != name]
-    mine = [r for r in runs if r[0] == name]
-    if not mine:
-        return errors + [f"dispatch の後に {name} を起動した記録が無い（main が書いた、または別の agent に書かせた）"]
+    errors = [f"{name} の起動の記録 {bad} が読めない（照合できない）" for t, _, _, bad in runs if bad and t == name]
+    errors += [f"dispatch は {name} を指したが、{t} を起動した" for t, _, _, _ in runs if t != name]
+    mine = [r for r in runs if r[0] == name and not r[3]]
+    if not mine and not errors:
+        return [f"dispatch の後に {name} を起動した記録が無い（main が書いた、または別の agent に書かせた）"]
     model, effort = defined(name)
-    for _, models, efforts in mine:
+    for _, models, efforts, _ in mine:
         if not models or not all(same_model(model, m) for m in models):
             errors.append(f"{name} が model {'・'.join(sorted(map(str, models))) or 'なし'} で動いた（定義は {model}）。"
                           "起動のときに model を渡さない")
@@ -772,8 +781,7 @@ def launch_errors(dispatch):
 
 def cmd_handoff(a):
     """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
-    閉じていて HEAD が違う: 閉じた tip の上に spec の外のファイルの commit を積んだなら拒む（直しは dispatch から渡す）。
-    閉じた tip が祖先でない（マージの前の rebase）なら、増分は見ず、commit していないコードと [x] だけを確かめる。"""
+    閉じていて HEAD が違う（マージの前の rebase）: 増分は見ず、commit していないコードと [x] だけを確かめる。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
     if s.get("phase") != "building":
@@ -797,13 +805,6 @@ def cmd_handoff(a):
         elif new_commits(root, base, now) == 0:
             errors.append(f"{(base or '着手の時点')[:8]} の後に commit が無い。実装役の「commit した」は事実と違う")
         errors += launch_errors(dispatches[-1])
-    elif contains(root, closed[-1].get("tip"), now):  # 閉じた tip の上に積んだ: dispatch を通さずに書いた
-        # 数えるのはこの枝で書いた commit だけ（first-parent の merge でないもの。merge で取り込んだ上流は数えない）
-        added = sorted({f.strip() for f in autopilot.git_lines(root, "log", "--first-parent", "--no-merges", "--name-only", "--format=",
-                                                        f"{closed[-1]['tip']}..{now}") if f.strip() and not autopilot.SPEC_FILES.search(f.strip())})
-        if added:
-            errors.append(f"最後の handoff（{closed[-1]['tip'][:8]}）の後に、dispatch を通さずにコードの commit が増えた: "
-                          f"{', '.join(added)}。直しは overnight.py dispatch から実装役に渡す")
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")
