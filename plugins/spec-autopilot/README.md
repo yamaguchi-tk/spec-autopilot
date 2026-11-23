@@ -31,17 +31,18 @@ LLM の多段レビューや人への中間確認ではなく、成果物の型�
 
 ## 判断の相談役（同梱の agent）
 
-判断の相談役の agent を 2 種類同梱しています。`/autopilot` の手順からは、IaC の初回の apply を含む spec と、人が名指ししたときだけ Opus を 1 本呼びます。ほかは、利用する repo の規則か、ユーザーが名指ししたときにだけ起動します。
+判断の相談役の agent を 2 種類と、その推奨を検証する agent を 1 種類同梱しています。`/autopilot` の手順からは、IaC の初回の apply を含む spec と、人が相談役を名指ししたときだけ、`fable-advisor` を 1 本呼び、`advice-checker` で反証を探します。`opus-advisor` は人が名指ししたときだけ呼びます。ほかは、利用する repo の規則か、ユーザーが名指ししたときにだけ起動します。
 
 | agent | 使う場面 |
 |---|---|
-| `opus-advisor` | 人に案を選んでもらう前、設計判断、レビュー指摘の直し方を決めるときの相談（Opus・high）。1 本で使います。同じモデルを 2 本並べても見方は増えません |
-| `fable-advisor` | 同じ相談を Fable・medium で行います。「ユーザーならどの案を選ぶか」の代わりとして使います |
+| `fable-advisor` | 人に案を選んでもらう前、設計判断、レビュー指摘の直し方を決めるときの相談の 1 段目（Fable・medium）。「ユーザーならどの案を選ぶか」の代わりとして推奨を出します |
+| `advice-checker` | 相談の 2 段目（Opus・high）。1 段目の推奨の根拠を repo の事実に当てて反証を探します。新しい案は出しません |
+| `opus-advisor` | 同じ相談を Opus・high で行います。人が名指ししたときに使います（main が Opus で動くとき、Opus の相談役を重ねても見方はあまり増えません） |
 
-- どちらも read-only（Read・Grep・Glob だけ）で、model と effort を定義で固定しています。起動するときに `model` を渡しません
+- どれも read-only（Read・Grep・Glob だけ）で、model と effort を定義で固定しています。起動するときに `model` を渡しません
 - 材料は要約せず、ファイルのパスや `file:line` で渡します
-- 規則に書くときの例: 「人に案を選んでもらう前に、`spec-autopilot:opus-advisor` に材料を場所で渡して 1 本相談し、推奨と自分の案との食い違いを確認の本文に載せる。推奨の `引いた決定:` がなし以外なら、引かれた行を読み直してから載せる」
-- 2 種類とも、工程管理つきの開発ハーネス [gate-driven-development](https://github.com/yamaguchi-tk/gate-driven-development)（GDD）の相談役から、その工程に結びついた起動条件を外して作ったものです。今はこの plugin の定義が正本で、GDD の側とは同期しません
+- 規則に書くときの例: 「人に案を選んでもらう前に、`spec-autopilot:fable-advisor` に材料を場所で渡して 1 本相談する。返った推奨の `推奨:`・`理由:`・`引いた決定:` の欄と、依頼の原文と材料の場所だけを `spec-autopilot:advice-checker` に渡して反証を探させ、`反証あり` なら、最初の材料の場所・最初の推奨・成り立たない主張を渡して fable-advisor に 1 回だけ直させる。最初の推奨と反証の結果、直した推奨（検証していないと書く）、自分の案との食い違いを確認の本文に載せる」
+- opus-advisor と fable-advisor は、工程管理つきの開発ハーネス [gate-driven-development](https://github.com/yamaguchi-tk/gate-driven-development)（GDD）の相談役から、その工程に結びついた起動条件を外して作ったものです。今はこの plugin の定義が正本で、GDD の側とは同期しません
 
 ## 前提と制限
 

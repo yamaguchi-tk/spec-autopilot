@@ -1577,13 +1577,13 @@ def test_session_start_reports_wait_and_how_to_resume(repo):
     assert "wait" in text and "deploy の確認" in text and "resume" in text
 
 
-ADVISORS = re.compile(r"spec-autopilot:([a-z-]+-advisor)")
+ADVISORS = re.compile(r"spec-autopilot:([a-z]+(?:-[a-z]+)*)")
 
 
 def advisor_rule(text):
     """相談役の規則の block を返し、名指しした agent が plugin の agents/ にあることを確かめる。"""
     names = set(ADVISORS.findall(text))
-    assert names == {"opus-advisor", "fable-advisor"}
+    assert names == {"fable-advisor", "advice-checker", "opus-advisor"}  # Fable が推し、Opus の検証役が反証する。Opus の相談役は名指しのとき
     for n in names:
         assert (PLUGIN / "agents" / f"{n}.md").is_file(), n
     return text
