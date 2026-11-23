@@ -142,3 +142,17 @@ def test_hook_command_passes_the_real_script_answer_through(repo):
     payload = json.dumps({"tool_name": "Agent", "tool_input": {"subagent_type": IMPL, "prompt": str(d)}, "cwd": str(repo)})
     r = subprocess.run(cmd, shell=True, input=payload, capture_output=True, text=True, env=env, timeout=30)
     assert decision(r) is None
+
+
+@pytest.mark.parametrize("dirname", ["my repo", "日本語 の repo"])
+def test_gate_allows_an_open_dispatch_under_a_path_with_spaces_or_japanese(tmp_path, monkeypatch, dirname):
+    monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(tmp_path / ".autopilot-home"))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / ".claude-config"))
+    root = tmp_path / dirname
+    root.mkdir()
+    subprocess.run(GIT[:1] + ["init", "-q", str(root)], check=True)
+    d = dispatched(root, building(root))
+    assert " " in str(d)
+    assert decision(fire(root, f"spec は {d} です。T1 を実装して")) is None
+    assert decision(fire(root, f"spec: {d}/")) is None
+    assert decision(fire(root, str(d.relative_to(root)))) is None

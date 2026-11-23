@@ -10,7 +10,8 @@ import re
 import sys
 from pathlib import Path
 
-PATH = re.compile(r"[A-Za-z0-9_./~-]+")
+START = re.compile(r"(?:^|(?<=[\s\"'`(\[<=,:]))[/~A-Za-z0-9_.-]")
+WORD = re.compile(r"\w")
 
 
 def short(name):
@@ -18,12 +19,27 @@ def short(name):
 
 
 def spec_dirs(prompt, cwd):
+    """prompt の各行で、区切りの字の後から始まり state.json を持つディレクトリになる最長の部分を探す（空白・日本語を含むパスも拾う）。"""
     found = []
-    for tok in PATH.findall(prompt):
-        p = Path(tok).expanduser()
-        p = p if p.is_absolute() else Path(cwd) / p
-        if (p / "state.json").is_file() and p not in found:
-            found.append(p)
+    for line in prompt.splitlines():
+        line = line[:4000]
+        for m in START.finditer(line):
+            for end in range(len(line), m.start(), -1):
+                if end < len(line) and WORD.match(line[end]):
+                    continue
+                tok = line[m.start():end].rstrip("/")
+                if not tok:
+                    continue
+                p = Path(tok).expanduser()
+                p = p if p.is_absolute() else Path(cwd) / p
+                try:
+                    ok = (p / "state.json").is_file()
+                except OSError:
+                    ok = False
+                if ok:
+                    if p not in found:
+                        found.append(p)
+                    break
     return found
 
 
