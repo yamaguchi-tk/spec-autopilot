@@ -914,3 +914,32 @@ def test_handoff_reads_the_records_of_the_session_that_dispatched(repo):
                        text=True, env=env, timeout=60)
     assert r.returncode == 0, r.stdout + r.stderr
 
+
+
+def test_handoff_refuses_an_implementer_launched_after_a_closed_handoff_without_a_dispatch(repo):
+    """閉じた handoff の後に、dispatch を打たずに実装役を起動し直した（照合を通らない起動）。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+    implementer_ran(model="claude-opus-5-5")
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "fix"], cwd=repo, check=True)
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "dispatch" in r.stdout and "起動" in r.stdout
+
+
+def test_handoff_uses_the_meta_time_when_the_transcript_is_missing(repo):
+    """transcript の無い実装役の記録は、meta.json の時刻で dispatch の前か後かを決める。"""
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    sub.mkdir(parents=True)
+    old = sub / "agent-old.meta.json"
+    old.write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    os.utime(old, (1, 1))
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+    redispatch(repo, d)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "fix"], cwd=repo, check=True)
+    implementer_ran()
+    (sub / "agent-new.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "agent-new" in r.stdout and "agent-old" not in r.stdout
