@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from test_autopilot import (GOOD_SPEC, PLUGIN, approved, hand_off, init_spec, make_done, repo, run, state,  # noqa: F401
+from test_autopilot import (GOOD_SPEC, PLUGIN, approved, hand_off, implementer_ran, init_spec, make_done, repo, run, state,  # noqa: F401
                             stop_hook, user_says)
 
 OVERNIGHT = PLUGIN / "scripts" / "overnight.py"
@@ -552,6 +552,7 @@ def test_handoff_requires_a_new_commit_and_checked_tasks(repo):
     (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")  # dispatch は tasks.md にあるタスクだけを受ける
     subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "base"], cwd=repo, check=True)
     assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    implementer_ran()
     (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 1 and "commit" in r.stdout and "T1" in r.stdout
@@ -781,3 +782,66 @@ def test_a_parked_high_can_be_reviewed_again_at_the_same_head_without_a_dispatch
     assert night(repo, "park", str(d), "--kind", "other", "--op", "差分の外の直し", "--reason", "差分の外", "--req", "R1").returncode == 0
     r = run(repo, "review", str(d), "--high", "none")
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def dispatched_and_committed(repo):
+    """T1 を dispatch し、実装役の commit と [x] を作る（起動の記録だけはまだ書かない）。"""
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    (d / "tasks.md").write_text("- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    return d
+
+
+def test_handoff_refuses_when_no_implementer_ran_after_the_dispatch(repo):
+    implementer_ran()  # dispatch の前の起動は数えない
+    d = dispatched_and_committed(repo)
+    implementer_ran("autopilot-implementer", agent_type="general-purpose")  # 実装役でない agent に書かせた
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "autopilot-implementer" in r.stdout and "起動した記録が無い" in r.stdout
+    implementer_ran()
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+
+
+def test_handoff_refuses_an_implementer_of_another_rung(repo):
+    d = dispatched_and_committed(repo)
+    implementer_ran("autopilot-implementer-opus")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "autopilot-implementer-opus" in r.stdout
+
+
+def test_handoff_refuses_a_model_other_than_the_definition(repo):
+    d = dispatched_and_committed(repo)
+    implementer_ran(model="claude-opus-5-5")  # model を渡して定義の model より優先させた
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "claude-opus-5-5" in r.stdout and "claude-sonnet-5-5" in r.stdout
+
+
+def test_handoff_refuses_an_effort_other_than_the_definition(repo):
+    d = dispatched_and_committed(repo)
+    implementer_ran(effort="xhigh")  # main の effort を継承した
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "xhigh" in r.stdout and "low" in r.stdout
+
+
+def test_handoff_accepts_an_alias_model_of_the_definition(repo):
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
+    s["dispatches"][-1]["agent"] = "autopilot-implementer-opus"  # 定義の model は別名の opus
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    (d / "tasks.md").write_text("- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    implementer_ran("autopilot-implementer-opus", model="claude-opus-5-5")
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+
+
+def test_handoff_refuses_when_the_session_is_unknown(repo):
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_SESSION_ID"}
+    r = subprocess.run([sys.executable, str(OVERNIGHT), "handoff", str(d), "--task", "T1"], cwd=repo, capture_output=True,
+                       text=True, env=env, timeout=60)
+    assert r.returncode == 1 and "CLAUDE_CODE_SESSION_ID" in r.stdout
