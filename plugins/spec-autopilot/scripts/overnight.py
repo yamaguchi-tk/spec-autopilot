@@ -34,6 +34,7 @@ import signal
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -692,6 +693,67 @@ def new_commits(root, base, now):
         return 0
 
 
+AGENTS = Path(__file__).resolve().parent.parent / "agents"
+ALIASES = ("opus", "sonnet", "fable", "haiku")
+
+
+def defined(name):
+    """agent 定義の (model, effort)。読めなければ (None, None)。"""
+    try:
+        fm = dict(re.findall(r"^(model|effort): *(\S+)", (AGENTS / f"{name}.md").read_text(encoding="utf-8"), re.M))
+    except OSError:
+        return None, None
+    return fm.get("model"), fm.get("effort")
+
+
+def same_model(want, got):
+    """定義の model（別名か ID）と、動いた model の ID が合うか。"""
+    return isinstance(got, str) and (got == want or want in ALIASES and got.startswith(f"claude-{want}-"))
+
+
+def launches(session, since):
+    """このセッションで since の後に起動した subagent の [(agent の名前, {model}, {effort})]。読めない記録は数えない。
+    host は subagent ごとに <config>/projects/<project>/<session>/subagents/agent-<id>.meta.json と .jsonl を書く。"""
+    home = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    out = []
+    for meta in home.glob(f"projects/*/{session}/subagents/*.meta.json"):
+        try:
+            m = json.loads(meta.read_text(encoding="utf-8"))
+            log = meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl").read_text(encoding="utf-8")
+            rows = [json.loads(line) for line in log.splitlines() if line.strip()]
+            start = datetime.fromisoformat(rows[0]["timestamp"].replace("Z", "+00:00")).timestamp()
+            name = m["agentType"].split(":")[-1]
+        except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError):
+            continue
+        said = [r for r in rows if r.get("type") == "assistant" and (r.get("message") or {}).get("model") != "<synthetic>"]
+        if start >= since:  # model は transcript から読む（meta.json に無いことがある。<synthetic> は host が足す行）
+            out.append((name, {(r.get("message") or {}).get("model") for r in said}, {r.get("effort") for r in said}))
+    return out
+
+
+def launch_errors(dispatch):
+    """dispatch が指した実装役が、定義の model と effort で起動されたか。main が書いた・別の段や agent に書かせた・
+    model を渡した・main の effort を継承した、を拒む。"""
+    name, session = dispatch.get("agent"), os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if not name:
+        return []
+    if not isinstance(session, str) or not autopilot.SESSION_ID.fullmatch(session):
+        return ["このセッションが分からない（CLAUDE_CODE_SESSION_ID が無い）ので、実装役の起動の記録を確かめられない"]
+    runs = [r for r in launches(session, float(dispatch.get("at") or 0)) if r[0].startswith("autopilot-implementer")]
+    errors = [f"dispatch は {name} を指したが、{t} を起動した" for t, _, _ in runs if t != name]
+    mine = [r for r in runs if r[0] == name]
+    if not mine:
+        return errors + [f"dispatch の後に {name} を起動した記録が無い（main が書いた、または別の agent に書かせた）"]
+    model, effort = defined(name)
+    for _, models, efforts in mine:
+        if not models or not all(same_model(model, m) for m in models):
+            errors.append(f"{name} が model {'・'.join(sorted(map(str, models))) or 'なし'} で動いた（定義は {model}）。"
+                          "起動のときに model を渡さない")
+        if efforts != {effort}:
+            errors.append(f"{name} が effort {'・'.join(sorted(map(str, efforts))) or 'なし'} で動いた（定義は {effort}）")
+    return errors
+
+
 def cmd_handoff(a):
     """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
     閉じていて HEAD が違う（マージの前の rebase）: 増分は見ず、commit していないコードと [x] だけを確かめる。"""
@@ -717,6 +779,7 @@ def cmd_handoff(a):
             errors.append(f"dispatch の時点（{base[:8]}）が今の HEAD の祖先でない。実装役に渡している間に履歴が書き換わった")
         elif new_commits(root, base, now) == 0:
             errors.append(f"{(base or '着手の時点')[:8]} の後に commit が無い。実装役の「commit した」は事実と違う")
+        errors += launch_errors(dispatches[-1])
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")
