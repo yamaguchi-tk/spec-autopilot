@@ -12,7 +12,7 @@ import pytest
 from test_autopilot import (EXISTING_SECTIONS, GOOD_SPEC, PLUGIN, existing_repo, init_spec, repo, run, state, stop_hook,  # noqa: F401
                            user_says)
 from test_overnight import FULL, GIT, gh, scoped  # noqa: F401
-from test_rollback import aws_home
+from test_rollback import aws_home, gdd_on
 
 LINEUP = PLUGIN / "scripts" / "lineup.py"
 START = PLUGIN / "hooks" / "session_start.py"
@@ -131,6 +131,7 @@ def test_next_blocks_a_spec_changed_after_the_approval_and_starts_the_following_
 def test_next_blocks_a_spec_whose_check_at_the_start_fails(repo):
     a = spec(repo, "a")
     queue(repo, a)
+    gdd_on(repo)
     (repo / ".claude").mkdir()
     (repo / ".claude" / "gdd-dev.local.md").write_text("---\nactive: true\n---\n", encoding="utf-8")
     r = line(repo, "next")

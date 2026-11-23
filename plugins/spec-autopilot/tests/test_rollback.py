@@ -202,6 +202,20 @@ def aws_home(tmp_path, monkeypatch, expires_in_min, refresh=False):
     monkeypatch.setenv("HOME", str(home))
 
 
+def gdd_on(repo, value=True, where="user"):
+    """Claude Code の設定で GDD の plugin を有効（value）にする。where は user・project・local。"""
+    f = {"user": repo.parent / ".claude-config" / "settings.json",
+         "project": repo / ".claude" / "settings.json",
+         "local": repo / ".claude" / "settings.local.json"}[where]
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps({"enabledPlugins": {"gate-driven-development@any-marketplace": value}}), encoding="utf-8")
+
+
+def gdd_marker(repo, line="active: true"):
+    (repo / ".claude").mkdir(exist_ok=True)
+    (repo / ".claude" / "gdd-dev.local.md").write_text(f"---\n{line}\n---\n", encoding="utf-8")
+
+
 def approve_text(repo, text):
     d = init_spec(repo)
     (d / "spec.md").write_text(text, encoding="utf-8")
@@ -479,10 +493,11 @@ def test_approve_refuses_a_refreshable_sso_session_that_no_longer_answers(repo, 
 
 @pytest.mark.parametrize("marker", ["active: True", "  active: true", "active: true # 作業中", "active: yes"])
 def test_approve_refuses_a_gdd_marker_that_gdd_reads_as_active_or_unreadable(repo, marker):
+    gdd_on(repo)
     (repo / ".claude").mkdir(exist_ok=True)
     (repo / ".claude" / "gdd-dev.local.md").write_text(f"---\n{marker}\n---\n", encoding="utf-8")
     _, r = approve_text(repo, scoped(FULL))
-    assert r.returncode == 1 and "GDD" in r.stdout
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
 
 
 def test_approve_takes_an_inactive_gdd_marker(repo):
@@ -493,12 +508,13 @@ def test_approve_takes_an_inactive_gdd_marker(repo):
 
 
 def test_lint_shows_the_overnight_prerequisites_before_the_spec_is_shown(repo):
+    gdd_on(repo)
     (repo / ".claude").mkdir(exist_ok=True)
     (repo / ".claude" / "gdd-dev.local.md").write_text("---\nactive: true\n---\n", encoding="utf-8")
     d = init_spec(repo)
     (d / "spec.md").write_text(scoped(FULL), encoding="utf-8")
     r = run(repo, "lint", str(d))
-    assert r.returncode == 1 and "GDD" in r.stdout
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
 
 
 def test_a_fix_after_a_confirmed_rollback_can_finish_the_night(repo, gh, tmp_path):
@@ -539,10 +555,55 @@ def test_a_slack_notification_carries_the_morning_report(repo):
 
 
 def test_approve_refuses_while_a_gdd_workflow_is_active(repo):
-    (repo / ".claude").mkdir(exist_ok=True)
-    (repo / ".claude" / "gdd-dev.local.md").write_text("---\nactive: true\n---\n", encoding="utf-8")
+    gdd_on(repo)
+    gdd_marker(repo)
     _, r = approve_text(repo, scoped(FULL))
-    assert r.returncode == 1 and "GDD" in r.stdout
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
+
+
+def test_approve_takes_an_active_gdd_marker_left_after_gdd_was_removed(repo):
+    gdd_marker(repo)  # GDD の plugin はどの設定でも有効になっていない
+    _, r = approve_text(repo, scoped(FULL))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "gdd-dev.local.md" in r.stdout  # 残った lock は知らせる
+
+
+def test_lint_passes_an_active_gdd_marker_whose_plugin_is_off_but_names_it(repo):
+    gdd_on(repo, False)
+    gdd_marker(repo)
+    d = init_spec(repo)
+    (d / "spec.md").write_text(scoped(FULL), encoding="utf-8")
+    r = run(repo, "lint", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "gdd-dev.local.md" in r.stdout
+
+
+@pytest.mark.parametrize("user, project, local, refused", [
+    (True, None, False, False),   # local が user を上書きする
+    (False, True, None, True),    # project が user を上書きする
+    (None, None, True, True),
+    (True, False, None, False),
+])
+def test_approve_reads_the_gdd_plugin_with_the_later_scope_winning(repo, user, project, local, refused):
+    for where, value in (("user", user), ("project", project), ("local", local)):
+        if value is not None:
+            gdd_on(repo, value, where)
+    gdd_marker(repo)
+    _, r = approve_text(repo, scoped(FULL))
+    if refused:
+        assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout, r.stdout + r.stderr
+    else:
+        assert r.returncode == 0, r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("body", ["{broken", "[]", '{"enabledPlugins": []}'])
+def test_approve_refuses_an_active_gdd_marker_when_a_settings_file_cannot_be_read(repo, body):
+    f = repo.parent / ".claude-config" / "settings.json"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(body, encoding="utf-8")
+    gdd_marker(repo)
+    _, r = approve_text(repo, scoped(FULL))
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
 
 
 def test_lint_warns_when_nothing_keeps_the_mac_awake(repo, tmp_path, monkeypatch):
