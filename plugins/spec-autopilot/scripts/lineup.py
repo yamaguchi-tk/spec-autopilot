@@ -78,7 +78,7 @@ def begin(d, s, by, prev):
     history = s.get("history", [])
     if prev != "discovery":
         history.append({**{k: s.get(k) for k in ("approved_at", "approved_by", "blocked", "done_at", "anomalies", "reviews",
-                                                 "fails", "streak", "reworks", "post_budget_min", *overnight.ROUND_KEYS)}, "phase": prev})
+                                                 "fails", "streak", "reworks", "post_budget_min", "paused_sec", *overnight.ROUND_KEYS)}, "phase": prev})
     for k in ("size_by_user", "done_at", "anomalies", "queued_from", *overnight.ROUND_KEYS):  # 前の巡の記録は history に移した
         s.pop(k, None)
     s.update(phase="building", approved_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), budget_min=budget,
@@ -89,9 +89,14 @@ def begin(d, s, by, prev):
 def block(d, s, reason):
     import overnight
 
+    if s.get("queued_from", "discovery") != "discovery" and (s.get("approved_at") is not None or s.get("blocked")):
+        # 前の巡（最上位の approved_at・blocked・paused_sec）を history に移し、最上位は空ける。次の begin が同じ巡を移し直さない
+        s["history"] = list(s.get("history") or []) + [{k: s.get(k) for k in ("approved_at", "blocked", "done_at", "paused_sec", "merges")}]
+        s.update(approved_at=None, paused_sec=0, done_at=None)
     s.update(phase="blocked", blocked={"req": "着手", "reason": reason, "evidence": NEXT, "at": time.time()})
     ap.save_state(d, s)
     ap.release(d)
+    __import__("runlog").record(d, s, "block", s["blocked"]["at"], top_end=None)
     print(f"blocked: {d.name}（{reason}）")
     overnight.notify(d)
 

@@ -1,0 +1,11 @@
+- commit: 63e17e25a157804c15195b498d20444561e05bff
+
+一時の git repo（.autopilot-qa/work/r2・r2w）で init → approve → CLI block、と init → approve → CLI wait（待ちの始まりを承認の 600 秒後に差し替え）→ CLI block を実際に回し、SPEC_AUTOPILOT_HOME の runs.jsonl を読んだ。
+
+$ python3 .autopilot-qa/check.py
+[R2] approve の後に block、wait のまま block
+  block exit=0 rows=[{"kind": "block", "at": 1795436497.474468, "spec": "2026-11-23-game", "repo": "<wt>/.autopilot-qa/work/r2/repo", "active_min": 0.0, "total_min": 0.0, "size": "S", "blocks": [{"req": "R1", "reason": "壊れた"}], "rework_of": null, "prs": []}]
+  R2 ok: kind block の 1 行、blocks に今回の req と reason
+  wait のまま block exit=0 active_min=10.0
+  R2 ok: wait のまま block は待ちの始まりまで（期待 10.0）
+R2 pass

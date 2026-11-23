@@ -1,0 +1,11 @@
+- commit: 63e17e25a157804c15195b498d20444561e05bff
+
+一時の git repo（.autopilot-qa/work/r4a・r4b）で、「## 制約」に `- 手戻り元: x` を足した spec と足さない spec を init → approve → done まで回し、runs.jsonl の rework_of を読んだ。
+
+$ python3 .autopilot-qa/check.py
+[R4] 手戻り元あり・なしで done
+  r4a done exit=0 rework_of=x
+  R4 ok: rework_of が x
+  r4b done exit=0 rework_of=None
+  R4 ok: rework_of が None
+R4 pass

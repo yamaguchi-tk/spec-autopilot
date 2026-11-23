@@ -991,10 +991,13 @@ def cmd_done(a):
     if report(errors, notes, "check: OK"):
         return 1
     s = load_state(d)
+    was_done = s.get("phase") == "done"
     s.update(phase="done", done_at=time.time())
     s["anomalies"] = done_anomalies(s)
     save_state(d, s)
     release(d)
+    if not was_done:
+        __import__("runlog").record(d, s, "done", s["done_at"])
     minutes = lambda since: round((s["done_at"] - since) / 60, 1)  # noqa: E731
     print(f"done: 承認から {minutes(s['approved_at'] + s.get('paused_sec', 0))} 分（確認待ちを除く）、着手から {minutes(s['created_at'])} 分。異常: {anomaly_line(s.get('anomalies') or {})}。{commit_note(s)}")
     text = (d / "spec.md").read_text(encoding="utf-8")
@@ -1028,10 +1031,12 @@ def cmd_block(a):
     gate = __import__("overnight").production_errors(d, s, done=False)
     if gate and not (a.no_rollback or "").strip():
         sys.exit(f"本番が良くない: {gate[0]}。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）")
+    wait_at = float(s["wait"]["at"]) if s.get("phase") == "wait" and s.get("wait") else None
     s.update(phase="blocked", blocked={"req": a.req, "reason": a.reason, "evidence": a.evidence, "at": time.time(),
                                        **({"no_rollback": a.no_rollback} if gate else {})})
     save_state(d, s)
     release(d)
+    __import__("runlog").record(d, s, "block", s["blocked"]["at"], top_end=wait_at or s["blocked"]["at"])
     print(f"blocked: {a.req}。人に 1 通で示す")
     __import__("overnight").notify(d)
     return 0
