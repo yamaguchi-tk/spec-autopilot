@@ -7,7 +7,8 @@
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
                                                     増えた・dispatch が指した実装役が定義の model と effort で動いた・commit していないコードが無い・タスクが [x]。
-                                                    閉じた後は同じ HEAD で記録済み、rebase の後は増分を見ない）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
+                                                    閉じた後は同じ HEAD で記録済み、HEAD が動いた後は増分を見ず、
+                                                    dispatch を打たずに実装役を起動していないかだけを見る）。review は最後の dispatch を今の HEAD で閉じた後だけ受ける
   overnight.py await <dir> --kind ci --pr <n>       CI を待つ（background の Bash で 1 本だけ起動する）
   overnight.py await <dir> --kind deploy   最後のマージの commit で、spec の `- デプロイの確かめ:` の workflow を全部待つ
       1 本でも失敗したら、すぐに exit 1。失敗のログが flake の型（run の 1 回目）なら exit 3 で返し、再実行は main が打つ。
@@ -713,7 +714,7 @@ def same_model(want, got):
 
 
 def launches(session, since):
-    """このセッションで since の後に起動した subagent の [(agent の名前, {model}, {effort}, 読めない記録の名前 or None)]。
+    """session で since の後に起動した subagent の [(agent の名前, {model}, {effort}, 読めない記録の名前 or None)]。
     host は subagent ごとに <config>/projects/<project>/<session>/subagents/agent-<id>.meta.json と .jsonl を書く。
     meta.json が読めない記録は数えない。実装役と読めて transcript が読めない記録は、読めない記録として返す（照合できないまま通さない）。"""
     home = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
@@ -727,8 +728,8 @@ def launches(session, since):
         try:
             launch = read_launch(name, log, since)
         except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError):
-            try:
-                late = log.stat().st_mtime >= since
+            try:  # transcript が無ければ meta.json の時刻で決める
+                late = (log if log.exists() else meta).stat().st_mtime >= since
             except OSError:
                 late = True
             launch = (name, set(), set(), log.stem) if late else None
@@ -784,7 +785,8 @@ def launch_errors(dispatch):
 
 def cmd_handoff(a):
     """受ける形は 3 つだけ。最後の dispatch が開いている: 全部を確かめる。閉じていて HEAD が閉じたときの tip: 記録済み。
-    閉じていて HEAD が違う（マージの前の rebase）: 増分は見ず、commit していないコードと [x] だけを確かめる。"""
+    閉じていて HEAD が違う: 増分は見ず、閉じた後に dispatch を打たずに実装役を起動していないか、commit していないコードと
+    [x] だけを確かめる（マージの前の rebase を通すため。main が自分で書いた commit は見分けない）。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
     if s.get("phase") != "building":
@@ -808,6 +810,13 @@ def cmd_handoff(a):
         elif new_commits(root, base, now) == 0:
             errors.append(f"{(base or '着手の時点')[:8]} の後に commit が無い。実装役の「commit した」は事実と違う")
         errors += launch_errors(dispatches[-1])
+    elif now != closed[-1].get("tip"):  # 閉じた後に HEAD が動いた: dispatch を通さずに実装役を起動していないか
+        session = dispatches[-1].get("session") or os.environ.get("CLAUDE_CODE_SESSION_ID")
+        if isinstance(session, str) and autopilot.SESSION_ID.fullmatch(session):
+            late = sorted({t for t, *_ in launches(session, float(closed[-1].get("at") or 0)) if t.startswith("autopilot-implementer")})
+            if late:
+                errors.append(f"最後の handoff の後に、dispatch を打たずに実装役（{', '.join(late)}）を起動した。"
+                              "overnight.py dispatch から打ち直す")
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")
