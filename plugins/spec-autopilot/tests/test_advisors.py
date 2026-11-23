@@ -1,4 +1,4 @@
-"""spec-autopilot に同梱した判断の相談役 2 本（opus-advisor・fable-advisor）が、GDD を入れずに使える形かを確かめる。
+"""spec-autopilot に同梱した判断の相談役（opus-advisor・fable-advisor）と、相談の推奨を反証する検証役（advice-checker）が、GDD を入れずに使える形かを確かめる。
 
 1. agent の定義の front matter（name・model・effort・tools）が、相談役として決めた値になっている
 """
@@ -19,7 +19,7 @@ def _front(path):
 
 @pytest.mark.parametrize(
     "agent, model, effort",
-    [("opus-advisor", "opus", "high"), ("fable-advisor", "fable", "medium")],
+    [("opus-advisor", "opus", "high"), ("fable-advisor", "fable", "medium"), ("advice-checker", "opus", "high")],
 )
 def test_agent_front_matter(agent, model, effort):
     front = _front(PLUGIN / "agents" / f"{agent}.md")
