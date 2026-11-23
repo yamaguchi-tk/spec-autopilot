@@ -862,3 +862,42 @@ def test_handoff_reads_the_model_from_the_transcript_not_the_meta(repo):
     implementer_ran(model="claude-sonnet-5")  # 定義の ID と違う版で動いた
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 1 and "claude-sonnet-5 " in r.stdout
+
+
+def test_handoff_refuses_code_committed_on_a_closed_handoff_without_a_dispatch(repo):
+    """評価役の high の後に、main が dispatch を打たずに自分で直して commit した。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+    (repo / "fix.js").write_text("y\n", encoding="utf-8")
+    subprocess.run([*GIT, "add", "fix.js"], cwd=repo, check=True)
+    subprocess.run([*GIT, "commit", "-q", "-m", "main fixed"], cwd=repo, check=True)
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "dispatch" in r.stdout and "fix.js" in r.stdout
+    redispatch(repo, d)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl fix"], cwd=repo, check=True)
+    implementer_ran()
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+
+
+def test_handoff_refuses_a_dispatch_without_an_agent_name(repo):
+    d = dispatched_and_committed(repo)
+    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
+    del s["dispatches"][-1]["agent"]  # 前の版が書いた記録・手で直した記録
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    implementer_ran()
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "名前が無い" in r.stdout
+
+
+def test_handoff_skips_a_broken_subagent_record(repo):
+    """セッションのどこかに形の違う記録があっても、traceback で落ちずに、読めた記録で判定する。"""
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    sub.mkdir(parents=True)
+    (sub / "agent-bad.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    (sub / "agent-bad.jsonl").write_text('{"type":"user","timestamp":"2099-01-01T00:00:00Z"}\n"text"\n'
+                                         '{"type":"assistant","message":"x","effort":["low"]}\n', encoding="utf-8")
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
