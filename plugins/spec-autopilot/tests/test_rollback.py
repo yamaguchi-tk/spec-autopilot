@@ -497,7 +497,7 @@ def test_approve_refuses_a_gdd_marker_that_gdd_reads_as_active_or_unreadable(rep
     (repo / ".claude").mkdir(exist_ok=True)
     (repo / ".claude" / "gdd-dev.local.md").write_text(f"---\n{marker}\n---\n", encoding="utf-8")
     _, r = approve_text(repo, scoped(FULL))
-    assert r.returncode == 1 and "GDD" in r.stdout
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
 
 
 def test_approve_takes_an_inactive_gdd_marker(repo):
@@ -514,7 +514,7 @@ def test_lint_shows_the_overnight_prerequisites_before_the_spec_is_shown(repo):
     d = init_spec(repo)
     (d / "spec.md").write_text(scoped(FULL), encoding="utf-8")
     r = run(repo, "lint", str(d))
-    assert r.returncode == 1 and "GDD" in r.stdout
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
 
 
 def test_a_fix_after_a_confirmed_rollback_can_finish_the_night(repo, gh, tmp_path):
