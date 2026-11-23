@@ -156,3 +156,65 @@ def test_gate_allows_an_open_dispatch_under_a_path_with_spaces_or_japanese(tmp_p
     assert decision(fire(root, f"spec は {d} です。T1 を実装して")) is None
     assert decision(fire(root, f"spec: {d}/")) is None
     assert decision(fire(root, str(d.relative_to(root)))) is None
+
+
+@pytest.mark.parametrize("prompt", [
+    "{d}を実装して。T1",
+    "{d}の T1 を実装して",
+    "spec は「{d}」です。T1",
+    "spec のディレクトリ：{d}",
+    "spec（{d}）の T1",
+    "spec は{d} の T1",
+    "T1 を、{d} で",
+    "T1。{d}。",
+    "spec【{d}】",
+    "spec={d}を",
+    "{d}/を実装",
+    "spec は『{d}』と〈{d}〉",
+])
+@pytest.mark.parametrize("dirname", ["plain", "my repo", "日本語 の repo"])
+def test_gate_allows_an_open_dispatch_whose_path_touches_japanese_or_fullwidth_marks(tmp_path, monkeypatch, dirname, prompt):
+    monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(tmp_path / ".autopilot-home"))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / ".claude-config"))
+    root = tmp_path / dirname
+    root.mkdir()
+    subprocess.run(GIT[:1] + ["init", "-q", str(root)], check=True)
+    d = dispatched(root, building(root))
+    assert decision(fire(root, prompt.format(d=d))) is None
+
+
+def test_gate_stays_linear_on_long_lines_without_a_spec_in_them(repo):
+    import time
+    d = dispatched(repo, building(repo))
+    words = " ".join(f"w{i}" for i in range(4000))[:4000]
+    slashes = "../" * 1300
+    ja = ("実装する、規則を守る。" * 400)[:4000]
+    for line in (words, slashes, "/" * 4000, ja, "a/" * 2000):
+        prompt = "\n".join([line] * 4) + f"\nspec: {d}"
+        t = time.time()
+        assert decision(fire(repo, prompt)) is None
+        assert time.time() - t < 3, line[:20]
+
+
+def test_gate_denies_quickly_on_a_long_line_without_any_spec(repo):
+    import time
+    building(repo)
+    prompt = "\n".join([" ".join(f"w{i}" for i in range(4000))[:4000]] * 4)
+    t = time.time()
+    kind, _ = decision(fire(repo, prompt))
+    assert kind == "deny" and time.time() - t < 3
+
+
+def test_gate_does_not_read_a_relative_path_out_of_the_middle_of_an_absolute_path(tmp_path, monkeypatch):
+    """別の repo の同じ slug の spec（dispatch 無し）を書いたとき、その中の docs/specs/<slug> を cwd の開いた spec と取り違えない。"""
+    monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(tmp_path / ".autopilot-home"))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / ".claude-config"))
+    roots = []
+    for name in ("open repo", "closed repo"):
+        root = tmp_path / name
+        root.mkdir()
+        subprocess.run(GIT[:1] + ["init", "-q", str(root)], check=True)
+        roots.append((root, building(root)))
+    dispatched(*roots[0])
+    kind, _ = decision(fire(roots[0][0], f"spec は {roots[1][1]} です"))
+    assert kind == "deny"

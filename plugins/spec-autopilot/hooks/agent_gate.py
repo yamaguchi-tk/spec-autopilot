@@ -5,41 +5,110 @@ PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json
 無ければ、prompt に spec が無い・state.json が読めない・途中の例外も含めて deny する。
 想定するのは事故（dispatch の打ち忘れ）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
 答えを出さずに終わった（import の失敗・終了コード 0 以外）ときの deny は、hooks.json の command が出す。"""
+import bisect
 import json
-import re
+import os
 import sys
 from pathlib import Path
 
-START = re.compile(r"(?:^|(?<=[\s\"'`(\[<=,:]))[/~A-Za-z0-9_.-]")
-WORD = re.compile(r"\w")
+NAME_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-")
 
 
 def short(name):
     return str(name or "").rsplit(":", 1)[-1]
 
 
+class Fs:
+    """ディレクトリの一覧と state.json の有無を、1 回の判定のあいだ覚えておく。"""
+
+    def __init__(self):
+        self.names, self.specs = {}, {}
+
+    def list(self, base):
+        if base not in self.names:
+            try:
+                found = os.listdir(base)
+            except OSError:
+                found = []
+            self.names[base] = sorted(set(found) | {".", ".."})
+        return self.names[base]
+
+    def has_prefix(self, base, part):
+        names = self.list(base)
+        i = bisect.bisect_left(names, part)
+        return i < len(names) and names[i].startswith(part)
+
+    def has_name(self, base, part):
+        names = self.list(base)
+        i = bisect.bisect_left(names, part)
+        return i < len(names) and names[i] == part
+
+    def is_spec(self, base, part):
+        key = (base, part)
+        if key not in self.specs:
+            self.specs[key] = os.path.isfile(os.path.join(base, part, "state.json"))
+        return self.specs[key]
+
+
+def reach(line, base, k, fs, memo):
+    """line[k:] を base の下のパスの続きとして 1 字ずつ伸ばし、state.json を持つディレクトリになった最長の終わりの位置（無ければ -1）。
+    伸ばすのは、base の下に今の部分で始まる名前があるあいだだけ。(base, k) ごとに 1 回だけ求める。"""
+    n, chain = len(line), []
+    while (base, k) not in memo:
+        best, nxt, j = -1, None, k
+        while True:
+            part = line[k:j]
+            if part and fs.has_name(base, part) and fs.is_spec(base, part):
+                best = j
+            if j >= n:
+                break
+            if line[j] == "/":
+                if not part:
+                    nxt = (base, j + 1)
+                elif fs.has_name(base, part) and os.path.isdir(os.path.join(base, part)):
+                    nxt = (os.path.normpath(os.path.join(base, part)), j + 1)
+                break
+            if not fs.has_prefix(base, part + line[j]):
+                break
+            j += 1
+        chain.append(((base, k), best))
+        if nxt is None:
+            memo[(base, k)] = best
+            chain.pop()
+            tail = best
+            break
+        base, k = nxt
+    else:
+        tail = memo[(base, k)]
+    for state, best in reversed(chain):
+        tail = max(best, tail)
+        memo[state] = tail
+    return tail
+
+
 def spec_dirs(prompt, cwd):
-    """prompt の各行で、区切りの字の後から始まり state.json を持つディレクトリになる最長の部分を探す（空白・日本語を含むパスも拾う）。"""
-    found = []
+    """prompt の各行の、どの位置からでも（相対パスは、直前が「/」か英数字・「_.-」でない位置から）、state.json を持つディレクトリになる最長の部分を探す（空白・日本語を含むパスも拾う）。
+    終わりは区切りの字で限らず、始まりから存在するパスの接頭辞であるあいだだけ伸ばす（行の長さに対して線形）。"""
+    found, fs = [], Fs()
+    cwd, home = os.path.abspath(cwd), os.path.expanduser("~")
     for line in prompt.splitlines():
-        line = line[:4000]
-        for m in START.finditer(line):
-            for end in range(len(line), m.start(), -1):
-                if end < len(line) and WORD.match(line[end]):
+        memo = {}
+        for i, c in enumerate(line):
+            if c == "/":
+                if i and line[i - 1] == "/":
                     continue
-                tok = line[m.start():end].rstrip("/")
-                if not tok:
-                    continue
-                p = Path(tok).expanduser()
+                end = reach(line, "/", i + 1, fs, memo)
+            elif c == "~" and line[i + 1:i + 2] == "/":
+                end = reach(line, home, i + 2, fs, memo)
+            elif i and (line[i - 1] == "/" or line[i - 1] in NAME_CHARS):
+                continue  # 別のパスや語の途中から始まる相対パスは読まない（絶対パスの中の docs/specs/x を cwd の下の別の spec と取り違えない）
+            else:
+                end = reach(line, cwd, i, fs, memo)
+            if end > 0:
+                p = Path(line[i:end]).expanduser()
                 p = p if p.is_absolute() else Path(cwd) / p
-                try:
-                    ok = (p / "state.json").is_file()
-                except OSError:
-                    ok = False
-                if ok:
-                    if p not in found:
-                        found.append(p)
-                    break
+                if p not in found:
+                    found.append(p)
     return found
 
 
