@@ -218,3 +218,55 @@ def test_gate_does_not_read_a_relative_path_out_of_the_middle_of_an_absolute_pat
     dispatched(*roots[0])
     kind, _ = decision(fire(roots[0][0], f"spec は {roots[1][1]} です"))
     assert kind == "deny"
+
+
+def fresh_repo(tmp_path, monkeypatch, dirname):
+    monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(tmp_path / ".autopilot-home"))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(tmp_path / ".claude-config"))
+    root = tmp_path / dirname
+    root.mkdir()
+    subprocess.run(GIT[:1] + ["init", "-q", str(root)], check=True)
+    return root
+
+
+@pytest.mark.parametrize("prompt", ["spec は {d} です。T1 を実装して", "{d}を実装して", "spec は「{d}」", "{d}/tasks.md の T1"])
+def test_gate_allows_an_open_dispatch_under_an_nfd_named_dir_written_in_nfc(tmp_path, monkeypatch, prompt):
+    """Finder などが NFD で保存した濁点・半濁点の名前の下の spec を、prompt が NFC で書いても引く（字ではなく stat で照らす）。"""
+    import unicodedata
+    root = fresh_repo(tmp_path, monkeypatch, unicodedata.normalize("NFD", "プロジェクト データ"))
+    d = dispatched(root, building(root))
+    if not (tmp_path / unicodedata.normalize("NFC", root.name)).exists():
+        pytest.skip("このファイルシステムは正規化を問わない照合をしない")
+    assert decision(fire(root, prompt.format(d=unicodedata.normalize("NFC", str(d))))) is None
+    rel = unicodedata.normalize("NFC", str(d.relative_to(root)))
+    assert decision(fire(root, f"./{rel} の T1")) is None
+
+
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0, reason="root は権限を問わずに読める")
+def test_gate_allows_an_open_dispatch_under_an_execute_only_ancestor(tmp_path, monkeypatch):
+    """祖先の docs が実行だけ（0311、一覧を読めない）でも、stat で state.json を確かめて通す。"""
+    root = fresh_repo(tmp_path, monkeypatch, "noread")
+    d = dispatched(root, building(root))
+    os.chmod(root / "docs", 0o311)
+    try:
+        assert decision(fire(root, f"spec は {d} です")) is None
+        assert decision(fire(root, f"{d.relative_to(root)}を実装して")) is None
+    finally:
+        os.chmod(root / "docs", 0o755)
+
+
+def test_gate_names_a_spec_once_even_if_an_inner_slash_also_reaches_it(repo):
+    """絶対パスの中の `/`（macOS の /private/var の中の /var など）からも同じ spec に届いても、deny の理由に 1 度だけ出す。"""
+    d = building(repo)
+    real = os.path.realpath(d)
+    _, why = decision(fire(repo, f"spec は {real} と {d} です"))
+    assert why.count(d.name) == 1, why
+
+
+def test_gate_takes_the_spec_dir_name_as_the_anchor_and_ignores_other_paths(repo):
+    """手がかり（docs/specs/<日付>-<slug>）の無いパスは、state.json があっても spec として拾わない。"""
+    d = dispatched(repo, building(repo))
+    link = repo / "plainlink"
+    link.symlink_to(d, target_is_directory=True)
+    kind, why = decision(fire(repo, f"spec は {link} です"))
+    assert kind == "deny" and "spec のディレクトリ" in why
