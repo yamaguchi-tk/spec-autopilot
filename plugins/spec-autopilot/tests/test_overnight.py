@@ -682,6 +682,7 @@ def test_a_park_before_the_last_merge_does_not_exempt_the_stages_after_it(repo, 
 
 def test_handoff_passes_after_a_rebase(repo):
     d = full_spec(repo)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "base"], cwd=repo, check=True)  # 枝を分ける元の commit
     base = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
     subprocess.run([*GIT, "checkout", "-q", "-b", "work"], cwd=repo, check=True)
     make_done(repo, d)
@@ -899,5 +900,22 @@ def test_handoff_skips_a_broken_subagent_record(repo):
                                          '{"type":"assistant","message":"x","effort":["low"]}\n', encoding="utf-8")
     d = dispatched_and_committed(repo)
     implementer_ran()
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_handoff_does_not_count_a_merged_upstream_as_main_written_code(repo):
+    """閉じた tip の上に上流を merge で取り込んだ。上流の変更は dispatch を通さずに書いたコードに数えない。"""
+    d = full_spec(repo)
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "base"], cwd=repo, check=True)
+    base = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    subprocess.run([*GIT, "checkout", "-q", "-b", "work"], cwd=repo, check=True)
+    make_done(repo, d)
+    subprocess.run([*GIT, "checkout", "-q", base], cwd=repo, check=True)
+    (repo / "other.txt").write_text("main moved\n", encoding="utf-8")
+    subprocess.run([*GIT, "add", "other.txt"], cwd=repo, check=True)
+    subprocess.run([*GIT, "commit", "-q", "-m", "main moved"], cwd=repo, check=True)
+    subprocess.run([*GIT, "checkout", "-q", "work"], cwd=repo, check=True)
+    subprocess.run([*GIT, "merge", "-q", "--no-edit", base], cwd=repo, check=True, capture_output=True)
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 0, r.stdout + r.stderr
