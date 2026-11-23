@@ -145,7 +145,7 @@ def awaiting(overnight, d):
     if rec is None or time.time() >= rec["deadline"]:
         return False
     try:
-        out = subprocess.run(["ps", "-o", "command=", "-p", str(rec["pid"])], capture_output=True, text=True, timeout=10)
+        out = subprocess.run(["ps", "-ww", "-o", "command=", "-p", str(rec["pid"])], capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.TimeoutExpired):
         return True
     return out.returncode == 0 and "await" in out.stdout
