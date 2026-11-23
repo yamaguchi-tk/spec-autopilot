@@ -933,3 +933,52 @@ def test_handoff_uses_the_meta_time_when_the_transcript_is_missing(repo):
     (sub / "agent-new.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 1 and "agent-new" in r.stdout and "agent-old" not in r.stdout
+
+
+# --- 閉じた後の main のコード（R4・R5・R6） ---
+
+def _g(repo, *args):
+    return subprocess.run([*GIT, *args], cwd=repo, check=True, capture_output=True, text=True).stdout.strip()
+
+
+def _closed_on_work(repo):
+    d = full_spec(repo)
+    _g(repo, "commit", "-q", "--allow-empty", "-m", "base")
+    base = _g(repo, "rev-parse", "--abbrev-ref", "HEAD")
+    _g(repo, "checkout", "-q", "-b", "work")
+    make_done(repo, d)
+    return d, base
+
+
+def test_handoff_refuses_code_written_by_main_after_close(repo):
+    d, _ = _closed_on_work(repo)
+    (repo / "hack.js").write_text("x\n", encoding="utf-8")
+    _g(repo, "add", "hack.js")
+    _g(repo, "commit", "-q", "-m", "main wrote")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode != 0 and "hack.js" in r.stdout
+
+
+def test_handoff_passes_after_spec_only_amend_and_integration_merge(repo):
+    d, base = _closed_on_work(repo)
+    _g(repo, "checkout", "-q", base)
+    (repo / "other.txt").write_text("main moved\n", encoding="utf-8")
+    _g(repo, "add", "other.txt")
+    _g(repo, "commit", "-q", "-m", "main moved")
+    _g(repo, "checkout", "-q", "work")
+    _g(repo, "merge", "-q", "--no-edit", base)
+    (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8") + "\n追記\n", encoding="utf-8")
+    _g(repo, "add", "-f", str(d / "spec.md"))
+    _g(repo, "commit", "-q", "--amend", "--no-edit")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_handoff_refuses_when_the_closed_tip_is_unreadable(repo):
+    d, _ = _closed_on_work(repo)
+    s = state(d)
+    s["handoffs"][-1]["tip"] = "0" * 40
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    _g(repo, "commit", "-q", "--allow-empty", "-m", "moved")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode != 0 and "読めない" in r.stdout
