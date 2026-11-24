@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "requirement-how-check",
   "created_at": 1795504457.363379,
   "existing": true,
   "start": "1ec2cb1a19314baa5dd7ca994753b08c9593a68f",
-  "last_active_at": 1795527265.184507,
+  "last_active_at": 1795527855.875958,
   "approved_at": 1795522972.970054,
   "approved_by": "OK（推奨のまま承認）",
   "spec_sha256": "f3f4fd24a9876362c5e8af04d93b966121d42c9359e09dc8de7abe58fc23c777",
@@ -203,5 +203,22 @@
       "from": "autopilot-implementer-high",
       "to": "autopilot-implementer-opus"
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 16,
+      "at": 1795527855.147041,
+      "sha": "f65e0d5c19dee2db5c753ddef69a08379531c09a",
+      "head": "9f1f2ccb7868498f69eca27c4058e3e3b389a73a"
+    }
+  ],
+  "merged_at": 1795527855.1470442,
+  "paused_at_merge": 0.0,
+  "done_at": 1795527855.846242,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
