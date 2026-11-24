@@ -1,0 +1,8 @@
+- commit: 942553e3ba692113b4f7d39cf88038fda967f16b
+
+$ sed -n 8p plugins/spec-autopilot/agents/advice-checker.md
+  相談の推奨の検証役（Opus・high）。spec-autopilot の SessionStart が全セッションに入れる相談役の規則か、/autopilot の手順か、利用する repo の規則が、1 段目の相談役（fable-advisor、または人が名指ししたときの opus-advisor）の推奨の後に名指ししたときに、その手順から 1 回起動する。渡されるのは、推奨の `推奨:`・`理由:`・`引いた決定:` の欄と、依頼の原文と材料の場所だけで、推奨を出した側の推論の過程は渡されない。役は、推奨の根拠を repo の事実に当てて反証を探すことで、新しい案を出すことではない。それ以外のユーザーの依頼から推し量って起動しない。model と effort を定義で固定し、main の effort を継承させない。起動時に model を渡さない（渡すと定義の model より優先される）。
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
