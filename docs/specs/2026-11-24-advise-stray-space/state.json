@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "advise-stray-space",
+  "created_at": 1795493765.621456,
+  "existing": true,
+  "start": "c3a8279a65da7546467182ac6de8fb4bed9041be",
+  "last_active_at": 1795494132.451498,
+  "approved_at": 1795494132.44822,
+  "approved_by": "OK（空白 1 つを除く spec をそのまま承認）",
+  "spec_sha256": "7b2b6c6480364af5a1792dfdfeeab07fcb80866f417ef0b7fcc0a4d2700d917e",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
