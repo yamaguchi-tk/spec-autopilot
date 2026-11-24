@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "advice-two-stage-doc-fixes",
+  "created_at": 1795481988.888912,
+  "existing": true,
+  "start": "55d6ecd9f068a2a7f15765de40f6b8bda6866177",
+  "last_active_at": 1795482932.45403,
+  "approved_at": 1795482932.4527612,
+  "approved_by": "OK（R1〜R5 の spec を承認）",
+  "spec_sha256": "8a01401dc746ce4290578783cb1de49ebd753129af88f793e7bd7a712c2a2ff6",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
