@@ -1,0 +1,207 @@
+{
+  "phase": "building",
+  "slug": "requirement-how-check",
+  "created_at": 1795504457.363379,
+  "existing": true,
+  "start": "1ec2cb1a19314baa5dd7ca994753b08c9593a68f",
+  "last_active_at": 1795527265.184507,
+  "approved_at": 1795522972.970054,
+  "approved_by": "OK（推奨のまま承認）",
+  "spec_sha256": "f3f4fd24a9876362c5e8af04d93b966121d42c9359e09dc8de7abe58fc23c777",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R1",
+        "R3"
+      ],
+      "at": 1795523507.1840792,
+      "sha": "a248f47d66b54b996924809e41dda4d4800f5754"
+    },
+    {
+      "high": [
+        "R1",
+        "R3"
+      ],
+      "at": 1795524527.287361,
+      "sha": "f709508557b96b23b1b52ae8a247b67b3fed5417"
+    },
+    {
+      "high": [
+        "R1"
+      ],
+      "at": 1795525356.198325,
+      "sha": "b78867c3b3863f3a620a5477b35c1856ebb091ab"
+    },
+    {
+      "high": [],
+      "at": 1795527265.184492,
+      "sha": "7451477cd8dd338eea8b11b4d0ed9c1a03d50cb3"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795523507.184073
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795524527.287356
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795525356.1983218
+      }
+    ],
+    "R3": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795523507.184077
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795524527.28736
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0
+  },
+  "reworks": {
+    "R1": [
+      "docs/adr/2026-11-24-checker-ground-column.md"
+    ]
+  },
+  "dispatches": [
+    {
+      "base": "115776010d126b69b457ee3196067e2f69501c68",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795522983.338505,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "a248f47d66b54b996924809e41dda4d4800f5754",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795523514.438585,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "f709508557b96b23b1b52ae8a247b67b3fed5417",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795524527.4426188,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "e3ffb1a5232ebf5cbb4103f4dbb9086327d20d64",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer-opus",
+      "at": 1795525391.91765,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "a248f47d66b54b996924809e41dda4d4800f5754",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795523014.886656
+    },
+    {
+      "tip": "f709508557b96b23b1b52ae8a247b67b3fed5417",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 1,
+      "at": 1795524408.505322
+    },
+    {
+      "tip": "b78867c3b3863f3a620a5477b35c1856ebb091ab",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 2,
+      "at": 1795524654.462647
+    },
+    {
+      "tip": "7451477cd8dd338eea8b11b4d0ed9c1a03d50cb3",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 3,
+      "at": 1795526505.6993
+    }
+  ],
+  "raises": [
+    {
+      "role": "impl",
+      "req": "R1",
+      "reason": "原因調査",
+      "at": 1795524527.287361,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-high"
+    },
+    {
+      "role": "impl",
+      "req": "R3",
+      "reason": "原因調査",
+      "at": 1795524527.287361,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-high"
+    },
+    {
+      "role": "impl",
+      "req": "R1",
+      "reason": "作り直し",
+      "at": 1795525356.198325,
+      "from": "autopilot-implementer-high",
+      "to": "autopilot-implementer-opus"
+    }
+  ]
+}

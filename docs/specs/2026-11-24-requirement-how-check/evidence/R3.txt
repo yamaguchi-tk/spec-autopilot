@@ -1,0 +1,42 @@
+- commit: 7451477cd8dd338eea8b11b4d0ed9c1a03d50cb3
+
+（手元のパスは `<worktree>` に伏せた。R1 と同じ一時の repo で、prompt に「合意し直し」を足して 2 回回した）
+
+$ cd <worktree>/.autopilot-qa/repo-handoff && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-handoff/docs/specs/2026-11-23-handoff-after-close
+合意し直し" > <worktree>/.autopilot-qa/out-r1.jsonl
+（1 回目の項目 1〜4・6・10 の行）
+| 1 | 言い切りの照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 2 | 影響範囲の照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 3 | 一緒に変えるもの | 該当なし（合意し直し） | - | 該当なし | |
+| 4 | 変えない挙動の照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 6 | 前提の照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 10 | 要件の中の作り方 | R1: 「prompt に書かれた spec のディレクトリ（state.json があるもの）」「phase が building」「最後の dispatch の agent の名前」と判定の手順を要件に書いている | Read spec.md:9。目的は dispatch の無い起動を止めること。入力の出どころと判定の手順は目的が求めていない | ng | 「prompt に書かれた」と phase・dispatch の判定の手順を作り方の節へ移す: spec.md:9 |
+| 10 | 要件の中の作り方 | R2: hooks.json の command の形と「prompt の相対パスは payload の cwd から引く」を要件に書いている | （略） | ng | command の形と「payload の cwd から引く」を作り方の節へ移す: spec.md:10 |
+| 10 | 要件の中の作り方 | R4: 統合先が変えたファイルの数え方を要件に書いている | （略） | ng | 統合先が変えたファイルの数え方を作り方の節へ移す: spec.md:12 |
+| 10 | 要件の中の作り方 | R7: 文書に書く場所（docstring・冒頭の使い方・C の 3・README の表）を要件に書いている | （略） | ng | docstring・冒頭の使い方などの置き場所を影響範囲か作り方へ移し、（略） |
+ng の件数: 5
+
+$ cd <worktree>/.autopilot-qa/repo-handoff && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-handoff/docs/specs/2026-11-23-handoff-after-close
+合意し直し" > <worktree>/.autopilot-qa/out-r2.jsonl
+（2 回目の項目 1〜4・6・10 の行）
+| 1 | 言い切りの照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 2 | 影響範囲の照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 3 | 一緒に変えるもの | 該当なし（合意し直し） | - | 該当なし | |
+| 4 | 変えない挙動の照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 6 | 前提の照合 | 該当なし（合意し直し） | - | 該当なし | |
+| 10 | 要件の中の作り方 | R1: 「prompt に書かれた spec のディレクトリ」 | spec.md:9 を読んだ。目的（spec.md:6）は、dispatch の無い起動と閉じた後の main のコードを止めることを求めている。prompt を読むことは求めていない。入力の取り方にあたる | ng | 「prompt に書かれた」を作り方の節へ移す: spec.md:9 |
+| 10 | 要件の中の作り方 | R2: 「hooks.json の command（…の形）」 | （略） | ng | command の形の指定を作り方の節へ移す: spec.md:10 |
+| 10 | 要件の中の作り方 | R2: 「prompt の相対パスは payload の cwd から引く」 | （略） | ng | 「payload の cwd から引く」を作り方の節へ移す: spec.md:10 |
+| 10 | 要件の中の作り方 | R4: 統合先が変えたファイルの数え方 | （略） | ng | 「統合先が変えたファイル」の数え方を作り方の節へ移す: spec.md:12 |
+ng の件数: 4
+
+$ sed -n 115p plugins/spec-autopilot/commands/autopilot.md
+- 合意し直しの照合: `autopilot-spec-checker` を前景で 1 回起動し、渡すのは spec のディレクトリと「合意し直し」の語だけにする。実装が進んだ後の作業ツリーには、既存のコードに当てる項目（1〜4・6）を当てられないので、照合役は今のコードに依らない項目（5・7・8・9・10）だけを見る。返った `ng` を直してから示す（人に戻るときも同じ）
+
+$ node .autopilot-qa/check.mjs
+# out-r1.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=4 [R1,R2,R4,R7]
+# out-r2.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=4 [R1,R2,R2,R4]
+# commands/autopilot.md:115 has 5・7・8・9・10: true
+R3 pass (items 1-4,6 該当なし（合意し直し） one row each; R1 item10 ng with ground in both runs; autopilot.md:115 ok)
+
+判定: pass。2 回とも、項目 1・2・3・4・6 が 1 行ずつ `該当なし（合意し直し）`（2 回とも「spec の文」の列、判定の列は `該当なし`）で、まとめた行は 0 本。項目 10 に R1 の ng の行があり、根拠の列に「prompt に書かれた」と「作り方の節へ移す」がある。commands/autopilot.md:115 の見る項目は 5・7・8・9・10。
