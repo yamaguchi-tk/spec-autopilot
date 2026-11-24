@@ -1,0 +1,12 @@
+- commit: b79c39e5bed2374e4370d4efe4828d662bb6ad9f
+
+$ python3 .autopilot-qa/check.py
+startup: rc=0 ascii=ok 含む=True 空白入りを含まない=True
+resume: rc=0 ascii=ok 含む=True 空白入りを含まない=True
+compact: rc=0 ascii=ok 含む=True 空白入りを含まない=True
+clear: rc=0 ascii=ok 含む=True 空白入りを含まない=True
+R1 pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisors.py plugins/spec-autopilot/tests/test_autopilot.py -q -k "advis or session_start"
+.....................                                                    [100%]
+21 passed, 365 deselected in 11.67s
