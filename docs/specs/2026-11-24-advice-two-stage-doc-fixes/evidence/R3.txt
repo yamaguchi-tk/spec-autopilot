@@ -1,0 +1,8 @@
+- commit: a0531ca159c849311a79fd31aa16f08fd73ef2e6
+$ python3 .autopilot-qa/check.py && python3 -m pytest plugins/spec-autopilot/tests/test_advisors.py plugins/spec-autopilot/tests/test_autopilot.py -q -k "advis or session_start"
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass
+20 passed, 365 deselected in 9.66s
