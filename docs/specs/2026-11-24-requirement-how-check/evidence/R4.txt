@@ -1,0 +1,11 @@
+- commit: a248f47d66b54b996924809e41dda4d4800f5754
+
+$ grep -n '"version"' plugins/spec-autopilot/.claude-plugin/plugin.json
+3:  "version": "0.1.2",
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q
+6 passed in 0.01s
+
+$ node .autopilot-qa/check.mjs
+R4 pass (6 passed in 0.01s)
+（check.mjs は marketplace.json の plugins[spec-autopilot].description が plugin.json の description と同じことも確かめる）
