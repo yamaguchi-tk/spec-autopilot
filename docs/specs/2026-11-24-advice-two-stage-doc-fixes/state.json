@@ -4,7 +4,7 @@
   "created_at": 1795481988.888912,
   "existing": true,
   "start": "55d6ecd9f068a2a7f15765de40f6b8bda6866177",
-  "last_active_at": 1795482932.45403,
+  "last_active_at": 1795482954.530157,
   "approved_at": 1795482932.4527612,
   "approved_by": "OK（R1〜R5 の spec を承認）",
   "spec_sha256": "8a01401dc746ce4290578783cb1de49ebd753129af88f793e7bd7a712c2a2ff6",
@@ -16,5 +16,20 @@
   "reviews": [],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "7ad6190e3e6a14f6506bbd7c690fc53b39e2a58a",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795482943.502816,
+      "session": "5292ffd4-9a66-425b-9e7d-0da7149983e2"
+    }
+  ]
 }
