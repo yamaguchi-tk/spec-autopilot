@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "requirement-how-check",
+  "created_at": 1795504457.363379,
+  "existing": true,
+  "start": "1ec2cb1a19314baa5dd7ca994753b08c9593a68f",
+  "last_active_at": 1795522972.970849,
+  "approved_at": 1795522972.970054,
+  "approved_by": "OK（推奨のまま承認）",
+  "spec_sha256": "f3f4fd24a9876362c5e8af04d93b966121d42c9359e09dc8de7abe58fc23c777",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
