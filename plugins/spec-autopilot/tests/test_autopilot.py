@@ -1597,6 +1597,12 @@ def test_session_start_gives_only_the_advisor_rule_without_active_specs(repo):
     assert str(d) not in text
 
 
+def test_session_start_advisor_rule_has_no_stray_space_after_watashite(tmp_path):
+    text = context(session_start(tmp_path))
+    assert "渡して最初の推奨を出した相談役を 1 本起動し" in text
+    assert "渡して 最初" not in text
+
+
 @pytest.mark.parametrize("source", ["startup", "resume", "compact", "clear"])
 def test_session_start_gives_the_advisor_rule_outside_any_spec(tmp_path, source):
     advisor_rule(context(session_start(tmp_path, source)))
