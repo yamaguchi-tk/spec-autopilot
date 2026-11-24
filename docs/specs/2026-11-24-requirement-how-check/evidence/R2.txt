@@ -1,0 +1,24 @@
+- commit: 7451477cd8dd338eea8b11b4d0ed9c1a03d50cb3
+
+（手元のパスは `<worktree>` に伏せた。handoff-after-close は R1 と R3 の 4 回の出力（evidence/R1.txt・R3.txt と同じ実行）を読んだ。advise-stray-space は spec.md だけを写した `<worktree>/.autopilot-qa/repo-advise` で 2 回回した）
+
+$ cd <worktree>/.autopilot-qa/repo-advise && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-advise/docs/specs/2026-11-24-advise-stray-space" > <worktree>/.autopilot-qa/out-a1.jsonl
+（1 回目の項目 10 の行）
+| 10 | 要件の中の作り方 | R1: 出力の additionalContext の文が「渡して最初の推奨を出した相談役を 1 本起動し」と続く | 要件は SessionStart の出力という外から見える形で書かれている。入力の取り方や道具は決めていない | ok | spec.md:9 |
+
+$ cd <worktree>/.autopilot-qa/repo-advise && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-advise/docs/specs/2026-11-24-advise-stray-space" > <worktree>/.autopilot-qa/out-a2.jsonl
+（2 回目の項目 10 の行）
+| 10 | 要件の中の作り方 | R1: SessionStart の hook の出力 additionalContext に「渡して最初…」と続けて書く | additionalContext は hook が利用者のセッションに渡す出力の形で、外から見える約束。入力の取り方や道具を決めていない | ok | spec.md:9 |
+
+（handoff-after-close の 4 回のうち、項目 10 で R8 に触れた行は out-h2 の `| 10 | 要件の中の作り方 | R8: hooks.json の matcher を Agent と Task に当てる | hooks.json に登録する tool の matcher で、外から見える約束にあたる | ok | spec.md:16 |` の 1 本だけで、ng は 0 本）
+
+$ node .autopilot-qa/check.mjs
+# out-h1.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=3 [R1,R2,R4]
+# out-h2.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=3 [R1,R2,R4]
+# out-r1.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=4 [R1,R2,R4,R7]
+# out-r2.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=4 [R1,R2,R2,R4]
+# out-a1.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=0 []
+# out-a2.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=0 []
+R2 pass (no R8 ng in 4 handoff runs; advise item10 ng=0 in 2 runs)
+
+判定: pass。handoff-after-close の 4 回で R8 は項目 10 の ng にならず、advise-stray-space の 2 回で項目 10 の ng は 0 件。
