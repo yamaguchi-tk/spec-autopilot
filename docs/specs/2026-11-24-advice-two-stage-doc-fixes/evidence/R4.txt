@@ -1,0 +1,9 @@
+- commit: 942553e3ba692113b4f7d39cf88038fda967f16b
+
+$ echo '{"source":"clear","cwd":"<worktree>/.autopilot-qa/empty"}' | python3 plugins/spec-autopilot/hooks/session_start.py | python3 -c '<出力が ASCII かを見て、additionalContext の該当の文を出す>'
+ascii True
+fable-advisor か advice-checker を起動できないとき（再試行は 1 回まで）は、本文に `<agent>: unavailable（理由）` と書いて進む。
+2 段目を起動できなければ、推奨が検証されていないと書く。
+
+$ python3 .autopilot-qa/check.py
+R4 pass
