@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "s-prototype-gate",
+  "created_at": 1795531993.911942,
+  "existing": true,
+  "start": "fc995fe21e0dd1843cb60a92cb2d9730ee0719d8",
+  "last_active_at": 1795564702.9015129,
+  "approved_at": 1795564702.900806,
+  "approved_by": "OK、承認する",
+  "spec_sha256": "927313a51beaa15fd586afa7f841fffe45e8282374f490de282a5c33e0af058a",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
