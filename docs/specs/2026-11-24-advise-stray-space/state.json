@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "advise-stray-space",
   "created_at": 1795493765.621456,
   "existing": true,
   "start": "c3a8279a65da7546467182ac6de8fb4bed9041be",
-  "last_active_at": 1795494440.763375,
+  "last_active_at": 1795494990.4603362,
   "approved_at": 1795494132.44822,
   "approved_by": "OK（空白 1 つを除く spec をそのまま承認）",
   "spec_sha256": "7b2b6c6480364af5a1792dfdfeeab07fcb80866f417ef0b7fcc0a4d2700d917e",
@@ -57,5 +57,22 @@
       "fixed": 0,
       "at": 1795494440.763374
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 14,
+      "at": 1795494989.79498,
+      "sha": "21d6f67b5f7da821366adbcf6c1438a79645953f",
+      "head": "8a0099da069b386dc4530c1c9e59e46c55b4a9d9"
+    }
+  ],
+  "merged_at": 1795494989.794981,
+  "paused_at_merge": 0.0,
+  "done_at": 1795494990.338294,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
