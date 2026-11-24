@@ -1,0 +1,9 @@
+- commit: 942553e3ba692113b4f7d39cf88038fda967f16b
+
+$ echo '{"source":"clear","cwd":"<worktree>/.autopilot-qa/empty"}' | python3 plugins/spec-autopilot/hooks/session_start.py | python3 -c '<additionalContext の該当の文を出す>'
+ascii True
+spec-autopilot:opus-advisor は、人が名指ししたときだけ起動する。
+名指しのときは opus-advisor を 1 段目にし、2 段目の advice-checker は同じく回し、反証ありの直しは最初の推奨を出した opus-advisor にさせる。
+
+$ python3 .autopilot-qa/check.py
+R5 pass
