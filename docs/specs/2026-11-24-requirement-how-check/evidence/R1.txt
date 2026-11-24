@@ -1,0 +1,25 @@
+- commit: 7451477cd8dd338eea8b11b4d0ed9c1a03d50cb3
+
+（手元のパスは `<worktree>` に伏せた。一時の repo は `<worktree>/.autopilot-qa/repo-handoff`（git init 済み、handoff-after-close の spec.md だけを写した）。同じコマンドを 2 回回した。init の event は 2 回とも model=claude-sonnet-5-5 で、agents に spec-autopilot:autopilot-spec-checker があった）
+
+$ cd <worktree>/.autopilot-qa/repo-handoff && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-handoff/docs/specs/2026-11-23-handoff-after-close" > <worktree>/.autopilot-qa/out-h1.jsonl
+（1 回目の result の項目 10 の行）
+| 10 | 要件の中の作り方 | R1: 「prompt に書かれた spec のディレクトリ（state.json があるもの）」 | 目的は dispatch の打ち忘れを止めることで、spec を prompt から読むことは求めていない。入力の取り方にあたる。 | ng | 「prompt に書かれた」を作り方の節へ移す: spec.md:9 |
+| 10 | 要件の中の作り方 | R2: 「prompt の相対パスは payload の cwd から引く」「`python3 <agent_gate.py> \|\| <printf>` の形」 | 入力の取り方（payload の cwd）と、command の組み立て方を決めている。外から見える約束は「deny が出る」ことだけで足りる。 | ng | 「payload の cwd から引く」と command の形を作り方の節へ移す: spec.md:10 |
+| 10 | 要件の中の作り方 | R4: 統合先が変えたファイルの定義（merge-base・祖先・remote のブランチの除外など） | 判定の手順を要件に書いている。（略） | ng | 統合先の定義の手順を作り方の節へ移す: spec.md:12 |
+ng の件数: 3
+
+$ cd <worktree>/.autopilot-qa/repo-handoff && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-handoff/docs/specs/2026-11-23-handoff-after-close" > <worktree>/.autopilot-qa/out-h2.jsonl
+（2 回目の result の項目 10 の行）
+| 10 | 要件の中の作り方 | R1: 「prompt に書かれた spec のディレクトリ（state.json があるもの）のうち…」 | 目的は prompt を読むことを求めていない。入力の取り方で、判定の手順も書いている | ng | 「prompt に書かれた」と判定の手順を作り方の節へ移す: spec.md:9 |
+| 10 | 要件の中の作り方 | R2: 「prompt の相対パスは payload の cwd から引く」「hooks.json の command（…の形）」 | （略） | ng | 「cwd から引く」と command の形を作り方の節へ移す: spec.md:10 |
+| 10 | 要件の中の作り方 | R4: 「統合先が変えたファイルは、…merge-base から…の差分に出るファイルとする」 | （略） | ng | 統合先の数え方（ブランチの除き方・merge-base）を作り方の節へ移す: spec.md:12 |
+| 10 | 要件の中の作り方 | R8: hooks.json の matcher を Agent と Task に当てる | hooks.json に登録する tool の matcher で、外から見える約束にあたる | ok | spec.md:16 |
+ng の件数: 4
+
+$ node .autopilot-qa/check.mjs
+# out-h1.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=3 [R1,R2,R4]
+# out-h2.jsonl: model=claude-sonnet-5-5 agentListed=true item10 ng=3 [R1,R2,R4]
+R1 pass (R1 ng row with prompt/作り方の節へ移す in ground column in both runs)
+
+判定: pass。2 回とも、項目 10 に R1 の ng の行があり、根拠の列（最後の列）に「prompt に書かれた」と「作り方の節へ移す」がある。前の巡の揺れ（語が「確かめた方法」の列に入る）は、2 回とも出なかった（合意し直しの 2 回、evidence/R3.txt でも同じ）。
