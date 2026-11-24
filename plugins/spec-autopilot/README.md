@@ -32,13 +32,13 @@ LLM の多段レビューや人への中間確認ではなく、成果物の型�
 
 ## 判断の相談役（同梱の agent）
 
-判断の相談役の agent を 2 種類と、その推奨を検証する agent を 1 種類同梱しています。`/autopilot` の手順からは、IaC の初回の apply を含む spec と、人が相談役を名指ししたときだけ、`fable-advisor` を 1 本呼び、`advice-checker` で反証を探します。`opus-advisor` は人が名指ししたときだけ呼びます。ほかは、利用する repo の規則か、ユーザーが名指ししたときにだけ起動します。
+判断の相談役の agent を 2 種類と、その推奨を検証する agent を 1 種類同梱しています。`/autopilot` の手順からは、IaC の初回の apply を含む spec と、人が相談役を名指ししたときだけ、`fable-advisor` を 1 本呼び、`advice-checker` で反証を探します。人が `opus-advisor` を名指ししたときは、`fable-advisor` の代わりに 1 段目に使い、`advice-checker` は同じく回します。このほか、SessionStart の hook が全セッションに入れる相談役の規則が、人に方向を決めてもらう返事待ちの前に、同じ 2 段で相談させます（利用する repo の規則に別の相談の規定があれば、そちらに従います）。
 
 | agent | 使う場面 |
 |---|---|
 | `fable-advisor` | 人に案を選んでもらう前、設計判断、レビュー指摘の直し方を決めるときの相談の 1 段目（Fable・medium）。「ユーザーならどの案を選ぶか」の代わりとして推奨を出します |
 | `advice-checker` | 相談の 2 段目（Opus・high）。1 段目の推奨の根拠を repo の事実に当てて反証を探します。新しい案は出しません |
-| `opus-advisor` | 同じ相談を Opus・high で行います。人が名指ししたときに使います（main が Opus で動くとき、Opus の相談役を重ねても見方はあまり増えません） |
+| `opus-advisor` | 同じ相談を Opus・high で行います。人が名指ししたときに、1 段目として使います（main が Opus で動くとき、Opus の相談役を重ねても見方はあまり増えません） |
 
 - どれも read-only（Read・Grep・Glob だけ）で、model と effort を定義で固定しています。起動するときに `model` を渡しません
 - 材料は要約せず、ファイルのパスや `file:line` で渡します
