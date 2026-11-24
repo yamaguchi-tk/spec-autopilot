@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "advice-two-stage-doc-fixes",
   "created_at": 1795481988.888912,
   "existing": true,
   "start": "55d6ecd9f068a2a7f15765de40f6b8bda6866177",
-  "last_active_at": 1795483467.408471,
+  "last_active_at": 1795484001.985364,
   "approved_at": 1795482932.4527612,
   "approved_by": "OK（R1〜R5 の spec を承認）",
   "spec_sha256": "8a01401dc746ce4290578783cb1de49ebd753129af88f793e7bd7a712c2a2ff6",
@@ -121,5 +121,22 @@
       "fixed": 2,
       "at": 1795483360.5658891
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 13,
+      "at": 1795484001.057421,
+      "sha": "bc9e4a20ee6783b40e1b2bd2f1ff1e1e378f2a24",
+      "head": "190bb400bb06de0684fa027aff8208e959da703c"
+    }
+  ],
+  "merged_at": 1795484001.0574248,
+  "paused_at_merge": 0.0,
+  "done_at": 1795484001.81726,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }

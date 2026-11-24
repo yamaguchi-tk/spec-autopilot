@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "handoff-after-close",
   "created_at": 1795440813.994286,
   "existing": true,
   "start": "1004eeeff8e06b2a53e1da6f37cd82786adb0f53",
-  "last_active_at": 1795448985.626766,
+  "last_active_at": 1795449872.36313,
   "approved_at": 1795444395.669418,
   "approved_by": "OK（推奨のままの spec を承認）",
   "spec_sha256": "23ed210873d1881537bec1cd1ff5928646db014309fbee2498de93ea8b29b606",
@@ -295,5 +295,22 @@
       "from": "autopilot-implementer-high",
       "to": "autopilot-implementer-opus"
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 10,
+      "at": 1795449861.7314408,
+      "sha": "55d6ecd9f068a2a7f15765de40f6b8bda6866177",
+      "head": "b1bec598e9ea21a1ecae0ae97e3f73c49a1ac763"
+    }
+  ],
+  "merged_at": 1795449861.731447,
+  "paused_at_merge": 0.0,
+  "done_at": 1795449872.2690592,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
