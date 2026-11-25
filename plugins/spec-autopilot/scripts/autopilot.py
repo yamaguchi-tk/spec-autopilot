@@ -662,7 +662,8 @@ def check(d, stage="all"):
     errors, notes = [], []
     if sha(d) != s.get("spec_sha256"):
         errors.append("spec.md の要件・QA の方向性・制約などが承認の後に変わった。"
-                      "変える必要があるなら block で記録して人に示す（作り方の節と、先頭の `- ADR:` 行の番号〔改番〕は変えてよい）")
+                      "spec.md を承認の時点に戻す。1 つの要件だけを変える必要があるなら `overnight.py park` でその要件を積む。"
+                      "どの要件も進められないときだけ block する（作り方の節と、先頭の `- ADR:` 行の番号〔改番〕は変えてよい）")
     adr = adr_error(d)
     if adr:
         errors.append(f"{adr}（ADR を改番したなら、先頭の `- ADR:` 行をファイルの名前に合わせる）")
@@ -715,8 +716,7 @@ def check(d, stage="all"):
             problem = evidence_problem(root, evidence, seen)
             if problem:
                 errors.append(f"{rid} の証拠: {problem}")
-    errors.extend(ladder_errors(s))
-    import overnight
+    errors.extend(ladder_errors(s)); import overnight
     errors.extend(overnight.review_errors(d, s))
     errors.extend(overnight.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage))
     if stage != "pr":
@@ -732,8 +732,9 @@ def ladder_errors(s):
         errors.append("最後のレビューが記録されていない（autopilot-reviewer を回し、autopilot.py review で記録する）")
     elif reviews[-1]["high"]:
         errors.append(f"最後のレビューに high（{', '.join(reviews[-1]['high'])}）が残っている。直してレビューし直す")
+    parked = {p.get("req") for p in s.get("parked") or []}
     for rid, n in sorted((s.get("streak") or {}).items()):
-        if n < LADDER_REWORK:
+        if n < LADDER_REWORK or rid in parked:
             continue
         if len((s.get("reworks") or {}).get(rid, [])) < MAX_REWORKS:
             errors.append(f"{rid} は失敗が {n} 巡続いた。作り方を変える"

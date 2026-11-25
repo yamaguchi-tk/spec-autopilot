@@ -2873,3 +2873,34 @@ def test_a_repo_that_starts_tracking_specs_commits_the_next_spec(repo):
     write_files(repo, {"docs/adr/2026-01-02-next.md": "# ADR\n"})
     staged = staged_after_add_all(repo)
     assert "-next/spec.md" in staged and "docs/adr/2026-01-02-next.md" in staged
+
+
+def park_req(d, req):
+    s = state(d)
+    s["parked"] = (s.get("parked") or []) + [{"kind": "other", "op": "要件の文を直す", "reason": "x", "req": req}]
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+
+
+def test_check_does_not_demand_rework_for_a_parked_requirement(repo):
+    d = approved(repo)
+    make_done(repo, d)
+    three_fails(repo, d)
+    assert "作り方" in run(repo, "check", str(d)).stdout
+    park_req(d, "R1")
+    assert "R1 は失敗が" not in run(repo, "check", str(d)).stdout
+
+
+def test_check_still_demands_rework_for_an_unparked_requirement(repo):
+    d = approved(repo)
+    make_done(repo, d)
+    three_fails(repo, d, "R2")
+    park_req(d, "R1")
+    out = run(repo, "check", str(d)).stdout
+    assert "R2 は失敗が" in out and "R1 は失敗が" not in out
+
+
+def test_changed_spec_error_names_revert_park_and_block(repo):
+    d = approved(repo)
+    (d / "spec.md").write_text(GOOD_SPEC.replace("Enter", "Space"), encoding="utf-8")
+    out = run(repo, "check", str(d)).stdout
+    assert "承認の時点に戻す" in out and "overnight.py park" in out and "どの要件も進められないときだけ block" in out
