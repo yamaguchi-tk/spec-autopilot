@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -120,6 +121,48 @@ def test_queued_approval_blocked_at_start_keeps_the_prototype_dispatch_after_the
     (d / "tasks.md").write_text(TASKS.replace("[ ]", "[x]"), encoding="utf-8")
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_requeued_approval_after_a_start_block_keeps_the_prototype_dispatch_and_handoff_closes_it(repo):
+    d = draft(repo)
+    implement(repo, d)
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "OK", "--queue").returncode == 0
+    (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8") + "\n変更\n", encoding="utf-8")
+    line(repo, "next")
+    assert state(d)["phase"] == "blocked"
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "OK", "--queue").returncode == 0
+    assert line(repo, "next").returncode == 0
+    assert state(d)["phase"] == "building" and len(state(d)["dispatches"]) == 1
+    (d / "tasks.md").write_text(TASKS.replace("[ ]", "[x]"), encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(d)["handoffs"][-1]["dispatch"] == 0
+
+
+@pytest.mark.parametrize("queue", [False, True])
+@pytest.mark.parametrize("after", ["done", "blocked"])
+def test_reapproval_after_a_building_round_moves_the_prototype_dispatch_and_handoff_to_history(repo, after, queue):
+    d = draft(repo)
+    implement(repo, d)
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+    (d / "tasks.md").write_text(TASKS.replace("[ ]", "[x]"), encoding="utf-8")
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+    st = state(d)
+    assert len(st["dispatches"]) == 1 and len(st["handoffs"]) == 1
+    st.update(phase=after, done_at=time.time(), blocked={"req": "R1", "reason": "x", "evidence": "y", "at": time.time()} if after == "blocked" else None)
+    (d / "state.json").write_text(json.dumps(st), encoding="utf-8")
+    user_says(repo)
+    r = run(repo, "approve", str(d), "--by", "OK", *(["--queue"] if queue else []))
+    assert r.returncode == 0, r.stdout + r.stderr
+    if queue:
+        assert line(repo, "next").returncode == 0
+    s = state(d)
+    assert s["phase"] == "building"
+    assert not s.get("dispatches") and not s.get("handoffs")
+    assert any(len(h.get("dispatches") or []) == 1 and len(h.get("handoffs") or []) == 1 for h in s["history"]), s["history"]
 
 
 def test_dispatch_and_gate_say_that_spec_md_could_not_be_read(repo):
