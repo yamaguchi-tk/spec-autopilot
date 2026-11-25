@@ -433,8 +433,93 @@ def rollback_error(root, s, head, base):
     return None
 
 
+INPUT_HEAD = ["入力の種類", "例", "期待", "今の結果", "テスト"]
+INPUT_NONE = re.compile(r"^- 入力の種類: なし（(.*)）$")
+
+
+def input_kinds(d, rid):
+    """spec の inputs/<rid>.md を読む。(行のリスト, 問題のリスト, なしの行だけか)。行は 5 欄の辞書。"""
+    path = Path(d) / "inputs" / f"{rid}.md"
+    where = f"{path}"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return [], [f"{where} が無い。`| {' | '.join(INPUT_HEAD)} |` の表を書く"], False
+    except (OSError, UnicodeDecodeError) as e:
+        return [], [f"{where} が読めない（{type(e).__name__}）"], False
+    lines = [x.strip() for x in text.splitlines() if x.strip()]
+    if len(lines) == 1 and (m := INPUT_NONE.match(lines[0])) and m.group(1).strip():
+        return [], [], True
+    cells = lambda x: [c.strip().strip("`") if i == 4 else c.strip() for i, c in enumerate(x.strip().strip("|").split("|"))]  # noqa: E731
+    head = next((i for i, x in enumerate(lines) if x.startswith("|") and [c.strip() for c in x.strip("|").split("|")] == INPUT_HEAD), None)
+    if head is None:
+        return [], [f"{where} に見出し `| {' | '.join(INPUT_HEAD)} |` の表が無い"], False
+    body = lines[head + 1:]
+    if body and re.fullmatch(r"\|[\s:|-]+\|", body[0]):
+        body = body[1:]
+    rows = []
+    for x in body:
+        if not x.startswith("|"):
+            break
+        c = cells(x)
+        rows.append(dict(zip(INPUT_HEAD, c + [""] * (5 - len(c)))) | {"raw": x, "n": len(c)})
+    problems = []
+    if len(rows) < 2:
+        problems.append(f"{where} のデータの行が {len(rows)} 行しかない（2 行以上、落ちた入力と同じ処理を通るほかの種類を書く）")
+    for r in rows:
+        empty = [k for k in INPUT_HEAD[:3] if not r[k]]
+        if r["n"] != 5:
+            problems.append(f"{where} の行の欄が 5 つでない: {r['raw']}")
+        elif empty:
+            problems.append(f"{where} の {'・'.join(empty)} が空の行: {r['raw']}")
+        elif r["今の結果"] not in ("pass", "fail"):
+            problems.append(f"{where} の今の結果が pass・fail でない行: {r['raw']}")
+    if rows and not any(r["今の結果"] == "fail" for r in rows):
+        problems.append(f"{where} に今の結果が fail の行が 1 つも無い（落ちた入力の行は fail で書く）")
+    return rows, problems, False
+
+
+def high_reqs(s, reqs):
+    """最後のレビューで high を受けた要件のうち、reqs にあるもの。"""
+    last = (s.get("reviews") or [{}])[-1].get("high") or []
+    return [q for q in reqs if q in last]
+
+
+def input_dispatch_errors(d, s, reqs):
+    return [p for q in high_reqs(s, reqs) for p in input_kinds(d, q)[1]]
+
+
+def input_handoff_errors(d, s, reqs, root):
+    """R2: 表の各行のテストの欄が <path>::<テスト名> で、repo にあるか。"""
+    errors, seen = [], {"texts": {}, "found": set(), "scanned": 0}
+    for q in high_reqs(s, reqs):
+        rows, problems, none = input_kinds(d, q)
+        errors += problems
+        for r in rows:
+            bad = autopilot.evidence_problem(root, r["テスト"], seen) if r["テスト"] else autopilot.EVIDENCE_FORMS
+            if bad:
+                errors.append(f"inputs/{q}.md のテストの欄が使えない（{bad}）: {r['raw']}")
+    return errors
+
+
+def input_fail_errors(d, s):
+    """R3: park に積んでいない要件の inputs/R<n>.md に今の結果が fail の行が残っていないか。"""
+    parked = {p.get("req") for p in s.get("parked") or []}
+    errors = []
+    for f in sorted((Path(d) / "inputs").glob("R*.md")):
+        if f.stem in parked:
+            continue
+        errors += [f"{f.stem} の入力の表に今の結果が fail の行が残っている: {r['raw']}。評価役を回し直して今の結果を書き換えさせる"
+                   for r in input_kinds(d, f.stem)[0] if r["今の結果"] == "fail"]
+    return errors
+
+
 def review_errors(d, s):
     """最後のレビューが今の HEAD を見たか（テスト・文書だけの違いは許す）。check が読む。"""
+    return input_fail_errors(d, s) + sha_errors(d, s)
+
+
+def sha_errors(d, s):
     reviews = s.get("reviews") or []
     if not reviews or "sha" not in reviews[-1]:
         return []  # レビューが無いことは ladder_errors が言う。sha の無い旧い記録は今までどおり
@@ -686,11 +771,17 @@ def cmd_dispatch(a):
     if stop:
         print(stop)
         return 1
+    bad = input_dispatch_errors(d, s, reqs)
+    if bad:
+        print("dispatch: 最後のレビューの high の要件に、入力の種類の表が足りない。記録しない\n" + "\n".join(f"- {x}" for x in bad))
+        return 1
     base = head(autopilot.repo_root(d))
     s.setdefault("dispatches", []).append({"base": base, "tasks": a.task, "reqs": reqs, "agent": name, "at": time.time(),
                                            "session": os.environ.get("CLAUDE_CODE_SESSION_ID"),
                                            **({"prototype": True} if s.get("phase") == "discovery" else {})})
     autopilot.save_state(d, s)
+    for q in high_reqs(s, reqs):
+        print(f"{q} は high。表 {d / 'inputs' / (q + '.md')} の行ごとにテストを書かせ、テストの欄（<path>::<テスト名>）を埋めさせる")
     print(f"dispatch: {', '.join(a.task)} を {(base or 'commit の無い repo')[:8]} から実装役に渡す。起動する agent:\n{name}")
     return 0
 
@@ -860,6 +951,7 @@ def cmd_handoff(a):
         errors += launch_errors(dispatches[-1])
     elif closed[-1].get("tip") != now:  # 閉じた後に HEAD が動いた: main が書いたコードを見分ける
         errors += after_close_errors(root, closed[-1].get("tip"), now)
+    errors += input_handoff_errors(d, s, dispatches[-1].get("reqs") or [], root)
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")
