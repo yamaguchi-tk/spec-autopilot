@@ -5,6 +5,7 @@
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from test_autopilot import GOOD_SPEC, PLUGIN, existing_spec, init_spec, write_files, make_done, repo, run, state, user_says  # noqa: F401（repo は fixture）
@@ -230,46 +231,78 @@ def test_light_run_refuses_rolled_back(repo):
 
 # --- 2 巡目のレビューの指摘 ---
 
-def test_a_protected_file_committed_before_approval_stops(repo):
-    """init から approve までの commit（S の試作）も判定に入る。"""
+def test_approve_refuses_a_protected_file_committed_since_init(repo):
+    """init から approve までの commit（S の試作）が保護 path に当たっていれば、軽量フローでは始めない。"""
     d = existing_spec(repo)
     write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", "docs/guardrails.md": "# 境界\n"})
     commit_all(repo, "prototype")
-    assert light(repo, "approve", str(d), "--source", "x").returncode == 0
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and "docs/guardrails.md" in r.stdout + r.stderr
+    assert state(d)["phase"] == "discovery"
+
+
+def test_approve_refuses_an_untracked_protected_file(repo):
+    d = existing_spec(repo)
+    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", "docs/guardrails.md": "# 境界\n"})
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and "docs/guardrails.md" in r.stdout + r.stderr
+
+
+def test_reverting_a_committed_protected_change_only_in_the_worktree_still_stops(repo):
+    d = committed_light(repo)
     make_done(repo, d)
+    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    commit_all(repo, "rules")
+    (repo / "CLAUDE.md").unlink()
     r = check_pr(repo, d)
-    assert r.returncode != 0 and "docs/guardrails.md" in r.stdout
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
 
-def test_an_untracked_protected_file_made_before_approval_stops(repo):
-    d = committed_light(repo, after_init={"docs/guardrails.md": "# 境界\n"})
-    make_done(repo, d)
-    (repo / "docs" / "guardrails.md").write_text("# 境界\n", encoding="utf-8")  # make_done の commit の後も追っていない形にする
-    subprocess.run(["git", "rm", "-q", "--cached", "docs/guardrails.md"], cwd=repo, check=True)
-    r = check_pr(repo, d)
-    assert r.returncode != 0 and "docs/guardrails.md" in r.stdout
+IGNORED = {".gitignore": ".claude/\n"}
 
 
-def test_ignored_protected_files_are_not_looked_at(repo):
-    """git が無視するファイルは PR に入らないので判定しない（限界。commands/autopilot.md の L）。"""
-    d = committed_light(repo, {".gitignore": ".claude/\n"}, after_init={".claude/settings.local.json": "{}\n"})
-    (repo / ".claude" / "settings.local.json").write_text('{"x": 1}\n', encoding="utf-8")
+def test_untouched_ignored_protected_file_does_not_stop(repo):
+    d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode == 0, r.stdout + r.stderr
 
 
-def test_loosening_an_uncommitted_config_does_not_unprotect(repo):
+def test_rewriting_an_ignored_protected_file_after_approval_stops(repo):
+    d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
+    time.sleep(0.05)
+    (repo / ".claude" / "settings.local.json").write_text('{"x": 1}\n', encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and ".claude/settings.local.json" in r.stdout
+
+
+def test_the_specs_own_adr_is_not_a_protected_path(repo):
+    d = init_spec(repo, "guardrails-wording")
+    adr = "docs/adr/2026-01-01-guardrails-wording.md"
+    (repo / adr).write_text("# ADR\n", encoding="utf-8")
+    (d / "spec.md").write_text(GOOD_SPEC.replace("docs/adr/2026-01-01-game.md", adr), encoding="utf-8")
+    assert light(repo, "approve", str(d), "--source", "x").returncode == 0
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_approve_prints_the_ceiling_once(repo):
+    d = light_approved(repo)
+    assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y").returncode == 0
+    user_says(repo)
+    r = run(repo, "approve", str(d), "--by", "OK")
+    assert r.returncode == 0 and "PR 作成まで" in r.stdout and "NOTE: NOTE:" not in r.stdout
+
+
+def test_approve_refuses_an_uncommitted_config(repo):
+    """commit していない設定（それ自身が保護 path）は、承認の時点の版を残せないので、軽量フローでは始めない。"""
     d = init_spec(repo)
     (repo / ".spec-autopilot").mkdir()
     (repo / ".spec-autopilot" / "protected-paths").write_text("secrets\n", encoding="utf-8")
-    assert light(repo, "approve", str(d), "--source", "x").returncode == 0
-    (repo / ".spec-autopilot" / "protected-paths").unlink()
-    (repo / "secrets").mkdir()
-    (repo / "secrets" / "a.txt").write_text("x\n", encoding="utf-8")
-    make_done(repo, d)
-    r = check_pr(repo, d)
-    assert r.returncode != 0 and "secrets/a.txt" in r.stdout
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and ".spec-autopilot/protected-paths" in r.stdout + r.stderr
 
 
 def test_the_specs_own_directory_is_not_a_protected_path(repo):

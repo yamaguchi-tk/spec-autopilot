@@ -7,15 +7,17 @@
 - 自走の上限は PR 作成まで。`- 範囲:` が「PR まで」でなければ approve しない。マージ・デプロイ・QA の書き込み・ロールバックの記録
   （overnight.py ready・merged・qa・rolled-back）を受けない。範囲をマージ以降に広げる根拠は人が承認した spec なので、合意を省いた run には及ばない
 - 止まる条件は、保護された path（下の既定と、repo の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の commit から
-  作業ツリーまでの変更ファイルと追っていないファイルの path で機械的に決める（git が無視するファイルは見ない）。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
+  HEAD・index・作業ツリーまでの変更ファイルと追っていないファイル、承認より後に書き換えた git が無視する保護ファイルの path で
+  機械的に決める。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
 - 印は block・done の後の approve でも外さない（その返事は spec の全体を見たものではない）。合意ありで進めるなら spec を作り直す
 
 範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa・rolled-back の拒否）だけを足す。合意ありの run の挙動は変えない
 想定する脅威: 事故（agent が範囲を広げる・保護 path に触れる・マージに進む）。敵対的な agent が state.json を書き換えて印を消すことは防がない
-やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、git が無視するファイル（PR に入らない）の判定
+やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、mtime を戻した書き換えの検出
 """
 import argparse
 import fnmatch
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -61,18 +63,38 @@ def ignorecase(root):
     return r.stdout.strip() == "true"
 
 
+def pathspecs(pats):
+    """pattern を、ls-files で無視されたファイルを絞る pathspec にする（node_modules などを全部は数えない）。"""
+    out = []
+    for p in pats:
+        g = p if "/" in p else f"**/{p}"
+        out += [f":(glob){g}", f":(glob){g}/**"]
+    return out
+
+
 def hits(d, s):
-    """起点から作業ツリーまでに触れた保護 path。追っていない（無視されていない）ファイルは、作った時期によらず数える。
-    git が無視するファイルは PR に入らないので見ない（読むと中身の指紋が commit される state に残り、数も多い）。"""
+    """起点から触れた保護 path。追っているものは起点と HEAD・index・作業ツリーの差で、追っていない（無視されていない）ものは
+    作った時期によらず、git が無視するものは承認より後に書き換えたもの（mtime）だけを数える（中身の指紋は残さない）。"""
     root = ap.repo_root(d)
     base = s.get("light_base") or EMPTY_TREE
     pats = patterns(root, base, s.get("light_patterns") or ())
-    skip = d.resolve().relative_to(Path(root).resolve()).as_posix() + "/"
+    rel = lambda x: Path(x).resolve().relative_to(Path(root).resolve()).as_posix()  # noqa: E731
+    skip = rel(d) + "/"
+    adr = ap.ADR_LINE.search((d / "spec.md").read_text(encoding="utf-8"))
+    own = {(Path(root) / adr.group(1)).resolve().relative_to(Path(root).resolve()).as_posix()} if adr else set()
     fold = ignorecase(root)
     # rename は両側の名前を出し（--no-renames）、非 ASCII の名前は引用しない（git_lines の -z と quotePath=false）
-    files = set(ap.git_lines(root, "diff", "--name-only", "--no-renames", base))
+    diff = ("diff", "--name-only", "--no-renames")
+    files = set(ap.git_lines(root, *diff, base)) | set(ap.git_lines(root, *diff, "--cached", base))
+    if subprocess.run(["git", "rev-parse", "--verify", "-q", "HEAD"], cwd=root, capture_output=True).returncode == 0:
+        files |= set(ap.git_lines(root, *diff, base, "HEAD"))
     files |= set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard"))
-    return sorted(f for f in files if not f.startswith(skip) and protected(f, pats, fold))
+    since = s.get("approved_at")
+    if since is not None:
+        for f in ap.git_lines(root, "ls-files", "--others", "--ignored", "--exclude-standard", "--", *pathspecs(pats)):
+            if os.lstat(Path(root) / f).st_mtime > float(since):
+                files.add(f)
+    return sorted(f for f in files if not f.startswith(skip) and f not in own and protected(f, pats, fold))
 
 
 def errors(d, s):
@@ -103,7 +125,7 @@ def refuse(s, what):
 
 
 def report(s):
-    return [f"NOTE: {CEILING}"] if s.get("light") else []
+    return [CEILING] if s.get("light") else []
 
 
 def cmd_approve(a):
@@ -135,11 +157,14 @@ def cmd_approve(a):
     base = s.get("start") or EMPTY_TREE  # init の時点（S の試作の commit も判定に入れる）。新しく作る repo は空の木から
     try:
         pats = patterns(root, base)
-    except (OSError, ValueError) as e:
-        sys.exit(f"保護された path の設定を読めない（{e}）ので承認しない")
+        before = hits(d, {"light_base": base, "light_patterns": pats})
+    except (RuntimeError, OSError, ValueError) as e:
+        sys.exit(f"保護された path を確かめられない（{e}）ので承認しない")
+    if before:  # init より後の commit か、追っていないファイルが、もう保護 path に当たっている
+        sys.exit(f"保護された path に承認の前から当たっている: {', '.join(before)}。軽量フローでは始めない（合意ありで進めるか、人が片づける）")
     budget = lineup.begin(d, s, f"軽量フロー（人の承認なし）: {a.source.strip()}", "discovery")
     s.update(light=True, light_base=base, light_patterns=pats)
-    ap.take_over(d, __import__("os").environ.get("CLAUDE_CODE_SESSION_ID"), "軽量フローの承認")
+    ap.take_over(d, os.environ.get("CLAUDE_CODE_SESSION_ID"), "軽量フローの承認")
     ap.save_state(d, s)
     ap.report([], warnings, f"approved（軽量フロー）: 予算 {budget} 分。{CEILING}")
     return 0
