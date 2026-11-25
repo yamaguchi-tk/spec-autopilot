@@ -84,6 +84,7 @@
 - R3 の「自走の範囲の節が同じか」は、承認した時点の spec の中身を持っていないので、cmd_approve が門を通った後、`lineup.enqueue`・`lineup.begin` を呼ぶ前に、spec.md の `## 自走の範囲` の節のハッシュを s に入れる（enqueue・begin がそのまま save する。begin は history に移すキーを選ぶので、このキーは最上位に残る）。`--by-advisor` の判定は、その上書きの前に、s に残る前の値と突き合わせる。残っていない（この版より前に承認した）spec は、`--by-advisor` を受けない（lineup.py は変えない）。lineup の着手の block（approved_at が None になる）でも、この記録は残るので対象になる
 - 返答は、最後の assistant の行の text の文か、SubagentHandback の tool_use の `input.message` から取る（実物の記録で両方の形を見た）
 - scripts/autopilot.py は 1500 行を超えない（今 1498 行。cmd_approve の 945-955 を新しいモジュールへ移して空ける）
+- 相談役の条件の判定（起動の順と 2 つの行）は、phase と自走の範囲の判定と別の関数にする（2026-11-26-goal-split が子の承認でこの関数だけを呼ぶ）
 - `overnight.py report` は変えない（変えるファイルを 5 本に収める。相談役で承認した巡は、main が人への報告に書く）
 
 ## QA の方向性
