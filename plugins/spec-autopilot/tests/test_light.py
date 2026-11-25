@@ -416,3 +416,25 @@ def test_light_run_follows_the_specs_scope_up_to_merge_and_qa(repo, scope="マ�
                  ("qa", str(d), "--evidence", str(d / "spec.md"), "--smoke", "pass")):
         out = night(repo, *args)
         assert "軽量フロー" not in out.stdout + out.stderr, args
+
+
+def test_a_rule_file_inside_the_spec_directory_stops(repo):
+    """spec の置き場は、置き場の名前では当てないが、置き場の下の保護名には当てる。"""
+    d = init_spec(repo, "guardrails-wording")
+    assert light(repo, "approve", str(d), "--source", "x").returncode == 0
+    make_done(repo, d)
+    (d / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    add(repo, str(d.relative_to(repo)))
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
+
+
+def test_a_submodule_pointer_under_a_protected_path_stops_even_if_ignored(repo):
+    """.gitmodules の ignore=all や diff.ignoreSubmodules があっても、gitlink の変更は数える。"""
+    d = committed_light(repo)
+    make_done(repo, d)
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True).stdout.strip()
+    subprocess.run(["git", "update-index", "--add", "--cacheinfo", f"160000,{head},terraform"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "diff.ignoreSubmodules", "all"], cwd=repo, check=True)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "terraform" in r.stdout
