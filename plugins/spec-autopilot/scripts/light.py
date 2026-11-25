@@ -105,7 +105,7 @@ def hits(d, s):
 
 
 KEYS = ("デプロイの起動", "ロールバック")
-TEMPLATE = Path(__file__).resolve().parent.parent / "templates" / "spec.md"
+TEMPLATE = ap.TEMPLATES / "spec.md"  # init が写すもの
 
 
 def command_errors(text, after_approve=False):
@@ -128,10 +128,17 @@ def command_errors(text, after_approve=False):
     rows = overnight.scope_rows(text) or {}
     allowed = {"デプロイの起動": (overnight.AUTO_DEPLOY,), "ロールバック": (overnight.REVERT,)}
     found = {k for k in KEYS if (rows.get(k) or "") not in ("", *allowed[k])}
-    # 確かめた節の範囲の行だけを外し（節の中のコメントは残す）、残りに語があれば断る
-    rest = unicodedata.normalize("NFKC", text.replace(raw, "\n".join(ap.COMMENT_BLOCK.findall(raw)), 1) if raw else text)
-    for c in ap.COMMENT_BLOCK.findall(TEMPLATE.read_text(encoding="utf-8")):
-        rest = rest.replace(unicodedata.normalize("NFKC", c), "")
+    # 確かめた節から、許可した 4 つの行と完全に同じ行だけを外す（ほかの行の値・行に付けたコメントは残す）
+    ok = re.compile(rf"- (?:デプロイの起動:(?: {re.escape(overnight.AUTO_DEPLOY)})?|ロールバック:(?: {re.escape(overnight.REVERT)})?)[ \t]*")
+    spans, kept, pos = [m.span() for m in ap.COMMENT_BLOCK.finditer(raw)], [], 0
+    for x in raw.split("\n"):  # コメントに重なる行は、許可した形でも外さない
+        if not (ok.fullmatch(x) and not any(a < pos + len(x) and pos < b for a, b in spans)):
+            kept.append(x)
+        pos += len(x) + 1
+    kept = "\n".join(kept)
+    rest = unicodedata.normalize("NFKC", text.replace(raw, kept, 1) if raw else text)
+    for c in ap.COMMENT_BLOCK.findall(TEMPLATE.read_text(encoding="utf-8")):  # テンプレートのコメントは、自分の行だけを占めるときに外す
+        rest = re.sub(r"(?m)^" + re.escape(unicodedata.normalize("NFKC", c)) + r"[ \t]*$", "", rest)
     found |= {k for k in KEYS if k in rest}
     return out + [f"軽量フローでは `- {key}:` は「{allowed[key][0]}」か空だけにし、spec のほかの所にこの語を書かない"
                   f"（人が見ないままコマンドを打つことになる）。{way}" for key in KEYS if key in found]
