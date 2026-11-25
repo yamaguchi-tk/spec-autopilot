@@ -1,4 +1,3 @@
-import pytest
 """scripts/light.py（人との spec 合意を省く軽量フロー）を、入口から通して確かめる。
 
 止まる条件（保護された path に触れたら check が通らない）と、自走の上限（PR 作成まで。マージ・QA の書き込みを受けない）を見る。
@@ -8,6 +7,8 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+
+import pytest
 
 from test_autopilot import GOOD_SPEC, PLUGIN, existing_spec, init_spec, write_files, make_done, repo, run, state, user_says  # noqa: F401（repo は fixture）
 

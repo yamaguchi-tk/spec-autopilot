@@ -131,7 +131,7 @@ PR のレビューや人の指摘で直しを頼まれたら、done のまま直
 
 入れるのは、受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まるときだけ（決まらないなら A・B の合意ありのフローで進める）。範囲がセキュリティ境界まで広がりそうな作業は、初めから合意ありで進める。
 
-1. A の 0 と同じく `CLI init <slug>` で spec を作り、Issue・依頼文から spec.md・ADR を埋めて repo に残す（ADR を commit する repo では、ADR の名前を保護の pattern〔`*guardrails*` など〕に当たらない名前にする。当たると approve が断る）。`- 範囲:` は「PR まで」にする（ほかの値では approve が通らない）。人の返事は待たない
+1. A の 0 と同じく `CLI init <slug>` で spec を作り、Issue・依頼文から spec.md・ADR を埋めて repo に残す（ADR を commit する repo〔init の時点で docs/adr の下を追っている repo〕では、新しく書いた ADR も保護の pattern に当てる。名前を `*guardrails*` などに当たらない名前にし、`*.md` のような拡張子の pattern を足した repo では commit 済みの ADR を指す。当たると approve が断る）。`- 範囲:` は「PR まで」にする（ほかの値では approve が通らない）。人の返事は待たない
 2. `CLI lint <dir>` を通し、`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/light.py" approve <dir> --source "<Issue の URL か依頼文の要約>"` で自走を始める（人の発言の記録は要らない。判定の起点〔init の時点の commit〕と pattern を記録する）
 3. ここからは C の自走と同じ（TDD・評価役・QA の証拠・`CLI check --stage pr`・`CLI done`・PR）。違いは次の 3 つだけ
    - **自走の上限は PR 作成まで**。マージ・デプロイ・QA の書き込みはしない（`overnight.py ready`・`merged`・`qa`・`rolled-back` は軽量フローの run を受けない）。自走の範囲をマージ以降に広げる根拠は「人が承認した spec」なので、合意を省いた run には及ばない。完了報告にも、マージは人の指示を待つと書く（`CLI done` が NOTE で出す）
