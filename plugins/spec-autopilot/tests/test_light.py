@@ -418,6 +418,25 @@ def test_light_run_follows_the_specs_scope_up_to_merge_and_qa(repo, scope="マ�
         assert "軽量フロー" not in out.stdout + out.stderr, args
 
 
+@pytest.mark.parametrize("row", [{"デプロイの起動": "コマンド: make deploy"}, {"ロールバック": "コマンド: make rollback"}])
+def test_approve_refuses_deploy_or_rollback_commands_nobody_has_seen(repo, row):
+    """軽量フローでは人が spec を見ないので、agent が書いたコマンドを打つ範囲では始めない。"""
+    from test_overnight import FULL, deployed, scoped
+    d = init_spec(repo)
+    (d / "spec.md").write_text(deployed(scoped(FULL, **row)), encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and next(iter(row)) in r.stdout + r.stderr
+    assert state(d)["phase"] == "discovery"
+
+
+def test_approve_takes_the_full_scope_when_merge_deploys_by_itself(repo):
+    from test_overnight import FULL, deployed, scoped
+    d = init_spec(repo)
+    (d / "spec.md").write_text(deployed(scoped(FULL)), encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
 def test_a_rule_file_inside_the_spec_directory_stops(repo):
     """spec の置き場は、置き場の名前では当てないが、置き場の下の保護名には当てる。"""
     d = init_spec(repo, "guardrails-wording")
