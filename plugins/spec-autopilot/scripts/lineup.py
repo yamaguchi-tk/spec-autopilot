@@ -83,7 +83,7 @@ def begin(d, s, by, prev):
     keep = ("dispatches", "handoffs") if ds and all(x.get("prototype") for x in ds) else ()  # 承認の前の S の試作の dispatch（印は dispatch が打つ）は、承認の後の handoff で閉じる
     for x in ds if keep else ():
         x.pop("prototype")  # 持ち越したら印を外す。次の巡の再承認では history に移す
-    for k in (*(("light", "light_base", "light_patterns") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", *(k for k in overnight.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
+    for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", *(k for k in overnight.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
         s.pop(k, None)
     s.update(phase="building", approved_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), budget_min=budget,
              post_budget_min=post, history=history, blocked=None, paused_sec=0, reviews=[], fails={}, streak={}, reworks={})
