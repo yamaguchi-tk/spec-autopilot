@@ -178,31 +178,52 @@ def test_handoff_takes_a_row_whose_cell_has_an_escaped_pipe(repo):
 
 TABLE_FAIL = "R1 の入力の表に今の結果が fail の行が残っている"
 BROKEN = "R1 の入力の表が読めない"
+ROW = "| 別 | x | 通る | fail | - |\n"
 
 
-@pytest.mark.parametrize("text, want", [
-    (GOOD.replace("|---|---|---|---|---|\n", "|---|---|---|---|---|\n\n注: 追記\n"), [TABLE_FAIL, "絶対パス"]),
-    (GOOD.replace("| 入力の種類 |", "| 種類 |"), [BROKEN]),
-    (GOOD.replace("fail", "pass") + "\n補足の文\n| 別 | x | 通る | fail | - |\n", [TABLE_FAIL, "| 別 |"]),
-])
-def test_check_names_a_fail_row_or_a_broken_table_even_with_a_sentence_between(repo, text, want):
-    out = run(repo, "check", str(after_high(repo, text))).stdout
-    for w in [*want, "評価役を回し直"]:
-        assert w in out, out
-    if want != [BROKEN]:
-        assert BROKEN not in out, out
-    if "| 別 |" not in want:
-        assert "| 別 |" not in out, out
+# ファイルは表 1 つだけ（か、なしの 1 行だけ）。末尾の空行のほかに表の外の行が 1 つでもあれば「表が読めない」とその行を出す
+@pytest.mark.parametrize("text, line", [
+    (GOOD.replace("fail", "pass") + "\n補足の文\n" + ROW, "補足の文"),
+    (GOOD.replace("|---|---|---|---|---|\n", "|---|---|---|---|---|\n\n注: 追記\n"), "注: 追記"),
+    (GOOD.replace("| 入力の種類 |", "| 種類 |"), "| 種類 |"),
+    (GOOD + "\n## 補足\n\n| 項目 | 値 |\n|---|---|\n| a | b |\n", "## 補足"),
+    (GOOD + "| 項目 | 値 |\n|:--|--:|\n| a | b |\n", "|:--|--:|"),
+    (GOOD.replace("fail", "pass") + "\n## 2 巡目\n\n" + HEAD + ROW, "## 2 巡目"),
+    (GOOD.replace("fail", "pass") + HEAD + ROW, "| 入力の種類 | 例 |"),
+    (GOOD.replace("| 相対パス |", "\n| 相対パス |"), "空行"),
+    ("注: 前置き\n" + GOOD, "注: 前置き"),
+    (NONE + "補足の文\n", "なし"),
+], ids=["sentence-then-fail-row", "sentence-inside", "broken-heading", "another-heading-table", "headless-table",
+        "same-heading-table-after-a-heading", "same-heading-table-right-after", "blank-line-inside", "sentence-before",
+        "none-line-and-a-sentence"])
+def test_dispatch_and_check_say_the_table_is_unreadable_and_name_the_line_outside_the_one_table(repo, text, line):
+    d = after_high(repo, text)
+    r = dispatch(repo, d)
+    assert r.returncode != 0 and "表が読めない" in r.stdout and line in r.stdout, r.stdout
+    out = run(repo, "check", str(d)).stdout
+    assert BROKEN in out and line in out and "評価役を回し直" in out, out
 
 
-@pytest.mark.parametrize("after", ["\n## 補足\n\n| 項目 | 値 |\n|---|---|\n| a | b |\n",
-                                   "\n| 項目 | 値 |\n|:--|--:|\n| a | b |\n| c | d |\n",
-                                   "\n## 補足\n\n文\n| 項目 | 備考 | 値 | 数 | 先 |\n|---|---|---|---|---|\n| a | b | c | d | e |\n"])
-def test_a_second_table_after_the_kinds_table_is_not_read_as_kind_rows(repo, after):
-    d = after_high(repo, GOOD + after)
+@pytest.mark.parametrize("text", [GOOD, GOOD + "\n\n", GOOD.replace("|---|---|---|---|---|", "|:--|:-:|--:|---|---|"),
+                                  HEAD + "| 或は | a\\|b | 通る | fail | - |\n| 相対 | a | 通る | pass | - |\n"],
+                         ids=["full", "trailing-blank-lines", "aligned-separator", "escaped-pipe"])
+def test_one_table_with_only_trailing_blank_lines_is_read_by_dispatch_and_check(repo, text):
+    d = after_high(repo, text)
     assert dispatch(repo, d).returncode == 0
     out = run(repo, "check", str(d)).stdout
-    assert BROKEN not in out and TABLE_FAIL in out and "絶対パス" in out and "項目" not in out, out
+    assert BROKEN not in out and TABLE_FAIL in out, out
+
+
+def test_a_none_line_with_trailing_blank_lines_is_taken_by_dispatch(repo):
+    assert dispatch(repo, after_high(repo, NONE + "\n\n")).returncode == 0
+
+
+def test_handoff_refuses_a_second_table_added_after_dispatch(repo):
+    d = dispatched(repo, GOOD, ["test_rule.py::test_absolute", "test_rule.py::test_relative"])
+    put(d, (d / "inputs" / "R1.md").read_text(encoding="utf-8") + "\n## 2 巡目\n\n" + HEAD + ROW)
+    r = handoff(repo, d)
+    assert r.returncode != 0 and "## 2 巡目" in r.stdout + r.stderr
+    assert len(state(d)["handoffs"]) == 1
 
 
 def test_dispatch_with_a_none_file_does_not_ask_for_tests(repo):
