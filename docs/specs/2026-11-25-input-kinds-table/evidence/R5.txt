@@ -1,0 +1,7 @@
+- commit: 56b9e07598345202e6df0837f1a15de3b16f6abd
+
+$ python3 .autopilot-qa/check.py
+（一時の repo で review --high R1 を記録し、揃った inputs/R1.md を置いて overnight.py dispatch <dir> --task T1 を打った出力）
+  ok   揃った表の dispatch の出力: 期待 表のパスとテストを書かせ欄を埋めさせる旨 / 実際 'R1 は high。表 <worktree>/.autopilot-qa/work/repo19/docs/specs/2026-11-25-game/inputs/R1.md の行ごとにテストを書かせ、テストの欄（<path>::<テスト名>）を埋めさせる\ndispatch: T1 を bd73ead4 から実装役に渡す。起動する agent:\nautopilot-implementer'
+  ok   最後の行が agent の名前: 実際 'autopilot-implementer'
+R5 pass
