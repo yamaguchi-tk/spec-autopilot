@@ -65,33 +65,40 @@ def patterns(root, base):
     return list(dict.fromkeys([*DEFAULT_PROTECTED, *config_lines(extra)]))
 
 
-def pathspecs(pats):
+def pathspecs(pats, within=None):
     """pattern を git の glob pathspec にする。前後の `/` を外し、`/` を含まない行はどの深さにも、含む行は repo の root から当て、
-    どちらも配下に当てる。大文字と小文字は区別しない（止める側）。"""
+    どちらも配下に当てる。大文字と小文字は区別しない（止める側）。within を渡すと、`/` を含まない行だけを、その下の深さに当てる。"""
     out = []
     for p in pats:
         core = p.strip("/")
-        if not core:
+        if not core or (within and "/" in core):
             continue
         if "/" not in core:
-            core = "**/" + core
+            core = f"{within}/**/{core}" if within else "**/" + core
         out += [f":(glob,icase){core}", f":(glob,icase){core}/**"]
     return out
 
 
-def hits(d, s):
-    """起点から、PR に入りうる変更（HEAD・index・作業ツリーの差と、追っていないファイル）で触れた保護 path。
-    git が無視するファイル・途中の commit で触れて戻したもの・spec 自身の置き場の中は数えない（限界）。照合は git がする。"""
-    root = ap.repo_root(d)
-    base = s.get("light_base") or EMPTY_TREE
-    own = Path(d).resolve().relative_to(Path(root).resolve()).as_posix()
-    specs = ["--", *pathspecs(patterns(root, base)), f":(exclude){own}"]
-    diff = ("diff", "--name-only", "--no-renames")  # rename は両側の名前を出す
+def changed(root, base, specs):
+    """起点から、PR に入りうる変更（HEAD・index・作業ツリーの差と、追っていないファイル）のうち specs に当たる path。"""
+    specs = ["--", *specs]
+    # rename は両側の名前を出し、submodule の無視の設定（.gitmodules・diff.ignoreSubmodules）に gitlink の変更を隠させない
+    diff = ("diff", "--name-only", "--no-renames", "--ignore-submodules=none")
     files = set(git(root, *diff, base, *specs)) | set(git(root, *diff, "--cached", base, *specs))
     if subprocess.run(["git", "rev-parse", "--verify", "-q", "HEAD"], cwd=root, capture_output=True).returncode == 0:
         files |= set(git(root, *diff, base, "HEAD", *specs))
     # 追っていないファイルも、後で commit すれば PR に入るので数える（git が無視するものは --exclude-standard で外れる）
-    return sorted(files | set(git(root, "ls-files", "--others", "--exclude-standard", *specs)))
+    return files | set(git(root, "ls-files", "--others", "--exclude-standard", *specs))
+
+
+def hits(d, s):
+    """起点から PR に入りうる変更で触れた保護 path。spec 自身の置き場は、置き場の名前では当てず、置き場の下の深さにだけ
+    `/` を含まない pattern を当てる。git が無視するファイル・途中の commit で触れて戻したものは数えない（限界）。照合は git がする。"""
+    root = ap.repo_root(d)
+    base = s.get("light_base") or EMPTY_TREE
+    own = Path(d).resolve().relative_to(Path(root).resolve()).as_posix()
+    pats = patterns(root, base)
+    return sorted(changed(root, base, [*pathspecs(pats), f":(exclude){own}"]) | changed(root, base, pathspecs(pats, own)))
 
 
 def errors(d, s):
@@ -129,7 +136,6 @@ def cmd_approve(a):
     if errs:
         ap.report(errs, warnings, "")
         return 1
-    root = ap.repo_root(d)
     base = s.get("start") or EMPTY_TREE  # init の時点（S の試作の commit も判定に入れる）。新しく作る repo は空の木から
     try:
         before = hits(d, {"light_base": base})
