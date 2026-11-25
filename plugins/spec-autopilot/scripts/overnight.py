@@ -458,8 +458,11 @@ def input_kinds(d, rid):
     if body and re.fullmatch(r"\|[\s:|-]+\|", body[0]):
         body = body[1:]
     rows = []
-    for x in body:
-        if not x.startswith("|") or re.fullmatch(r"\|[\s:|-]+\|", x):
+    sep = lambda x: bool(re.fullmatch(r"\|[\s:|-]+\|", x))  # noqa: E731
+    for i, x in enumerate(body):
+        if x.startswith("#") or sep(x) or (x.startswith("|") and sep(body[i + 1] if i + 1 < len(body) else "")):
+            break  # 別の見出しか、別の表（区切り行とその見出し行）から先は、この表の行ではない。文を挟んだ後の行は読む
+        if not x.startswith("|"):
             continue
         c = cells(x)
         rows.append(dict(zip(INPUT_HEAD, c + [""] * (5 - len(c)))) | {"raw": x, "n": len(c)})
