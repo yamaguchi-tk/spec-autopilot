@@ -1,0 +1,38 @@
+- commit: 56b9e07598345202e6df0837f1a15de3b16f6abd
+
+$ sh .autopilot-qa/r4-setup.sh
+85a66bf4026f24944f339b3b93172580dc30d3f0
+9b6b5bc4b1da2adfb4b87e5103eaf5e12c095d3c
+（words.py の count(text) が text.split(" ") で数える、入力の形で落ちる小さい実装の一時 repo）
+
+$ cd .autopilot-qa/r4/repo && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-reviewer --allowedTools "Read Grep Glob Write Bash" --permission-mode acceptEdits "spec のディレクトリ: .../docs/specs/2026-11-25-words 差分の base: 85a66bf4 差分の tip: 9b6b5bc4 観点: 1 巡目。"
+| R1 | fail | cmd: `python3 .autopilot-qa/check.py` で count を呼んだ。`count('')` は期待 0 で実際 1、... |
+- severity: high / `words.py:2` / R1 / 確かめ方: 再実行
+- severity: high / `test_words.py:4` / R1 / 確かめ方: 評価役
+high: R1
+
+$ cat .autopilot-qa/r4/repo/docs/specs/2026-11-25-words/inputs/R1.md
+| 入力の種類 | 例 | 期待 | 今の結果 | テスト |
+|---|---|---|---|---|
+| スペース 1 つずつで区切る | `"a b c"` | 3 | pass | - |
+| 1 語だけ | `"one"` | 1 | pass | - |
+| 空の文字列 | `""` | 0 | fail | - |
+| スペースだけ | `"   "` | 0 | fail | - |
+| タブ・改行・スペースだけ | `"\t\n "` | 0 | fail | - |
+| 続いたスペース | `"a  b"` | 2 | fail | - |
+| タブで区切る | `"a\tb"` | 2 | fail | - |
+| 改行で区切る | `"a\nb"` | 2 | fail | - |
+| 前後に空白 | `" a b "` | 2 | fail | - |
+
+$ python3 -c "import sys; sys.path.insert(0,'plugins/spec-autopilot/scripts'); import overnight; r,p,n=overnight.input_kinds('.autopilot-qa/r4/repo/docs/specs/2026-11-25-words','R1'); print(len(r), sum(x['今の結果']=='fail' for x in r), p, n)"
+9 7 [] False
+
+$ for f in autopilot-reviewer autopilot-reviewer-xhigh autopilot-reviewer-fable; do awk 'n>=2;/^---$/{n++}' plugins/spec-autopilot/agents/$f.md | shasum; done
+7cad8e1c3ca3a865dce9fbe5119affde8a9a7ca7  -
+7cad8e1c3ca3a865dce9fbe5119affde8a9a7ca7  -
+7cad8e1c3ca3a865dce9fbe5119affde8a9a7ca7  -
+
+$ grep -c "入力の種類: なし（<理由>）" plugins/spec-autopilot/agents/autopilot-reviewer*.md
+plugins/spec-autopilot/agents/autopilot-reviewer.md:1
+plugins/spec-autopilot/agents/autopilot-reviewer-fable.md:1
+plugins/spec-autopilot/agents/autopilot-reviewer-xhigh.md:1
