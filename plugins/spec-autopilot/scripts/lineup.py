@@ -79,7 +79,8 @@ def begin(d, s, by, prev):
     if prev != "discovery":
         history.append({**{k: s.get(k) for k in ("approved_at", "approved_by", "blocked", "done_at", "anomalies", "reviews",
                                                  "fails", "streak", "reworks", "post_budget_min", "paused_sec", *overnight.ROUND_KEYS)}, "phase": prev})
-    for k in ("size_by_user", "done_at", "anomalies", "queued_from", *overnight.ROUND_KEYS):  # 前の巡の記録は history に移した
+    keep = ("dispatches", "handoffs") if prev == "discovery" else ()  # 承認の前の S の試作の dispatch は、承認の後の handoff で閉じる
+    for k in ("size_by_user", "done_at", "anomalies", "queued_from", *(k for k in overnight.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
         s.pop(k, None)
     s.update(phase="building", approved_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), budget_min=budget,
              post_budget_min=post, history=history, blocked=None, paused_sec=0, reviews=[], fails={}, streak={}, reworks={})

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """実装役（subagent_type の最後の `:` の後が autopilot-implementer で始まる）の起動を、dispatch が開いているときだけ通す
-PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json があるもの）のうち、phase が building・最後の dispatch を
+PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json があるもの）のうち、phase が building（または discovery で「## 制約」の大きさが S の試作）・最後の dispatch を
 閉じた handoff が無い・その dispatch の agent が起動する名前と同じ、の 3 つを満たすものが 1 つでもあれば何も出さない。
 無ければ、prompt に spec が無い・state.json が読めない・途中の例外も含めて deny する。
 想定するのは事故（dispatch の打ち忘れ）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
@@ -10,6 +10,9 @@ import os
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import autopilot  # noqa: E402
 
 # CLI init が作る spec のディレクトリの名前（<日付>-<英小文字・数字・ハイフン>）を、prompt のパスの手がかりにする
 ANCHOR = re.compile(r"docs/specs/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*")
@@ -83,8 +86,8 @@ def problem(d, name):
         s = json.loads((d / "state.json").read_text(encoding="utf-8"))
     except Exception as e:
         return f"{d} の state.json が読めない（{type(e).__name__}）"
-    if s.get("phase") != "building":
-        return f"{d} は building でない（{s.get('phase')}）"
+    if not (s.get("phase") == "building" or (s.get("phase") == "discovery" and autopilot.is_small(d))):
+        return f"{d} は building でない（{s.get('phase')}。discovery は大きさ S だけ）"
     dispatches = s.get("dispatches") or []
     if not dispatches:
         return f"{d} に dispatch の記録が無い"
