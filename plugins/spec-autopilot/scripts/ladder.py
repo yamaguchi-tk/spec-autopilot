@@ -9,8 +9,7 @@ import re
 # 役 → 段の名前 → (agent の名前, model, effort)。順は安い順で、先頭が既定
 RUNGS = {
     "impl": {
-        "sonnet-low": ("autopilot-implementer", "claude-sonnet-5-5", "low"),
-        "sonnet-high": ("autopilot-implementer-high", "claude-sonnet-5-5", "high"),
+        "sonnet-high": ("autopilot-implementer", "claude-sonnet-5-5", "high"),
         "opus-medium": ("autopilot-implementer-opus", "opus", "medium"),
         "opus-xhigh": ("autopilot-implementer-opus-xhigh", "opus", "xhigh"),
         "fable": ("autopilot-implementer-fable", "fable", "high"),
