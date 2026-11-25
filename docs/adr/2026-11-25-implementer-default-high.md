@@ -24,3 +24,4 @@
 - `## モデル` に `- 実装: sonnet-low` と書いた spec は lint が ERROR にする
 - 実装の費用は、既定で Sonnet の effort high のぶん増える
 - 効き目は、マージの後の spec の runs.jsonl で測る
+- 訂正（2026-11-26）: Context の回数は数え違いだった。dispatch ごとに、その後の最初のレビューの high がその dispatch の要件と重なるかで 5 本の state.json を数え直すと、Sonnet low は 17 回中 10 回、sonnet-high は 5 回中 2 回、opus-medium は 2 回中 0 回だった。差は小さくなるが、Decision は変えない（効き目は runs.jsonl で測る）
