@@ -65,20 +65,20 @@ def test_gate_denies_in_discovery_when_the_size_is_not_small_even_with_a_dispatc
     st = state(d)
     st["dispatches"] = [{"base": None, "tasks": ["T1"], "reqs": ["R1"], "agent": "autopilot-implementer", "at": 1}]
     (d / "state.json").write_text(json.dumps(st), encoding="utf-8")
-    kind, _ = decision(fire(repo, f"{d}"))
-    assert kind == "deny"
+    out = decision(fire(repo, f"{d}"))
+    assert out is not None and out[0] == "deny"
 
 
 def test_gate_denies_in_discovery_for_a_small_spec_without_a_dispatch(repo):
-    kind, why = decision(fire(repo, f"{draft(repo)}"))
-    assert kind == "deny" and "overnight.py dispatch" in why
+    out = decision(fire(repo, f"{draft(repo)}"))
+    assert out is not None and out[0] == "deny" and "overnight.py dispatch" in out[1]
 
 
 def test_gate_denies_in_discovery_an_implementer_of_another_rung(repo):
     d = draft(repo)
     assert dispatch(repo, d).returncode == 0
-    kind, _ = decision(fire(repo, f"{d}", agent="spec-autopilot:autopilot-implementer-fable"))
-    assert kind == "deny"
+    out = decision(fire(repo, f"{d}", agent="spec-autopilot:autopilot-implementer-fable"))
+    assert out is not None and out[0] == "deny"
 
 
 def test_handoff_closes_the_prototype_dispatch_after_approval(repo):
@@ -104,3 +104,31 @@ def test_handoff_closes_the_prototype_dispatch_after_a_queued_approval_starts(re
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 0, r.stdout + r.stderr
     assert state(d)["handoffs"][-1]["dispatch"] == 0
+
+
+def test_queued_approval_blocked_at_start_keeps_the_prototype_dispatch_after_the_next_approve(repo):
+    d = draft(repo)
+    implement(repo, d)
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "OK", "--queue").returncode == 0
+    (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8") + "\n変更\n", encoding="utf-8")
+    line(repo, "next")
+    assert state(d)["phase"] == "blocked"
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+    assert len(state(d)["dispatches"]) == 1
+    (d / "tasks.md").write_text(TASKS.replace("[ ]", "[x]"), encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_dispatch_and_gate_say_that_spec_md_could_not_be_read(repo):
+    d = draft(repo)
+    (d / "spec.md").chmod(0)
+    try:
+        r = dispatch(repo, d)
+        out = decision(fire(repo, f"{d}"))
+    finally:
+        (d / "spec.md").chmod(0o644)
+    assert r.returncode != 0 and "spec.md が読めない" in r.stdout + r.stderr
+    assert out is not None and out[0] == "deny" and "spec.md が読めない" in out[1]
