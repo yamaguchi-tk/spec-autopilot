@@ -431,3 +431,15 @@ def test_a_config_with_a_bom_is_read(repo):
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode != 0 and "secrets/a.txt" in r.stdout
+
+
+@pytest.mark.parametrize("text", ["\u200bsecrets\n", "secr\u200bets\n", b"secrets\xff\n"])
+def test_a_config_with_unreadable_characters_stops(repo, text):
+    """見えない文字や UTF-8 でない中身は、足した pattern が黙って効かなくなるので止める。"""
+    f = repo / ".spec-autopilot" / "protected-paths"
+    f.parent.mkdir()
+    f.write_bytes(text if isinstance(text, bytes) else text.encode("utf-8"))
+    d = existing_spec(repo, files={"README.md": "# x\n"})  # init の前の commit に設定も入る（git add -A）
+    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n"})
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and "確かめられない" in r.stdout + r.stderr
