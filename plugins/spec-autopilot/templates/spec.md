@@ -44,7 +44,7 @@
 - playbook: <名前>[、<名前>]<!-- commands/autopilot.md の A の 0 の索引から選ぶ（references/playbooks/ のファイル名。例: feature、external-service）。当たるものが無ければ `なし（<理由>）` -->
 
 ## モデル
-<!-- 書かなければ既定（実装 sonnet-low・評価 opus-high）。始めから上げる役だけ書く。実装: sonnet-low・sonnet-high・opus-medium・opus-xhigh・fable、評価: opus-high・opus-xhigh・fable（評価は既定より下げない） -->
+<!-- 書かなければ既定（実装 sonnet-high・評価 opus-high）。始めから上げる役だけ書く。実装: sonnet-high・opus-medium・opus-xhigh・fable、評価: opus-high・opus-xhigh・fable（評価は既定より下げない） -->
 
 ## 自走の範囲
 <!-- 必須（`CLI lint` が求める）。6 行とも消さない。`- 範囲:` は「マージ・デプロイ・QA まで」（既定）・「マージまで」・「PR まで」のどれか。
