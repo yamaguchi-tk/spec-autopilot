@@ -1,0 +1,31 @@
+- commit: f137cd662a3d5c76ca23a43ca947a25df9841d95
+
+既存の test_qa_evidence.py と全体のテストを回し、一時の repo で、今までの並べ方（通る）と、区切りの後ろに repo に無い path・無いテストを並べた証拠（落ちる）で tip と base の autopilot.py check を回した。加えて、名前が無ければ落とす条件を外す変異（.autopilot-qa/mut-R2-1.patch）で、足したテストが落ちることを確かめた。
+
+$ python3 .autopilot-qa/check.py
+  [ok] 'tests/test_x.py::test_a・::test_c': tip exit=0 want 0; base exit=0 want 0 (check: OK); tip: check: OK
+  [ok] 'tests/test_x.py::test_a, tests/test_y.py::test_y': tip exit=0 want 0; base exit=0 want 0 (check: OK); tip: check: OK
+  [ok] 'tests/test_x.py::test_a、::test_c・tests/test_y.py::test_y': tip exit=0 want 0; base exit=0 want 0 (check: OK); tip: check: OK
+  [ok] 'tests/test_x.py::test_a・::test_nope': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: tests/test_x.py に「test_nope」が無い); tip: ERROR: R1 の証拠: tests/test_x.py に「test_nope」が無い
+  [ok] 'tests/test_x.py::test_a・tests/test_y.py::test_nope': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: tests/test_y.py に「test_nope」が無い); tip: ERROR: R1 の証拠: tests/test_y.py に「test_nope」が無い
+  [ok] 'tests/test_x.py::test_a・nofile.py::test_c': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: nofile.py が無い); tip: ERROR: R1 の証拠: tests/test_x.py に「test_a・nofile.py」が無い
+  [ok] 'tests/test_x.py::test_a・tests/nofile.py::test_a': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: tests/nofile.py が無い); tip: ERROR: R1 の証拠: tests/test_x.py に「test_a・tests/nofile.py」が無い
+  [ok] 'core.test.js::得点・レベル::A・::nope': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: ERROR: R1 の証拠: core.test.js に「nope」が無い
+  [ok] 'core.test.js::得点・レベル::1 行消すと、100 点・tests/test_y.py::test_nope': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: ERROR: R1 の証拠: tests/test_y.py に「test_nope」が無い
+  [ok] 'core.test.js::得点・レベル::1 行消すと、100 点・nofile.py::test_y': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: ERROR: R1 の証拠: core.test.js に「1 行消すと、100 点・nofile.py」が無い
+  [ok] 'core.test.js::得点・nofile.py::test_y': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: nofile.py が無い); tip: ERROR: R1 の証拠: core.test.js に「得点・nofile.py」が無い
+  [ok] '`core.test.js::得点・レベル::A`・`nofile.py::test_y`': tip exit=1 want 1; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: ERROR: R1 の証拠: core.test.js に「A`・`nofile.py」が無い
+R2 pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n 8 -p no:cacheprovider
+1000 passed in 193.41s (0:03:13)
+
+$ git apply .autopilot-qa/mut-R2-1.patch && python3 -m pytest "plugins/spec-autopilot/tests/test_qa_evidence.py::test_check_still_fails_when_a_listed_test_after_a_separator_is_missing" -q -p no:cacheprovider; git apply -R .autopilot-qa/mut-R2-1.patch
+（変異の前: 4 passed in 6.41s）
+plugins/spec-autopilot/tests/test_qa_evidence.py:252: AssertionError
+FAILED ...test_check_still_fails_when_a_listed_test_after_a_separator_is_missing[core.test.js::得点・レベル::A・::nope]
+FAILED ...test_check_still_fails_when_a_listed_test_after_a_separator_is_missing[core.test.js::得点・レベル::1 行消すと、100 点・tests/test_y.py::test_nope]
+FAILED ...test_check_still_fails_when_a_listed_test_after_a_separator_is_missing[core.test.js::得点・レベル::1 行消すと、100 点・nofile.py::test_y]
+FAILED ...test_check_still_fails_when_a_listed_test_after_a_separator_is_missing[core.test.js::得点・nofile.py::test_y]
+4 failed in 6.02s
+（戻した後: git diff --quiet HEAD -- plugins/ が通り、印は消えた）
