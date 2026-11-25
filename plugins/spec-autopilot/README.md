@@ -14,7 +14,7 @@
 
 ## 軽量フロー（合意を省く）
 
-受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まる小さい修正は、`scripts/light.py approve` で人との spec 合意を省いて自走できる（spec は自動で作って repo に残す）。自走の上限は PR 作成までで、マージ・デプロイ・QA の書き込みはしない。保護された path（既定の一覧は `scripts/light.py` の `DEFAULT_PROTECTED`。IaC の主な拡張子とディレクトリ、名前に guardrails を含むもの、エージェントの規則と設定、`.github`、設定そのものの `.spec-autopilot`。起点の commit の `.spec-autopilot/protected-paths` で足せる）に触れたら、変更ファイルの path で機械的に止まり、人に戻る。判定するのは PR に入りうる変更（PR が持ち込む差と追っていないファイル）だけで、git が無視するファイル・途中の commit で触れて戻したものは見ないので、手元の設定の書き換えは防がない。手順は `commands/autopilot.md` の「L. 軽量フロー」。
+受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まる小さい修正は、`scripts/light.py approve` で人との spec 合意を省いて自走できる（spec は自動で作って repo に残す）。自走の上限は PR 作成までで、マージ・デプロイ・QA の書き込みはしない。保護された path（既定の一覧は `scripts/light.py` の `DEFAULT_PROTECTED`。IaC の主な拡張子とディレクトリ、名前に guardrails を含むもの、エージェントの規則と設定、`.github`、設定そのものの `.spec-autopilot`。起点の commit の `.spec-autopilot/protected-paths` で足せる）に触れたら、変更ファイルの path で機械的に止まり、人に戻る。判定するのは init の時点から PR に入りうる変更（HEAD・index・作業ツリーの差と追っていないファイル）だけで、init より前の commit・git が無視するファイル・途中の commit で触れて戻したもの・spec の置き場の中は見ないので、手元の設定の書き換えは防がない。手順は `commands/autopilot.md` の「L. 軽量フロー」。
 
 ## かっちりさの作り方
 
