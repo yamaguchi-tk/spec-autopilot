@@ -1,0 +1,10 @@
+- commit: f137cd662a3d5c76ca23a43ca947a25df9841d95
+
+$ grep -n '"version"' plugins/spec-autopilot/.claude-plugin/plugin.json
+3:  "version": "0.1.4",
+
+$ python3 -c "import json;print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['description']==json.load(open('plugins/spec-autopilot/.claude-plugin/plugin.json'))['description'])"
+True
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q -p no:cacheprovider
+6 passed in 0.02s
