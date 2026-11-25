@@ -1,0 +1,6 @@
+- commit: d2b2aef952333ca31d6d341e7769427eaeed5f5a
+（一時の repo <worktree>/.autopilot-qa/work/r4 で承認の後に spec.md の R2 の「Enter で再開できる」を「Space で再開できる」に変えた）
+$ python3 .autopilot-qa/check.py   （R4 の部分。autopilot.py check を打った）
+  R4 check exit=1
+    ERROR: spec.md の要件・QA の方向性・制約などが承認の後に変わった。spec.md を承認の時点に戻す。1 つの要件だけを変える必要があるなら `overnight.py park` でその要件を積む。どの要件も進められないときだけ block する（作り方の節と、先頭の `- ADR:` 行の番号〔改番〕は変えてよい）
+R4 pass  (エラー文に戻す・park・block の使い分け)
