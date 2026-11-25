@@ -23,12 +23,11 @@ def check(text, adr_path, d, reqs=None):
     missing = [f"`- 退けた: {st}（<理由>）` か `- 要件の文で退けた: {st}（R<n> の「<要件の語>」）` の行" for st in FIX_ORDER[:chosen]
                if st not in done]
     overnight = shlex.quote(str(Path(__file__).with_name("overnight.py")))
-    by_req = {}  # park は (kind, op, req) が同じものを重複として捨てるので、要件ごとに 1 本にして理由を全部入れる
-    for st, req, word in req_rows:
-        by_req.setdefault(req, []).append(f"{st}を退けた。要件の語「{word}」")
-    cmds = [" ".join(["python3", overnight, "park", shlex.quote(str(d)), "--kind", "other", "--op", shlex.quote("要件の文を直す"),
-                      "--reason", shlex.quote(" / ".join(rs) + f" ADR: {adr_path}"), "--req", req])
-            for req, rs in by_req.items()]
+    # park は (kind, op, req) が同じものを重複として捨てるので、行ごとに --op へ退けた段と要件の語を入れて区別する
+    cmds = [" ".join(["python3", overnight, "park", shlex.quote(str(d)), "--kind", "other",
+                      "--op", shlex.quote(f"{req} の要件の文を直す（{st}・「{word}」）"),
+                      "--reason", shlex.quote(f"{st}を退けた。要件の語「{word}」 ADR: {adr_path}"), "--req", req])
+            for st, req, word in req_rows]
     return missing, cmds
 
 
