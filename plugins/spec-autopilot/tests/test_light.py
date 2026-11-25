@@ -409,12 +409,25 @@ def test_a_config_whose_blob_is_missing_stops(repo):
     assert r.returncode != 0 and "確かめられない" in r.stdout
 
 
-def test_a_symlinked_config_stops(repo):
-    """設定が symlink のときは中身を読めないので止める（リンク先の pattern を黙って落とさない）。"""
-    (repo / ".spec-autopilot").mkdir()
-    (repo / ".spec-autopilot" / "list.txt").write_text("secrets\n", encoding="utf-8")
-    os.symlink("list.txt", repo / ".spec-autopilot" / "protected-paths")
+@pytest.mark.parametrize("link", [".spec-autopilot/protected-paths", ".spec-autopilot"])
+def test_a_symlinked_config_stops(repo, link):
+    """設定かその置き場が symlink のときは中身を読めないので止める（リンク先の pattern を黙って落とさない）。"""
+    (repo / "conf").mkdir()
+    (repo / "conf" / "protected-paths").write_text("secrets\n", encoding="utf-8")
+    if link == ".spec-autopilot":
+        os.symlink("conf", repo / ".spec-autopilot")
+    else:
+        (repo / ".spec-autopilot").mkdir()
+        os.symlink("../conf/protected-paths", repo / link)
     d = existing_spec(repo, files={"README.md": "# x\n"})
     write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n"})
     r = light(repo, "approve", str(d), "--source", "x")
-    assert r.returncode != 0 and "確かめられない" in r.stdout + r.stderr
+    assert r.returncode != 0 and f"普通のファイルでない: {link}（120000）" in r.stdout + r.stderr
+
+
+def test_a_config_with_a_bom_is_read(repo):
+    d = committed_light(repo, {".spec-autopilot/protected-paths": "\ufeffsecrets\n"})
+    touch(repo, "secrets/a.txt")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "secrets/a.txt" in r.stdout
