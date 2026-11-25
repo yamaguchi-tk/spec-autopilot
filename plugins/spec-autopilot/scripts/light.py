@@ -105,21 +105,32 @@ def hits(d, s):
 
 
 KEYS = ("デプロイの起動", "ロールバック")
-# 鍵の語と `コマンド:` が同じ行にある（行の形・コメントを問わない）。テンプレートの説明の `<1 行のコマンド>` は除く
+# 鍵の語の後ろの同じ行に `コマンド:` がある（行の形・コメントを問わない）。テンプレートの説明の `<1 行のコマンド>` は除く
 CMD_LINE = re.compile(r"(" + "|".join(KEYS) + r")[^\n]*?コマンド\s*:\s*(?!<1 行のコマンド>)\S")
 
 
 def command_errors(text, after_approve=False):
-    """spec がデプロイの起動・ロールバックをコマンドにしていれば ERROR。使う側の読み方（overnight.scope_rows）と、
-    全文を NFKC にして同じ行に鍵の語と `コマンド:` があるかの、どちらかで当たれば断る（コメントは外さない）。
-    合意ありでは承認のときに人が見る。軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので打たせない。"""
+    """軽量フローの spec の自走の範囲を許可リストで確かめる。合意ありでは承認のときに人がデプロイ・ロールバックの行を見るが、
+    軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので、agent の書いたコマンドを打たせない。
+    - `## 自走の範囲` の見出しは 1 つだけ（コメントの中も数える）
+    - その節は、コメントを外した後、範囲の行と空行だけ（続きの行・閉じていないコメントは断る）
+    - `デプロイの起動` は「マージで自動」か空、`ロールバック` は revert の PR か空
+    - 予備に、全文（NFKC。コメントも含む）で鍵の語の後ろの同じ行に `コマンド:` があれば断る"""
     import overnight
-    rows = overnight.scope_rows(text) or {}
-    found = {k for k in KEYS if overnight.ROLLBACK_CMD.match(rows.get(k) or "")}
-    found |= set(CMD_LINE.findall(unicodedata.normalize("NFKC", text)))
     way = ("`autopilot.py block` で記録して人に戻る" if after_approve else
            "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
-    return [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。{way}" for key in KEYS if key in found]
+    norm = unicodedata.normalize("NFKC", text)
+    out = []
+    if len(re.findall(r"^#+\s*" + overnight.SCOPE_SECTION + r"\s*$", norm, re.M)) != 1:
+        out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` の節を 1 つだけにする。{way}")
+    body = ap.COMMENT_BLOCK.sub("", ap.section(text, overnight.SCOPE_SECTION) or "")
+    _, bad = ap.classify(body, [("row", overnight.SCOPE_ROW)])
+    if bad:
+        out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` に `- <キー>: <値>` の行のほかを書けない（{bad[0][:40]}）。{way}")
+    rows = overnight.scope_rows(text) or {}
+    allowed = {"デプロイの起動": ("", overnight.AUTO_DEPLOY), "ロールバック": ("", overnight.REVERT)}
+    found = {k for k in KEYS if (rows.get(k) or "") not in allowed[k]} | set(CMD_LINE.findall(norm))
+    return out + [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。{way}" for key in KEYS if key in found]
 
 
 def errors(d, s):
