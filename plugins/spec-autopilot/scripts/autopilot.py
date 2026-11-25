@@ -1012,7 +1012,7 @@ def cmd_done(a):
     if "L" in (stated, size):  # 合意し直しと自走中に育った L も、PR を作る前のここで受け持つ
         print(f"NOTE: {SPLIT_PR}（申告 {stated or 'なし'}・{detail}）")
     overnight = __import__("overnight")
-    print("\n".join(overnight.report(d) + __import__("light").report(s)))
+    print("\n".join(overnight.report(d) + [f"NOTE: {x}" for x in __import__("light").report(s)]))
     overnight.notify(d)
     return 0
 
