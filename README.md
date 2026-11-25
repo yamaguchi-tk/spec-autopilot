@@ -1,6 +1,6 @@
 # spec-autopilot
 
-spec-autopilot は、Claude Code の plugin です。要件を人と壁打ちで詰め、要件・作り方・QA の方向性・制約・予算を 1 つの spec で 1 回合意したら、TDD 実装 → レビュー → QA → PR 作成まで、人に聞かずに進めます（`/autopilot`）。人に戻るのは、合意した要件を満たす方法が無いときだけです。受入条件が決まっている小さい修正は、合意を省いて PR 作成まで進める軽量フローも選べます。
+spec-autopilot は、Claude Code の plugin です。要件を人と壁打ちで詰め、要件・作り方・QA の方向性・制約・予算を 1 つの spec で 1 回合意したら、TDD 実装 → レビュー → QA → PR 作成まで、人に聞かずに進めます（`/autopilot`）。人に戻るのは、合意した要件を満たす方法が無いときだけです。受入条件が決まっている小さい修正は、合意を省いて進める軽量フロー（spec の範囲どおりマージ・QA まで。保護された path に触れたら人に戻る）も選べます。
 
 使い方・前提と制限は [plugins/spec-autopilot/README.md](plugins/spec-autopilot/README.md) にあります。設計の判断は [docs/adr/](docs/adr/) にあります。
 

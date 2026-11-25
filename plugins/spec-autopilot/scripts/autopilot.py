@@ -959,7 +959,7 @@ def cmd_approve(a):
     budget = lineup.begin(d, s, a.by, s.get("phase"))
     take_over(d, session, "承認")
     save_state(d, s)
-    report([], warnings + __import__("light").report(s), f"approved: 予算 {budget} 分。ここから自走する")
+    report([], warnings, f"approved: 予算 {budget} 分。ここから自走する")
     return 0
 
 
@@ -1012,7 +1012,7 @@ def cmd_done(a):
     if "L" in (stated, size):  # 合意し直しと自走中に育った L も、PR を作る前のここで受け持つ
         print(f"NOTE: {SPLIT_PR}（申告 {stated or 'なし'}・{detail}）")
     overnight = __import__("overnight")
-    print("\n".join(overnight.report(d) + [f"NOTE: {x}" for x in __import__("light").report(s)]))
+    print("\n".join(overnight.report(d)))
     overnight.notify(d)
     return 0
 

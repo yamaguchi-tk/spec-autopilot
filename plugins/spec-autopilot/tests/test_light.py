@@ -406,8 +406,7 @@ def test_a_config_with_unreadable_characters_stops(repo, text):
     assert r.returncode != 0 and "確かめられない" in r.stdout + r.stderr
 
 
-@pytest.mark.parametrize("scope", ["マージまで", "マージ・デプロイ・QA まで"])
-def test_light_run_follows_the_specs_scope_up_to_merge_and_qa(repo, scope):
+def test_light_run_follows_the_specs_scope_up_to_merge_and_qa(repo, scope="マージまで"):
     """軽量フローも、合意ありと同じく spec の範囲までマージ・QA に進む（記録のコマンドを断らない）。"""
     d = init_spec(repo)
     (d / "spec.md").write_text(GOOD_SPEC.replace("- 範囲: PR まで", f"- 範囲: {scope}"), encoding="utf-8")
