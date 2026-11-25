@@ -1,0 +1,104 @@
+{
+  "phase": "building",
+  "slug": "implementer-default-high",
+  "created_at": 1795616925.619315,
+  "existing": true,
+  "start": "1e31f5874cf2c73b364e899f36e63496dd4b0eb2",
+  "last_active_at": 1795618417.16542,
+  "approved_at": 1795617258.531918,
+  "approved_by": "人が OK と返した（推奨のまま承認）",
+  "spec_sha256": "15d988f0daf5abad0be2e31426c631cb5394d7d9dfe22b2e37384daeb7df356f",
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R1"
+      ],
+      "at": 1795618016.520208,
+      "sha": "faa5a0b664a6eb987776432ec39a6082b9ed978d"
+    },
+    {
+      "high": [],
+      "at": 1795618417.165401,
+      "sha": "d3415031d1a3129ec9ad07c40c0ad41ea8860e20"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795618016.520204
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "44e17164cf351b29cfd952e3a273fb7135751af7",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795617268.086213,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "5ceaabf9e3394f86e0943f15eb6724551993bf30",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795618019.308943,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "dd5126519ea3caa2e8ef7e5bb40282c861ecbbe1",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795617372.6357272
+    },
+    {
+      "tip": "faa5a0b664a6eb987776432ec39a6082b9ed978d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795618014.103198
+    },
+    {
+      "tip": "d3415031d1a3129ec9ad07c40c0ad41ea8860e20",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 1,
+      "at": 1795618225.451099
+    }
+  ]
+}

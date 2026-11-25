@@ -2,7 +2,7 @@
 name: autopilot-implementer
 description: /autopilot の自走の段で、tasks.md のタスクを TDD で実装する。/autopilot の本文からだけ起動し、ユーザーの依頼から直接は起動しない。起動時に model を渡さない。
 model: claude-sonnet-5-5
-effort: low
+effort: high
 tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 
