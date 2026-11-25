@@ -81,3 +81,44 @@ def test_requirement_sentence_rejection_is_refused_with_a_pasteable_park_command
     assert parts[parts.index("--op") + 1] == "要件の文を直す"
     reason = parts[parts.index("--reason") + 1]
     assert "要らなくする" in reason and word in reason and p in reason
+
+
+REFS = Path(__file__).resolve().parents[1] / "references"
+
+
+def _section2(text):
+    return text.split("\n## 2.", 1)[1].split("\n## 3.", 1)[0]
+
+
+def _positions(text):
+    return [text.index(st) for st in rootcause.FIX_ORDER]
+
+
+def test_dead_end_section2_lists_fix_stages_in_fix_order():
+    pos = _positions(_section2((REFS / "dead-end.md").read_text(encoding="utf-8")))
+    assert pos == sorted(pos)
+
+
+def test_adr_template_lists_fix_stages_in_fix_order():
+    pos = _positions((REFS / "adr-template.md").read_text(encoding="utf-8"))
+    assert pos == sorted(pos)
+
+
+def test_documented_line_examples_match_the_shapes_rootcause_reads():
+    for name in ("dead-end.md", "adr-template.md"):
+        text = (REFS / name).read_text(encoding="utf-8")
+        text = _section2(text) if name == "dead-end.md" else text
+        ex = "\n".join(l.strip().strip("`") for l in text.splitlines() if l.strip().strip("`").startswith("- ") and "段" not in l[:3])
+        ex = "\n".join(l for l in ex.splitlines() if "<" not in l or True)
+        fixed = (ex.replace("<段>", "設計を変える").replace("<理由>", "理由").replace("R<n>", "R1")
+                 .replace("<要件の語>", "語"))
+        assert rootcause.FIX_LINE.search(fixed), name
+        assert rootcause.REJECT.search(fixed), name
+        assert rootcause.REQ_REJECT.search(fixed), name
+
+
+def test_rework_output_tells_to_keep_the_premise_memo_lines(repo):
+    d = ready(repo)
+    p = adr(repo, "ok.md", "- 直し方: 要らなくする")
+    r = rework(repo, d, p)
+    assert r.returncode == 0 and "メモ: 前提:" in r.stdout

@@ -1273,7 +1273,7 @@ def cmd_rework(a):
     reworks.setdefault(a.req, []).append(str(adr.relative_to(root)))
     s.setdefault("streak", {})[a.req] = 0
     save_state(d, s)
-    print(f"rework: {a.req} の {len(reworks[a.req])} 回目の作り直し。spec の作り方の節と tasks.md を直して進む")
+    print(f"rework: {a.req} の {len(reworks[a.req])} 回目の作り直し。spec の作り方の節と tasks.md を直して進む（tasks.md の `  - メモ: 前提:` の行は消さない）")
     return 0
 
 
