@@ -29,7 +29,8 @@ def impl_fail(repo, d, req="R1"):
 def high(repo, d, reqs="R1"):
     for q in reqs.split(","):  # 評価役が書く入力の種類の表（入力の形でない high は「なし」の 1 行）
         (d / "inputs").mkdir(exist_ok=True)
-        (d / "inputs" / f"{q}.md").write_text("- 入力の種類: なし（テスト用）\n", encoding="utf-8")
+        if not (d / "inputs" / f"{q}.md").exists():
+            (d / "inputs" / f"{q}.md").write_text("- 入力の種類: なし（テスト用）\n", encoding="utf-8")
     r = run(repo, "review", str(d), "--high", reqs)
     assert r.returncode == 0, r.stdout + r.stderr
     return r

@@ -450,8 +450,8 @@ def input_kinds(d, rid):
     lines = [x.strip() for x in text.splitlines() if x.strip()]
     if len(lines) == 1 and (m := INPUT_NONE.match(lines[0])) and m.group(1).strip():
         return [], [], True
-    cells = lambda x: [c.strip().strip("`") if i == 4 else c.strip() for i, c in enumerate(x.strip().strip("|").split("|"))]  # noqa: E731
-    head = next((i for i, x in enumerate(lines) if x.startswith("|") and [c.strip() for c in x.strip("|").split("|")] == INPUT_HEAD), None)
+    cells = lambda x: [c.strip().strip("`") if i == 4 else c.strip() for i, c in enumerate(re.split(r"(?<!\\)\|", x.strip().strip("|")))]  # noqa: E731
+    head = next((i for i, x in enumerate(lines) if x.startswith("|") and [c.strip() for c in re.split(r"(?<!\\)\|", x.strip("|"))] == INPUT_HEAD), None)
     if head is None:
         return [], [f"{where} に見出し `| {' | '.join(INPUT_HEAD)} |` の表が無い"], False
     body = lines[head + 1:]
@@ -459,8 +459,8 @@ def input_kinds(d, rid):
         body = body[1:]
     rows = []
     for x in body:
-        if not x.startswith("|"):
-            break
+        if not x.startswith("|") or re.fullmatch(r"\|[\s:|-]+\|", x):
+            continue
         c = cells(x)
         rows.append(dict(zip(INPUT_HEAD, c + [""] * (5 - len(c)))) | {"raw": x, "n": len(c)})
     problems = []
@@ -496,7 +496,7 @@ def input_handoff_errors(d, s, reqs, root):
         rows, problems, none = input_kinds(d, q)
         errors += problems
         for r in rows:
-            bad = autopilot.evidence_problem(root, r["テスト"], seen) if r["テスト"] else autopilot.EVIDENCE_FORMS
+            bad = autopilot.EVIDENCE_FORMS if not r["テスト"] or autopilot.EVIDENCE_FREE.search(r["テスト"]) else autopilot.evidence_problem(root, r["テスト"], seen)
             if bad:
                 errors.append(f"inputs/{q}.md のテストの欄が使えない（{bad}）: {r['raw']}")
     return errors
@@ -509,8 +509,10 @@ def input_fail_errors(d, s):
     for f in sorted((Path(d) / "inputs").glob("R*.md")):
         if f.stem in parked:
             continue
+        rows, problems, _ = input_kinds(d, f.stem)
         errors += [f"{f.stem} の入力の表に今の結果が fail の行が残っている: {r['raw']}。評価役を回し直して今の結果を書き換えさせる"
-                   for r in input_kinds(d, f.stem)[0] if r["今の結果"] == "fail"]
+                   for r in rows if r["今の結果"] == "fail"]
+        errors += [f"{f.stem} の入力の表が読めない（fail の行を見落とすので、評価役を回し直して書き直させる）: {x}" for x in problems if "1 つも無い" not in x]
     return errors
 
 
@@ -781,6 +783,8 @@ def cmd_dispatch(a):
                                            **({"prototype": True} if s.get("phase") == "discovery" else {})})
     autopilot.save_state(d, s)
     for q in high_reqs(s, reqs):
+        if input_kinds(d, q)[2]:
+            continue
         print(f"{q} は high。表 {d / 'inputs' / (q + '.md')} の行ごとにテストを書かせ、テストの欄（<path>::<テスト名>）を埋めさせる")
     print(f"dispatch: {', '.join(a.task)} を {(base or 'commit の無い repo')[:8]} から実装役に渡す。起動する agent:\n{name}")
     return 0
