@@ -1,6 +1,6 @@
 """scripts/light.py（人との spec 合意を省く軽量フロー）を、入口から通して確かめる。
 
-止まる条件（保護された path に触れたら check が通らない）と、自走の上限（PR 作成まで。マージ・QA の書き込みを受けない）を見る。
+止まる条件（保護された path に触れたら check が通らない）と、自走の範囲が合意ありと同じく spec の `- 範囲:` で決まることを見る。
 """
 import os
 import subprocess
@@ -41,14 +41,6 @@ def test_approve_needs_no_human_reply_and_marks_the_run_light(repo):
     s = state(d)
     assert s["phase"] == "building" and s["light"] is True
     assert "人の承認なし" in s["approved_by"]
-
-
-def test_approve_refuses_a_scope_wider_than_pr(repo):
-    d = init_spec(repo)
-    (d / "spec.md").write_text(GOOD_SPEC.replace("- 範囲: PR まで", "- 範囲: マージまで"), encoding="utf-8")
-    r = light(repo, "approve", str(d), "--source", "依頼文")
-    assert r.returncode != 0
-    assert state(d)["phase"] == "discovery"
 
 
 def test_check_passes_when_no_protected_path_is_touched(repo):
@@ -103,23 +95,6 @@ def test_human_approval_after_a_light_block_keeps_the_light_mark(repo):
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode != 0 and "CLAUDE.md" in r.stdout
-
-
-def test_light_run_refuses_merge_and_qa_records(repo):
-    d = light_approved(repo)
-    for args in (("ready", str(d), "--pr", "1"), ("merged", str(d), "--pr", "1"),
-                 ("qa", str(d), "--evidence", str(d / "spec.md"), "--smoke", "pass")):
-        r = night(repo, *args)
-        assert r.returncode != 0, args
-        assert "PR 作成まで" in r.stdout + r.stderr, args
-
-
-def test_done_reports_the_pr_ceiling(repo):
-    d = light_approved(repo)
-    make_done(repo, d)
-    r = run(repo, "done", str(d))
-    assert r.returncode == 0, r.stdout + r.stderr
-    assert "PR 作成まで" in r.stdout
 
 
 # --- 既存の repo（init の前に commit がある）---
@@ -259,12 +234,6 @@ def test_runlog_marks_light_runs(repo):
     assert json.loads(rows[-1])["light"] is True
 
 
-def test_light_run_refuses_rolled_back(repo):
-    d = light_approved(repo)
-    r = night(repo, "rolled-back", str(d), "--evidence", str(d / "spec.md"), "--reason", "x")
-    assert r.returncode != 0 and "PR 作成まで" in r.stdout + r.stderr
-
-
 def test_approve_refuses_a_protected_file_committed_since_init(repo):
     """init から approve までの commit（S の試作）が保護 path に当たっていれば、軽量フローでは始めない。"""
     d = existing_spec(repo)
@@ -303,14 +272,6 @@ def test_a_protected_change_reverted_by_a_later_commit_is_not_counted(repo):
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode == 0, r.stdout + r.stderr
-
-
-def test_approve_prints_the_ceiling_once(repo):
-    d = light_approved(repo)
-    assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y").returncode == 0
-    user_says(repo)
-    r = run(repo, "approve", str(d), "--by", "OK")
-    assert r.returncode == 0 and "PR 作成まで" in r.stdout and "NOTE: NOTE:" not in r.stdout
 
 
 def test_the_specs_own_directory_is_not_a_protected_path(repo):
@@ -443,3 +404,16 @@ def test_a_config_with_unreadable_characters_stops(repo, text):
     write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n"})
     r = light(repo, "approve", str(d), "--source", "x")
     assert r.returncode != 0 and "確かめられない" in r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("scope", ["マージまで", "マージ・デプロイ・QA まで"])
+def test_light_run_follows_the_specs_scope_up_to_merge_and_qa(repo, scope):
+    """軽量フローも、合意ありと同じく spec の範囲までマージ・QA に進む（記録のコマンドを断らない）。"""
+    d = init_spec(repo)
+    (d / "spec.md").write_text(GOOD_SPEC.replace("- 範囲: PR まで", f"- 範囲: {scope}"), encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "Issue #1 の受入条件")
+    assert r.returncode == 0, r.stdout + r.stderr
+    for args in (("ready", str(d), "--pr", "1"), ("merged", str(d), "--pr", "1"),
+                 ("qa", str(d), "--evidence", str(d / "spec.md"), "--smoke", "pass")):
+        out = night(repo, *args)
+        assert "軽量フロー" not in out.stdout + out.stderr, args
