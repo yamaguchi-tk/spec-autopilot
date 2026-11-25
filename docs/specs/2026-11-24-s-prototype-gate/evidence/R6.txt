@@ -1,0 +1,14 @@
+- commit: e624b01fc14f235b21dd3a709e7d5c8dc5023582
+
+$ grep -n "discovery\|handoff" plugins/spec-autopilot/references/small-prototype.md
+8:- 起動の前に: tasks.md に全要件を受け持つタスクを書き（playbook のタスクがあれば先頭に）、`overnight.py dispatch <dir> --task T<n>...` を打つ（discovery の大きさ S だけ受ける。最後の行が起動する agent の名前。打たずに起動すると hook が deny する）
+21:- C の 1 で tasks.md を書き、試作で済んだタスクを `[x]` にして `overnight.py handoff <dir> --task T<n>...` で試作の dispatch を閉じる（承認は dispatch を消さない）。残りを実装してから C の 3 の評価に進む
+
+$ sed -n 5p plugins/spec-autopilot/scripts/overnight.py
+  overnight.py dispatch <dir> --task T<n>...        （building と、discovery の大きさ S の spec の試作）実装役に渡す時点の HEAD を記録し、起動する実装役の段の agent を最後の行に出す（渡すたびに打つ）
+
+$ sed -n 3p plugins/spec-autopilot/hooks/agent_gate.py
+PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json があるもの）のうち、phase が building（または discovery で「## 制約」の大きさが S の試作）・最後の dispatch を
+
+$ grep -n version plugins/spec-autopilot/.claude-plugin/plugin.json
+3:  "version": "0.1.3",
