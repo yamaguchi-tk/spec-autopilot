@@ -1,8 +1,13 @@
 {
-  "phase": "discovery",
+  "phase": "queued",
   "slug": "advisor-reapproval",
   "created_at": 1795624714.107002,
   "existing": true,
   "start": "f78818b158c1c6b73cb5bc21b4464e8bcb5a217f",
-  "last_active_at": 1795624714.13324
+  "last_active_at": 1795650754.756219,
+  "queued_from": "discovery",
+  "queued_at": 1795650754.75523,
+  "approved_by": "OK（2 本をこの順でまとめて承認）",
+  "spec_sha256": "d7c6d941abd3ad6347492b56eadec603981f607eed19f1200e6bacc697c02056",
+  "after": null
 }
