@@ -1,0 +1,7 @@
+- commit: 56b9e07598345202e6df0837f1a15de3b16f6abd
+
+$ grep -n '"version"' plugins/spec-autopilot/.claude-plugin/plugin.json
+3:  "version": "0.1.5",
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q
+6 passed in 0.02s
