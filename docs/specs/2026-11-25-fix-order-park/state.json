@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "fix-order-park",
+  "created_at": 1795581043.15456,
+  "existing": true,
+  "start": "eab7d9f0767b830b7e18bf54df1c1cb4e7e9e5dc",
+  "last_active_at": 1795581400.1117609,
+  "approved_at": 1795581400.102593,
+  "approved_by": "OK（推奨のまま承認）",
+  "spec_sha256": "4c58044609f1c97f2604eacf06ceaa94fce7980839dff6c9732e111dd27748d9",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
