@@ -346,7 +346,7 @@ def test_a_protected_change_only_inside_merge_commits_stops(repo):
 
 
 def test_an_adr_matching_a_protected_pattern_is_counted(repo):
-    """ADR は保護から除かない。slug が *guardrails* に当たる spec は、その ADR で approve が断る（止める側）。"""
+    """ADR は保護から除かない。ADR の名前が *guardrails* に当たると approve が断る（止める側）。"""
     d = existing_spec(repo, files={"docs/adr/README.md": "# ADR\n"})
     adr = "docs/adr/2026-01-01-guardrails-wording.md"
     write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", adr: "# ADR\n"})
@@ -370,3 +370,12 @@ def test_a_rule_file_inside_the_spec_directory_stops(repo):
     (d / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
     r = check_pr(repo, d)
     assert r.returncode != 0 and "CLAUDE.md" in r.stdout
+
+
+def test_a_double_star_pattern_with_a_slash_protects_at_any_depth(repo):
+    d = committed_light(repo, {".spec-autopilot/protected-paths": "**/migrations/*.sql\n"})
+    make_done(repo, d)
+    (repo / "services" / "a" / "migrations").mkdir(parents=True)
+    (repo / "services" / "a" / "migrations" / "001.sql").write_text("x\n", encoding="utf-8")
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "services/a/migrations/001.sql" in r.stdout
