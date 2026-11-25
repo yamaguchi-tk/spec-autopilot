@@ -1,0 +1,34 @@
+- commit: 66adc37b85492068867ed7328df804fab725f18d
+
+$ python3 .autopilot-qa/check.py
+（一時の repo で inputs/R1.md を置き、`autopilot.py review <dir> --high none` を記録してから `autopilot.py check <dir>` を打った。R3 の行だけ。「R2 を受け持つタスクが tasks.md に無い」は一時の spec の作りによる別の誤りで、どの場合にも出る。出力は要点に切った。手元のパスは <worktree> に伏せた）
+  ok   R3 fail を残して積まない: rc=1 「ERROR: R1 の入力の表に今の結果が fail の行が残っている: | 絶対パス | /a/spec.md | 通る | fail | - |。評価役を回し直して今の結果を書き換えさせる」
+  ok   R3 全部 pass: 入力の表の誤りなし（「R2 を受け持つタスクが tasks.md に無い」だけ）
+  ok   R3 fail を残して park に積む: 入力の表の誤りなし
+  ok   R3 なしの行だけ: 入力の表の誤りなし
+  ok   R3 同じ見出しの 2 つ目の表に fail（見出しを挟む）: rc=1 「ERROR: R1 の入力の表が読めない（fail の行を見落とすので、評価役を回し直して書き直させる）: … 表の外の行がある …: 6 行目: ## 2 巡目」ほか
+  ok   R3 同じ見出しの 2 つ目の表に fail（すぐ後）: rc=1 「ERROR: R1 の入力の表が読めない（…評価役を回し直して…）: … 5 行目: | 入力の種類 | 例 | 期待 | 今の結果 | テスト |」
+  ok   R3 文を挟んだ fail の行: rc=1 「… 表が読めない …: 6 行目: 補足の文」
+  ok   R3 途中の空行の後の fail の行: rc=1 「… 表が読めない …: 4 行目: （空行）」
+  ok   R3 区切りを挟んだ fail の行: rc=1 「… 表が読めない …: 5 行目: |---|---|---|---|---|」
+  ok   R3 見出しの崩れた 2 つ目の表に fail: rc=1 「R1 の入力の表に今の結果が fail の行が残っている: | 別 | x | 通る | fail | - |」と「表が読めない …: 今の結果が pass・fail でない行: | 種類 | … |」
+  ok   R3 末尾の | が無い fail の行: rc=1 「… 表が読めない …: 5 行目: | 別 | x | 通る | fail | -」
+  ok   R3 FAIL の行: rc=1 「… 表が読めない …: 今の結果が pass・fail でない行: | 絶対パス | … | FAIL | - |」
+  ok   R3 欄が 6 つの fail の行: rc=1 「… 表が読めない …: 行の欄が 5 つでない: | 別 | a|b | 通る | fail | - |」
+R3 pass
+（終了コード 0）
+
+$ bash .autopilot-qa/mut.sh .autopilot-qa/mut-R3-2.patch 66adc37b85492068867ed7328df804fab725f18d plugins/spec-autopilot/tests/test_input_kinds.py::test_dispatch_and_check_say_the_table_is_unreadable_and_name_the_line_outside_the_one_table plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_second_table_added_after_dispatch
+（変異: input_kinds の表の外の行を集める range(2, len(lines)) を range(len(lines), len(lines)) にし、表の外の行を見なくする。mut-R3-1 は zsh が変数を語に分けずテストが 0 件で回らなかったので判定できず、別の 1 か所で入れ直した）
+== 変異の前
+11 passed in 9.29s
+== 変異の後
+FAILED plugins/spec-autopilot/tests/test_input_kinds.py::test_dispatch_and_check_say_the_table_is_unreadable_and_name_the_line_outside_the_one_table[sentence-then-fail-row]
+FAILED …[same-heading-table-right-after]
+FAILED …[headless-table]
+FAILED …[blank-line-inside]
+FAILED …[sentence-inside]
+FAILED …[same-heading-table-after-a-heading]
+FAILED …[another-heading-table]
+7 failed, 4 passed in 7.79s
+== 戻した: 0 行の差・印 なし
