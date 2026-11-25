@@ -1,0 +1,32 @@
+- commit: d2b2aef952333ca31d6d341e7769427eaeed5f5a
+（<worktree> は worktree の絶対パスを伏せたもの。<dir> は一時の repo の spec のディレクトリ <worktree>/.autopilot-qa/work/r2/repo/docs/specs/2026-11-25-game）
+ADR（docs/adr/req.md）の行:
+  - 直し方: 局所の継ぎ足し
+  - 要件の文で退けた: 要らなくする（R1 の「a "b" $(touch PWNED) `touch PWNED2` c'd  ${HOME} !x」）
+  - 要件の文で退けた: 入力の約束を変える（R1 の「盤面」）
+  - 退けた: 設計を変える（y）
+  - 要件の文で退けた: 設計を変える（R2 の「Enter で再開」）
+$ python3 .autopilot-qa/check.py   （R2 の部分）
+  R2 rework exit=1 reworks={}
+    rework: 要件の文で退けた直しがある。作り直しは記録しない。その要件を park に積む（人が要件の文を直すかを決める）:
+    python3 <worktree>/plugins/spec-autopilot/scripts/overnight.py park <dir> --kind other --op 'R1 の要件の文を直す（要らなくする・「a "b" $(touch PWNED) `touch PWNED2` c'"'"'d  ${HOME} !x」）' --reason '要らなくするを退けた。要件の語「a "b" $(touch PWNED) `touch PWNED2` c'"'"'d  ${HOME} !x」 ADR: docs/adr/req.md' --req R1
+    python3 <worktree>/plugins/spec-autopilot/scripts/overnight.py park <dir> --kind other --op 'R1 の要件の文を直す（入力の約束を変える・「盤面」）' --reason '入力の約束を変えるを退けた。要件の語「盤面」 ADR: docs/adr/req.md' --req R1
+    python3 <worktree>/plugins/spec-autopilot/scripts/overnight.py park <dir> --kind other --op 'R2 の要件の文を直す（設計を変える・「Enter で再開」）' --reason '設計を変えるを退けた。要件の語「Enter で再開」 ADR: docs/adr/req.md' --req R2
+  $ (zsh -c で上の 1 本目をそのまま)
+    exit=0 parked: R1 の要件の文を直す（要らなくする・「a "b" $(touch PWNED) `touch PWNED2` c'd  ${HOME} !x」）。止めずに残りを進める（この操作に頼る要件は qa.md で unverified（park: ...）にする）
+  $ (zsh -c で 2 本目)
+    exit=0 parked: R1 の要件の文を直す（入力の約束を変える・「盤面」）。止めずに残りを進める（この操作に頼る要件は qa.md で unverified（park: ...）にする）
+  $ (zsh -c で 3 本目)
+    exit=0 parked: R2 の要件の文を直す（設計を変える・「Enter で再開」）。止めずに残りを進める（この操作に頼る要件は qa.md で unverified（park: ...）にする）
+  （3 本を sh -c で打ち直すと、どれも exit 0「記録済み」で parked は 3 件のまま。PWNED・PWNED2 はどこにも作られない）
+  parked=[{"kind": "other", "op": "R1 の要件の文を直す（要らなくする・「a \"b\" $(touch PWNED) `touch PWNED2` c'd  ${HOME} !x」）", "reason": "要らなくするを退けた。要件の語「a \"b\" $(touch PWNED) `touch PWNED2` c'd  ${HOME} !x」 ADR: docs/adr/req.md", "req": "R1", "merges": 0, ...}, {"kind": "other", "op": "R1 の要件の文を直す（入力の約束を変える・「盤面」）", "reason": "入力の約束を変えるを退けた。要件の語「盤面」 ADR: docs/adr/req.md", "req": "R1", "merges": 0, ...}, {"kind": "other", "op": "R2 の要件の文を直す（設計を変える・「Enter で再開」）", "reason": "設計を変えるを退けた。要件の語「Enter で再開」 ADR: docs/adr/req.md", "req": "R2", "merges": 0, ...}]
+R2 pass  (3 本の要件の文で退けた行ごとに park のコマンドが出て、zsh でそのまま打つと parked に 3 件)
+
+変異 .autopilot-qa/mut-R2-1.patch（--reason の shlex.quote を、単引用符で包むだけに替える）
+$ python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_rootcause.py::test_two_requirement_sentence_rejections_on_one_req_both_land_in_parked   （変異の前）
+1 passed in 3.82s
+$ git apply .autopilot-qa/mut-R2-1.patch && python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_rootcause.py::test_two_requirement_sentence_rejections_on_one_req_both_land_in_parked
+E       AssertionError: assert 1 == 2
+plugins/spec-autopilot/tests/test_rootcause.py:99: AssertionError
+1 failed in 3.36s
+$ git apply -R .autopilot-qa/mut-R2-1.patch && git diff --quiet HEAD -- plugins/   → 戻した（印 .applied は残っていない）

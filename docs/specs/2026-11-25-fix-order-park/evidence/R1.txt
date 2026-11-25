@@ -1,0 +1,42 @@
+- commit: d2b2aef952333ca31d6d341e7769427eaeed5f5a
+（<worktree> は worktree の絶対パスを伏せたもの。一時の repo は <worktree>/.autopilot-qa/work/r1）
+$ python3 .autopilot-qa/check.py   （R1 の部分）
+  R1 [直し方の行が無い] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 直し方: <段>` の行がちょうど 1 本要る（段は 要らなくする / 入力の約束を変える / 設計を変える / 局所の継ぎ足し のどれか）
+  R1 [段の名前が違う] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 直し方: <段>` の行がちょうど 1 本要る（段は 要らなくする / 入力の約束を変える / 設計を変える / 局所の継ぎ足し のどれか）
+  R1 [直し方が 2 本（別の段）] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 直し方: <段>` の行がちょうど 1 本要る（段は 要らなくする / 入力の約束を変える / 設計を変える / 局所の継ぎ足し のどれか）
+  R1 [直し方が 2 本（同じ段）] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 直し方: <段>` の行がちょうど 1 本要る（段は 要らなくする / 入力の約束を変える / 設計を変える / 局所の継ぎ足し のどれか）
+  R1 [上の段の退けた行が 1 つ足りない] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 退けた: 入力の約束を変える（<理由>）` か `- 要件の文で退けた: 入力の約束を変える（R<n> の「<要件の語>」）` の行
+  R1 [上の段の退けた行が全部無い] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 退けた: 要らなくする（<理由>）` か `- 要件の文で退けた: 要らなくする（R<n> の「<要件の語>」）` の行
+    - `- 退けた: 入力の約束を変える（<理由>）` か `- 要件の文で退けた: 入力の約束を変える（R<n> の「<要件の語>」）` の行
+    - `- 退けた: 設計を変える（<理由>）` か `- 要件の文で退けた: 設計を変える（R<n> の「<要件の語>」）` の行
+  R1 [下の段を退けただけ] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 退けた: 要らなくする（<理由>）` か `- 要件の文で退けた: 要らなくする（R<n> の「<要件の語>」）` の行
+  R1 [退けた行の括弧が半角] exit=1 reworks=[] streak=3
+    rework: ADR に足りない行がある。
+    - `- 退けた: 要らなくする（<理由>）` か `- 要件の文で退けた: 要らなくする（R<n> の「<要件の語>」）` の行
+  R1 [揃った ADR] exit=0 reworks=['docs/adr/ok.md'] streak=0
+    rework: R1 の 1 回目の作り直し。spec の作り方の節と tasks.md を直して進む（tasks.md の `  - メモ: 前提:` の行は消さない）
+R1 pass  (8 種の欠けた ADR は exit 1・reworks 増えず、揃った ADR だけ記録)
+
+変異 .autopilot-qa/mut-R1-1.patch（rootcause.py の `if st not in done]` を `if False]` にして、上の段の退けた行の不足を見ない）
+$ python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_rootcause.py::test_rework_names_the_missing_rejected_stage   （変異の前）
+1 passed in 67.97s (0:01:07)
+$ git apply .autopilot-qa/mut-R1-1.patch && python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_rootcause.py::test_rework_names_the_missing_rejected_stage
+>       assert r.returncode != 0
+E       AssertionError: assert 0 != 0
+plugins/spec-autopilot/tests/test_rootcause.py:64: AssertionError
+1 failed in 5.16s
+$ git apply -R .autopilot-qa/mut-R1-1.patch && git diff --quiet HEAD -- plugins/   → 戻した（印 .applied は残っていない）
