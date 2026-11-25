@@ -536,15 +536,6 @@ def stated_size(constraints):
     return m.group(1), None
 
 
-def is_small(d):
-    """spec.md の「## 制約」の大きさの行が `- 大きさ: S` か（読めない・形が違う・無いなら False）。"""
-    try:
-        text = (Path(d) / "spec.md").read_text(encoding="utf-8")
-        return stated_size(COMMENT_BLOCK.sub("", section(text, "制約") or ""))[0] == "S"
-    except Exception:
-        return False
-
-
 def size_errors(d, impact_text, stated, first_agreement, at_approve):
     """既存の repo の、申告した大きさと数えた大きさを突き合わせる。(errors, warnings) を返す。大きさは申告と数えた大きさの大きい側だけで決め、人の発言では小さくしない。L は初回の合意（first_agreement）でだけ止める。"""
     if stated is None:
