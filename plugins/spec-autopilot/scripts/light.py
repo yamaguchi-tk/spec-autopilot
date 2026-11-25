@@ -9,6 +9,10 @@
 - 止まる条件は、保護された path（下の既定と、repo の `.spec-autopilot/protected-paths`）に触れたとき。承認の時点の HEAD から
   作業ツリーまでの変更ファイルの path で機械的に決める。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
 - 人が `autopilot.py approve` で承認し直したら、合意ありの run になる（lineup.begin が印を外す）
+
+範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa の拒否）だけを足す。合意ありの run の挙動は変えない
+想定する脅威: 事故（agent が範囲を広げる・保護 path に触れる・マージに進む）。敵対的な agent が state.json を書き換えて印を消すことは防がない
+やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集の拒否、利用する repo の設定の形の検査
 """
 import argparse
 import fnmatch
