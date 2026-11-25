@@ -1,0 +1,10 @@
+- commit: faa5a0b664a6eb987776432ec39a6082b9ed978d
+
+templates/spec.md の `## モデル` の注記を読み、ladder.RUNGS と突き合わせた。検査: python3 .autopilot-qa/check_idh.py（注記の既定が RUNGS の impl・review の先頭、実装の並びと評価の並びが RUNGS と同じ）
+
+$ grep -A1 '^## モデル' plugins/spec-autopilot/templates/spec.md
+## モデル
+<!-- 書かなければ既定（実装 sonnet-high・評価 opus-high）。始めから上げる役だけ書く。実装: sonnet-high・opus-medium・opus-xhigh・fable、評価: opus-high・opus-xhigh・fable（評価は既定より下げない） -->
+
+$ python3 -c 'import ladder; print(list(ladder.RUNGS["impl"]), list(ladder.RUNGS["review"]))'
+['sonnet-high', 'opus-medium', 'opus-xhigh', 'fable'] ['opus-high', 'opus-xhigh', 'fable']
