@@ -4,7 +4,7 @@
   "created_at": 1795609273.92617,
   "existing": true,
   "start": "b016b85249904383dc3441fdfe9560818f42ffb3",
-  "last_active_at": 1795613573.247954,
+  "last_active_at": 1795614569.6475751,
   "approved_at": 1795609785.2615428,
   "approved_by": "OK（推奨のまま承認）",
   "spec_sha256": "434e03cef7f3017205d8991b04a069d0ff97d966a2379806474b51f0df6f1794",
@@ -29,6 +29,13 @@
       ],
       "at": 1795613573.246903,
       "sha": "26206c4d2e9be257635b8c8bad0cd6f9d7399c0d"
+    },
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795614552.476322,
+      "sha": "5e91418282a663ec728accca0e3b0d57a1fb854f"
     }
   ],
   "fails": {
@@ -56,18 +63,27 @@
         "from": "review",
         "evidence": "最後のレビューの high",
         "at": 1795613573.246899
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795614552.476319
       }
     ]
   },
   "streak": {
     "R1": 0,
     "R2": 0,
-    "R3": 2,
+    "R3": 0,
     "R4": 0,
     "R5": 0,
     "R6": 0
   },
-  "reworks": {},
+  "reworks": {
+    "R3": [
+      "docs/adr/2026-11-25-input-kinds-file-is-one-table.md"
+    ]
+  },
   "dispatches": [
     {
       "base": "d8c31b78329b5b0951291807c84b5f20eec84432",
@@ -111,6 +127,21 @@
       "agent": "autopilot-implementer",
       "at": 1795611417.294915,
       "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "0545d32bcaf0850de3463c2d500dd6ce6565020c",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R5"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795613573.653856,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
     }
   ],
   "handoffs": [
@@ -137,6 +168,14 @@
       ],
       "dispatch": 2,
       "at": 1795611926.076664
+    },
+    {
+      "tip": "5e91418282a663ec728accca0e3b0d57a1fb854f",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 3,
+      "at": 1795613852.732917
     }
   ],
   "anomalies": {
@@ -153,6 +192,14 @@
       "at": 1795613573.246903,
       "from": "autopilot-implementer",
       "to": "autopilot-implementer-high"
+    },
+    {
+      "role": "impl",
+      "req": "R3",
+      "reason": "作り直し",
+      "at": 1795614552.476322,
+      "from": "autopilot-implementer-high",
+      "to": "autopilot-implementer-opus"
     }
   ]
 }
