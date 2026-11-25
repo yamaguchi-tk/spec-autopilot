@@ -425,8 +425,21 @@ def test_approve_refuses_deploy_or_rollback_commands_nobody_has_seen(repo, row):
     d = init_spec(repo)
     (d / "spec.md").write_text(deployed(scoped(FULL, **row)), encoding="utf-8")
     r = light(repo, "approve", str(d), "--source", "x")
-    assert r.returncode != 0 and next(iter(row)) in r.stdout + r.stderr
+    assert r.returncode != 0 and f"ERROR: 軽量フローでは `- {next(iter(row))}:`" in r.stdout
     assert state(d)["phase"] == "discovery"
+
+
+def test_a_rollback_command_written_before_a_reapproval_still_stops_check(repo):
+    """block の後の返事は spec の全体を見たものではないので、再承認の後もコマンドは打たせない。"""
+    d = light_approved(repo)
+    assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "x").returncode == 0
+    from test_overnight import scoped
+    (d / "spec.md").write_text(scoped("マージまで", **{"ロールバック": "コマンド: make rollback"}), encoding="utf-8")
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "ERROR: 軽量フローでは `- ロールバック:`" in r.stdout
 
 
 def test_approve_takes_the_full_scope_when_merge_deploys_by_itself(repo):
