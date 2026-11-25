@@ -5,6 +5,7 @@
 ## いつ・誰が作るか
 
 - 草案の要件どおりに動く版を、草案の `## モデル` の `- 実装:` の段の agent（無ければ `autopilot-implementer`。名前は `scripts/ladder.py` の RUNGS）に書かせる。渡すのは spec のディレクトリと「全要件」だけ。単体テスト込み、作業ブランチに commit。tasks.md の先頭に playbook のタスクがあれば、その順に 1 タスク 1 commit で書かせる（bug-fix なら、落ちる再現のテストを直しと別の commit にする）
+- 起動の前に: tasks.md に全要件を受け持つタスクを書き（playbook のタスクがあれば先頭に）、`overnight.py dispatch <dir> --task T<n>...` を打つ（discovery の大きさ S だけ受ける。最後の行が起動する agent の名前。打たずに起動すると hook が deny する）
 - 起動の時機: spec.md の要件を書いて `CLI lint` を通し、B の 3 の照合役が返って `ng` を直した後。ADR を書く Write と同じメッセージに並べる（どちらも前景で、並行に走る。implementer は ADR を読まない。照合役は作業ツリーを読むので、試作が書き換えている間には回さない）
 - 依存は入れない（承認の前なので）
 
@@ -17,4 +18,4 @@
 
 ## 承認の後
 
-- C の 1 で tasks.md を書き（試作で済んだタスクは `[x]`）、残りを実装してから C の 3 の評価に進む
+- C の 1 で tasks.md を書き、試作で済んだタスクを `[x]` にして `overnight.py handoff <dir> --task T<n>...` で試作の dispatch を閉じる（承認は dispatch を消さない）。残りを実装してから C の 3 の評価に進む
