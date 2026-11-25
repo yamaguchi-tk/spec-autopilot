@@ -1,0 +1,47 @@
+- commit: 66adc37b85492068867ed7328df804fab725f18d
+
+$ python3 .autopilot-qa/check.py
+（一時の repo で review --high R1 を記録し、inputs/R1.md を置いて overnight.py dispatch <dir> --task T1 を打ち、終了コードと state.json の dispatches を読んだ。R1 の行だけ。出力は要点に切った。手元のパスは <worktree> に伏せた）
+  ok   R1 表が無い: rc=1 dispatches 1->1 「<worktree>/.autopilot-qa/work/r1/repo/docs/specs/2026-11-25-game/inputs/R1.md が無い。`| 入力の種類 | 例 | 期待 | 今の結果 | テスト |` の表を書く」
+  ok   R1 行が 1 行: rc=1 1->1 「… inputs/R1.md のデータの行が 1 行しかない（2 行以上、…）」
+  ok   R1 欄が空: rc=1 1->1 「… inputs/R1.md の 期待 が空の行: | 絶対 | /a |  | fail | - |」
+  ok   R1 種類が空: rc=1 1->1 「… の 入力の種類 が空の行: |  | /a | 通る | fail | - |」
+  ok   R1 今の結果が別の語: rc=1 1->1 「… の今の結果が pass・fail でない行: | 相対 | a | 通る | たぶん | - |」
+  ok   R1 今の結果が FAIL: rc=1 1->1 「… の今の結果が pass・fail でない行: | 絶対 | /a | 通る | FAIL | - |」
+  ok   R1 fail の行が無い: rc=1 1->1 「… に今の結果が fail の行が 1 つも無い（落ちた入力の行は fail で書く）」
+  ok   R1 見出しが違う: rc=1 1->1 「… の表が読めない（1 行目が見出し … でない）: 1 行目: | 種類 | 例 | 期待 | 今の結果 | テスト |」
+  ok   R1 区切りの行が無い: rc=1 1->1 「… の表が読めない（2 行目が区切りの行でない）: 2 行目: | 絶対パス | …」
+  ok   R1 欄が 4 つの行: rc=1 1->1 「… の行の欄が 5 つでない: | 絶対 | /a | 通る | fail |」
+  ok   R1 なしの理由が空: rc=1 1->1 「… の表が読めない（1 行目が見出し … でない）: 1 行目: - 入力の種類: なし（）」
+  ok   R1 なしの行と文: rc=1 1->1 「… の表が読めない（1 行目が見出し … でない）」
+  ok   R1 表の後に文と fail の行: rc=1 1->1 「… の表が読めない（表の外の行がある。…）: 5 行目: （空行）」「…: 6 行目: 補足の文」
+  ok   R1 表の前に文: rc=1 1->1 「… の表が読めない（1 行目が見出し … でない）: 1 行目: 注: 前置き」
+  ok   R1 表の途中の空行: rc=1 1->1 「… の表が読めない（表の外の行がある。…）: 4 行目: （空行）」
+  ok   R1 後ろに別の見出しと別の表: rc=1 1->1 「… 表の外の行がある …: 6 行目: ## 補足」ほか
+  ok   R1 同じ見出しの 2 つ目の表（見出しを挟む）: rc=1 1->1 「… 表の外の行がある …: 6 行目: ## 2 巡目」ほか
+  ok   R1 同じ見出しの 2 つ目の表（すぐ後）: rc=1 1->1 「… 表の外の行がある …: 5 行目: | 入力の種類 | 例 | 期待 | 今の結果 | テスト |」ほか
+  ok   R1 見出しの無い別の表の区切り: rc=1 1->1 「… 表の外の行がある …: 6 行目: |:--|--:|」
+  ok   R1 HTML のコメント: rc=1 1->1 「… 表の外の行がある …: 5 行目: <!-- 2 巡目 -->」
+  ok   R1 末尾の | が無い行: rc=1 1->1 「… 表の外の行がある …: 3 行目: | 絶対 | /a | 通る | fail | -」
+  ok   R1 空白だけの行が途中: rc=1 1->1 「… 表の外の行がある …: 4 行目: （空行）」
+  ok   R1 空のファイル: rc=1 1->1 「… inputs/R1.md に見出し … の表が無い」
+  ok   R1 揃った表: rc=0 1->2 「R1 は high。表 <worktree>/…/inputs/R1.md の行ごとにテストを書かせ、テストの欄（<path>::<テスト名>）を埋めさせる」最後の行 autopilot-implementer
+  ok   R1 揃った表と末尾の空行: rc=0 1->2
+  ok   R1 区切りに :: rc=0 1->2
+  ok   R1 例の中に \|: rc=0 1->2
+  ok   R1 CRLF の揃った表: rc=0 1->2
+  ok   R1 なしの行だけ: rc=0 1->2（テストを書かせる指示なし）
+  ok   R1 なしの行と末尾の空行: rc=0 1->2（指示なし）
+  ok   R1 high の無い巡・表なし: rc=0
+R1 pass
+R2 pass
+R3 pass
+（終了コード 0。53 件すべて ok）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_input_kinds.py plugins/spec-autopilot/tests/test_ladder.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q -n auto -p no:cacheprovider
+FAILED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_releases_when_another_tool_follows_the_timer
+1 failed, 545 passed in 106.65s (0:01:46)
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_releases_when_another_tool_follows_the_timer -q -p no:cacheprovider
+1 passed in 25.76s
+（sleep のプロセスと timer に頼る stop hook のテストで、差分は stop hook を変えていない。load average 220 前後の揺れ）

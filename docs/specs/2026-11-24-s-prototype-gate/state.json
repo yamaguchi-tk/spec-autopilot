@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "s-prototype-gate",
   "created_at": 1795531993.911942,
   "existing": true,
   "start": "fc995fe21e0dd1843cb60a92cb2d9730ee0719d8",
-  "last_active_at": 1795571680.093559,
+  "last_active_at": 1795572409.3057861,
   "approved_at": 1795564702.900806,
   "approved_by": "OK、承認する",
   "spec_sha256": "927313a51beaa15fd586afa7f841fffe45e8282374f490de282a5c33e0af058a",
@@ -227,5 +227,22 @@
       "from": "autopilot-implementer",
       "to": "autopilot-implementer-high"
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 20,
+      "at": 1795572408.237115,
+      "sha": "eab7d9f0767b830b7e18bf54df1c1cb4e7e9e5dc",
+      "head": "59760b43c9d1a714896cff086bd4430abf7bc5f7"
+    }
+  ],
+  "merged_at": 1795572408.237118,
+  "paused_at_merge": 0.0,
+  "done_at": 1795572409.278712,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
