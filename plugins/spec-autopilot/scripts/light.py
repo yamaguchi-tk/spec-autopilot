@@ -37,7 +37,7 @@ CEILING = "軽量フロー（人と spec を合意していない run）の自�
 
 def config_lines(text):
     pats = (x.strip().strip("/") for x in text.splitlines() if x.strip() and not x.strip().startswith("#"))
-    return [p[3:] if p.startswith("**/") else p for p in pats if p]
+    return [p for p in pats if p]
 
 
 def patterns(root, base, recorded=()):
@@ -50,12 +50,19 @@ def patterns(root, base, recorded=()):
 
 def protected(path, pats, fold=False):
     """`/` を含まない pattern は path のどの要素にも、含む pattern は path かその前置（ディレクトリ）のどれかに当てる。
+    先頭が `**/` の pattern は、残りを path のどの深さから始まる部分（`a/b`・`x/a/b` の `a/b` など）にも当てる。
     fold は大文字と小文字を区別しない repo（core.ignorecase）で、両方を casefold して比べる。"""
     if fold:
         path, pats = path.casefold(), [p.casefold() for p in pats]
     parts = path.split("/")
     prefixes = ["/".join(parts[:i]) for i in range(1, len(parts) + 1)]
-    return any(any(fnmatch.fnmatchcase(x, p) for x in (prefixes if "/" in p else parts)) for p in pats)
+    spans = ["/".join(parts[i:j]) for i in range(len(parts)) for j in range(i + 1, len(parts) + 1)]
+
+    def hit(p):
+        if p.startswith("**/"):
+            return any(fnmatch.fnmatchcase(x, p[3:]) for x in spans)
+        return any(fnmatch.fnmatchcase(x, p) for x in (prefixes if "/" in p else parts))
+    return any(hit(p) for p in pats)
 
 
 def ignorecase(root):
