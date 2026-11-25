@@ -1,13 +1,48 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "advisor-reapproval",
   "created_at": 1795624714.107002,
   "existing": true,
   "start": "f78818b158c1c6b73cb5bc21b4464e8bcb5a217f",
-  "last_active_at": 1795650754.756219,
-  "queued_from": "discovery",
+  "last_active_at": 1795651111.373801,
   "queued_at": 1795650754.75523,
   "approved_by": "OK（2 本をこの順でまとめて承認）",
   "spec_sha256": "d7c6d941abd3ad6347492b56eadec603981f607eed19f1200e6bacc697c02056",
-  "after": null
+  "after": null,
+  "approved_at": 1795650768.5744672,
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "b1e770519eb197935e4d46fc560606d40cf21609",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795650781.129004,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "97cdb3201a8d5ae3d5523f4924d2fc6d1c40b928",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795651111.373794
+    }
+  ]
 }
