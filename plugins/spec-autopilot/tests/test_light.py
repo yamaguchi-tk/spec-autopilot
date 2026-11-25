@@ -116,3 +116,103 @@ def test_done_reports_the_pr_ceiling(repo):
     r = run(repo, "done", str(d))
     assert r.returncode == 0, r.stdout + r.stderr
     assert "PR 作成まで" in r.stdout
+
+
+# --- 1 巡目のレビューの指摘（commit のある repo で承認する） ---
+
+def commit_all(repo, msg="c"):
+    subprocess.run(["git", "add", "-A", "--", ".", ":(exclude)docs/specs"], cwd=repo, check=True)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false",
+                    "commit", "-qm", msg], cwd=repo, check=True)
+
+
+def committed_light(repo, files=None):
+    for name, body in {"src.js": "// x\n", **(files or {})}.items():
+        (repo / name).parent.mkdir(parents=True, exist_ok=True)
+        (repo / name).write_text(body, encoding="utf-8")
+    commit_all(repo, "init")
+    return light_approved(repo)
+
+
+def check_pr(repo, d):
+    return run(repo, "check", str(d), "--stage", "pr")
+
+
+def test_renaming_a_protected_file_stops(repo):
+    d = committed_light(repo, {"CLAUDE.md": "# rules\n"})
+    subprocess.run(["git", "mv", "CLAUDE.md", "notes.md"], cwd=repo, check=True)
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
+
+
+def test_non_ascii_name_under_a_protected_dir_stops(repo):
+    d = committed_light(repo)
+    (repo / ".claude" / "commands").mkdir(parents=True)
+    (repo / ".claude" / "commands" / "日本語.md").write_text("x\n", encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "日本語.md" in r.stdout
+
+
+def test_loosening_the_config_after_approval_does_not_unprotect(repo):
+    d = committed_light(repo, {".spec-autopilot/protected-paths": "secrets/*\n"})
+    (repo / ".spec-autopilot" / "protected-paths").write_text("", encoding="utf-8")
+    (repo / "secrets").mkdir()
+    (repo / "secrets" / "a.txt").write_text("x\n", encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "secrets/a.txt" in r.stdout
+
+
+def test_gitignore_style_directory_patterns_protect(repo):
+    for i, pat in enumerate(("secrets/", "/secrets", "config/prod")):
+        sub = repo / f"r{i}"
+        sub.mkdir()
+        subprocess.run(["git", "init", "-q"], cwd=sub, check=True)
+        d = committed_light(sub, {".spec-autopilot/protected-paths": pat + "\n"})
+        target = sub / ("config/prod/a.yml" if "config" in pat else "secrets/a.txt")
+        target.parent.mkdir(parents=True)
+        target.write_text("x\n", encoding="utf-8")
+        make_done(sub, d)
+        r = check_pr(sub, d)
+        assert r.returncode != 0, pat
+
+
+def test_rework_after_done_stays_light(repo):
+    d = committed_light(repo)
+    make_done(repo, d)
+    assert run(repo, "done", str(d)).returncode == 0
+    user_says(repo)
+    assert run(repo, "approve", str(d), "--by", "直して").returncode == 0
+    assert state(d).get("light") is True
+
+
+def test_light_approve_refuses_a_dependent_spec(repo):
+    d = init_spec(repo)
+    text = (d / "spec.md").read_text(encoding="utf-8").replace("- 予算: 30 分", "- 予算: 30 分\n- 依る spec: other")
+    (d / "spec.md").write_text(text, encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "依頼文")
+    assert r.returncode != 0 and state(d)["phase"] == "discovery"
+
+
+def test_light_approve_refuses_a_size_above_s(repo):
+    d = init_spec(repo)
+    (d / "spec.md").write_text(GOOD_SPEC.replace("- 大きさ: S", "- 大きさ: M"), encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "依頼文")
+    assert r.returncode != 0 and state(d)["phase"] == "discovery"
+
+
+def test_runlog_marks_light_runs(repo):
+    import json
+    d = light_approved(repo)
+    make_done(repo, d)
+    assert run(repo, "done", str(d)).returncode == 0
+    rows = (Path(os.environ["SPEC_AUTOPILOT_HOME"]) / "runs.jsonl").read_text(encoding="utf-8").splitlines()
+    assert json.loads(rows[-1])["light"] is True
+
+
+def test_light_run_refuses_rolled_back(repo):
+    d = light_approved(repo)
+    r = night(repo, "rolled-back", str(d), "--evidence", str(d / "spec.md"), "--reason", "x")
+    assert r.returncode != 0 and "PR 作成まで" in r.stdout + r.stderr
