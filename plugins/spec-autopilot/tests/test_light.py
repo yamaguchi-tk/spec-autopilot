@@ -407,3 +407,14 @@ def test_a_config_whose_blob_is_missing_stops(repo):
     (repo / ".git" / "objects" / oid[:2] / oid[2:]).unlink()
     r = check_pr(repo, d)
     assert r.returncode != 0 and "確かめられない" in r.stdout
+
+
+def test_a_symlinked_config_stops(repo):
+    """設定が symlink のときは中身を読めないので止める（リンク先の pattern を黙って落とさない）。"""
+    (repo / ".spec-autopilot").mkdir()
+    (repo / ".spec-autopilot" / "list.txt").write_text("secrets\n", encoding="utf-8")
+    os.symlink("list.txt", repo / ".spec-autopilot" / "protected-paths")
+    d = existing_spec(repo, files={"README.md": "# x\n"})
+    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n"})
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and "確かめられない" in r.stdout + r.stderr
