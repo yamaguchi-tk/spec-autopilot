@@ -1,29 +1,15 @@
-- commit: 26206c4d2e9be257635b8c8bad0cd6f9d7399c0d
+- commit: 66adc37b85492068867ed7328df804fab725f18d
 
 $ python3 .autopilot-qa/check.py
-（R1 の揃った表で dispatch した一時の repo に test_rule.py を置き、inputs/R1.md のテストの欄を書き換えて commit してから overnight.py handoff <dir> --task T1 を打ち、終了コードと state.json の handoffs を読んだ。R2 の行だけ。長い行は切った）
-  ok   テストの欄が -: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 'ERROR: inputs/R1.md のテストの欄が使えない（形が読めない ...
-  ok   テストの欄が空: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
-  ok   無いテスト: 期待 rc!=0・('test_nowhere',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 'ERROR: inputs/R1.md のテストの欄が使えない（test_rule.py に「test_nowhere」が無い）...
-  ok   無いファイル: 期待 rc!=0・('nope.py',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 'ERROR: inputs/R1.md のテストの欄が使えない（nope.py が無い）: | 相対パス | a/spec.md | 通る | pa
-  ok   cmd: の自由文（テストでない）: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
-  ok   manual: の自由文（テストでない）: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
-  ok   全行が repo のテスト: 期待 閉じる / 実際 rc=0 handoffs 1->2 'handoff: OK。評価役に進む'
-  ok   backtick 付きのテスト: 期待 閉じる / 実際 rc=0 handoffs 1->2 'handoff: OK。評価役に進む'
-  ok   テストの後に自由文（。加えて cmd:）: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
-  ok   テストの後に と cmd:: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
-  ok   :: の無い自由文: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
-  ok   2 つのテストを・で並べる: 期待 閉じる / 実際 rc=0 handoffs 1->2 'handoff: OK。評価役に進む'
+（一時の repo で review --high R1 → dispatch → test_rule.py を足し、inputs/R1.md のテストの欄を埋めて commit → overnight.py handoff <dir> --task T1 を打ち、終了コードと state.json の handoffs を読んだ。R2 の行だけ。出力は要点に切った。手元のパスは <worktree> に伏せた）
+  ok   R2 テストの欄が -: rc=1 handoffs 1->1 「ERROR: inputs/R1.md のテストの欄が使えない（形が読めない …）: | 絶対パス | … | - |」「…: | 相対パス | … | - |」
+  ok   R2 無いテスト: rc=1 1->1 「ERROR: inputs/R1.md のテストの欄が使えない（test_rule.py に「test_nowhere」が無い）: | 相対パス | … | test_rule.py::test_nowhere |」
+  ok   R2 無いファイル: rc=1 1->1 「ERROR: … （nofile.py が無い）: | 相対パス | … | nofile.py::test_relative |」
+  ok   R2 cmd: の自由文: rc=1 1->1 「ERROR: … （形が読めない …）: | 絶対パス | … | cmd: 手で見た |」
+  ok   R2 テストの後に と cmd:: rc=1 1->1 「ERROR: … （形が読めない …）: | 絶対パス | … | test_rule.py::test_absolute と cmd: x |」
+  ok   R2 全行が repo のテスト: rc=0 1->2 「handoff: OK。評価役に進む」
+  ok   R2 backtick 付き: rc=0 1->2 「handoff: OK。評価役に進む」
+  ok   R2 dispatch の後に 2 つ目の表を足す: rc=1 1->1 「ERROR: <worktree>/…/inputs/R1.md の表が読めない（表の外の行がある。…）: 5 行目: （空行）」「…: 6 行目: ## 2 巡目」ほか
+  ok   R2 dispatch の後に表の後へ文を足す: rc=1 1->1 「ERROR: … の表が読めない（表の外の行がある。…）: 5 行目: 補足」
 R2 pass
-
-$ bash .autopilot-qa/mut.sh mut-R2-4 plugins/spec-autopilot/scripts/overnight.py plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell
-（変異: overnight.py:499 の `or autopilot.EVIDENCE_FREE.search(r["テスト"])` を外す）
---- 変異の前
-3 passed in 70.45s (0:01:10)
---- 当てた
-E       AssertionError: assert (0 != 0)
-FAILED plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell[cmd: 手で見た]
-FAILED plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell[manual: 見た]
-FAILED plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell[test_rule.py::test_absolute。加えて cmd: x]
-3 failed in 34.53s
---- 戻した
+（終了コード 0）
