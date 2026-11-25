@@ -447,24 +447,29 @@ def input_kinds(d, rid):
         return [], [f"{where} が無い。`| {' | '.join(INPUT_HEAD)} |` の表を書く"], False
     except (OSError, UnicodeDecodeError) as e:
         return [], [f"{where} が読めない（{type(e).__name__}）"], False
-    lines = [x.strip() for x in text.splitlines() if x.strip()]
+    lines = [x.strip() for x in text.splitlines()]
+    while lines and not lines[-1]:
+        lines.pop()  # 空行はファイルの末尾にだけ許す
     if len(lines) == 1 and (m := INPUT_NONE.match(lines[0])) and m.group(1).strip():
         return [], [], True
-    cells = lambda x: [c.strip().strip("`") if i == 4 else c.strip() for i, c in enumerate(re.split(r"(?<!\\)\|", x.strip().strip("|")))]  # noqa: E731
-    head = next((i for i, x in enumerate(lines) if x.startswith("|") and [c.strip() for c in re.split(r"(?<!\\)\|", x.strip("|"))] == INPUT_HEAD), None)
-    if head is None:
-        return [], [f"{where} に見出し `| {' | '.join(INPUT_HEAD)} |` の表が無い"], False
-    body = lines[head + 1:]
-    if body and re.fullmatch(r"\|[\s:|-]+\|", body[0]):
-        body = body[1:]
-    rows = []
+    split = lambda x: [c.strip() for c in re.split(r"(?<!\\)\|", x.strip("|"))]  # noqa: E731
     sep = lambda x: bool(re.fullmatch(r"\|[\s:|-]+\|", x))  # noqa: E731
-    for i, x in enumerate(body):
-        if x.startswith("#") or sep(x) or (x.startswith("|") and sep(body[i + 1] if i + 1 < len(body) else "")):
-            break  # 別の見出しか、別の表（区切り行とその見出し行）から先は、この表の行ではない。文を挟んだ後の行は読む
-        if not x.startswith("|"):
-            continue
-        c = cells(x)
+    shown = lambda n: f"{n + 1} 行目: {lines[n] or '（空行）'}"  # noqa: E731
+    if not lines:
+        return [], [f"{where} に見出し `| {' | '.join(INPUT_HEAD)} |` の表が無い"], False
+    if split(lines[0]) != INPUT_HEAD or not lines[0].startswith("|"):
+        return [], [f"{where} の表が読めない（1 行目が見出し `| {' | '.join(INPUT_HEAD)} |` でない）: {shown(0)}"], False
+    if len(lines) < 2 or not sep(lines[1]):
+        return [], [f"{where} の表が読めない（2 行目が区切りの行でない）: {shown(min(1, len(lines) - 1))}"], False
+    # ファイルは表 1 つだけ。表の外の行（文・見出し・2 つ目の表・途中の空行）を見分けて読み飛ばさず、全部「読めない」で止める
+    outside = [n for n in range(2, len(lines))
+               if not (lines[n].startswith("|") and lines[n].endswith("|")) or sep(lines[n]) or split(lines[n]) == INPUT_HEAD]
+    if outside:
+        why = "表の外の行がある。ファイルは表 1 つだけにし、前の巡の行は同じ表に足し、補足は表の欄に書く"
+        return [], [f"{where} の表が読めない（{why}）: {shown(n)}" for n in outside], False
+    rows = []
+    for x in lines[2:]:
+        c = [v.strip("`") if k == 4 else v for k, v in enumerate(split(x))]
         rows.append(dict(zip(INPUT_HEAD, c + [""] * (5 - len(c)))) | {"raw": x, "n": len(c)})
     problems = []
     if len(rows) < 2:
