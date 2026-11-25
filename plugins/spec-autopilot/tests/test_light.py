@@ -429,17 +429,28 @@ def test_approve_refuses_deploy_or_rollback_commands_nobody_has_seen(repo, row):
     assert state(d)["phase"] == "discovery"
 
 
-def test_a_rollback_command_written_before_a_reapproval_still_stops_check(repo):
+@pytest.mark.parametrize("key", ["デプロイの起動", "ロールバック"])
+def test_a_command_written_before_a_reapproval_still_stops_check(repo, key):
     """block の後の返事は spec の全体を見たものではないので、再承認の後もコマンドは打たせない。"""
     d = light_approved(repo)
     assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "x").returncode == 0
     from test_overnight import scoped
-    (d / "spec.md").write_text(scoped("マージまで", **{"ロールバック": "コマンド: make rollback"}), encoding="utf-8")
+    (d / "spec.md").write_text(scoped("マージまで", **{key: "コマンド: make x"}), encoding="utf-8")
     user_says(repo)
     assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
     make_done(repo, d)
     r = check_pr(repo, d)
-    assert r.returncode != 0 and "ERROR: 軽量フローでは `- ロールバック:`" in r.stdout
+    assert r.returncode != 0 and f"ERROR: 軽量フローでは `- {key}:`" in r.stdout and "autopilot.py block" in r.stdout
+
+
+@pytest.mark.parametrize("row", ["- デプロイの起動: コマンド: make deploy", "- ロールバック：コマンド：make rollback"])
+def test_approve_refuses_a_command_in_a_second_scope_section(repo, row):
+    """節が 2 つあっても、どちらかにコマンドがあれば断る（読み手が最初の節だけを見る抜けを作らない）。"""
+    from test_overnight import scoped
+    d = init_spec(repo)
+    (d / "spec.md").write_text(scoped("マージまで") + f"\n## 自走の範囲\n{row}\n", encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
 
 
 def test_approve_takes_the_full_scope_when_merge_deploys_by_itself(repo):
