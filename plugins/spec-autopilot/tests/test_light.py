@@ -344,3 +344,54 @@ def test_core_ignorecase_matches_any_case(repo):
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode != 0 and "Claude.md" in r.stdout
+
+
+def test_a_committed_change_restored_only_in_the_worktree_stops(repo):
+    """PR に入るのは HEAD。commit した保護 path を作業ツリーだけ戻しても止める。"""
+    d = committed_light(repo, {"CLAUDE.md": "# rules\n"})
+    (repo / "CLAUDE.md").write_text("# changed\n", encoding="utf-8")
+    commit_all(repo, "rules")
+    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
+
+
+def test_a_staged_file_removed_from_the_worktree_stops(repo):
+    d = committed_light(repo)
+    make_done(repo, d)
+    touch(repo, ".mcp.json", "{}\n")
+    (repo / ".mcp.json").unlink()
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and ".mcp.json" in r.stdout
+
+
+def test_literal_pathspecs_in_the_environment_do_not_disable_matching(repo):
+    d = committed_light(repo)
+    make_done(repo, d)
+    touch(repo, "CLAUDE.md")
+    env = {**os.environ, "GIT_LITERAL_PATHSPECS": "1"}
+    r = subprocess.run([sys.executable, str(PLUGIN / "scripts" / "autopilot.py"), "check", str(d), "--stage", "pr"],
+                       cwd=repo, capture_output=True, text=True, env=env)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
+
+
+def test_any_case_matches_without_core_ignorecase(repo):
+    subprocess.run(["git", "config", "core.ignorecase", "false"], cwd=repo, check=True)
+    d = committed_light(repo)
+    touch(repo, "Claude.md")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "Claude.md" in r.stdout
+
+
+def test_an_unreadable_start_stops(repo):
+    """起点を読めないときは、判定できないので止める（通さない）。"""
+    import json
+    d = light_approved(repo)
+    make_done(repo, d)
+    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
+    s["light_base"] = "0" * 40
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "確かめられない" in r.stdout
