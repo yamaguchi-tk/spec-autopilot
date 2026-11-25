@@ -1,0 +1,8 @@
+- commit: d2b2aef952333ca31d6d341e7769427eaeed5f5a
+$ wc -l plugins/spec-autopilot/scripts/autopilot.py
+    1498 plugins/spec-autopilot/scripts/autopilot.py
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n 8 -rf -p no:randomly
+1006 passed in 262.01s (0:04:22)
+（同じ全量を -n 8 で回した 1 回目は「2 failed, 1004 passed in 211.18s」。直後に `--lf` で 1 本ずつ回すと「2 passed in 10.08s」で、2 回目の全量は上のとおり全部通った。並列の負荷による時間の揺れで、落ちたテストの名前は残せなかった）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_ladder.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_main_progress.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_rootcause.py -q -n 8
+548 passed in 95.18s (0:01:35)
