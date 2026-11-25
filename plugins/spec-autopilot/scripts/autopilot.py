@@ -1268,6 +1268,7 @@ def cmd_rework(a):
         sys.exit(f"{a.adr} は前に使った ADR。作り方の変更は新しい ADR に書く")
     if not adr.is_file() or root not in adr.parents:
         sys.exit(f"ADR {a.adr} が repo の中に無い")
+    __import__("rootcause").refuse_if_unfit(adr.read_text(encoding="utf-8"), a.adr, d)
     reworks.setdefault(a.req, []).append(str(adr.relative_to(root)))
     s.setdefault("streak", {})[a.req] = 0
     save_state(d, s)
