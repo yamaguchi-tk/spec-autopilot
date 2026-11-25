@@ -17,8 +17,10 @@
 """
 import argparse
 import os
+import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -102,21 +104,24 @@ def hits(d, s):
     return sorted(changed(root, base, [*pathspecs(pats), f":(exclude){own}"]) | changed(root, base, pathspecs(pats, own)))
 
 
-def command_errors(text):
-    """spec の自走の範囲が、デプロイの起動・ロールバックをコマンドにしていれば ERROR。
+CMD_ROW = re.compile(r"^-\s*(デプロイの起動|ロールバック)\s*:\s*コマンド\s*:", re.M)
+
+
+def command_errors(text, after_approve=False):
+    """spec のどこかに、デプロイの起動・ロールバックをコマンドにした行があれば ERROR（節が 2 つあっても全文を見る。全角のコロンも当てる）。
     合意ありでは承認のときに人が見る。軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので打たせない。"""
-    import overnight
-    rows = overnight.scope_rows(text) or {}
-    return [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。"
-            "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す"
-            for key in ("デプロイの起動", "ロールバック") if overnight.ROLLBACK_CMD.match(rows.get(key) or "")]
+    found = set(CMD_ROW.findall(ap.COMMENT_BLOCK.sub("", unicodedata.normalize("NFKC", text))))
+    way = ("`autopilot.py block` で記録して人に戻る（承認の後は spec を変えられない）" if after_approve else
+           "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
+    return [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。{way}"
+            for key in ("デプロイの起動", "ロールバック") if key in found]
 
 
 def errors(d, s):
     """軽量フローの run の check の ERROR。合意ありの run では []。"""
     if not s.get("light"):
         return []
-    out = command_errors((Path(d) / "spec.md").read_text(encoding="utf-8"))
+    out = command_errors((Path(d) / "spec.md").read_text(encoding="utf-8"), after_approve=True)
     try:
         found = hits(d, s)
     except (RuntimeError, OSError, ValueError) as e:  # 数えられないときは止める側に倒す
