@@ -1,4 +1,4 @@
-- commit: faa5a0b664a6eb987776432ec39a6082b9ed978d
+- commit: d3415031d1a3129ec9ad07c40c0ad41ea8860e20
 
 一時の repo（`## モデル` の節が無い spec を承認し、tasks.md に T1）で本物の overnight.py を打った。検査: python3 .autopilot-qa/check_idh.py
 
@@ -25,7 +25,7 @@ handoff: OK。評価役に進む
 (exit 0)
 
 $ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
-dispatch: T1 を f7b770c9 から実装役に渡す。起動する agent:
+dispatch: T1 を 6d2a2beb から実装役に渡す。起動する agent:
 autopilot-implementer
 (exit 0)
 
@@ -33,3 +33,12 @@ autopilot-implementer
 $ python3 plugins/spec-autopilot/scripts/overnight.py handoff <repo>/docs/specs/2026-11-25-game --task T1
 ERROR: autopilot-implementer が effort low で動いた（定義は high）
 (exit 1)
+
+（証拠のテストの変異: overnight.py の `（定義は {effort}）` を `（定義は ?）` にする .autopilot-qa/mut-R1-3.patch）
+$ bash .autopilot-qa/mut.sh .autopilot-qa/mut-R1-3.patch d3415031d1a3129ec9ad07c40c0ad41ea8860e20 plugins/spec-autopilot/tests/test_overnight.py::test_handoff_refuses_an_effort_other_than_the_definition
+== 変異の前
+1 passed in 1.99s
+== 変異の後
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_refuses_an_effort_other_than_the_definition
+1 failed in 1.92s
+== 戻した: 0 行の差・印 なし
