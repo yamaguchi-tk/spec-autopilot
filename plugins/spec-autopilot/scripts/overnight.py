@@ -875,6 +875,7 @@ def cmd_handoff(a):
 def cmd_ready(a):
     d = Path(a.dir)
     s = autopilot.load_state(d)
+    __import__("light").refuse(s, "マージの前の検査")
     if a.rollback:
         return ready_rollback(d, s, a.pr)
     broken = production_errors(d, s, done=False)
@@ -921,6 +922,7 @@ def ready_rollback(d, s, pr):
 def cmd_merged(a):
     d = Path(a.dir)
     s = autopilot.load_state(d)
+    __import__("light").refuse(s, "マージの記録")
     if s.get("phase") != "building":
         autopilot.refuse(s, "merged は自走中（building）だけ受ける")
     merges = s.setdefault("merges", [])
@@ -952,6 +954,7 @@ def cmd_merged(a):
 def cmd_qa(a):
     d = Path(a.dir)
     s = autopilot.load_state(d)
+    __import__("light").refuse(s, "QA の書き込みの記録")
     if s.get("phase") != "building":
         autopilot.refuse(s, "qa は自走中（building）だけ受ける")
     f = Path(a.evidence)

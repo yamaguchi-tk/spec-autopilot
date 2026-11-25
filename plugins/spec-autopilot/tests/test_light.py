@@ -104,7 +104,7 @@ def test_human_approval_after_a_light_run_clears_the_light_mark(repo):
 def test_light_run_refuses_merge_and_qa_records(repo):
     d = light_approved(repo)
     for args in (("ready", str(d), "--pr", "1"), ("merged", str(d), "--pr", "1"),
-                 ("qa", str(d), "--evidence", str(d / "spec.md"))):
+                 ("qa", str(d), "--evidence", str(d / "spec.md"), "--smoke", "pass")):
         r = night(repo, *args)
         assert r.returncode != 0, args
         assert "PR 作成まで" in r.stdout + r.stderr, args

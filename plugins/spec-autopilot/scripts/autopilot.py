@@ -719,7 +719,7 @@ def check(d, stage="all"):
     import overnight
     errors += ladder_errors(s) + overnight.review_errors(d, s)
     errors += overnight.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage)
-    return errors + (overnight.scope_errors(d, s) if stage != "pr" else []), notes
+    return errors + (overnight.scope_errors(d, s) if stage != "pr" else []) + __import__("light").errors(d, s), notes
 
 
 def ladder_errors(s):
@@ -1012,7 +1012,7 @@ def cmd_done(a):
     if "L" in (stated, size):  # 合意し直しと自走中に育った L も、PR を作る前のここで受け持つ
         print(f"NOTE: {SPLIT_PR}（申告 {stated or 'なし'}・{detail}）")
     overnight = __import__("overnight")
-    print("\n".join(overnight.report(d)))
+    print("\n".join(overnight.report(d) + __import__("light").report(s)))
     overnight.notify(d)
     return 0
 
