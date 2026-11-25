@@ -4,7 +4,8 @@
   light.py approve <dir> --source <Issue の URL か依頼文の要約>   人の返事を待たずに自走を始める（phase=building、light=true）
 
 - 入れるのは、受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まるときだけ（commands/autopilot.md の L）
-- 自走の範囲は、合意ありと同じく spec の `- 範囲:` で決める（マージ・QA まで進める。マージしないと QA できない repo はマージしてから QA する）
+- 自走の範囲は、合意ありと同じく spec の `- 範囲:` で決める。ただし `デプロイの起動:` と `ロールバック:` はコマンドにできない（人が見ないまま打たない）。
+  デプロイの workflow が無い repo でマージしてから QA する段は無い（限界）
 - 止まる条件は、保護された path（下の既定と、起点の commit の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の
   commit から、PR が持ち込む差（HEAD・index・作業ツリー）と追っていないファイルの path で機械的に決め、照合は git の glob pathspec に任せる。
   init より前の commit・git が無視するファイル・途中の commit で触れて戻したもの・spec の置き場の中は見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
@@ -133,6 +134,12 @@ def cmd_approve(a):
     text = (d / "spec.md").read_text(encoding="utf-8")
     if ap.stated_size(ap.COMMENT_BLOCK.sub("", ap.section(text, "制約") or ""))[0] != "S":
         errs.append("軽量フローは `- 大きさ: S` の spec だけで始める（予算も人が見ないので、小さい修正に限る）")
+    import overnight
+    rows = overnight.scope_rows(text) or {}
+    for key in ("デプロイの起動", "ロールバック"):  # 合意ありでは承認のときに人が見る。軽量フローでは誰も見ないので打たせない
+        if overnight.ROLLBACK_CMD.match(rows.get(key) or ""):
+            errs.append(f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。"
+                        "マージで自動に動く workflow か revert の PR にするか、合意ありで承認する")
     if errs:
         ap.report(errs, warnings, "")
         return 1
