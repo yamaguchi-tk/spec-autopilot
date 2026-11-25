@@ -13,7 +13,7 @@
 
 範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa・rolled-back の拒否）だけを足す。合意ありの run の挙動は変えない
 想定する脅威: 事故（agent が範囲を広げる・保護 path に触れる・マージに進む）。敵対的な agent が state.json を書き換えて印を消すことは防がない
-やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、git が無視するファイル・途中の commit の判定
+やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の中身の検査（ゼロ幅文字・Git LFS などの filter。設定ファイルと置き場が普通のファイル・ディレクトリかだけは確かめて止める）、git が無視するファイル・途中の commit の判定
 """
 import argparse
 import os
@@ -60,7 +60,7 @@ def patterns(root, base):
         out = subprocess.run(["git", "cat-file", "blob", f"{base}:{CONFIG.as_posix()}"], cwd=root, capture_output=True, text=True)
         if out.returncode:  # 木にあって読めない（blob が手元に無いなど）ときは、足した pattern を落とさずに止める
             raise RuntimeError(out.stderr.strip() or "起点の設定を読めない")
-        extra = out.stdout
+        extra = out.stdout.lstrip("\ufeff")  # 先頭の BOM は pattern に入れない
     return list(dict.fromkeys([*DEFAULT_PROTECTED, *config_lines(extra)]))
 
 
