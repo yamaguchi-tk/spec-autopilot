@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "input-kinds-table",
+  "created_at": 1795609273.92617,
+  "existing": true,
+  "start": "b016b85249904383dc3441fdfe9560818f42ffb3",
+  "last_active_at": 1795609785.262581,
+  "approved_at": 1795609785.2615428,
+  "approved_by": "OK（推奨のまま承認）",
+  "spec_sha256": "434e03cef7f3017205d8991b04a069d0ff97d966a2379806474b51f0df6f1794",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
