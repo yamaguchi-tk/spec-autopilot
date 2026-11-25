@@ -1,7 +1,7 @@
 # ADR: 要件の high で、入力の種類の表を直しの入口と出口の条件にする
 
 - 日付: 2026-11-25
-- 状態: Accepted
+- 状態: Superseded（表のファイルの形は docs/adr/2026-11-25-input-kinds-file-is-one-table.md。置き場と止める場所はこの ADR のまま）
 - spec: docs/specs/2026-11-25-input-kinds-table
 
 ## Context

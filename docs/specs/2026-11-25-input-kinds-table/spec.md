@@ -77,6 +77,7 @@
 
 - 評価役の定義: agents/autopilot-reviewer.md・autopilot-reviewer-xhigh.md・autopilot-reviewer-fable.md の本文に同じ文を足す（:9 の書いてよい先に `inputs/` を足す）
 - main への指示: commands/autopilot.md は変えない（変えると変えるファイルが 6 つになり、大きさが L になる）。high の後の直しで表を渡すことは dispatch の出力（R5）が、再実行の巡で評価役を回し直すことは check の出力（R3）が言う
+- 表のファイルの形（R3 の作り直しの ADR: docs/adr/2026-11-25-input-kinds-file-is-one-table.md）: ファイルは、見出しの行・区切りの行・データの行だけの 1 つの表か、`- 入力の種類: なし（<理由>）` の 1 行だけ。空行は末尾にだけ許し、ほかの行が 1 つでもあれば dispatch・handoff・check のどれでも「表が読めない」としてその行を出す。評価役は前の巡の表に行を足すとき、同じ表の中に足す
 - 表の置き場: spec のディレクトリの `inputs/R<n>.md`。spec のファイルなので、approve の検査と handoff の「main が spec の外に書いた」の検査の外にある
 - テストの欄: qa.md の pass の証拠と同じ書き方にし、autopilot.py の evidence_problem でテストの有無を見る。評価役が high のときに書く行のテストの欄は `-` でよい（R1 は見ず、R2 で実装役が埋める）
 - 表の検査の本体は、overnight.py に 1 つの関数として置く（autopilot.py は 1498 行で、触らない）
