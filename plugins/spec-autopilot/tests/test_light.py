@@ -453,7 +453,8 @@ def test_approve_refuses_a_command_in_a_second_scope_section(repo, row):
     assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
 
 
-@pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "indented", "bold", "table"])
+@pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "indented", "bold", "table", "next-line",
+                                 "next-line-in-a-second-section", "other-value"])
 def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
     """コメントの外し方や行の形で、使う側に見えるコマンドを見落とさない（鍵の語と `コマンド:` が同じ行にあれば断る）。"""
     from test_overnight import scoped
@@ -466,11 +467,21 @@ def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
         "indented": base + "\n  - デプロイの起動: コマンド: make deploy\n",
         "bold": base + "\n* **デプロイの起動**: コマンド: make deploy\n",
         "table": base + "\n| ロールバック | コマンド: make rollback |\n",
+        "next-line": base.replace("- ロールバック: revert の PR をマージし、デプロイの完了を確かめる", "- ロールバック:\n  コマンド: make rollback"),
+        "next-line-in-a-second-section": base + "\n## 自走の範囲\n- ロールバック:\n  コマンド: make rollback\n",
+        "other-value": base.replace("revert の PR をマージし、デプロイの完了を確かめる", "make rollback を打つ"),
     }[how]
     d = init_spec(repo)
     (d / "spec.md").write_text(text, encoding="utf-8")
     r = light(repo, "approve", str(d), "--source", "x")
     assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
+
+
+def test_the_templates_scope_section_is_not_refused():
+    """init が写すテンプレートの自走の範囲（説明のコメントに `コマンド: <1 行のコマンド>` を含む）は断らない。"""
+    sys.path.insert(0, str(PLUGIN / "scripts"))
+    import light as light_py
+    assert light_py.command_errors((PLUGIN / "templates" / "spec.md").read_text(encoding="utf-8")) == []
 
 
 def test_approve_takes_the_full_scope_when_merge_deploys_by_itself(repo):
