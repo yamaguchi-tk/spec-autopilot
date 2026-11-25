@@ -453,6 +453,26 @@ def test_approve_refuses_a_command_in_a_second_scope_section(repo, row):
     assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
 
 
+@pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "indented", "bold", "table"])
+def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
+    """コメントの外し方や行の形で、使う側に見えるコマンドを見落とさない（鍵の語と `コマンド:` が同じ行にあれば断る）。"""
+    from test_overnight import scoped
+    base = scoped("マージまで")
+    row = "- ロールバック: コマンド: make rollback"
+    text = {
+        "unclosed-comment": base.replace("- ロールバック: revert の PR をマージし、デプロイの完了を確かめる",
+                                         "<!-- メモ\n" + row).replace("## 止まる条件", "<!-- x -->\n## 止まる条件"),
+        "fullwidth-comment": base.replace("- ロールバック: revert の PR をマージし、デプロイの完了を確かめる", "＜！－－\n" + row + "\n-->"),
+        "indented": base + "\n  - デプロイの起動: コマンド: make deploy\n",
+        "bold": base + "\n* **デプロイの起動**: コマンド: make deploy\n",
+        "table": base + "\n| ロールバック | コマンド: make rollback |\n",
+    }[how]
+    d = init_spec(repo)
+    (d / "spec.md").write_text(text, encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
+
+
 def test_approve_takes_the_full_scope_when_merge_deploys_by_itself(repo):
     from test_overnight import FULL, deployed, scoped
     d = init_spec(repo)
