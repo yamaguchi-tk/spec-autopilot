@@ -979,6 +979,7 @@ def cmd_rolled_back(a):
     宣言と違うコマンド・壊れる前の出力・承認の後に変えた spec は受けない。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
+    __import__("light").refuse(s, "ロールバックの記録")
     if s.get("phase") != "building":
         autopilot.refuse(s, "rolled-back は自走中（building）だけ受ける")
     if not a.reason.strip():

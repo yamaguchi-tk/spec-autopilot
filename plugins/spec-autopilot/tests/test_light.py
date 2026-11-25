@@ -127,11 +127,15 @@ def commit_all(repo, msg="c"):
 
 
 def committed_light(repo, files=None):
+    """spec を作ってから（新しく作る repo として）ファイルを commit し、承認の時点に HEAD がある形にする。"""
+    d = init_spec(repo)
     for name, body in {"src.js": "// x\n", **(files or {})}.items():
         (repo / name).parent.mkdir(parents=True, exist_ok=True)
         (repo / name).write_text(body, encoding="utf-8")
     commit_all(repo, "init")
-    return light_approved(repo)
+    r = light(repo, "approve", str(d), "--source", "Issue #1 の受入条件")
+    assert r.returncode == 0, r.stdout + r.stderr
+    return d
 
 
 def check_pr(repo, d):

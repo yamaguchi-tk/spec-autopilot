@@ -8,7 +8,8 @@
   （overnight.py ready・merged・qa）を受けない。範囲をマージ以降に広げる根拠は人が承認した spec なので、合意を省いた run には及ばない
 - 止まる条件は、保護された path（下の既定と、repo の `.spec-autopilot/protected-paths`）に触れたとき。承認の時点の HEAD から
   作業ツリーまでの変更ファイルの path で機械的に決める。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
-- 人が `autopilot.py approve` で承認し直したら、合意ありの run になる（lineup.begin が印を外す）
+- block の後に人が spec を見て `autopilot.py approve` で承認し直したら、合意ありの run になる（lineup.begin が印を外す）。
+  done の後の直しの approve では印を残す（spec を人に示していないため）
 
 範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa の拒否）だけを足す。合意ありの run の挙動は変えない
 想定する脅威: 事故（agent が範囲を広げる・保護 path に触れる・マージに進む）。敵対的な agent が state.json を書き換えて印を消すことは防がない
@@ -25,7 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import autopilot as ap  # noqa: E402
 
 # `/` を含まない pattern は path のどの要素にも当て、含む pattern は path 全体に当てる（fnmatch の * は / にも当たる）
-DEFAULT_PROTECTED = ("*.tf", "*.tfvars", "terraform", "infra", "*guardrails*", "CLAUDE.md", "AGENTS.md", ".claude")
+DEFAULT_PROTECTED = ("*.tf", "*.tf.json", "*.tfvars", "*.hcl", "terraform", "infra", "*guardrails*", "CLAUDE.md", "CLAUDE.local.md",
+                     "AGENTS.md", "GEMINI.md", ".claude", ".mcp.json", ".github", ".spec-autopilot")
 CONFIG = Path(".spec-autopilot") / "protected-paths"
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 CEILING = "軽量フロー（人と spec を合意していない run）の自走の上限は PR 作成まで。マージ・デプロイ・QA の書き込みはしない（人の指示を待つ）"
@@ -38,20 +40,28 @@ def git(root, *args):
     return [x for x in r.stdout.splitlines() if x]
 
 
-def patterns(root):
+def patterns(root, base):
+    """既定と、repo の設定の承認の時点（base）の版と今の版の和。承認の後に設定を緩めても、守る path は減らない。"""
     f = Path(root) / CONFIG
     extra = f.read_text(encoding="utf-8").splitlines() if f.is_file() else []
-    return [*DEFAULT_PROTECTED, *(x.strip() for x in extra if x.strip() and not x.strip().startswith("#"))]
+    old = subprocess.run(["git", "show", f"{base}:{CONFIG.as_posix()}"], cwd=root, capture_output=True, text=True)
+    extra += old.stdout.splitlines() if old.returncode == 0 else []
+    pats = (x.strip().strip("/") for x in extra if x.strip() and not x.strip().startswith("#"))
+    return [*DEFAULT_PROTECTED, *dict.fromkeys(p for p in pats if p)]
 
 
 def protected(path, pats):
-    return any(fnmatch.fnmatchcase(path, p) if "/" in p else any(fnmatch.fnmatchcase(c, p) for c in path.split("/"))
-               for p in pats)
+    """`/` を含まない pattern は path のどの要素にも、含む pattern は path かその前置（ディレクトリ）のどれかに当てる。"""
+    parts = path.split("/")
+    prefixes = ["/".join(parts[:i]) for i in range(1, len(parts) + 1)]
+    return any(any(fnmatch.fnmatchcase(x, p) for x in (prefixes if "/" in p else parts)) for p in pats)
 
 
 def touched(root, base):
     """承認の時点（base）から作業ツリーまでに変わったファイル（commit していないもの・追っていないものを含む）。"""
-    return sorted(set(git(root, "diff", "--name-only", base)) | set(git(root, "ls-files", "--others", "--exclude-standard")))
+    # rename は両側の名前を出し（--no-renames）、非 ASCII の名前は引用しない（git_lines の -z と quotePath=false）
+    return sorted(set(ap.git_lines(root, "diff", "--name-only", "--no-renames", base))
+                  | set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard")))
 
 
 def errors(d, s):
@@ -66,7 +76,9 @@ def errors(d, s):
         out.append(f"{CEILING}。`- 範囲:` は「{overnight.PR}」にする（今は「{scope}」）")
     root = ap.repo_root(d)
     try:
-        hits = [f for f in touched(root, s.get("light_base") or EMPTY_TREE) if protected(f, patterns(root))]
+        base = s.get("light_base") or EMPTY_TREE
+        pats = patterns(root, base)
+        hits = [f for f in touched(root, base) if protected(f, pats)]
     except RuntimeError as e:  # 数えられないときは止める側に倒す
         return out + [f"保護された path を確かめられない（{e}）"]
     if hits:
@@ -103,6 +115,11 @@ def cmd_approve(a):
     adr = ap.adr_error(d)
     if adr:
         errs.append(adr)
+    if lineup.after_name(d):
+        errs.append("依る spec のある spec は軽量フローで始めない（合意ありで --queue で承認する）")
+    text = (d / "spec.md").read_text(encoding="utf-8")
+    if ap.stated_size(ap.COMMENT_BLOCK.sub("", ap.section(text, "制約") or ""))[0] != "S":
+        errs.append("軽量フローは `- 大きさ: S` の spec だけで始める（予算も人が見ないので、小さい修正に限る）")
     if errs:
         ap.report(errs, warnings, "")
         return 1
