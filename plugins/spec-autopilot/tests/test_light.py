@@ -454,9 +454,10 @@ def test_approve_refuses_a_command_in_a_second_scope_section(repo, row):
 
 
 @pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "indented", "bold", "table", "next-line",
-                                 "next-line-in-a-second-section", "other-value"])
+                                 "next-line-in-a-second-section", "indented-heading", "closed-heading",
+                                 "suffixed-heading", "setext-heading", "inside-a-comment", "other-value"])
 def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
-    """コメントの外し方や行の形で、使う側に見えるコマンドを見落とさない（鍵の語と `コマンド:` が同じ行にあれば断る）。"""
+    """見出し・行の形・コメントで、読み手に見えるコマンドを見落とさない（鍵の語は自走の範囲の許可した 2 行とテンプレートの説明にだけ置ける）。"""
     from test_overnight import scoped
     base = scoped("マージまで")
     row = "- ロールバック: コマンド: make rollback"
@@ -469,6 +470,11 @@ def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
         "table": base + "\n| ロールバック | コマンド: make rollback |\n",
         "next-line": base.replace("- ロールバック: revert の PR をマージし、デプロイの完了を確かめる", "- ロールバック:\n  コマンド: make rollback"),
         "next-line-in-a-second-section": base + "\n## 自走の範囲\n- ロールバック:\n  コマンド: make rollback\n",
+        "indented-heading": base + "\n ## 自走の範囲\n- デプロイの起動:\n  コマンド: make deploy\n",
+        "closed-heading": base + "\n## 自走の範囲 ##\n- デプロイの起動:\n  コマンド: make deploy\n",
+        "suffixed-heading": base + "\n## 自走の範囲（続き）\n- デプロイの起動:\n  コマンド: make deploy\n",
+        "setext-heading": base + "\n自走の範囲\n---\n- デプロイの起動:\n  コマンド: make deploy\n",
+        "inside-a-comment": base.replace("## 止まる条件", "<!--\n- ロールバック:\n  コマンド: make rollback\n-->\n## 止まる条件"),
         "other-value": base.replace("revert の PR をマージし、デプロイの完了を確かめる", "make rollback を打つ"),
     }[how]
     d = init_spec(repo)
