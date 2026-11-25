@@ -1,3 +1,4 @@
+import pytest
 """scripts/light.py（人との spec 合意を省く軽量フロー）を、入口から通して確かめる。
 
 止まる条件（保護された path に触れたら check が通らない）と、自走の上限（PR 作成まで。マージ・QA の書き込みを受けない）を見る。
@@ -381,11 +382,12 @@ def test_a_double_star_pattern_with_a_slash_protects_at_any_depth(repo):
     assert r.returncode != 0 and "services/a/migrations/001.sql" in r.stdout
 
 
-def test_a_middle_double_star_also_matches_zero_directories(repo):
-    """gitignore と同じく、途中の `/**/` は 0 段のディレクトリにも当たる。"""
+@pytest.mark.parametrize("path", ["config/secrets/a.txt", "config/a/secrets/a.txt", "config/a/b/secrets/a.txt"])
+def test_a_middle_double_star_matches_zero_or_more_directories(repo, path):
+    """gitignore と同じく、途中の `/**/` は 0 段以上のディレクトリに当たる。"""
     d = committed_light(repo, {".spec-autopilot/protected-paths": "config/**/secrets\n"})
     make_done(repo, d)
-    (repo / "config" / "secrets").mkdir(parents=True)
-    (repo / "config" / "secrets" / "a.txt").write_text("x\n", encoding="utf-8")
+    (repo / path).parent.mkdir(parents=True)
+    (repo / path).write_text("x\n", encoding="utf-8")
     r = check_pr(repo, d)
-    assert r.returncode != 0 and "config/secrets/a.txt" in r.stdout
+    assert r.returncode != 0 and path in r.stdout
