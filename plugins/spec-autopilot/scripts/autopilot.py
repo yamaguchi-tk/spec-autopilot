@@ -716,12 +716,10 @@ def check(d, stage="all"):
             problem = evidence_problem(root, evidence, seen)
             if problem:
                 errors.append(f"{rid} の証拠: {problem}")
-    errors.extend(ladder_errors(s)); import overnight
-    errors.extend(overnight.review_errors(d, s))
-    errors.extend(overnight.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage))
-    if stage != "pr":
-        errors.extend(overnight.scope_errors(d, s))
-    return errors, notes
+    import overnight
+    errors += ladder_errors(s) + overnight.review_errors(d, s)
+    errors += overnight.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage)
+    return errors + (overnight.scope_errors(d, s) if stage != "pr" else []), notes
 
 
 def ladder_errors(s):
@@ -1013,7 +1011,7 @@ def cmd_done(a):
             print(f"NOTE: 大きさを数えられない（{e}）。PR の大きさは差分を見て決める")
     if "L" in (stated, size):  # 合意し直しと自走中に育った L も、PR を作る前のここで受け持つ
         print(f"NOTE: {SPLIT_PR}（申告 {stated or 'なし'}・{detail}）")
-    import overnight
+    overnight = __import__("overnight")
     print("\n".join(overnight.report(d)))
     overnight.notify(d)
     return 0
@@ -1269,7 +1267,7 @@ def cmd_rework(a):
         sys.exit(f"{a.adr} は前に使った ADR。作り方の変更は新しい ADR に書く")
     if not adr.is_file() or root not in adr.parents:
         sys.exit(f"ADR {a.adr} が repo の中に無い")
-    __import__("rootcause").refuse_if_unfit(adr.read_text(encoding="utf-8"), a.adr, d)
+    __import__("rootcause").refuse_if_unfit(adr.read_text(encoding="utf-8"), a.adr, d, reqs)
     reworks.setdefault(a.req, []).append(str(adr.relative_to(root)))
     s.setdefault("streak", {})[a.req] = 0
     save_state(d, s)
