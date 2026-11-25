@@ -277,9 +277,9 @@ def test_approve_refuses_a_protected_file_committed_since_init(repo):
 
 def test_untracked_and_ignored_files_are_not_looked_at(repo):
     """PR が持ち込む差だけを見る。追っていないファイルと git が無視するファイルは判定しない（限界。commands/autopilot.md の L の 5）。"""
-    d = committed_light(repo, {".gitignore": ".claude/\n"}, after_init={".claude/settings.local.json": "{}\n", "terraform.tfstate": "{}\n"})
-    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    d = committed_light(repo, {".gitignore": ".claude/\n"}, after_init={".claude/settings.local.json": "{}\n"})
     make_done(repo, d)
+    write_files(repo, {"CLAUDE.md": "# rules\n", "terraform.tfstate": "{}\n"})
     r = check_pr(repo, d)
     assert r.returncode == 0, r.stdout + r.stderr
 
