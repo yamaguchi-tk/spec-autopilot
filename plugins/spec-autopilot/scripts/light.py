@@ -8,7 +8,7 @@
   デプロイの workflow が無い repo でマージしてから QA する段は無い（限界）
 - 止まる条件は、保護された path（下の既定と、起点の commit の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の
   commit から、PR が持ち込む差（HEAD・index・作業ツリー）と追っていないファイルの path で機械的に決め、照合は git の glob pathspec に任せる。
-  init より前の commit・git が無視するファイル・途中の commit で触れて戻したもの・spec の置き場の中は見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
+  init より前の commit・git が無視するファイル・途中の commit で触れて戻したもの・spec の置き場の中の `/` を含む pattern は見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
 - 印は block・done の後の approve でも外さない（その返事は spec の全体を見たものではない）。合意ありで進めるなら spec を作り直す
 
 範囲: 軽量フローの承認と保護 path の判定だけを足す。合意ありの run の挙動は変えない
