@@ -959,7 +959,7 @@ def cmd_approve(a):
     budget = lineup.begin(d, s, a.by, s.get("phase"))
     take_over(d, session, "承認")
     save_state(d, s)
-    report([], warnings, f"approved: 予算 {budget} 分。ここから自走する")
+    report([], warnings + __import__("light").report(s), f"approved: 予算 {budget} 分。ここから自走する")
     return 0
 
 

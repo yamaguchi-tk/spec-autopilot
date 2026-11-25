@@ -7,16 +7,15 @@
 - 自走の上限は PR 作成まで。`- 範囲:` が「PR まで」でなければ approve しない。マージ・デプロイ・QA の書き込み・ロールバックの記録
   （overnight.py ready・merged・qa・rolled-back）を受けない。範囲をマージ以降に広げる根拠は人が承認した spec なので、合意を省いた run には及ばない
 - 止まる条件は、保護された path（下の既定と、repo の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の commit から
-  作業ツリーまでの変更ファイルの path（追っていない・無視されたファイルは承認のときの控えとの違い）で機械的に決める。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
+  作業ツリーまでの変更ファイルと追っていないファイルの path で機械的に決める（git が無視するファイルは見ない）。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
 - 印は block・done の後の approve でも外さない（その返事は spec の全体を見たものではない）。合意ありで進めるなら spec を作り直す
 
-範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa の拒否）だけを足す。合意ありの run の挙動は変えない
+範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa・rolled-back の拒否）だけを足す。合意ありの run の挙動は変えない
 想定する脅威: 事故（agent が範囲を広げる・保護 path に触れる・マージに進む）。敵対的な agent が state.json を書き換えて印を消すことは防がない
-やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集の拒否、利用する repo の設定の形の検査
+やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、git が無視するファイル（PR に入らない）の判定
 """
 import argparse
 import fnmatch
-import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -62,28 +61,18 @@ def ignorecase(root):
     return r.stdout.strip() == "true"
 
 
-def untracked(root, pats, skip):
-    """追っていない（無視されたものを含む）ファイルのうち保護に当たるものの {path: sha256}。spec 自身の置き場（skip）は除く。"""
-    fold = ignorecase(root)
-    out = {}
-    for f in ap.git_lines(root, "ls-files", "--others"):
-        if not f.startswith(skip) and protected(f, pats, fold):
-            out[f] = hashlib.sha256((Path(root) / f).read_bytes()).hexdigest()
-    return out
-
-
 def hits(d, s):
-    """起点から作業ツリーまでに触れた保護 path。追っているものは diff で、追っていないものは承認のときの控えと比べる。"""
+    """起点から作業ツリーまでに触れた保護 path。追っていない（無視されていない）ファイルは、作った時期によらず数える。
+    git が無視するファイルは PR に入らないので見ない（読むと中身の指紋が commit される state に残り、数も多い）。"""
     root = ap.repo_root(d)
     base = s.get("light_base") or EMPTY_TREE
     pats = patterns(root, base, s.get("light_patterns") or ())
     skip = d.resolve().relative_to(Path(root).resolve()).as_posix() + "/"
     fold = ignorecase(root)
     # rename は両側の名前を出し（--no-renames）、非 ASCII の名前は引用しない（git_lines の -z と quotePath=false）
-    tracked = {f for f in ap.git_lines(root, "diff", "--name-only", "--no-renames", base)
-               if not f.startswith(skip) and protected(f, pats, fold)}
-    before, now = s.get("light_untracked") or {}, untracked(root, pats, skip)
-    return sorted(tracked | {f for f in set(before) | set(now) if before.get(f) != now.get(f)})
+    files = set(ap.git_lines(root, "diff", "--name-only", "--no-renames", base))
+    files |= set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard"))
+    return sorted(f for f in files if not f.startswith(skip) and protected(f, pats, fold))
 
 
 def errors(d, s):
@@ -98,7 +87,7 @@ def errors(d, s):
         out.append(f"{CEILING}。`- 範囲:` は「{overnight.PR}」にする（今は「{scope}」）")
     try:
         found = hits(d, s)
-    except (RuntimeError, OSError) as e:  # 数えられないときは止める側に倒す
+    except (RuntimeError, OSError, ValueError) as e:  # 数えられないときは止める側に倒す
         return out + [f"保護された path を確かめられない（{e}）"]
     if found:
         out.append(f"保護された path に触れた: {', '.join(found)}。軽量フローでは進めない。"
@@ -144,13 +133,12 @@ def cmd_approve(a):
         return 1
     root = ap.repo_root(d)
     base = s.get("start") or EMPTY_TREE  # init の時点（S の試作の commit も判定に入れる）。新しく作る repo は空の木から
-    pats = patterns(root, base)
     try:
-        snap = untracked(root, pats, d.resolve().relative_to(Path(root).resolve()).as_posix() + "/")
-    except (RuntimeError, OSError) as e:
-        sys.exit(f"保護された path の控えを取れない（{e}）ので承認しない")
+        pats = patterns(root, base)
+    except (OSError, ValueError) as e:
+        sys.exit(f"保護された path の設定を読めない（{e}）ので承認しない")
     budget = lineup.begin(d, s, f"軽量フロー（人の承認なし）: {a.source.strip()}", "discovery")
-    s.update(light=True, light_base=base, light_patterns=pats, light_untracked=snap)
+    s.update(light=True, light_base=base, light_patterns=pats)
     ap.take_over(d, __import__("os").environ.get("CLAUDE_CODE_SESSION_ID"), "軽量フローの承認")
     ap.save_state(d, s)
     ap.report([], warnings, f"approved（軽量フロー）: 予算 {budget} 分。{CEILING}")

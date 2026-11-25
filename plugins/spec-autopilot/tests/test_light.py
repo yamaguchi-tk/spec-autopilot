@@ -232,29 +232,31 @@ def test_light_run_refuses_rolled_back(repo):
 
 def test_a_protected_file_committed_before_approval_stops(repo):
     """init から approve までの commit（S の試作）も判定に入る。"""
-    d = committed_light(repo, after_init={"docs/guardrails.md": "# 境界\n"})
+    d = existing_spec(repo)
+    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", "docs/guardrails.md": "# 境界\n"})
     commit_all(repo, "prototype")
+    assert light(repo, "approve", str(d), "--source", "x").returncode == 0
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode != 0 and "docs/guardrails.md" in r.stdout
 
 
-IGNORED = {".gitignore": ".claude/\n"}
-
-
-def test_untouched_preexisting_ignored_protected_file_does_not_stop(repo):
-    d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
+def test_an_untracked_protected_file_made_before_approval_stops(repo):
+    d = committed_light(repo, after_init={"docs/guardrails.md": "# 境界\n"})
     make_done(repo, d)
+    (repo / "docs" / "guardrails.md").write_text("# 境界\n", encoding="utf-8")  # make_done の commit の後も追っていない形にする
+    subprocess.run(["git", "rm", "-q", "--cached", "docs/guardrails.md"], cwd=repo, check=True)
     r = check_pr(repo, d)
-    assert r.returncode == 0, r.stdout + r.stderr
+    assert r.returncode != 0 and "docs/guardrails.md" in r.stdout
 
 
-def test_changing_an_ignored_protected_file_stops(repo):
-    d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
+def test_ignored_protected_files_are_not_looked_at(repo):
+    """git が無視するファイルは PR に入らないので判定しない（限界。commands/autopilot.md の L）。"""
+    d = committed_light(repo, {".gitignore": ".claude/\n"}, after_init={".claude/settings.local.json": "{}\n"})
     (repo / ".claude" / "settings.local.json").write_text('{"x": 1}\n', encoding="utf-8")
     make_done(repo, d)
     r = check_pr(repo, d)
-    assert r.returncode != 0 and ".claude/settings.local.json" in r.stdout
+    assert r.returncode == 0, r.stdout + r.stderr
 
 
 def test_loosening_an_uncommitted_config_does_not_unprotect(repo):
@@ -268,3 +270,13 @@ def test_loosening_an_uncommitted_config_does_not_unprotect(repo):
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode != 0 and "secrets/a.txt" in r.stdout
+
+
+def test_the_specs_own_directory_is_not_a_protected_path(repo):
+    """slug が保護の pattern（*guardrails*）に当たっても、spec 自身の置き場では止めない。"""
+    d = init_spec(repo, "guardrails-wording")
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode == 0, r.stdout + r.stderr
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode == 0, r.stdout + r.stderr
