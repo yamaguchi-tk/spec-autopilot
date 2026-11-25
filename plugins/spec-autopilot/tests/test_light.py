@@ -3,6 +3,7 @@
 止まる条件（保護された path に触れたら check が通らない）と、自走の範囲が合意ありと同じく spec の `- 範囲:` で決まることを見る。
 """
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -453,9 +454,14 @@ def test_approve_refuses_a_command_in_a_second_scope_section(repo, row):
     assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
 
 
+TEMPLATE_SCOPE_COMMENT = re.search(r"## 自走の範囲\n(<!--.*?-->)", (PLUGIN / "templates" / "spec.md").read_text(encoding="utf-8"), re.S).group(1)
+
+
 @pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "indented", "bold", "table", "next-line",
                                  "next-line-in-a-second-section", "indented-heading", "closed-heading",
-                                 "suffixed-heading", "setext-heading", "inside-a-comment", "other-value"])
+                                 "suffixed-heading", "setext-heading", "inside-a-comment", "in-another-rows-value",
+                                 "comment-on-an-allowed-row", "after-a-copied-template-comment", "comment-in-another-section",
+                                 "other-value"])
 def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
     """見出し・行の形・コメントで、読み手に見えるコマンドを見落とさない（鍵の語は自走の範囲の許可した 2 行とテンプレートの説明にだけ置ける）。"""
     from test_overnight import scoped
@@ -475,6 +481,11 @@ def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
         "suffixed-heading": base + "\n## 自走の範囲（続き）\n- デプロイの起動:\n  コマンド: make deploy\n",
         "setext-heading": base + "\n自走の範囲\n---\n- デプロイの起動:\n  コマンド: make deploy\n",
         "inside-a-comment": base.replace("## 止まる条件", "<!--\n- ロールバック:\n  コマンド: make rollback\n-->\n## 止まる条件"),
+        "in-another-rows-value": base.replace("- QA の環境: 本番の test チャネル", "- QA の環境: ロールバック: コマンド: make rollback"),
+        "comment-on-an-allowed-row": base.replace("revert の PR をマージし、デプロイの完了を確かめる",
+                                                  "revert の PR をマージし、デプロイの完了を確かめる<!-- コマンド: make rollback -->"),
+        "after-a-copied-template-comment": base.replace("## 止まる条件", "## 止まる条件\n" + TEMPLATE_SCOPE_COMMENT + " コマンド: make deploy"),
+        "comment-in-another-section": base + "\n<!-- ロールバック: コマンド: make rollback -->\n",
         "other-value": base.replace("revert の PR をマージし、デプロイの完了を確かめる", "make rollback を打つ"),
     }[how]
     d = init_spec(repo)
