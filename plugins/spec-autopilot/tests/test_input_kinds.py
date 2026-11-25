@@ -40,7 +40,9 @@ def refused(repo, d, *want):
 
 
 def test_dispatch_after_high_refuses_when_the_table_file_is_missing(repo):
-    refused(repo, after_high(repo), "inputs/R1.md")
+    d = after_high(repo)
+    (d / "inputs" / "R1.md").unlink()
+    refused(repo, d, "inputs/R1.md")
 
 
 def test_dispatch_after_high_refuses_a_table_with_one_row(repo):
@@ -152,3 +154,36 @@ def test_two_handoffs_at_once_leave_the_table_check_the_same(repo):
     d = dispatched(repo, GOOD, ["test_rule.py::test_absolute", "test_rule.py::test_relative"])
     rs = [handoff(repo, d), handoff(repo, d)]
     assert [r.returncode for r in rs] == [0, 0]
+
+
+def test_check_from_the_entrance_names_the_fail_row_and_reruns_the_reviewer(repo):
+    d = after_high(repo, GOOD)
+    out = run(repo, "check", str(d))
+    t = out.stdout + out.stderr
+    assert "R1" in t and "絶対パス" in t and "評価役を回し直" in t
+
+
+@pytest.mark.parametrize("cell", ["cmd: 手で見た", "manual: 見た", "test_rule.py::test_absolute。加えて cmd: x"])
+def test_handoff_refuses_a_free_text_test_cell(repo, cell):
+    d = dispatched(repo, GOOD, [cell, "test_rule.py::test_relative"])
+    r = handoff(repo, d)
+    assert r.returncode != 0 and len(state(d)["handoffs"]) == 1
+
+
+def test_handoff_takes_a_row_whose_cell_has_an_escaped_pipe(repo):
+    text = HEAD + "| 或は | a\\|b | 通る | fail | - |\n| 相対 | a | 通る | pass | - |\n"
+    d = dispatched(repo, text, ["test_rule.py::test_absolute", "test_rule.py::test_relative"])
+    assert handoff(repo, d).returncode == 0
+
+
+@pytest.mark.parametrize("text", [GOOD.replace("|---|---|---|---|---|\n", "|---|---|---|---|---|\n\n注: 追記\n"),
+                                  GOOD.replace("| 入力の種類 |", "| 種類 |"),
+                                  GOOD + "\n補足の文\n| 別 | x | 通る | fail | - |\n"])
+def test_check_names_a_fail_row_or_a_broken_table_even_with_a_sentence_between(repo, text):
+    d = after_high(repo, text)
+    assert "R1" in (run(repo, "check", str(d)).stdout)
+
+
+def test_dispatch_with_a_none_file_does_not_ask_for_tests(repo):
+    r = dispatch(repo, after_high(repo, NONE))
+    assert r.returncode == 0 and "行ごとにテスト" not in r.stdout
