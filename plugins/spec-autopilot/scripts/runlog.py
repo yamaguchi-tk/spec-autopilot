@@ -54,7 +54,7 @@ def record(d, s, kind, end, top_end="same"):
                "active_min": active_min(s, end if top_end == "same" else top_end),
                "total_min": minutes(end - s["created_at"]), "size": size,
                "blocks": [{"req": b.get("req"), "reason": b.get("reason")} for b in blocks],
-               "rework_of": rework.group(1) if rework else None, "prs": prs}
+               "rework_of": rework.group(1) if rework else None, "prs": prs, "light": bool(s.get("light"))}
         f = log_path()
         f.parent.mkdir(parents=True, exist_ok=True)
         with f.open("a", encoding="utf-8") as fh:
