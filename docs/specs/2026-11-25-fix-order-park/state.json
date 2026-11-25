@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "fix-order-park",
   "created_at": 1795581043.15456,
   "existing": true,
   "start": "eab7d9f0767b830b7e18bf54df1c1cb4e7e9e5dc",
-  "last_active_at": 1795590880.3334389,
+  "last_active_at": 1795591486.353856,
   "approved_at": 1795581400.102593,
   "approved_by": "OK（推奨のまま承認）",
   "spec_sha256": "4c58044609f1c97f2604eacf06ceaa94fce7980839dff6c9732e111dd27748d9",
@@ -194,5 +194,22 @@
       "from": "autopilot-implementer",
       "to": "autopilot-implementer-high"
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 25,
+      "at": 1795591485.803227,
+      "sha": "c0dfc39145a0a607a7b81ce80ebb9bfe1e886e38",
+      "head": "1ee16e8d168336f966d11b170f5744d3cc04ab1b"
+    }
+  ],
+  "merged_at": 1795591485.8032289,
+  "paused_at_merge": 0.0,
+  "done_at": 1795591486.318775,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
