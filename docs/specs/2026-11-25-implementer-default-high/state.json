@@ -4,7 +4,7 @@
   "created_at": 1795616925.619315,
   "existing": true,
   "start": "1e31f5874cf2c73b364e899f36e63496dd4b0eb2",
-  "last_active_at": 1795617372.6357372,
+  "last_active_at": 1795618016.5202339,
   "approved_at": 1795617258.531918,
   "approved_by": "人が OK と返した（推奨のまま承認）",
   "spec_sha256": "15d988f0daf5abad0be2e31426c631cb5394d7d9dfe22b2e37384daeb7df356f",
@@ -13,9 +13,30 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
+  "reviews": [
+    {
+      "high": [
+        "R1"
+      ],
+      "at": 1795618016.520208,
+      "sha": "faa5a0b664a6eb987776432ec39a6082b9ed978d"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795618016.520204
+      }
+    ]
+  },
+  "streak": {
+    "R1": 1,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0
+  },
   "reworks": {},
   "dispatches": [
     {
@@ -42,6 +63,14 @@
       ],
       "dispatch": 0,
       "at": 1795617372.6357272
+    },
+    {
+      "tip": "faa5a0b664a6eb987776432ec39a6082b9ed978d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795618014.103198
     }
   ]
 }
