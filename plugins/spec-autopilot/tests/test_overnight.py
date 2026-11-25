@@ -823,7 +823,7 @@ def test_handoff_refuses_an_effort_other_than_the_definition(repo):
     d = dispatched_and_committed(repo)
     implementer_ran(effort="xhigh")  # main の effort を継承した
     r = night(repo, "handoff", str(d), "--task", "T1")
-    assert r.returncode == 1 and "xhigh" in r.stdout and "low" in r.stdout
+    assert r.returncode == 1 and "xhigh" in r.stdout and "high" in r.stdout
 
 
 def test_handoff_accepts_an_alias_model_of_the_definition(repo):

@@ -52,9 +52,9 @@ def test_the_default_agents_are_the_measured_pair(repo):
 def test_a_failure_of_the_implementer_raises_its_requirement_at_once(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1]\n- [x] T2: 表示 [R2]\n")
     impl_fail(repo, d)
-    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-high"  # 次のレビューを待たずに作り直す
+    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus"  # 次のレビューを待たずに作り直す
     impl_fail(repo, d)
-    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-high"  # 上げた段をまだ渡していない
+    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus"  # 上げた段をまだ渡していない
     assert name(agent_of(repo, d, "impl", "T2")) == "autopilot-implementer"  # 上げるのはその要件のタスクだけ
 
 
@@ -65,17 +65,17 @@ def test_each_dispatch_that_fails_raises_one_more_rung_within_a_round(repo):
         assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
         impl_fail(repo, d)  # 渡した段でも満たせなかった（レビューの巡はまだ）
         seen.append(name(agent_of(repo, d, "impl", "T1")))
-    assert seen == ["autopilot-implementer-high", "autopilot-implementer-opus"]
+    assert seen == ["autopilot-implementer-opus", "autopilot-implementer-opus-xhigh"]
 
 
 def test_a_review_round_raises_again_after_the_raised_rung_was_dispatched(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1]\n")
     high(repo, d)
     assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
-    impl_fail(repo, d)  # low→high
+    impl_fail(repo, d)  # sonnet-high→opus-medium
     hand_off(repo, d)  # 上げた段で渡し直した
     high(repo, d)  # 2 巡目（原因調査）
-    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus"
+    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus-xhigh"
 
 
 def test_the_dead_end_ladder_raises_without_main_calling_anything(repo):
@@ -85,7 +85,7 @@ def test_the_dead_end_ladder_raises_without_main_calling_anything(repo):
         high(repo, d)
         seen.append(name(agent_of(repo, d, "impl", "T1")))
     # 1 巡目: 上げない。2 巡目（原因調査）・3 巡目（作り直し）で 1 段ずつ
-    assert seen == ["autopilot-implementer", "autopilot-implementer-high", "autopilot-implementer-opus"]
+    assert seen == ["autopilot-implementer", "autopilot-implementer-opus", "autopilot-implementer-opus-xhigh"]
 
 
 def test_one_round_raises_one_rung_even_with_several_signals(repo):
@@ -93,7 +93,7 @@ def test_one_round_raises_one_rung_even_with_several_signals(repo):
     high(repo, d)
     impl_fail(repo, d)
     high(repo, d)  # 原因調査と実装役の失敗が同じ巡に当たる
-    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-high"
+    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus"
     assert len([r for r in state(d)["raises"] if r["req"] == "R1"]) == 1
 
 
@@ -101,7 +101,7 @@ def test_a_task_takes_the_highest_rung_of_its_requirements(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1, R2]\n")
     impl_fail(repo, d, "R2")
     run(repo, "review", str(d), "--high", "none")
-    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-high"
+    assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus"
 
 
 def test_the_rung_survives_a_rewrite_of_tasks_md(repo):
@@ -109,7 +109,7 @@ def test_the_rung_survives_a_rewrite_of_tasks_md(repo):
     impl_fail(repo, d)
     run(repo, "review", str(d), "--high", "none")
     (d / "tasks.md").write_text("# タスク\n\n- [x] T7: 作り直した規則 [R1]\n", encoding="utf-8")
-    assert name(agent_of(repo, d, "impl", "T7")) == "autopilot-implementer-high"
+    assert name(agent_of(repo, d, "impl", "T7")) == "autopilot-implementer-opus"
 
 
 def raise_rounds(repo, d, n, req="R1"):
@@ -120,7 +120,7 @@ def raise_rounds(repo, d, n, req="R1"):
 
 def test_fable_comes_only_after_two_failures_at_the_top_opus_and_runs_once(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1]\n")
-    raise_rounds(repo, d, 3)
+    raise_rounds(repo, d, 2)
     assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus-xhigh"
     raise_rounds(repo, d, 1)
     assert name(agent_of(repo, d, "impl", "T1")) == "autopilot-implementer-opus-xhigh"  # 1 回目はそのまま
@@ -136,7 +136,7 @@ def test_fable_comes_only_after_two_failures_at_the_top_opus_and_runs_once(repo)
 
 def test_a_failure_at_fable_parks_the_requirement(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1]\n")
-    raise_rounds(repo, d, 6)
+    raise_rounds(repo, d, 5)
     r = agent_of(repo, d, "impl", "T1")
     assert r.returncode == 1 and "park" in r.stdout
 
@@ -145,8 +145,8 @@ def test_dispatch_prints_and_records_the_agent(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1]\n")
     raise_rounds(repo, d, 1)
     r = night(repo, "dispatch", str(d), "--task", "T1")
-    assert r.returncode == 0 and r.stdout.strip().splitlines()[-1] == "autopilot-implementer-high"
-    assert state(d)["dispatches"][-1]["agent"] == "autopilot-implementer-high"
+    assert r.returncode == 0 and r.stdout.strip().splitlines()[-1] == "autopilot-implementer-opus"
+    assert state(d)["dispatches"][-1]["agent"] == "autopilot-implementer-opus"
 
 
 def test_the_reviewer_goes_up_by_hand_when_the_verdict_is_not_decided_and_tries_fable_once(repo):
@@ -176,7 +176,7 @@ def test_the_spec_can_start_a_role_higher(repo):
     assert "モデル" not in run(repo, "lint", str(d)).stdout
 
 
-@pytest.mark.parametrize("row", ["- 評価: sonnet-high", "- 実装: gpt", "- 評価: なんでも"])
+@pytest.mark.parametrize("row", ["- 評価: sonnet-high", "- 実装: gpt", "- 評価: なんでも", "- 実装: sonnet-low"])
 def test_lint_refuses_an_unknown_rung_or_a_reviewer_below_the_default(repo, row):
     d = init_spec(repo)
     spec = d / "spec.md"
@@ -193,7 +193,7 @@ def test_the_report_counts_a_raised_requirement_as_passed_only_by_a_later_review
     high(repo, d, "R2")  # R1 は上げた後のレビューで high が無い。R2 は上げた後も high
     out = night(repo, "report", str(d)).stdout
     assert re.search(r"段を上げたタスク: 2（上げた後のレビューで通った割合 50%）", out), out
-    assert "R1 autopilot-implementer→autopilot-implementer-high（実装役の失敗）" in out
+    assert "R1 autopilot-implementer→autopilot-implementer-opus（実装役の失敗）" in out
 
 
 def test_every_rung_has_an_agent_with_the_declared_model_and_the_same_body():
@@ -213,7 +213,7 @@ def test_every_rung_has_an_agent_with_the_declared_model_and_the_same_body():
 
 def test_park_names_only_the_requirement_past_the_top_and_the_rest_goes_on(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1, R2]\n")
-    raise_rounds(repo, d, 6, "R1")
+    raise_rounds(repo, d, 5, "R1")
     r = night(repo, "dispatch", str(d), "--task", "T1")
     assert r.returncode == 1 and "R1 を park" in r.stdout and "R2" not in r.stdout
     assert night(repo, "park", str(d), "--kind", "other", "--req", "R1", "--op", "R1 の実装",
@@ -224,7 +224,7 @@ def test_park_names_only_the_requirement_past_the_top_and_the_rest_goes_on(repo)
 
 def test_a_fable_pass_does_not_block_the_next_fix_of_the_same_task(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1]\n")
-    raise_rounds(repo, d, 5)
+    raise_rounds(repo, d, 4)
     assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0  # Fable
     run(repo, "review", str(d), "--high", "none")  # 通った
     r = night(repo, "dispatch", str(d), "--task", "T1")
@@ -255,7 +255,7 @@ def test_a_model_row_inside_a_comment_does_not_count_and_a_trailing_comment_is_f
 
 def test_a_task_whose_only_requirement_is_parked_past_the_top_is_not_handed_out(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1]\n")
-    raise_rounds(repo, d, 6, "R1")
+    raise_rounds(repo, d, 5, "R1")
     assert night(repo, "park", str(d), "--kind", "other", "--req", "R1", "--op", "R1 の実装",
                  "--reason", "一番上でも通らない").returncode == 0
     for cmd in (["dispatch"], ["agent", "--role", "impl"]):
@@ -266,7 +266,7 @@ def test_a_task_whose_only_requirement_is_parked_past_the_top_is_not_handed_out(
 @pytest.mark.parametrize("line", ["- [X] T1: 規則 [R1]", "- [x] T1: 規則 [R1]　"])
 def test_a_task_line_that_check_accepts_is_read_the_same_by_the_ladder(repo, line):
     d = done_spec(repo, line + "\n")
-    raise_rounds(repo, d, 6, "R1")
+    raise_rounds(repo, d, 5, "R1")
     for cmd in (["dispatch"], ["agent", "--role", "impl"]):
         r = night(repo, *cmd, str(d), "--task", "T1")
         assert r.returncode == 1 and "R1 を park" in r.stdout, r.stdout
@@ -277,3 +277,38 @@ def test_a_task_not_in_tasks_md_is_refused(repo):
     for cmd in (["dispatch"], ["agent", "--role", "impl"]):
         r = night(repo, *cmd, str(d), "--task", "T9")
         assert r.returncode == 1 and "tasks.md に無い" in r.stdout, r.stdout
+
+
+def test_the_default_implementer_is_sonnet_high_and_the_rungs_rise_from_it():
+    import sys
+    sys.path.insert(0, str(AGENTS.parent / "scripts"))
+    import ladder
+    assert list(ladder.RUNGS["impl"].items()) == [
+        ("sonnet-high", ("autopilot-implementer", "claude-sonnet-5-5", "high")),
+        ("opus-medium", ("autopilot-implementer-opus", "opus", "medium")),
+        ("opus-xhigh", ("autopilot-implementer-opus-xhigh", "opus", "xhigh")),
+        ("fable", ("autopilot-implementer-fable", "fable", "high")),
+    ]
+    assert not (AGENTS / "autopilot-implementer-high.md").exists()
+    head = (AGENTS / "autopilot-implementer.md").read_text(encoding="utf-8").split("\n---\n", 1)[0]
+    assert "\nmodel: claude-sonnet-5-5\n" in head + "\n" and "\neffort: high\n" in head + "\n"
+
+
+def test_lint_names_the_rungs_it_accepts_when_a_spec_still_says_sonnet_low(repo):
+    d = init_spec(repo)
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8") + "\n## モデル\n\n- 実装: sonnet-low\n", encoding="utf-8")
+    r = run(repo, "lint", str(d))
+    assert r.returncode != 0
+    assert re.search(r"ERROR.*モデル.*「sonnet-high」「opus-medium」「opus-xhigh」「fable」.*sonnet-low", r.stdout), r.stdout
+
+
+def test_the_template_note_states_the_default_and_the_rungs_of_ladder_py():
+    import sys
+    sys.path.insert(0, str(AGENTS.parent / "scripts"))
+    import ladder
+    text = (AGENTS.parent / "templates" / "spec.md").read_text(encoding="utf-8")
+    note = re.search(r"<!-- 書かなければ既定（(.*?)）。.*?実装: ([^、]*)、評価: ([^（]*)", text, re.S)
+    assert note, text
+    assert note.group(1) == f"実装 {next(iter(ladder.RUNGS['impl']))}・評価 {next(iter(ladder.RUNGS['review']))}"
+    assert note.group(2).split("・") == list(ladder.RUNGS["impl"])
