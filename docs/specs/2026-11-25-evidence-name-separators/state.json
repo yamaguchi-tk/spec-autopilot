@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "evidence-name-separators",
+  "created_at": 1795580856.4158232,
+  "existing": true,
+  "start": "eab7d9f0767b830b7e18bf54df1c1cb4e7e9e5dc",
+  "last_active_at": 1795581131.650283,
+  "approved_at": 1795581131.6495419,
+  "approved_by": "推奨のままで OK（承認）",
+  "spec_sha256": "a0025be041e2568da119043259a19b2ebc649da0f2cc2a7775da886ea3c3030b",
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
