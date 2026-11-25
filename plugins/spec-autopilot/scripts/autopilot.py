@@ -783,7 +783,7 @@ def evidence_problem(root, evidence, seen=None):
     if not tests:
         return None if free else EVIDENCE_FORMS
     path = None
-    for item in EVIDENCE_SEP.split(tests):
+    for item in __import__("evidence").items(root, tests, EVIDENCE_SEP):
         p, sep, names = item.strip().strip("`").partition("::")
         path = p.strip() or path
         names = [n.strip() for n in names.split("::")]

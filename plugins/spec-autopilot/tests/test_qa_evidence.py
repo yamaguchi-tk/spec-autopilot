@@ -210,3 +210,43 @@ def test_check_ends_quickly_on_many_names_in_a_large_evidence_file(repo, monkeyp
     quick(monkeypatch, 10)
     r = check_with(repo, "tests/test_big.py::" + "・::".join(names))
     assert r.returncode in (0, 1)
+
+
+JEST = ("describe('得点・レベル', () => { test('1 行消すと、100 点', () => {}) })\n"
+        "describe('得点、レベル', () => { test('A', () => {}) })\n"
+        "describe('a,b', () => { test('C', () => {}) })\n")
+
+
+def check_with_jest(repo, evidence):
+    d = approved(repo)
+    make_done(repo, d)
+    (repo / "tests").mkdir(exist_ok=True)
+    (repo / "tests" / "test_y.py").write_text(TEST_Y, encoding="utf-8")
+    (repo / "core.test.js").write_text(JEST, encoding="utf-8")
+    qa = d / "qa.md"
+    qa.write_text(qa.read_text(encoding="utf-8").replace(
+        "core.test.js::clears a full line", evidence), encoding="utf-8")
+    return run(repo, "check", str(d))
+
+
+@pytest.mark.parametrize("evidence", [
+    "core.test.js::得点・レベル::1 行消すと、100 点",
+    "core.test.js::得点、レベル::A",
+    "core.test.js::a,b::C",
+    "core.test.js::得点・レベル::1 行消すと、100 点・tests/test_y.py::test_y",
+    "core.test.js::得点・レベル::1 行消すと、100 点・::得点、レベル::A",
+])
+def test_check_accepts_a_test_name_with_a_separator_before_a_double_colon(repo, evidence):
+    r = check_with_jest(repo, evidence)
+    assert r.returncode == 0, r.stdout
+
+
+@pytest.mark.parametrize("evidence", [
+    "core.test.js::得点・レベル::A・::nope",
+    "core.test.js::得点・レベル::1 行消すと、100 点・tests/test_y.py::test_nope",
+    "core.test.js::得点・レベル::1 行消すと、100 点・nofile.py::test_y",
+    "core.test.js::得点・nofile.py::test_y",
+])
+def test_check_still_fails_when_a_listed_test_after_a_separator_is_missing(repo, evidence):
+    r = check_with_jest(repo, evidence)
+    assert r.returncode == 1, r.stdout

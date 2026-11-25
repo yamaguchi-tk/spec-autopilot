@@ -1,0 +1,19 @@
+- commit: f137cd662a3d5c76ca23a43ca947a25df9841d95
+
+一時の repo（.autopilot-qa/work/repo。tests/test_autopilot.py の approved と make_done）に、describe の名前に ・、, を含む core.test.js を置き、qa.md の R1 の証拠を書き換えて、tip の autopilot.py check と base（26d69f93）の autopilot.py check を回した。
+
+$ python3 .autopilot-qa/check.py
+  [ok] 'core.test.js::得点・レベル::1 行消すと、100 点': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: check: OK
+  [ok] 'core.test.js::得点、レベル::A': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: check: OK
+  [ok] 'core.test.js::a,b::C': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: b が無い); tip: check: OK
+  [ok] 'core.test.js::得点・レベル::1 行消すと、100 点・tests/test_y.py::test_y': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: check: OK
+  [ok] '`core.test.js::得点・レベル::A`・`tests/test_y.py::test_y`': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: check: OK
+  [ok] 'core.test.js::得点・レベル::1 行消すと、100 点・::得点、レベル::A': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: check: OK
+  [ok] 'core.test.js::x・tests::T': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: tests が無い); tip: check: OK
+  [ok] 'core.test.js::p、 q::S': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: q が無い); tip: check: OK
+  [ok] 'core.test.js::得点・レベル::A（全体で 10 passed）': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: check: OK
+  [ok] 'core.test.js::得点・レベル::A と cmd: 検査で通った': tip exit=0 want 0; base exit=1 want 1 (ERROR: R1 の証拠: レベル が無い); tip: check: OK
+R1 pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_qa_evidence.py -q -p no:cacheprovider
+62 passed in 122.04s (0:02:02)
