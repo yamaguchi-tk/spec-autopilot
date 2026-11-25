@@ -7,13 +7,13 @@
 - 自走の上限は PR 作成まで。`- 範囲:` が「PR まで」でなければ approve しない。マージ・デプロイ・QA の書き込み・ロールバックの記録
   （overnight.py ready・merged・qa・rolled-back）を受けない。範囲をマージ以降に広げる根拠は人が承認した spec なので、合意を省いた run には及ばない
 - 止まる条件は、保護された path（下の既定と、起点の commit の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の
-  commit から、PR が持ち込む差（追っているファイルの HEAD・index・作業ツリー）の path で機械的に決め、照合は git の glob pathspec に任せる。
-  追っていないファイル・git が無視するファイル・途中の commit で触れて戻したものは見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
+  commit から、PR が持ち込む差（HEAD・index・作業ツリー）と追っていないファイルの path で機械的に決め、照合は git の glob pathspec に任せる。
+  git が無視するファイル・途中の commit で触れて戻したものは見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
 - 印は block・done の後の approve でも外さない（その返事は spec の全体を見たものではない）。合意ありで進めるなら spec を作り直す
 
 範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa・rolled-back の拒否）だけを足す。合意ありの run の挙動は変えない
 想定する脅威: 事故（agent が範囲を広げる・保護 path に触れる・マージに進む）。敵対的な agent が state.json を書き換えて印を消すことは防がない
-やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、追っていないファイル・git が無視するファイル・途中の commit の判定
+やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、git が無視するファイル・途中の commit の判定
 """
 import argparse
 import os
@@ -59,15 +59,17 @@ def pathspecs(pats, fold=False):
 
 
 def hits(d, s):
-    """起点から、PR が持ち込む差（HEAD と index と作業ツリーの、追っているファイル）で触れた保護 path。
-    追っていないファイル・git が無視するファイル・途中の commit で触れて戻したものは数えない（限界）。照合は git がする。"""
+    """起点から、PR が持ち込む差（HEAD と index と作業ツリー）と追っていないファイルで触れた保護 path。
+    git が無視するファイル・途中の commit で触れて戻したものは数えない（限界）。照合は git がする。"""
     root = ap.repo_root(d)
     base = s.get("light_base") or EMPTY_TREE
     fold = subprocess.run(["git", "config", "--bool", "core.ignorecase"], cwd=root, capture_output=True, text=True).stdout.strip() == "true"
     own = Path(d).resolve().relative_to(Path(root).resolve()).as_posix()
     specs = pathspecs(patterns(root, base), fold) + [f":(exclude){own}"]
     # rename は両側の名前を出し（--no-renames）、非 ASCII の名前は引用しない（git_lines の -z と quotePath=false）
-    return sorted(set(ap.git_lines(root, "diff", "--name-only", "--no-renames", base, "--", *specs)))
+    # 追っていないファイルも、後で commit すれば PR に入るので数える（git が無視するものは --exclude-standard で外れる）
+    return sorted(set(ap.git_lines(root, "diff", "--name-only", "--no-renames", base, "--", *specs))
+                  | set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard", "--", *specs)))
 
 
 def errors(d, s):
