@@ -18,7 +18,6 @@
 import argparse
 import fnmatch
 import os
-import posixpath
 import subprocess
 import sys
 from pathlib import Path
@@ -64,27 +63,16 @@ def ignorecase(root):
     return r.stdout.strip() == "true"
 
 
-def own_adr(root, base, text):
-    """保護から外す spec の ADR。`docs/adr/` の下で、symlink でなく、起点に無い（この run で作った）ものだけ。"""
-    m = ap.ADR_LINE.search(text)
-    if not m:
-        return None
-    path = posixpath.normpath(m.group(1))
-    full = Path(root) / path
-    exact = {p.casefold() for p in DEFAULT_PROTECTED if "*" not in p}  # 規則ファイルの名前（docs/adr/CLAUDE.md など）は外さない
-    if not path.startswith("docs/adr/") or full.is_symlink() or posixpath.basename(path).casefold() in exact:
-        return None
-    new = subprocess.run(["git", "cat-file", "-e", f"{base}:{path}"], cwd=root, capture_output=True).returncode != 0
-    return path if new else None
-
-
 def commits_touched(root, base):
     """起点から HEAD までの各 commit（merge を含む）で触れた path。利用者の設定（署名の表示など）に左右されない plumbing で読む。"""
-    revs = subprocess.run(["git", "rev-list", "HEAD" if base == EMPTY_TREE else f"{base}..HEAD"], cwd=root, capture_output=True, text=True)
+    # merge は 1 番目の親とだけ比べる（統合先を取り込んだ merge で、分かれてからの統合先の変更を数えない）
+    revs = subprocess.run(["git", "rev-list", "--parents", "HEAD" if base == EMPTY_TREE else f"{base}..HEAD"], cwd=root,
+                          capture_output=True, text=True)
     if revs.returncode:
         raise RuntimeError(revs.stderr.strip() or "git rev-list が失敗した")
-    out = subprocess.run(["git", "-c", "core.quotePath=false", "diff-tree", "--stdin", "-r", "-m", "--root", "--no-commit-id",
-                          "--name-only", "--no-renames", "-z"], cwd=root, input=revs.stdout, capture_output=True, text=True)
+    pairs = "".join(" ".join(x.split()[:2]) + "\n" for x in revs.stdout.splitlines() if x.strip())
+    out = subprocess.run(["git", "-c", "core.quotePath=false", "diff-tree", "--stdin", "-r", "--root", "--no-commit-id",
+                          "--name-only", "--no-renames", "-z"], cwd=root, input=pairs, capture_output=True, text=True)
     if out.returncode:
         raise RuntimeError(out.stderr.strip() or "git diff-tree が失敗した")
     return {f for f in out.stdout.split("\0") if f}
@@ -97,7 +85,6 @@ def hits(d, s):
     base = s.get("light_base") or EMPTY_TREE
     pats = patterns(root, base, s.get("light_patterns") or ())
     skip = Path(d).resolve().relative_to(Path(root).resolve()).as_posix() + "/"
-    own = own_adr(root, base, (d / "spec.md").read_text(encoding="utf-8"))
     fold = ignorecase(root)
     # rename は両側の名前を出し（--no-renames）、非 ASCII の名前は引用しない（git_lines の -z と quotePath=false）
     diff = ("diff", "--name-only", "--no-renames")
@@ -106,7 +93,7 @@ def hits(d, s):
         files |= set(ap.git_lines(root, *diff, base, "HEAD"))
         files |= commits_touched(root, base)
     files |= set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard"))
-    return sorted(f for f in files if not f.startswith(skip) and f != own and protected(f, pats, fold))
+    return sorted(f for f in files if not f.startswith(skip) and protected(f, pats, fold))
 
 
 def errors(d, s):
