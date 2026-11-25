@@ -5,7 +5,6 @@
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 from test_autopilot import GOOD_SPEC, PLUGIN, existing_spec, init_spec, write_files, make_done, repo, run, state, user_says  # noqa: F401（repo は fixture）
@@ -261,20 +260,48 @@ def test_reverting_a_committed_protected_change_only_in_the_worktree_still_stops
 IGNORED = {".gitignore": ".claude/\n"}
 
 
-def test_untouched_ignored_protected_file_does_not_stop(repo):
+def test_ignored_protected_files_are_not_looked_at(repo):
+    """git が無視するファイルは PR に入らないので判定しない（限界。commands/autopilot.md の L の 5）。"""
     d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
+    (repo / ".claude" / "settings.local.json").write_text('{"x": 1}\n', encoding="utf-8")
     make_done(repo, d)
     r = check_pr(repo, d)
     assert r.returncode == 0, r.stdout + r.stderr
 
 
-def test_rewriting_an_ignored_protected_file_after_approval_stops(repo):
-    d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
-    time.sleep(0.05)
-    (repo / ".claude" / "settings.local.json").write_text('{"x": 1}\n', encoding="utf-8")
+def test_a_protected_change_left_only_in_head_stops(repo):
+    """commit した後に index と作業ツリーから消しても、HEAD に残るなら PR に入るので止める。"""
+    d = committed_light(repo)
     make_done(repo, d)
+    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    commit_all(repo, "rules")
+    subprocess.run(["git", "rm", "-q", "CLAUDE.md"], cwd=repo, check=True)
     r = check_pr(repo, d)
-    assert r.returncode != 0 and ".claude/settings.local.json" in r.stdout
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
+
+
+def test_a_protected_change_reverted_by_a_later_commit_stops(repo):
+    d = committed_light(repo)
+    make_done(repo, d)
+    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    commit_all(repo, "rules")
+    (repo / "CLAUDE.md").unlink()
+    commit_all(repo, "revert")
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
+
+
+def test_an_adr_line_pointing_at_a_protected_file_does_not_exclude_it(repo):
+    d = committed_light(repo, {"CLAUDE.md": "# rules\n"})
+    text = (d / "spec.md").read_text(encoding="utf-8").replace("docs/adr/2026-01-01-game.md", "CLAUDE.md")
+    (d / "spec.md").write_text(text, encoding="utf-8")
+    import json
+    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
+    (repo / "CLAUDE.md").write_text("# changed\n", encoding="utf-8")
+    hits = subprocess.run([sys.executable, "-c", "import sys, json; sys.path.insert(0, sys.argv[1]); import light;"
+                           "from pathlib import Path; print(light.hits(Path(sys.argv[2]), json.loads(sys.argv[3])))",
+                           str(PLUGIN / "scripts"), str(d), json.dumps(s)], cwd=repo, capture_output=True, text=True)
+    assert "CLAUDE.md" in hits.stdout, hits.stdout + hits.stderr
 
 
 def test_the_specs_own_adr_is_not_a_protected_path(repo):
