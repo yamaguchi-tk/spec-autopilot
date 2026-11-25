@@ -688,7 +688,8 @@ def cmd_dispatch(a):
         return 1
     base = head(autopilot.repo_root(d))
     s.setdefault("dispatches", []).append({"base": base, "tasks": a.task, "reqs": reqs, "agent": name, "at": time.time(),
-                                           "session": os.environ.get("CLAUDE_CODE_SESSION_ID")})
+                                           "session": os.environ.get("CLAUDE_CODE_SESSION_ID"),
+                                           **({"prototype": True} if s.get("phase") == "discovery" else {})})
     autopilot.save_state(d, s)
     print(f"dispatch: {', '.join(a.task)} を {(base or 'commit の無い repo')[:8]} から実装役に渡す。起動する agent:\n{name}")
     return 0
