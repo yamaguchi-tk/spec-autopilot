@@ -71,10 +71,23 @@ def own_adr(root, base, text):
         return None
     path = posixpath.normpath(m.group(1))
     full = Path(root) / path
-    if not path.startswith("docs/adr/") or full.is_symlink():
+    exact = {p.casefold() for p in DEFAULT_PROTECTED if "*" not in p}  # 規則ファイルの名前（docs/adr/CLAUDE.md など）は外さない
+    if not path.startswith("docs/adr/") or full.is_symlink() or posixpath.basename(path).casefold() in exact:
         return None
     new = subprocess.run(["git", "cat-file", "-e", f"{base}:{path}"], cwd=root, capture_output=True).returncode != 0
     return path if new else None
+
+
+def commits_touched(root, base):
+    """起点から HEAD までの各 commit（merge を含む）で触れた path。利用者の設定（署名の表示など）に左右されない plumbing で読む。"""
+    revs = subprocess.run(["git", "rev-list", "HEAD" if base == EMPTY_TREE else f"{base}..HEAD"], cwd=root, capture_output=True, text=True)
+    if revs.returncode:
+        raise RuntimeError(revs.stderr.strip() or "git rev-list が失敗した")
+    out = subprocess.run(["git", "-c", "core.quotePath=false", "diff-tree", "--stdin", "-r", "-m", "--root", "--no-commit-id",
+                          "--name-only", "--no-renames", "-z"], cwd=root, input=revs.stdout, capture_output=True, text=True)
+    if out.returncode:
+        raise RuntimeError(out.stderr.strip() or "git diff-tree が失敗した")
+    return {f for f in out.stdout.split("\0") if f}
 
 
 def hits(d, s):
@@ -91,7 +104,7 @@ def hits(d, s):
     files = set(ap.git_lines(root, *diff, base)) | set(ap.git_lines(root, *diff, "--cached", base))
     if subprocess.run(["git", "rev-parse", "--verify", "-q", "HEAD"], cwd=root, capture_output=True).returncode == 0:
         files |= set(ap.git_lines(root, *diff, base, "HEAD"))
-        files |= set(ap.git_lines(root, "log", "--format=", "--name-only", "--no-renames", "HEAD" if base == EMPTY_TREE else f"{base}..HEAD"))
+        files |= commits_touched(root, base)
     files |= set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard"))
     return sorted(f for f in files if not f.startswith(skip) and f != own and protected(f, pats, fold))
 
