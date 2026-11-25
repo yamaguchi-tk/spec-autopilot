@@ -379,3 +379,13 @@ def test_a_double_star_pattern_with_a_slash_protects_at_any_depth(repo):
     (repo / "services" / "a" / "migrations" / "001.sql").write_text("x\n", encoding="utf-8")
     r = check_pr(repo, d)
     assert r.returncode != 0 and "services/a/migrations/001.sql" in r.stdout
+
+
+def test_a_middle_double_star_also_matches_zero_directories(repo):
+    """gitignore と同じく、途中の `/**/` は 0 段のディレクトリにも当たる。"""
+    d = committed_light(repo, {".spec-autopilot/protected-paths": "config/**/secrets\n"})
+    make_done(repo, d)
+    (repo / "config" / "secrets").mkdir(parents=True)
+    (repo / "config" / "secrets" / "a.txt").write_text("x\n", encoding="utf-8")
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "config/secrets/a.txt" in r.stdout
