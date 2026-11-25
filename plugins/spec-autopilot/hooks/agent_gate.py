@@ -86,8 +86,9 @@ def problem(d, name):
         s = json.loads((d / "state.json").read_text(encoding="utf-8"))
     except Exception as e:
         return f"{d} の state.json が読めない（{type(e).__name__}）"
-    if not (s.get("phase") == "building" or (s.get("phase") == "discovery" and overnight.is_small(d))):
-        return f"{d} は building でない（{s.get('phase')}。discovery は大きさ S だけ）"
+    small, why = overnight.is_small(d) if s.get("phase") == "discovery" else (False, None)
+    if not (s.get("phase") == "building" or small):
+        return f"{d} は building でない（{s.get('phase')}。discovery は大きさ S だけ）" + (f"。{why}" if why else "")
     dispatches = s.get("dispatches") or []
     if not dispatches:
         return f"{d} に dispatch の記録が無い"

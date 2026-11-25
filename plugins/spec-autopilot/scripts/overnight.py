@@ -667,20 +667,21 @@ def first_attempt(run_id):
 
 
 def is_small(d):
-    """spec.md の「## 制約」の大きさの行が `- 大きさ: S` か（読めない・形が違う・無いなら False）。"""
+    """spec.md の「## 制約」の大きさの行が `- 大きさ: S` か。(真偽, 読めなかったときの理由か None)。読めない・形が違う・無いなら偽。"""
     try:
         text = (Path(d) / "spec.md").read_text(encoding="utf-8")
-        return autopilot.stated_size(autopilot.COMMENT_BLOCK.sub("", autopilot.section(text, "制約") or ""))[0] == "S"
-    except Exception:
-        return False
+        return autopilot.stated_size(autopilot.COMMENT_BLOCK.sub("", autopilot.section(text, "制約") or ""))[0] == "S", None
+    except Exception as e:
+        return False, f"spec.md が読めない（{type(e).__name__}）"
 
 
 def cmd_dispatch(a):
     """実装役に渡す時点の HEAD を記録する（handoff はここから commit が増えたかを見る）。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
-    if not (s.get("phase") == "building" or (s.get("phase") == "discovery" and is_small(d))):
-        autopilot.refuse(s, "dispatch は自走中（building）か、承認の前の大きさ S の試作だけ受ける")
+    small, why = is_small(d) if s.get("phase") == "discovery" else (False, None)
+    if not (s.get("phase") == "building" or small):
+        autopilot.refuse(s, "dispatch は自走中（building）か、承認の前の大きさ S の試作だけ受ける" + (f"。{why}" if why else ""))
     name, reqs, stop = impl_name(d, s, a.task)
     if stop:
         print(stop)
