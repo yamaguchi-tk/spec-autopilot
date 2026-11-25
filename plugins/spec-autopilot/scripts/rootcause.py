@@ -12,7 +12,7 @@ REJECT = re.compile(rf"^- 退けた:[ \t]*({STAGES})（.+）[ \t]*$", re.M)
 REQ_REJECT = re.compile(rf"^- 要件の文で退けた:[ \t]*({STAGES})（(R\d+) の「(.+)」）[ \t]*$", re.M)
 
 
-def check(text, adr_path, d):
+def check(text, adr_path, d, reqs=None):
     """(足りない行の一覧, park のコマンドの一覧)。"""
     fixes = FIX_LINE.findall(text)
     if len(fixes) != 1 or fixes[0] not in FIX_ORDER:
@@ -23,15 +23,21 @@ def check(text, adr_path, d):
     missing = [f"`- 退けた: {st}（<理由>）` か `- 要件の文で退けた: {st}（R<n> の「<要件の語>」）` の行" for st in FIX_ORDER[:chosen]
                if st not in done]
     overnight = shlex.quote(str(Path(__file__).with_name("overnight.py")))
+    by_req = {}  # park は (kind, op, req) が同じものを重複として捨てるので、要件ごとに 1 本にして理由を全部入れる
+    for st, req, word in req_rows:
+        by_req.setdefault(req, []).append(f"{st}を退けた。要件の語「{word}」")
     cmds = [" ".join(["python3", overnight, "park", shlex.quote(str(d)), "--kind", "other", "--op", shlex.quote("要件の文を直す"),
-                      "--reason", shlex.quote(f"{st}を退けた。要件の語「{word}」 ADR: {adr_path}"), "--req", req])
-            for st, req, word in req_rows]
+                      "--reason", shlex.quote(" / ".join(rs) + f" ADR: {adr_path}"), "--req", req])
+            for req, rs in by_req.items()]
     return missing, cmds
 
 
-def refuse_if_unfit(text, adr_path, d):
+def refuse_if_unfit(text, adr_path, d, reqs=None):
     """足りなければ、足りない行を出して終える。要件の文で退けた行があれば、park のコマンドを出して終える。"""
     missing, cmds = check(text, adr_path, d)
+    unknown = sorted({r[1] for r in REQ_REJECT.findall(text)} - set(reqs)) if reqs is not None else []
+    if unknown:
+        sys.exit(f"rework: {', '.join(unknown)} は spec.md の要件に無い（`- 要件の文で退けた:` の R<n> を直す）")
     if missing:
         sys.exit("rework: ADR に足りない行がある。\n" + "\n".join(f"- {m}" for m in missing))
     if cmds:

@@ -1,4 +1,5 @@
 """作り直しの ADR の「直し方」の行を、rework の入口から確かめる（R1・R2）。"""
+import json
 import shlex
 import subprocess
 import sys
@@ -83,6 +84,29 @@ def test_requirement_sentence_rejection_is_refused_with_a_pasteable_park_command
     assert "要らなくする" in reason and word in reason and p in reason
 
 
+def test_two_requirement_sentence_rejections_on_one_req_both_land_in_parked(repo):
+    d = ready(repo)
+    w1 = "a \"b\" $(touch PWNED) c'd"
+    p = adr(repo, "two.md", "- 直し方: 局所の継ぎ足し", f"- 要件の文で退けた: 要らなくする（R1 の「{w1}」）",
+            "- 要件の文で退けた: 入力の約束を変える（R1 の「盤面」）", "- 退けた: 設計を変える（y）")
+    r = rework(repo, d, p)
+    cmds = [l for l in r.stdout.splitlines() + r.stderr.splitlines() if "overnight.py" in l and " park " in l]
+    for c in cmds:
+        subprocess.run(["sh", "-c", c], cwd=repo, capture_output=True, text=True)
+    assert not (repo / "PWNED").exists() and not (d / "PWNED").exists()
+    parked = json.dumps(state(d).get("parked"), ensure_ascii=False)
+    assert "要らなくする" in parked and "入力の約束を変える" in parked and "盤面" in parked and "PWNED" in parked
+
+
+def test_requirement_sentence_rejection_of_unknown_req_is_refused_at_once(repo):
+    d = ready(repo)
+    p = adr(repo, "unk.md", "- 直し方: 設計を変える", "- 要件の文で退けた: 要らなくする（R9 の「x」）",
+            "- 退けた: 入力の約束を変える（y）")
+    r = rework(repo, d, p)
+    assert r.returncode != 0 and "R9 は spec.md の要件に無い" in r.stdout + r.stderr
+    assert " park " not in r.stdout + r.stderr
+
+
 REFS = Path(__file__).resolve().parents[1] / "references"
 
 
@@ -109,7 +133,6 @@ def test_documented_line_examples_match_the_shapes_rootcause_reads():
         text = (REFS / name).read_text(encoding="utf-8")
         text = _section2(text) if name == "dead-end.md" else text
         ex = "\n".join(l.strip().strip("`") for l in text.splitlines() if l.strip().strip("`").startswith("- ") and "段" not in l[:3])
-        ex = "\n".join(l for l in ex.splitlines() if "<" not in l or True)
         fixed = (ex.replace("<段>", "設計を変える").replace("<理由>", "理由").replace("R<n>", "R1")
                  .replace("<要件の語>", "語"))
         assert rootcause.FIX_LINE.search(fixed), name
