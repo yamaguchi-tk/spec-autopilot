@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from test_autopilot import GOOD_SPEC, PLUGIN, init_spec, make_done, repo, run, state, user_says  # noqa: F401（repo は fixture）
+from test_autopilot import GOOD_SPEC, PLUGIN, existing_spec, init_spec, write_files, make_done, repo, run, state, user_says  # noqa: F401（repo は fixture）
 
 LIGHT = PLUGIN / "scripts" / "light.py"
 NIGHT = PLUGIN / "scripts" / "overnight.py"
@@ -93,12 +93,17 @@ def test_protected_paths_do_not_stop_an_agreed_run(repo):
     assert r.returncode == 0, r.stdout + r.stderr
 
 
-def test_human_approval_after_a_light_run_clears_the_light_mark(repo):
+def test_human_approval_after_a_light_block_keeps_the_light_mark(repo):
+    """block の後の返事は spec の全体を見たものではないので、印は外さない（合意ありにするなら spec を作り直す）。"""
     d = light_approved(repo)
     assert run(repo, "block", str(d), "--req", "R1", "--reason", "保護 path", "--evidence", "CLAUDE.md").returncode == 0
     user_says(repo)
     assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
-    assert not state(d).get("light")
+    assert state(d).get("light") is True
+    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
 
 def test_light_run_refuses_merge_and_qa_records(repo):
@@ -126,13 +131,10 @@ def commit_all(repo, msg="c"):
                     "commit", "-qm", msg], cwd=repo, check=True)
 
 
-def committed_light(repo, files=None):
-    """spec を作ってから（新しく作る repo として）ファイルを commit し、承認の時点に HEAD がある形にする。"""
-    d = init_spec(repo)
-    for name, body in {"src.js": "// x\n", **(files or {})}.items():
-        (repo / name).parent.mkdir(parents=True, exist_ok=True)
-        (repo / name).write_text(body, encoding="utf-8")
-    commit_all(repo, "init")
+def committed_light(repo, files=None, after_init=None):
+    """既存の repo（files を init の前に commit）で spec を作り、S の試作（src/board.js）と after_init を書いてから軽量フローで承認する。"""
+    d = existing_spec(repo, files=files)
+    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", **(after_init or {})})
     r = light(repo, "approve", str(d), "--source", "Issue #1 の受入条件")
     assert r.returncode == 0, r.stdout + r.stderr
     return d
@@ -170,7 +172,7 @@ def test_loosening_the_config_after_approval_does_not_unprotect(repo):
 
 
 def test_gitignore_style_directory_patterns_protect(repo):
-    for i, pat in enumerate(("secrets/", "/secrets", "config/prod")):
+    for i, pat in enumerate(("secrets/", "/secrets", "config/prod", "**/secrets")):
         sub = repo / f"r{i}"
         sub.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=sub, check=True)
@@ -180,7 +182,7 @@ def test_gitignore_style_directory_patterns_protect(repo):
         target.write_text("x\n", encoding="utf-8")
         make_done(sub, d)
         r = check_pr(sub, d)
-        assert r.returncode != 0, pat
+        assert r.returncode != 0 and target.relative_to(sub).as_posix() in r.stdout, pat
 
 
 def test_rework_after_done_stays_light(repo):
@@ -190,6 +192,10 @@ def test_rework_after_done_stays_light(repo):
     user_says(repo)
     assert run(repo, "approve", str(d), "--by", "直して").returncode == 0
     assert state(d).get("light") is True
+    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
 
 def test_light_approve_refuses_a_dependent_spec(repo):
@@ -220,3 +226,45 @@ def test_light_run_refuses_rolled_back(repo):
     d = light_approved(repo)
     r = night(repo, "rolled-back", str(d), "--evidence", str(d / "spec.md"), "--reason", "x")
     assert r.returncode != 0 and "PR 作成まで" in r.stdout + r.stderr
+
+
+# --- 2 巡目のレビューの指摘 ---
+
+def test_a_protected_file_committed_before_approval_stops(repo):
+    """init から approve までの commit（S の試作）も判定に入る。"""
+    d = committed_light(repo, after_init={"docs/guardrails.md": "# 境界\n"})
+    commit_all(repo, "prototype")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "docs/guardrails.md" in r.stdout
+
+
+IGNORED = {".gitignore": ".claude/\n"}
+
+
+def test_untouched_preexisting_ignored_protected_file_does_not_stop(repo):
+    d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_changing_an_ignored_protected_file_stops(repo):
+    d = committed_light(repo, IGNORED, after_init={".claude/settings.local.json": "{}\n"})
+    (repo / ".claude" / "settings.local.json").write_text('{"x": 1}\n', encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and ".claude/settings.local.json" in r.stdout
+
+
+def test_loosening_an_uncommitted_config_does_not_unprotect(repo):
+    d = init_spec(repo)
+    (repo / ".spec-autopilot").mkdir()
+    (repo / ".spec-autopilot" / "protected-paths").write_text("secrets\n", encoding="utf-8")
+    assert light(repo, "approve", str(d), "--source", "x").returncode == 0
+    (repo / ".spec-autopilot" / "protected-paths").unlink()
+    (repo / "secrets").mkdir()
+    (repo / "secrets" / "a.txt").write_text("x\n", encoding="utf-8")
+    make_done(repo, d)
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "secrets/a.txt" in r.stdout

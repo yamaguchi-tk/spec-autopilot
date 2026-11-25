@@ -27,9 +27,9 @@ def test_done_appends_one_row_with_all_keys(repo):
     make_done(repo, d)
     assert run(repo, "done", str(d)).returncode == 0
     (row,) = rows()
-    assert set(row) == {"kind", "at", "spec", "repo", "active_min", "total_min", "size", "blocks", "rework_of", "prs"}
+    assert set(row) == {"kind", "at", "spec", "repo", "active_min", "total_min", "size", "blocks", "rework_of", "prs", "light"}
     assert row["kind"] == "done" and row["spec"] == d.name and row["repo"] == str(repo.resolve())
-    assert row["size"] == "S" and row["blocks"] == [] and row["rework_of"] is None and row["prs"] == []
+    assert row["size"] == "S" and row["blocks"] == [] and row["rework_of"] is None and row["prs"] == [] and row["light"] is False
 
 
 def test_done_on_a_done_spec_adds_no_row(repo):
