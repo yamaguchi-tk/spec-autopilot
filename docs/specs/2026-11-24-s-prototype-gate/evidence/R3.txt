@@ -1,0 +1,8 @@
+- commit: 408afe7c4b400526715f483e019470a172eb20bc
+
+$ python3 -m pytest -v -p no:cacheprovider plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_allows_the_implementer_dispatched_in_discovery
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_allows_the_implementer_dispatched_in_discovery PASSED
+
+$ python3 .autopilot-qa/check.py
+R3 pass
+（.autopilot-qa/qa_checks.py::test_R3_gate_allows_after_dispatch: dispatch の後に spec を prompt に書いた Agent の PreToolUse の payload を agent_gate.py の stdin に渡す → 出力が空で終了コード 0）

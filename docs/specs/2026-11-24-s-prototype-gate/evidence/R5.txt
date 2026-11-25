@@ -1,0 +1,12 @@
+- commit: 85678cb0b02478a90f38455b26c33124c53f4945
+
+$ python3 -m pytest -v -p no:cacheprovider plugins/spec-autopilot/tests/test_prototype_gate.py::test_handoff_closes_the_prototype_dispatch_after_approval plugins/spec-autopilot/tests/test_prototype_gate.py::test_handoff_closes_the_prototype_dispatch_after_a_queued_approval_starts plugins/spec-autopilot/tests/test_prototype_gate.py::test_queued_approval_blocked_at_start_keeps_the_prototype_dispatch_after_the_next_approve plugins/spec-autopilot/tests/test_prototype_gate.py::test_requeued_approval_after_a_start_block_keeps_the_prototype_dispatch_and_handoff_closes_it plugins/spec-autopilot/tests/test_prototype_gate.py::test_reapproval_after_a_building_round_moves_the_prototype_dispatch_and_handoff_to_history
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_handoff_closes_the_prototype_dispatch_after_approval PASSED [ 12%]
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_handoff_closes_the_prototype_dispatch_after_a_queued_approval_starts PASSED [ 25%]
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_queued_approval_blocked_at_start_keeps_the_prototype_dispatch_after_the_next_approve PASSED [ 37%]
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_requeued_approval_after_a_start_block_keeps_the_prototype_dispatch_and_handoff_closes_it PASSED [ 50%]
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_reapproval_after_a_building_round_moves_the_prototype_dispatch_and_handoff_to_history[done-False] PASSED [ 62%]
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_reapproval_after_a_building_round_moves_the_prototype_dispatch_and_handoff_to_history[done-True] PASSED [ 75%]
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_reapproval_after_a_building_round_moves_the_prototype_dispatch_and_handoff_to_history[blocked-False] PASSED [ 87%]
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_reapproval_after_a_building_round_moves_the_prototype_dispatch_and_handoff_to_history[blocked-True] PASSED [100%]
+============================== 8 passed in 14.17s ==============================

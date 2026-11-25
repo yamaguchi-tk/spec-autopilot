@@ -1,0 +1,11 @@
+- commit: 408afe7c4b400526715f483e019470a172eb20bc
+
+$ python3 -m pytest -v -p no:cacheprovider plugins/spec-autopilot/tests/test_prototype_gate.py::test_dispatch_in_discovery_accepts_a_small_spec_and_prints_the_implementer
+plugins/spec-autopilot/tests/test_prototype_gate.py::test_dispatch_in_discovery_accepts_a_small_spec_and_prints_the_implementer PASSED
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+（.autopilot-qa/qa_checks.py::test_R1_dispatch_small_discovery: 一時の repo で S の spec を init し、tasks.md に T1 を書いて CLI の dispatch を打つ → 終了コード 0、最後の行 autopilot-implementer、dispatches 1 件）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_agent_gate.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_prototype_gate.py -q
+580 passed in 1506.50s (0:25:06)

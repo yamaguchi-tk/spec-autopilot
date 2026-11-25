@@ -1,0 +1,31 @@
+- commit: 408afe7c4b400526715f483e019470a172eb20bc
+
+$ python3 -m pytest -v -p no:cacheprovider plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_denies_in_discovery_when_the_size_is_not_small_even_with_a_dispatch_record plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_denies_in_discovery_for_a_small_spec_without_a_dispatch plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_denies_in_discovery_an_implementer_of_another_rung plugins/spec-autopilot/tests/test_agent_gate.py::test_gate_denies_an_implementer_when_no_dispatch_was_made plugins/spec-autopilot/tests/test_agent_gate.py::test_gate_denies_after_the_dispatch_was_closed_by_a_handoff plugins/spec-autopilot/tests/test_agent_gate.py::test_gate_denies_an_implementer_of_another_rung
+test_gate_denies_in_discovery_when_the_size_is_not_small_even_with_a_dispatch_record[- 大きさ: M] PASSED
+test_gate_denies_in_discovery_when_the_size_is_not_small_even_with_a_dispatch_record[- 大きさ: L] PASSED
+test_gate_denies_in_discovery_when_the_size_is_not_small_even_with_a_dispatch_record[None] PASSED
+test_gate_denies_in_discovery_for_a_small_spec_without_a_dispatch PASSED
+test_gate_denies_in_discovery_an_implementer_of_another_rung PASSED
+test_agent_gate.py::test_gate_denies_an_implementer_when_no_dispatch_was_made PASSED
+test_agent_gate.py::test_gate_denies_after_the_dispatch_was_closed_by_a_handoff PASSED
+test_agent_gate.py::test_gate_denies_an_implementer_of_another_rung PASSED
+
+$ python3 .autopilot-qa/check.py
+R4 pass
+（queued・wait・done・blocked の phase、大きさの行が 2 本の S を deny、Explore の起動は 3 秒以内に素通し）
+
+$ bash .autopilot-qa/mut.sh mut-R4-3 408afe7c4b400526715f483e019470a172eb20bc plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_denies_in_discovery_when_the_size_is_not_small_even_with_a_dispatch_record
+PRE: 変異の前に通った
+E       assert (None is not None)
+plugins/spec-autopilot/tests/test_prototype_gate.py:69: AssertionError
+3 failed in 1.55s
+RESTORE: 戻した
+（変異: agent_gate.problem の `or small` を `or s.get("phase") == "discovery"` にする。assert で落ちた）
+
+$ bash .autopilot-qa/mut.sh mut-R4-4 408afe7c4b400526715f483e019470a172eb20bc plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_denies_in_discovery_an_implementer_of_another_rung
+PRE: 変異の前に通った
+E       assert (None is not None)
+plugins/spec-autopilot/tests/test_prototype_gate.py:81: AssertionError
+1 failed in 1.20s
+RESTORE: 戻した
+（変異: agent_gate.problem の別の段の名前の照合を `if False:` にする。assert で落ちた）
