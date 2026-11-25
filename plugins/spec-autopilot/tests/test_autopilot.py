@@ -1393,7 +1393,7 @@ def three_fails(repo, d, req="R1"):
 
 
 def new_adr(repo, name):
-    (repo / "docs" / "adr" / name).write_text("# ADR: 作り直し\n", encoding="utf-8")
+    (repo / "docs" / "adr" / name).write_text("# ADR: 作り直し\n\n- 直し方: 要らなくする\n", encoding="utf-8")
     return f"docs/adr/{name}"
 
 
