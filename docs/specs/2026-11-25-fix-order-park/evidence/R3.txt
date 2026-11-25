@@ -1,0 +1,17 @@
+- commit: d2b2aef952333ca31d6d341e7769427eaeed5f5a
+（<worktree> は worktree の絶対パスを伏せたもの。一時の repo は <worktree>/.autopilot-qa/work/r2・r3b・r3c）
+$ python3 .autopilot-qa/check.py   （R3 の部分。R2 の park のコマンドで R1・R2 を積んだ後）
+  R3 check after park (R1・R2 を積んだ):
+    check: OK
+  （続けて review --high R1 の後の check に「最後のレビューに high」が出ることを確かめ、review --high none を記録）
+  R3 review none exit=0; check:
+    ERROR: R1 の evidence/R1.txt の頭の `- commit:` が、R1 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+    （「最後のレビューに high」と「R1 は失敗が」は出ない。残る 1 行は一時の repo の証拠の古さで、R3 とは別）
+  R3 R1 を積み R2 は積まない check:
+    ERROR: R2 は失敗が 3 巡続いた。作り方を変える（references/dead-end.md の 2。新しい ADR を書き、autopilot.py rework で記録する）
+  （作り直しを 2 回した R1 が 3 巡続いた repo で、check に「autopilot.py block」の要求が出ることを確かめた後）
+  R3 3 回目の rework（要件の文で退けた）: exit=1 R1 は作り直しを 2 回した。autopilot.py block <dir> --req R1 で人に戻す
+  $ python3 <worktree>/plugins/spec-autopilot/scripts/overnight.py park <dir> --kind other --op 'R1 の要件の文を直す' --reason x --req R1
+  R3 block の要求のあと積んだ check:
+    check: OK
+R3 pass  (積んだ要件に作り直し・block を求めず、none のレビューの後は high のエラーも無い。積まない R2 には求める)
