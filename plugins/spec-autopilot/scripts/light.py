@@ -7,17 +7,18 @@
 - 自走の上限は PR 作成まで。`- 範囲:` が「PR まで」でなければ approve しない。マージ・デプロイ・QA の書き込み・ロールバックの記録
   （overnight.py ready・merged・qa・rolled-back）を受けない。範囲をマージ以降に広げる根拠は人が承認した spec なので、合意を省いた run には及ばない
 - 止まる条件は、保護された path（下の既定と、repo の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の commit から
-  HEAD・index・作業ツリーまでの変更ファイルと追っていないファイル、承認より後に書き換えた git が無視する保護ファイルの path で
-  機械的に決める。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
+  HEAD・index・作業ツリーまでの変更ファイル、途中の commit で触れたファイル、追っていないファイルの path で機械的に決める。
+  git が無視するファイルは PR に入らないので見ない（手元の設定の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
 - 印は block・done の後の approve でも外さない（その返事は spec の全体を見たものではない）。合意ありで進めるなら spec を作り直す
 
 範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa・rolled-back の拒否）だけを足す。合意ありの run の挙動は変えない
 想定する脅威: 事故（agent が範囲を広げる・保護 path に触れる・マージに進む）。敵対的な agent が state.json を書き換えて印を消すことは防がない
-やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、mtime を戻した書き換えの検出
+やらないこと: 影響範囲の宣言と差分の突き合わせ、hook での編集・`gh pr merge` の拒否、利用する repo の設定の形の検査、git が無視するファイル（PR に入らない手元のファイル）の判定
 """
 import argparse
 import fnmatch
 import os
+import posixpath
 import subprocess
 import sys
 from pathlib import Path
@@ -27,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import autopilot as ap  # noqa: E402
 
 # `/` を含まない pattern は path のどの要素にも当て、含む pattern は path かその上のディレクトリに当てる（fnmatch の * は / にも当たる）
-DEFAULT_PROTECTED = ("*.tf", "*.tf.json", "*.tfvars", "*.tfvars.json", "*.tofu", "*.tofu.json", "*.hcl", "terraform", "infra",
+DEFAULT_PROTECTED = ("*.tf", "*.tf.json", "*.tfvars", "*.tfvars.json", "*.tfstate", "*.tfstate.*", ".terraform", "*.tofu", "*.tofu.json", "*.hcl", "terraform", "infra",
                      "*guardrails*", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", "GEMINI.md", ".claude", ".mcp.json", ".github",
                      ".spec-autopilot")
 CONFIG = Path(".spec-autopilot") / "protected-paths"
@@ -63,38 +64,36 @@ def ignorecase(root):
     return r.stdout.strip() == "true"
 
 
-def pathspecs(pats):
-    """pattern を、ls-files で無視されたファイルを絞る pathspec にする（node_modules などを全部は数えない）。"""
-    out = []
-    for p in pats:
-        g = p if "/" in p else f"**/{p}"
-        out += [f":(glob){g}", f":(glob){g}/**"]
-    return out
+def own_adr(root, base, text):
+    """保護から外す spec の ADR。`docs/adr/` の下で、symlink でなく、起点に無い（この run で作った）ものだけ。"""
+    m = ap.ADR_LINE.search(text)
+    if not m:
+        return None
+    path = posixpath.normpath(m.group(1))
+    full = Path(root) / path
+    if not path.startswith("docs/adr/") or full.is_symlink():
+        return None
+    new = subprocess.run(["git", "cat-file", "-e", f"{base}:{path}"], cwd=root, capture_output=True).returncode != 0
+    return path if new else None
 
 
 def hits(d, s):
-    """起点から触れた保護 path。追っているものは起点と HEAD・index・作業ツリーの差で、追っていない（無視されていない）ものは
-    作った時期によらず、git が無視するものは承認より後に書き換えたもの（mtime）だけを数える（中身の指紋は残さない）。"""
+    """起点から触れた保護 path。追っているものは起点と HEAD・index・作業ツリーの差と、途中の commit で触れたもの、
+    追っていない（無視されていない）ものは作った時期によらず数える。git が無視するファイルは PR に入らないので見ない（限界）。"""
     root = ap.repo_root(d)
     base = s.get("light_base") or EMPTY_TREE
     pats = patterns(root, base, s.get("light_patterns") or ())
-    rel = lambda x: Path(x).resolve().relative_to(Path(root).resolve()).as_posix()  # noqa: E731
-    skip = rel(d) + "/"
-    adr = ap.ADR_LINE.search((d / "spec.md").read_text(encoding="utf-8"))
-    own = {(Path(root) / adr.group(1)).resolve().relative_to(Path(root).resolve()).as_posix()} if adr else set()
+    skip = Path(d).resolve().relative_to(Path(root).resolve()).as_posix() + "/"
+    own = own_adr(root, base, (d / "spec.md").read_text(encoding="utf-8"))
     fold = ignorecase(root)
     # rename は両側の名前を出し（--no-renames）、非 ASCII の名前は引用しない（git_lines の -z と quotePath=false）
     diff = ("diff", "--name-only", "--no-renames")
     files = set(ap.git_lines(root, *diff, base)) | set(ap.git_lines(root, *diff, "--cached", base))
     if subprocess.run(["git", "rev-parse", "--verify", "-q", "HEAD"], cwd=root, capture_output=True).returncode == 0:
         files |= set(ap.git_lines(root, *diff, base, "HEAD"))
+        files |= set(ap.git_lines(root, "log", "--format=", "--name-only", "--no-renames", "HEAD" if base == EMPTY_TREE else f"{base}..HEAD"))
     files |= set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard"))
-    since = s.get("approved_at")
-    if since is not None:
-        for f in ap.git_lines(root, "ls-files", "--others", "--ignored", "--exclude-standard", "--", *pathspecs(pats)):
-            if os.lstat(Path(root) / f).st_mtime > float(since):
-                files.add(f)
-    return sorted(f for f in files if not f.startswith(skip) and f not in own and protected(f, pats, fold))
+    return sorted(f for f in files if not f.startswith(skip) and f != own and protected(f, pats, fold))
 
 
 def errors(d, s):
