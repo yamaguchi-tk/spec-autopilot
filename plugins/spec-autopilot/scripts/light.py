@@ -65,7 +65,7 @@ def ignorecase(root):
 
 def commits_touched(root, base):
     """起点から HEAD までの各 commit（merge を含む）で触れた path。利用者の設定（署名の表示など）に左右されない plumbing で読む。"""
-    # merge は 1 番目の親とだけ比べる（統合先を取り込んだ merge で、分かれてからの統合先の変更を数えない）
+    # merge は 1 番目の親とだけ比べる（2 番目の親の線の commit は rev-list に別に入る）。統合先を取り込むと、その変更も数える（限界）
     revs = subprocess.run(["git", "rev-list", "--parents", "HEAD" if base == EMPTY_TREE else f"{base}..HEAD"], cwd=root,
                           capture_output=True, text=True)
     if revs.returncode:
@@ -93,7 +93,8 @@ def hits(d, s):
         files |= set(ap.git_lines(root, *diff, base, "HEAD"))
         files |= commits_touched(root, base)
     files |= set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard"))
-    return sorted(f for f in files if not f.startswith(skip) and protected(f, pats, fold))
+    # spec 自身の置き場は、置き場の名前（slug）では当てず、置き場より下の部分だけに当てる（置き場の下の CLAUDE.md などは止める）
+    return sorted(f for f in files if protected(f[len(skip):] if f.startswith(skip) else f, pats, fold))
 
 
 def errors(d, s):

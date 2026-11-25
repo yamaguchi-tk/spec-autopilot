@@ -344,6 +344,7 @@ def test_a_protected_change_only_inside_merge_commits_stops(repo):
     r = check_pr(repo, d)
     assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
+
 def test_an_adr_matching_a_protected_pattern_is_counted(repo):
     """ADR は保護から除かない。slug が *guardrails* に当たる spec は、その ADR で approve が断る（止める側）。"""
     d = existing_spec(repo, files={"docs/adr/README.md": "# ADR\n"})
@@ -351,7 +352,8 @@ def test_an_adr_matching_a_protected_pattern_is_counted(repo):
     write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", adr: "# ADR\n"})
     (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8").replace("docs/adr/2026-01-01-game.md", adr), encoding="utf-8")
     r = light(repo, "approve", str(d), "--source", "x")
-    assert r.returncode != 0 and adr in r.stdout + r.stderr
+    out = r.stdout + r.stderr
+    assert r.returncode != 0 and adr in out and "保護された path に承認の前から当たっている" in out
 
 
 def test_an_untracked_tfstate_stops(repo):
@@ -360,3 +362,11 @@ def test_an_untracked_tfstate_stops(repo):
     (repo / "terraform.tfstate").write_text("{}\n", encoding="utf-8")
     r = check_pr(repo, d)
     assert r.returncode != 0 and "terraform.tfstate" in r.stdout
+
+
+def test_a_rule_file_inside_the_spec_directory_stops(repo):
+    d = committed_light(repo, {"docs/specs/README.md": "# specs\n"})  # spec を commit する repo（init が置き場を無視にしない）
+    make_done(repo, d)
+    (d / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
