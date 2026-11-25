@@ -1,0 +1,20 @@
+{
+  "phase": "building",
+  "slug": "implementer-default-high",
+  "created_at": 1795616925.619315,
+  "existing": true,
+  "start": "1e31f5874cf2c73b364e899f36e63496dd4b0eb2",
+  "last_active_at": 1795617258.533003,
+  "approved_at": 1795617258.531918,
+  "approved_by": "人が OK と返した（推奨のまま承認）",
+  "spec_sha256": "15d988f0daf5abad0be2e31426c631cb5394d7d9dfe22b2e37384daeb7df356f",
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
