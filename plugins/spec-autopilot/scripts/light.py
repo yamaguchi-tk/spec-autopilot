@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import autopilot as ap  # noqa: E402
 
-# `/` を含まない pattern は path のどの要素にも当て、含む pattern は path かその上のディレクトリに当てる（fnmatch の * は / にも当たる）
+# pattern の当て方は protected() の docstring を見る（fnmatch の * は / にも当たる）
 DEFAULT_PROTECTED = ("*.tf", "*.tf.json", "*.tfvars", "*.tfvars.json", "*.tfstate", "*.tfstate.*", ".terraform", "*.tofu", "*.tofu.json", "*.hcl", "terraform", "infra",
                      "*guardrails*", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", "GEMINI.md", ".claude", ".mcp.json", ".github",
                      ".spec-autopilot")
@@ -51,6 +51,7 @@ def patterns(root, base, recorded=()):
 def protected(path, pats, fold=False):
     """`/` を含まない pattern は path のどの要素にも、含む pattern は path かその前置（ディレクトリ）のどれかに当てる。
     先頭が `**/` の pattern は、残りを path のどの深さから始まる部分（`a/b`・`x/a/b` の `a/b` など）にも当てる。
+    途中の `/**/` は 0 段以上のディレクトリに当てる（`a/**/b` は `a/b` にも `a/x/y/b` にも当たる）。
     fold は大文字と小文字を区別しない repo（core.ignorecase）で、両方を casefold して比べる。"""
     if fold:
         path, pats = path.casefold(), [p.casefold() for p in pats]
@@ -59,6 +60,9 @@ def protected(path, pats, fold=False):
     spans = ["/".join(parts[i:j]) for i in range(len(parts)) for j in range(i + 1, len(parts) + 1)]
 
     def hit(p):
+        if "/**/" in p:  # gitignore と同じく 0 段以上（fnmatch の * は / も越えるので 1 段以上は /*/）
+            head, tail = p.split("/**/", 1)
+            return hit(f"{head}/{tail}") or hit(f"{head}/*/{tail}")
         if p.startswith("**/"):
             return any(fnmatch.fnmatchcase(x, p[3:]) for x in spans)
         return any(fnmatch.fnmatchcase(x, p) for x in (prefixes if "/" in p else parts))
