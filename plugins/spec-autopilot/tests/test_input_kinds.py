@@ -176,12 +176,33 @@ def test_handoff_takes_a_row_whose_cell_has_an_escaped_pipe(repo):
     assert handoff(repo, d).returncode == 0
 
 
-@pytest.mark.parametrize("text", [GOOD.replace("|---|---|---|---|---|\n", "|---|---|---|---|---|\n\n注: 追記\n"),
-                                  GOOD.replace("| 入力の種類 |", "| 種類 |"),
-                                  GOOD + "\n補足の文\n| 別 | x | 通る | fail | - |\n"])
-def test_check_names_a_fail_row_or_a_broken_table_even_with_a_sentence_between(repo, text):
-    d = after_high(repo, text)
-    assert "R1" in (run(repo, "check", str(d)).stdout)
+TABLE_FAIL = "R1 の入力の表に今の結果が fail の行が残っている"
+BROKEN = "R1 の入力の表が読めない"
+
+
+@pytest.mark.parametrize("text, want", [
+    (GOOD.replace("|---|---|---|---|---|\n", "|---|---|---|---|---|\n\n注: 追記\n"), [TABLE_FAIL, "絶対パス"]),
+    (GOOD.replace("| 入力の種類 |", "| 種類 |"), [BROKEN]),
+    (GOOD.replace("fail", "pass") + "\n補足の文\n| 別 | x | 通る | fail | - |\n", [TABLE_FAIL, "| 別 |"]),
+])
+def test_check_names_a_fail_row_or_a_broken_table_even_with_a_sentence_between(repo, text, want):
+    out = run(repo, "check", str(after_high(repo, text))).stdout
+    for w in [*want, "評価役を回し直"]:
+        assert w in out, out
+    if want != [BROKEN]:
+        assert BROKEN not in out, out
+    if "| 別 |" not in want:
+        assert "| 別 |" not in out, out
+
+
+@pytest.mark.parametrize("after", ["\n## 補足\n\n| 項目 | 値 |\n|---|---|\n| a | b |\n",
+                                   "\n| 項目 | 値 |\n|:--|--:|\n| a | b |\n| c | d |\n",
+                                   "\n## 補足\n\n文\n| 項目 | 備考 | 値 | 数 | 先 |\n|---|---|---|---|---|\n| a | b | c | d | e |\n"])
+def test_a_second_table_after_the_kinds_table_is_not_read_as_kind_rows(repo, after):
+    d = after_high(repo, GOOD + after)
+    assert dispatch(repo, d).returncode == 0
+    out = run(repo, "check", str(d)).stdout
+    assert BROKEN not in out and TABLE_FAIL in out and "絶対パス" in out and "項目" not in out, out
 
 
 def test_dispatch_with_a_none_file_does_not_ask_for_tests(repo):
