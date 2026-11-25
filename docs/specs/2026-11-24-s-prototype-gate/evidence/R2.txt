@@ -1,0 +1,21 @@
+- commit: 408afe7c4b400526715f483e019470a172eb20bc
+
+$ python3 -m pytest -v -p no:cacheprovider plugins/spec-autopilot/tests/test_prototype_gate.py::test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state plugins/spec-autopilot/tests/test_prototype_gate.py::test_dispatch_and_gate_say_that_spec_md_could_not_be_read
+test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state[- 大きさ: M] PASSED
+test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state[- 大きさ: L] PASSED
+test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state[None] PASSED
+test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state[- 大きさ: 小] PASSED
+test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state[- 大きさ: S\n- 大きさ: S] PASSED
+test_dispatch_and_gate_say_that_spec_md_could_not_be_read PASSED
+
+$ python3 .autopilot-qa/check.py
+R2 pass
+X7 pass
+（M・L・行なし・s・S（小）・コメントの中の S・制約の外の S のどれも終了コード 0 以外で state.json がバイト単位で同じ。chmod 0 の spec.md で dispatch と hook の理由に「spec.md」が出る）
+
+$ bash .autopilot-qa/mut.sh mut-R2-2 408afe7c4b400526715f483e019470a172eb20bc plugins/spec-autopilot/tests/test_prototype_gate.py::test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state
+PRE: 変異の前に通った
+E       AssertionError: assert 0 != 0
+plugins/spec-autopilot/tests/test_prototype_gate.py:52: AssertionError
+RESTORE: 戻した
+（変異: cmd_dispatch の `or small` を `or s.get("phase") == "discovery"` にする。assert で落ちた）
