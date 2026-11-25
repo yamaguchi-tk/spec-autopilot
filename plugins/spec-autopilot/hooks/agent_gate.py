@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-import autopilot  # noqa: E402
+import overnight  # noqa: E402
 
 # CLI init が作る spec のディレクトリの名前（<日付>-<英小文字・数字・ハイフン>）を、prompt のパスの手がかりにする
 ANCHOR = re.compile(r"docs/specs/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*")
@@ -86,7 +86,7 @@ def problem(d, name):
         s = json.loads((d / "state.json").read_text(encoding="utf-8"))
     except Exception as e:
         return f"{d} の state.json が読めない（{type(e).__name__}）"
-    if not (s.get("phase") == "building" or (s.get("phase") == "discovery" and autopilot.is_small(d))):
+    if not (s.get("phase") == "building" or (s.get("phase") == "discovery" and overnight.is_small(d))):
         return f"{d} は building でない（{s.get('phase')}。discovery は大きさ S だけ）"
     dispatches = s.get("dispatches") or []
     if not dispatches:
