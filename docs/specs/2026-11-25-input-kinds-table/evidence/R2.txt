@@ -1,0 +1,29 @@
+- commit: 26206c4d2e9be257635b8c8bad0cd6f9d7399c0d
+
+$ python3 .autopilot-qa/check.py
+（R1 の揃った表で dispatch した一時の repo に test_rule.py を置き、inputs/R1.md のテストの欄を書き換えて commit してから overnight.py handoff <dir> --task T1 を打ち、終了コードと state.json の handoffs を読んだ。R2 の行だけ。長い行は切った）
+  ok   テストの欄が -: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 'ERROR: inputs/R1.md のテストの欄が使えない（形が読めない ...
+  ok   テストの欄が空: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
+  ok   無いテスト: 期待 rc!=0・('test_nowhere',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 'ERROR: inputs/R1.md のテストの欄が使えない（test_rule.py に「test_nowhere」が無い）...
+  ok   無いファイル: 期待 rc!=0・('nope.py',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 'ERROR: inputs/R1.md のテストの欄が使えない（nope.py が無い）: | 相対パス | a/spec.md | 通る | pa
+  ok   cmd: の自由文（テストでない）: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
+  ok   manual: の自由文（テストでない）: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
+  ok   全行が repo のテスト: 期待 閉じる / 実際 rc=0 handoffs 1->2 'handoff: OK。評価役に進む'
+  ok   backtick 付きのテスト: 期待 閉じる / 実際 rc=0 handoffs 1->2 'handoff: OK。評価役に進む'
+  ok   テストの後に自由文（。加えて cmd:）: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
+  ok   テストの後に と cmd:: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
+  ok   :: の無い自由文: 期待 rc!=0・('相対パス',) を出す・handoffs 不変 / 実際 rc=1 handoffs 1->1 ...
+  ok   2 つのテストを・で並べる: 期待 閉じる / 実際 rc=0 handoffs 1->2 'handoff: OK。評価役に進む'
+R2 pass
+
+$ bash .autopilot-qa/mut.sh mut-R2-4 plugins/spec-autopilot/scripts/overnight.py plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell
+（変異: overnight.py:499 の `or autopilot.EVIDENCE_FREE.search(r["テスト"])` を外す）
+--- 変異の前
+3 passed in 70.45s (0:01:10)
+--- 当てた
+E       AssertionError: assert (0 != 0)
+FAILED plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell[cmd: 手で見た]
+FAILED plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell[manual: 見た]
+FAILED plugins/spec-autopilot/tests/test_input_kinds.py::test_handoff_refuses_a_free_text_test_cell[test_rule.py::test_absolute。加えて cmd: x]
+3 failed in 34.53s
+--- 戻した

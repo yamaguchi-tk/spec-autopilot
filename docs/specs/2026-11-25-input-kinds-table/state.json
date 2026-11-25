@@ -4,7 +4,7 @@
   "created_at": 1795609273.92617,
   "existing": true,
   "start": "b016b85249904383dc3441fdfe9560818f42ffb3",
-  "last_active_at": 1795611416.575218,
+  "last_active_at": 1795613573.247954,
   "approved_at": 1795609785.2615428,
   "approved_by": "OK（推奨のまま承認）",
   "spec_sha256": "434e03cef7f3017205d8991b04a069d0ff97d966a2379806474b51f0df6f1794",
@@ -22,6 +22,13 @@
       ],
       "at": 1795611416.575187,
       "sha": "56b9e07598345202e6df0837f1a15de3b16f6abd"
+    },
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795613573.246903,
+      "sha": "26206c4d2e9be257635b8c8bad0cd6f9d7399c0d"
     }
   ],
   "fails": {
@@ -44,13 +51,18 @@
         "from": "review",
         "evidence": "最後のレビューの high",
         "at": 1795611416.575187
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795613573.246899
       }
     ]
   },
   "streak": {
-    "R1": 1,
-    "R2": 1,
-    "R3": 1,
+    "R1": 0,
+    "R2": 0,
+    "R3": 2,
     "R4": 0,
     "R5": 0,
     "R6": 0
@@ -84,6 +96,21 @@
       "agent": "autopilot-implementer",
       "at": 1795610074.214426,
       "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "e00f71c7ae09ca438cced89d1a6d7b8725157bf9",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795611417.294915,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
     }
   ],
   "handoffs": [
@@ -102,6 +129,30 @@
       ],
       "dispatch": 1,
       "at": 1795610197.3572521
+    },
+    {
+      "tip": "26206c4d2e9be257635b8c8bad0cd6f9d7399c0d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 2,
+      "at": 1795611926.076664
+    }
+  ],
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 3,
+    "待ちの poll": 0
+  },
+  "raises": [
+    {
+      "role": "impl",
+      "req": "R3",
+      "reason": "原因調査",
+      "at": 1795613573.246903,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-high"
     }
   ]
 }
