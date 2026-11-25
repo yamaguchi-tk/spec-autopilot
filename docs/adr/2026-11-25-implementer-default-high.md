@@ -23,5 +23,5 @@
 ## Consequences
 - `## モデル` に `- 実装: sonnet-low` と書いた spec は lint が ERROR にする
 - 実装の費用は、既定で Sonnet の effort high のぶん増える
-- 効き目の測り方は、この ADR では決めない。測るときに、その時点の state.json と runs.jsonl の形に合わせて決める。spec の前提の節にある測り方（runs.jsonl で high の巡の数を測る）は使わない
-- 訂正（2026-11-26）: Context の回数は数え違いだった。対象は requirement-how-check・s-prototype-gate・evidence-name-separators・fix-order-park・input-kinds-table の 5 本の state.json で、handoff で閉じた dispatch（`handoffs[].dispatch`）ごとに、その後の最初のレビューの high がその dispatch の要件と重なるかを数えた。Sonnet low は 17 回中 10 回、sonnet-high は 4 回中 2 回、opus-medium は 2 回中 0 回だった。1 回のレビューを、その前の複数の dispatch で数えている（レビューごとに数えると low は 9 回中 8 回、sonnet-high は 4 回中 2 回）。sonnet-high と opus-medium は、この 5 本では原因調査の後の直しの巡でしか使っていない。差は小さくなるが、Decision は変えない
+- 効き目の測り方は、この ADR では決めない。測るときに、その時点の state.json と runs.jsonl の形に合わせて決める。spec の前提の節にある測り方（runs.jsonl で承認からの分数と high の巡の数を測る）は、runs.jsonl の行に high の巡の欄が無いので、そのままは使わない。state.json の dispatch には effort が残らず、既定の名前も前と同じなので、前と後を分けるために、pull した人が pull の時刻を控える
+- 訂正（2026-11-26）: Context と、spec の目的・前提の節の回数は数え違いだった。対象は requirement-how-check・s-prototype-gate・evidence-name-separators・fix-order-park・input-kinds-table の 5 本の state.json で、handoff で閉じた dispatch（`handoffs[].dispatch`）ごとに、その後の最初のレビューの high がその dispatch の要件と重なるかを数えた。Sonnet low は 17 回中 10 回、sonnet-high は 4 回中 2 回、opus-medium は 2 回中 0 回だった。1 回のレビューを、その前の複数の dispatch で数えている（レビューごとに数えると low は 9 回中 8 回、sonnet-high は 4 回中 2 回）。sonnet-high と opus-medium は、この 5 本では原因調査の後の直しの巡でしか使っていない。差は小さくなるが、Decision は変えない
