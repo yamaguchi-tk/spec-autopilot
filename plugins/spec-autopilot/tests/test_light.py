@@ -396,3 +396,14 @@ def test_an_unreadable_start_stops(repo):
     (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
     r = check_pr(repo, d)
     assert r.returncode != 0 and "確かめられない" in r.stdout
+
+
+def test_a_config_whose_blob_is_missing_stops(repo):
+    """起点の木に設定があって中身を読めないときは、足した pattern を落とさずに止める。"""
+    d = committed_light(repo, {".spec-autopilot/protected-paths": "secrets\n"})
+    make_done(repo, d)
+    oid = subprocess.run(["git", "rev-parse", f"{state(d)['light_base']}:.spec-autopilot/protected-paths"], cwd=repo,
+                         capture_output=True, text=True, check=True).stdout.strip()
+    (repo / ".git" / "objects" / oid[:2] / oid[2:]).unlink()
+    r = check_pr(repo, d)
+    assert r.returncode != 0 and "確かめられない" in r.stdout
