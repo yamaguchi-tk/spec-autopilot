@@ -105,32 +105,36 @@ def hits(d, s):
 
 
 KEYS = ("デプロイの起動", "ロールバック")
-# 鍵の語の後ろの同じ行に `コマンド:` がある（行の形・コメントを問わない）。テンプレートの説明の `<1 行のコマンド>` は除く
-CMD_LINE = re.compile(r"(" + "|".join(KEYS) + r")[^\n]*?コマンド\s*:\s*(?!<1 行のコマンド>)\S")
+TEMPLATE = Path(__file__).resolve().parent.parent / "templates" / "spec.md"
 
 
 def command_errors(text, after_approve=False):
-    """軽量フローの spec の自走の範囲を許可リストで確かめる。合意ありでは承認のときに人がデプロイ・ロールバックの行を見るが、
+    """軽量フローの spec のデプロイ・ロールバックを許可リストで確かめる。合意ありでは承認のときに人がこの 2 行を見るが、
     軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので、agent の書いたコマンドを打たせない。
-    - `## 自走の範囲` の見出しは 1 つだけ（コメントの中も数える）
-    - その節は、コメントを外した後、範囲の行と空行だけ（続きの行・閉じていないコメントは断る）
-    - `デプロイの起動` は「マージで自動」か空、`ロールバック` は revert の PR か空
-    - 予備に、全文（NFKC。コメントも含む）で鍵の語の後ろの同じ行に `コマンド:` があれば断る"""
+    - 自走の範囲の節は、コメントを外した後、`- <キー>: <値>` の行と空行だけ。`デプロイの起動` は「マージで自動」か空、`ロールバック` は revert の PR か空
+    - 2 つの語は、spec の全体（NFKC。コメントの中も見る）で、その節の許可した行と、init が写すテンプレートのコメント（一字一句同じもの）にだけ置ける
+      （見出しや行の形を数えず、語の置き場所で決める。語を使わない散文のコマンドは拾わない。限界）"""
     import overnight
     way = ("`autopilot.py block` で記録して人に戻る" if after_approve else
            "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
-    norm = unicodedata.normalize("NFKC", text)
     out = []
-    if len(re.findall(r"^#+\s*" + overnight.SCOPE_SECTION + r"\s*$", norm, re.M)) != 1:
-        out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` の節を 1 つだけにする。{way}")
-    body = ap.COMMENT_BLOCK.sub("", ap.section(text, overnight.SCOPE_SECTION) or "")
+    raw = ap.section(text, overnight.SCOPE_SECTION) or ""
+    body = ap.COMMENT_BLOCK.sub("", raw)
     _, bad = ap.classify(body, [("row", overnight.SCOPE_ROW)])
+    if raw.count("<!--") != raw.count("-->"):  # 閉じていないコメントが、後ろのコメントの閉じまでを隠さないように
+        bad.append("<!-- と --> の数が合わない")
     if bad:
         out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` に `- <キー>: <値>` の行のほかを書けない（{bad[0][:40]}）。{way}")
     rows = overnight.scope_rows(text) or {}
-    allowed = {"デプロイの起動": ("", overnight.AUTO_DEPLOY), "ロールバック": ("", overnight.REVERT)}
-    found = {k for k in KEYS if (rows.get(k) or "") not in allowed[k]} | set(CMD_LINE.findall(norm))
-    return out + [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。{way}" for key in KEYS if key in found]
+    allowed = {"デプロイの起動": (overnight.AUTO_DEPLOY,), "ロールバック": (overnight.REVERT,)}
+    found = {k for k in KEYS if (rows.get(k) or "") not in ("", *allowed[k])}
+    # 確かめた節の範囲の行だけを外し（節の中のコメントは残す）、残りに語があれば断る
+    rest = unicodedata.normalize("NFKC", text.replace(raw, "\n".join(ap.COMMENT_BLOCK.findall(raw)), 1) if raw else text)
+    for c in ap.COMMENT_BLOCK.findall(TEMPLATE.read_text(encoding="utf-8")):
+        rest = rest.replace(unicodedata.normalize("NFKC", c), "")
+    found |= {k for k in KEYS if k in rest}
+    return out + [f"軽量フローでは `- {key}:` は「{allowed[key][0]}」か空だけにし、spec のほかの所にこの語を書かない"
+                  f"（人が見ないままコマンドを打つことになる）。{way}" for key in KEYS if key in found]
 
 
 def errors(d, s):
