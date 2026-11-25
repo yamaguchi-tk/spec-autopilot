@@ -12,6 +12,10 @@
 2. **合意**: `docs/specs/<日付>-<slug>/spec.md` と ADR（`docs/adr/`）を書き、1 回だけ承認を求めます
 3. **自走**: Sonnet 5.5 の実装者が TDD で実装し、経緯を知らない Opus の評価役が要件ごとに自分で動かして確かめます（QA とレビューを兼ね、high none まで回し直す）。評価の結果を `qa.md` に写し、PR を作ります。範囲がマージ以上なら、CI とデプロイを `scripts/overnight.py await` で待ち（待つ間は Stop hook が止めない）、マージ・実環境の QA まで進めます（`references/after-pr.md`）
 
+## 軽量フロー（合意を省く）
+
+受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まる小さい修正は、`scripts/light.py approve` で人との spec 合意を省いて自走できる（spec は自動で作って repo に残す）。自走の上限は PR 作成までで、マージ・デプロイ・QA の書き込みはしない。保護された path（既定は IaC・guardrails の文書・エージェントの規則ファイル。repo の `.spec-autopilot/protected-paths` で足せる）に触れたら、変更ファイルの path で機械的に止まり、人に戻る。手順は `commands/autopilot.md` の「L. 軽量フロー」。
+
 ## かっちりさの作り方
 
 LLM の多段レビューや人への中間確認ではなく、成果物の型と機械の検査で固めます。

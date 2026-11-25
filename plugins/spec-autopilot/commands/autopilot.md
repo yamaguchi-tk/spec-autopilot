@@ -127,6 +127,17 @@ PR のレビューや人の指摘で直しを頼まれたら、done のまま直
 - Stop hook が止めるのは、自走を引き受けたセッション（approve・resume・adopt を実行したセッション）だけ。fork・同じ repo で開いた別のセッション・/clear の後のセッションは止めない。SessionStart hook は、そうしたセッションには spec の場所と phase だけを出し、続ける指示を出さない
 - 別アカウントへの引き継ぎ・/clear の後: 新しいセッションを同じ worktree で開き（/clear の後はそのまま）、人がそのセッションで引き継ぐと言ったら（`/autopilot` の起動を含む）、`CLI adopt <dir>` を実行してから続ける。以後は cwd を移しても Stop hook が止める。人に言われずに adopt しない（fork が止まり続けるため）。hook の文脈が無いときは `CLI status <dir>` を実行して同じ状態を得る
 
+## L. 軽量フロー（人との spec 合意を省く）
+
+入れるのは、受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まるときだけ（決まらないなら A・B の合意ありのフローで進める）。範囲がセキュリティ境界まで広がりそうな作業は、初めから合意ありで進める。
+
+1. A の 0 と同じく `CLI init <slug>` で spec を作り、Issue・依頼文から spec.md・ADR を埋めて repo に残す。`- 範囲:` は「PR まで」にする（ほかの値では approve が通らない）。人の返事は待たない
+2. `CLI lint <dir>` を通し、`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/light.py" approve <dir> --source "<Issue の URL か依頼文の要約>"` で自走を始める（人の発言の記録は要らない。承認の時点の HEAD を記録する）
+3. ここからは C の自走と同じ（TDD・評価役・QA の証拠・`CLI check --stage pr`・`CLI done`・PR）。違いは次の 2 つだけ
+   - **自走の上限は PR 作成まで**。マージ・デプロイ・QA の書き込みはしない（`overnight.py ready`・`merged`・`qa` は軽量フローの run を受けない）。自走の範囲をマージ以降に広げる根拠は「人が承認した spec」なので、合意を省いた run には及ばない。完了報告にも、マージは人の指示を待つと書く（`CLI done` が NOTE で出す）
+   - **止まる条件**: 保護された path に触れたら `CLI check` が通らない。判定は承認の時点の HEAD から作業ツリーまでの変更ファイルの path だけで行う（LLM が判断しない）。既定は `*.tf`・`*.tfvars`・`terraform`・`infra`・`*guardrails*`・`CLAUDE.md`・`AGENTS.md`・`.claude`（`/` を含まない pattern は path のどの要素にも当たる）で、利用する repo は `.spec-autopilot/protected-paths` に 1 行 1 pattern（`#` はコメント、`/` を含む pattern は path 全体に当てる）で足せる。触れたら、範囲が広がった（spec.md を変える必要がある。check が止める）、受入条件を満たす方法が無いときと同じく、`CLI block` で記録して「人に戻るとき」に進む
+4. 人が spec を承認し直したら（`CLI approve`）、合意ありの run になり、保護 path の判定と上限の印は外れる
+
 ## 人に戻るとき
 
 `CLI block <dir> --req R<n> --reason "<理由>" --evidence "<証拠>"` を実行してから、1 通にまとめる。
