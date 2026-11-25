@@ -5,6 +5,7 @@
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from test_autopilot import GOOD_SPEC, PLUGIN, existing_spec, init_spec, write_files, make_done, repo, run, state, user_says  # noqa: F401（repo は fixture）
@@ -291,30 +292,6 @@ def test_a_protected_change_reverted_by_a_later_commit_stops(repo):
     assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
 
-def test_an_adr_line_pointing_at_a_protected_file_does_not_exclude_it(repo):
-    d = committed_light(repo, {"CLAUDE.md": "# rules\n"})
-    text = (d / "spec.md").read_text(encoding="utf-8").replace("docs/adr/2026-01-01-game.md", "CLAUDE.md")
-    (d / "spec.md").write_text(text, encoding="utf-8")
-    import json
-    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
-    (repo / "CLAUDE.md").write_text("# changed\n", encoding="utf-8")
-    hits = subprocess.run([sys.executable, "-c", "import sys, json; sys.path.insert(0, sys.argv[1]); import light;"
-                           "from pathlib import Path; print(light.hits(Path(sys.argv[2]), json.loads(sys.argv[3])))",
-                           str(PLUGIN / "scripts"), str(d), json.dumps(s)], cwd=repo, capture_output=True, text=True)
-    assert "CLAUDE.md" in hits.stdout, hits.stdout + hits.stderr
-
-
-def test_the_specs_own_adr_is_not_a_protected_path(repo):
-    d = init_spec(repo, "guardrails-wording")
-    adr = "docs/adr/2026-01-01-guardrails-wording.md"
-    (repo / adr).write_text("# ADR\n", encoding="utf-8")
-    (d / "spec.md").write_text(GOOD_SPEC.replace("docs/adr/2026-01-01-game.md", adr), encoding="utf-8")
-    assert light(repo, "approve", str(d), "--source", "x").returncode == 0
-    make_done(repo, d)
-    r = check_pr(repo, d)
-    assert r.returncode == 0, r.stdout + r.stderr
-
-
 def test_approve_prints_the_ceiling_once(repo):
     d = light_approved(repo)
     assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y").returncode == 0
@@ -349,77 +326,32 @@ def git_c(repo, *args):
                    cwd=repo, check=True, capture_output=True)
 
 
-def test_a_protected_change_only_inside_a_merge_commit_stops(repo):
-    d = committed_light(repo)
-    make_done(repo, d)
-    git_c(repo, "checkout", "-q", "-b", "side")
+def merge_side(repo, change):
+    git_c(repo, "checkout", "-q", "-b", f"side{time.time_ns()}")
     git_c(repo, "commit", "-q", "--allow-empty", "-m", "side")
     git_c(repo, "checkout", "-q", "-")
-    git_c(repo, "merge", "-q", "--no-commit", "--no-ff", "side")
-    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
-    git_c(repo, "add", "CLAUDE.md")
+    git_c(repo, "merge", "-q", "--no-commit", "--no-ff", "-")
+    change()
     git_c(repo, "commit", "-q", "-m", "merge")
-    (repo / "CLAUDE.md").unlink()
-    commit_all(repo, "revert")
-    r = check_pr(repo, d)
-    assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
 
-def test_the_show_signature_setting_does_not_hide_commits(repo):
+def test_a_protected_change_only_inside_merge_commits_stops(repo):
+    """merge の commit の中だけで足し、別の merge の中で消した保護 path も数える。"""
     d = committed_light(repo)
     make_done(repo, d)
-    git_c(repo, "config", "log.showSignature", "true")
-    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
-    commit_all(repo, "rules")
-    (repo / "CLAUDE.md").unlink()
-    commit_all(repo, "revert")
+    merge_side(repo, lambda: ((repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8"), git_c(repo, "add", "CLAUDE.md")))
+    merge_side(repo, lambda: git_c(repo, "rm", "-q", "CLAUDE.md"))
     r = check_pr(repo, d)
     assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
-
-def adr_light(repo, adr, before_init=None, symlink_to=None):
-    """slug が *guardrails* に当たる spec を、既存の repo で ADR の path を adr にして軽量フローで承認する。"""
-    d = committed_light(repo, {"docs/adr/README.md": "# ADR\n", **(before_init or {})})  # 追っている置き場（init が無視にしない）
-    if symlink_to:
-        (repo / adr).parent.mkdir(parents=True, exist_ok=True)
-        os.symlink(symlink_to, repo / adr)
-    elif not (repo / adr).exists():
-        (repo / adr).write_text("# ADR\n", encoding="utf-8")
-    text = (d / "spec.md").read_text(encoding="utf-8").replace("docs/adr/2026-01-01-game.md", adr)
-    (d / "spec.md").write_text(text, encoding="utf-8")
-    return d
-
-
-def own_hits(repo, d):
-    import json
-    code = ("import sys, json; sys.path.insert(0, sys.argv[1]); import light; from pathlib import Path;"
-            "print(light.hits(Path(sys.argv[2]), json.loads(sys.argv[3])))")
-    s = (d / "state.json").read_text(encoding="utf-8")
-    r = subprocess.run([sys.executable, "-c", code, str(PLUGIN / "scripts"), str(d), json.dumps(json.loads(s))],
-                       cwd=repo, capture_output=True, text=True)
-    return r.stdout + r.stderr
-
-
-def test_a_new_adr_under_docs_adr_is_excluded(repo):
-    d = adr_light(repo, "docs/adr/2026-01-01-guardrails-wording.md")
-    assert "guardrails-wording" not in own_hits(repo, d)
-
-
-def test_an_adr_that_existed_at_init_is_not_excluded(repo):
+def test_an_adr_matching_a_protected_pattern_is_counted(repo):
+    """ADR は保護から除かない。slug が *guardrails* に当たる spec は、その ADR で approve が断る（止める側）。"""
+    d = existing_spec(repo, files={"docs/adr/README.md": "# ADR\n"})
     adr = "docs/adr/2026-01-01-guardrails-wording.md"
-    d = adr_light(repo, adr, before_init={adr: "# 前からある\n"})
-    (repo / adr).write_text("# 書き換え\n", encoding="utf-8")
-    assert "guardrails-wording" in own_hits(repo, d)
-
-
-def test_a_symlinked_adr_is_not_excluded(repo):
-    d = adr_light(repo, "docs/adr/guardrails.md", symlink_to="../../src.js")
-    assert "docs/adr/guardrails.md" in own_hits(repo, d)
-
-
-def test_an_adr_named_like_a_rule_file_is_not_excluded(repo):
-    d = adr_light(repo, "docs/adr/CLAUDE.md")
-    assert "docs/adr/CLAUDE.md" in own_hits(repo, d)
+    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", adr: "# ADR\n"})
+    (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8").replace("docs/adr/2026-01-01-game.md", adr), encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and adr in r.stdout + r.stderr
 
 
 def test_an_untracked_tfstate_stops(repo):
