@@ -275,13 +275,22 @@ def test_approve_refuses_a_protected_file_committed_since_init(repo):
     assert state(d)["phase"] == "discovery"
 
 
-def test_untracked_and_ignored_files_are_not_looked_at(repo):
-    """PR が持ち込む差だけを見る。追っていないファイルと git が無視するファイルは判定しない（限界。commands/autopilot.md の L の 5）。"""
+def test_ignored_files_are_not_looked_at(repo):
+    """git が無視するファイルは PR に入らないので判定しない（限界。commands/autopilot.md の L の 5）。"""
     d = committed_light(repo, {".gitignore": ".claude/\n"}, after_init={".claude/settings.local.json": "{}\n"})
+    make_done(repo, d)
+    (repo / ".claude" / "settings.local.json").write_text('{"x": 1}\n', encoding="utf-8")
+    r = check_pr(repo, d)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_an_untracked_protected_file_stops(repo):
+    """追っていないファイルも、後で commit すれば PR に入るので止める。"""
+    d = committed_light(repo)
     make_done(repo, d)
     write_files(repo, {"CLAUDE.md": "# rules\n", "terraform.tfstate": "{}\n"})
     r = check_pr(repo, d)
-    assert r.returncode == 0, r.stdout + r.stderr
+    assert r.returncode != 0 and "CLAUDE.md" in r.stdout and "terraform.tfstate" in r.stdout
 
 
 def test_a_protected_change_reverted_by_a_later_commit_is_not_counted(repo):
