@@ -40,7 +40,7 @@ def config_lines(text):
 
 def git(root, *args):
     """NUL 区切りで読む。pathspec の magic を環境変数で切られないようにし、失敗したら例外を投げる（止める側に倒す）。"""
-    env = {**os.environ, "GIT_LITERAL_PATHSPECS": "0", "GIT_GLOB_PATHSPECS": "0", "GIT_NOGLOB_PATHSPECS": "0", "LC_ALL": "C"}
+    env = {**os.environ, "GIT_LITERAL_PATHSPECS": "0", "GIT_GLOB_PATHSPECS": "0", "GIT_NOGLOB_PATHSPECS": "0", "GIT_ICASE_PATHSPECS": "0", "LC_ALL": "C"}
     out = subprocess.run(["git", "-c", "core.quotePath=false", args[0], "-z", *args[1:]], cwd=root, capture_output=True, text=True, env=env)
     if out.returncode:
         raise RuntimeError(out.stderr.strip() or f"git {args[0]} が {out.returncode} で終わった")
@@ -50,7 +50,13 @@ def git(root, *args):
 def patterns(root, base):
     """既定と、起点（base）の commit の設定。設定を PR の中で変えると、`.spec-autopilot` 自体が既定の保護なので止まる。"""
     extra = ""
-    if base != EMPTY_TREE and git(root, "ls-tree", "--name-only", base, "--", CONFIG.as_posix()):  # 「無い」は木の一覧で決める
+    entries = {} if base == EMPTY_TREE else dict(  # 「無い」は木の一覧で決める
+        reversed(e.split("\t", 1)) for e in git(root, "ls-tree", base, "--", CONFIG.parent.as_posix(), CONFIG.as_posix()))
+    want = {CONFIG.parent.as_posix(): ("040000",), CONFIG.as_posix(): ("100644", "100755")}  # symlink などは中身を読めないので止める
+    bad = [f"{k}（{v.split()[0]}）" for k, v in entries.items() if k in want and v.split()[0] not in want[k]]
+    if bad:
+        raise RuntimeError(f"起点の設定が普通のファイルでない: {', '.join(bad)}")
+    if CONFIG.as_posix() in entries:
         out = subprocess.run(["git", "cat-file", "blob", f"{base}:{CONFIG.as_posix()}"], cwd=root, capture_output=True, text=True)
         if out.returncode:  # 木にあって読めない（blob が手元に無いなど）ときは、足した pattern を落とさずに止める
             raise RuntimeError(out.stderr.strip() or "起点の設定を読めない")
