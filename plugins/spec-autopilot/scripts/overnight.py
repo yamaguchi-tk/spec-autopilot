@@ -2,7 +2,7 @@
 """spec-autopilot の PR の後のループ（範囲がマージ以上の spec。手順は references/after-pr.md）。
 
 使い方:
-  overnight.py dispatch <dir> --task T<n>...        実装役に渡す時点の HEAD を記録し、起動する実装役の段の agent を最後の行に出す（渡すたびに打つ）
+  overnight.py dispatch <dir> --task T<n>...        （building と、discovery の大きさ S の spec の試作）実装役に渡す時点の HEAD を記録し、起動する実装役の段の agent を最後の行に出す（渡すたびに打つ）
   overnight.py agent <dir> --role impl|review [--task T<n>...]  今の段の agent の名前（実装役は受け持つ要件の段の最大）
   overnight.py raise <dir> --role review --reason 判定が決まらない  評価役の段を 1 つ上げる（実装役は review の巡で自動）
   overnight.py handoff <dir> --task T<n>...         実装役の報告を確かめ、最後の dispatch を閉じる（開いていれば、その時点から commit が
@@ -666,19 +666,30 @@ def first_attempt(run_id):
         return False
 
 
+def is_small(d):
+    """spec.md の「## 制約」の大きさの行が `- 大きさ: S` か。(真偽, 読めなかったときの理由か None)。読めない・形が違う・無いなら偽。"""
+    try:
+        text = (Path(d) / "spec.md").read_text(encoding="utf-8")
+        return autopilot.stated_size(autopilot.COMMENT_BLOCK.sub("", autopilot.section(text, "制約") or ""))[0] == "S", None
+    except Exception as e:
+        return False, f"spec.md が読めない（{type(e).__name__}）"
+
+
 def cmd_dispatch(a):
     """実装役に渡す時点の HEAD を記録する（handoff はここから commit が増えたかを見る）。"""
     d = Path(a.dir)
     s = autopilot.load_state(d)
-    if s.get("phase") != "building":
-        autopilot.refuse(s, "dispatch は自走中（building）だけ受ける")
+    small, why = is_small(d) if s.get("phase") == "discovery" else (False, None)
+    if not (s.get("phase") == "building" or small):
+        autopilot.refuse(s, "dispatch は自走中（building）か、承認の前の大きさ S の試作だけ受ける" + (f"。{why}" if why else ""))
     name, reqs, stop = impl_name(d, s, a.task)
     if stop:
         print(stop)
         return 1
     base = head(autopilot.repo_root(d))
     s.setdefault("dispatches", []).append({"base": base, "tasks": a.task, "reqs": reqs, "agent": name, "at": time.time(),
-                                           "session": os.environ.get("CLAUDE_CODE_SESSION_ID")})
+                                           "session": os.environ.get("CLAUDE_CODE_SESSION_ID"),
+                                           **({"prototype": True} if s.get("phase") == "discovery" else {})})
     autopilot.save_state(d, s)
     print(f"dispatch: {', '.join(a.task)} を {(base or 'commit の無い repo')[:8]} から実装役に渡す。起動する agent:\n{name}")
     return 0
