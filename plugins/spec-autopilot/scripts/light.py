@@ -102,11 +102,21 @@ def hits(d, s):
     return sorted(changed(root, base, [*pathspecs(pats), f":(exclude){own}"]) | changed(root, base, pathspecs(pats, own)))
 
 
+def command_errors(text):
+    """spec の自走の範囲が、デプロイの起動・ロールバックをコマンドにしていれば ERROR。
+    合意ありでは承認のときに人が見る。軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので打たせない。"""
+    import overnight
+    rows = overnight.scope_rows(text) or {}
+    return [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。"
+            "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す"
+            for key in ("デプロイの起動", "ロールバック") if overnight.ROLLBACK_CMD.match(rows.get(key) or "")]
+
+
 def errors(d, s):
     """軽量フローの run の check の ERROR。合意ありの run では []。"""
     if not s.get("light"):
         return []
-    out = []
+    out = command_errors((Path(d) / "spec.md").read_text(encoding="utf-8"))
     try:
         found = hits(d, s)
     except (RuntimeError, OSError, ValueError) as e:  # 数えられないときは止める側に倒す
@@ -134,12 +144,7 @@ def cmd_approve(a):
     text = (d / "spec.md").read_text(encoding="utf-8")
     if ap.stated_size(ap.COMMENT_BLOCK.sub("", ap.section(text, "制約") or ""))[0] != "S":
         errs.append("軽量フローは `- 大きさ: S` の spec だけで始める（予算も人が見ないので、小さい修正に限る）")
-    import overnight
-    rows = overnight.scope_rows(text) or {}
-    for key in ("デプロイの起動", "ロールバック"):  # 合意ありでは承認のときに人が見る。軽量フローでは誰も見ないので打たせない
-        if overnight.ROLLBACK_CMD.match(rows.get(key) or ""):
-            errs.append(f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。"
-                        "マージで自動に動く workflow か revert の PR にするか、合意ありで承認する")
+    errs += command_errors(text)
     if errs:
         ap.report(errs, warnings, "")
         return 1
