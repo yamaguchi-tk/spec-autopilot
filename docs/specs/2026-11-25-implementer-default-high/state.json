@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "implementer-default-high",
   "created_at": 1795616925.619315,
   "existing": true,
   "start": "1e31f5874cf2c73b364e899f36e63496dd4b0eb2",
-  "last_active_at": 1795618417.16542,
+  "last_active_at": 1795619114.899702,
   "approved_at": 1795617258.531918,
   "approved_by": "人が OK と返した（推奨のまま承認）",
   "spec_sha256": "15d988f0daf5abad0be2e31426c631cb5394d7d9dfe22b2e37384daeb7df356f",
@@ -100,5 +100,22 @@
       "dispatch": 1,
       "at": 1795618225.451099
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 31,
+      "at": 1795619113.245646,
+      "sha": "5bb9ddd800ba924aaa46d769b78a22b849d50d68",
+      "head": "21b7b220c3d4958e4a96a87cd89bd009669b91ec"
+    }
+  ],
+  "merged_at": 1795619113.2456489,
+  "paused_at_merge": 0.0,
+  "done_at": 1795619114.196085,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
