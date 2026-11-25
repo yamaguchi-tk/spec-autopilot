@@ -50,8 +50,11 @@ def git(root, *args):
 def patterns(root, base):
     """既定と、起点（base）の commit の設定。設定を PR の中で変えると、`.spec-autopilot` 自体が既定の保護なので止まる。"""
     extra = ""
-    if base != EMPTY_TREE and ap.at_start(root, base, "cat-file", "-e", f"{base}:{CONFIG.as_posix()}"):  # 無いのと読めないのを分ける
-        extra = subprocess.run(["git", "show", f"{base}:{CONFIG.as_posix()}"], cwd=root, capture_output=True, text=True, check=True).stdout
+    if base != EMPTY_TREE and git(root, "ls-tree", "--name-only", base, "--", CONFIG.as_posix()):  # 「無い」は木の一覧で決める
+        out = subprocess.run(["git", "cat-file", "blob", f"{base}:{CONFIG.as_posix()}"], cwd=root, capture_output=True, text=True)
+        if out.returncode:  # 木にあって読めない（blob が手元に無いなど）ときは、足した pattern を落とさずに止める
+            raise RuntimeError(out.stderr.strip() or "起点の設定を読めない")
+        extra = out.stdout
     return list(dict.fromkeys([*DEFAULT_PROTECTED, *config_lines(extra)]))
 
 
