@@ -104,17 +104,22 @@ def hits(d, s):
     return sorted(changed(root, base, [*pathspecs(pats), f":(exclude){own}"]) | changed(root, base, pathspecs(pats, own)))
 
 
-CMD_ROW = re.compile(r"^-\s*(デプロイの起動|ロールバック)\s*:\s*コマンド\s*:", re.M)
+KEYS = ("デプロイの起動", "ロールバック")
+# 鍵の語と `コマンド:` が同じ行にある（行の形・コメントを問わない）。テンプレートの説明の `<1 行のコマンド>` は除く
+CMD_LINE = re.compile(r"(" + "|".join(KEYS) + r")[^\n]*?コマンド\s*:\s*(?!<1 行のコマンド>)\S")
 
 
 def command_errors(text, after_approve=False):
-    """spec のどこかに、デプロイの起動・ロールバックをコマンドにした行があれば ERROR（節が 2 つあっても全文を見る。全角のコロンも当てる）。
+    """spec がデプロイの起動・ロールバックをコマンドにしていれば ERROR。使う側の読み方（overnight.scope_rows）と、
+    全文を NFKC にして同じ行に鍵の語と `コマンド:` があるかの、どちらかで当たれば断る（コメントは外さない）。
     合意ありでは承認のときに人が見る。軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので打たせない。"""
-    found = set(CMD_ROW.findall(ap.COMMENT_BLOCK.sub("", unicodedata.normalize("NFKC", text))))
-    way = ("`autopilot.py block` で記録して人に戻る（承認の後は spec を変えられない）" if after_approve else
+    import overnight
+    rows = overnight.scope_rows(text) or {}
+    found = {k for k in KEYS if overnight.ROLLBACK_CMD.match(rows.get(k) or "")}
+    found |= set(CMD_LINE.findall(unicodedata.normalize("NFKC", text)))
+    way = ("`autopilot.py block` で記録して人に戻る" if after_approve else
            "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
-    return [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。{way}"
-            for key in ("デプロイの起動", "ロールバック") if key in found]
+    return [f"軽量フローでは `- {key}:` をコマンドにできない（人が見ないまま打つことになる）。{way}" for key in KEYS if key in found]
 
 
 def errors(d, s):
