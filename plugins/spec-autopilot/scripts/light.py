@@ -8,7 +8,7 @@
   （overnight.py ready・merged・qa・rolled-back）を受けない。範囲をマージ以降に広げる根拠は人が承認した spec なので、合意を省いた run には及ばない
 - 止まる条件は、保護された path（下の既定と、起点の commit の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の
   commit から、PR が持ち込む差（HEAD・index・作業ツリー）と追っていないファイルの path で機械的に決め、照合は git の glob pathspec に任せる。
-  git が無視するファイル・途中の commit で触れて戻したものは見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
+  init より前の commit・git が無視するファイル・途中の commit で触れて戻したもの・spec の置き場の中は見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
 - 印は block・done の後の approve でも外さない（その返事は spec の全体を見たものではない）。合意ありで進めるなら spec を作り直す
 
 範囲: 軽量フローの承認・保護 path の判定・PR 作成までの上限（ready・merged・qa・rolled-back の拒否）だけを足す。合意ありの run の挙動は変えない
@@ -38,15 +38,26 @@ def config_lines(text):
     return [x.strip() for x in text.splitlines() if x.strip() and not x.strip().startswith("#")]
 
 
+def git(root, *args):
+    """NUL 区切りで読む。pathspec の magic を環境変数で切られないようにし、失敗したら例外を投げる（止める側に倒す）。"""
+    env = {**os.environ, "GIT_LITERAL_PATHSPECS": "0", "GIT_GLOB_PATHSPECS": "0", "GIT_NOGLOB_PATHSPECS": "0", "LC_ALL": "C"}
+    out = subprocess.run(["git", "-c", "core.quotePath=false", args[0], "-z", *args[1:]], cwd=root, capture_output=True, text=True, env=env)
+    if out.returncode:
+        raise RuntimeError(out.stderr.strip() or f"git {args[0]} が {out.returncode} で終わった")
+    return [f for f in out.stdout.split("\0") if f]
+
+
 def patterns(root, base):
     """既定と、起点（base）の commit の設定。設定を PR の中で変えると、`.spec-autopilot` 自体が既定の保護なので止まる。"""
-    old = subprocess.run(["git", "show", f"{base}:{CONFIG.as_posix()}"], cwd=root, capture_output=True, text=True)
-    return list(dict.fromkeys([*DEFAULT_PROTECTED, *config_lines(old.stdout if old.returncode == 0 else "")]))
+    extra = ""
+    if base != EMPTY_TREE and ap.at_start(root, base, "cat-file", "-e", f"{base}:{CONFIG.as_posix()}"):  # 無いのと読めないのを分ける
+        extra = subprocess.run(["git", "show", f"{base}:{CONFIG.as_posix()}"], cwd=root, capture_output=True, text=True, check=True).stdout
+    return list(dict.fromkeys([*DEFAULT_PROTECTED, *config_lines(extra)]))
 
 
-def pathspecs(pats, fold=False):
-    """pattern を git の glob pathspec にする。`/` を含まない行はどの深さにも、含む行は repo の root から当て、どちらも配下に当てる。"""
-    magic = "glob,icase" if fold else "glob"
+def pathspecs(pats):
+    """pattern を git の glob pathspec にする。前後の `/` を外し、`/` を含まない行はどの深さにも、含む行は repo の root から当て、
+    どちらも配下に当てる。大文字と小文字は区別しない（止める側）。"""
     out = []
     for p in pats:
         core = p.strip("/")
@@ -54,22 +65,23 @@ def pathspecs(pats, fold=False):
             continue
         if "/" not in core:
             core = "**/" + core
-        out += [f":({magic}){core}", f":({magic}){core}/**"]
+        out += [f":(glob,icase){core}", f":(glob,icase){core}/**"]
     return out
 
 
 def hits(d, s):
-    """起点から、PR が持ち込む差（HEAD と index と作業ツリー）と追っていないファイルで触れた保護 path。
-    git が無視するファイル・途中の commit で触れて戻したものは数えない（限界）。照合は git がする。"""
+    """起点から、PR に入りうる変更（HEAD・index・作業ツリーの差と、追っていないファイル）で触れた保護 path。
+    git が無視するファイル・途中の commit で触れて戻したもの・spec 自身の置き場の中は数えない（限界）。照合は git がする。"""
     root = ap.repo_root(d)
     base = s.get("light_base") or EMPTY_TREE
-    fold = subprocess.run(["git", "config", "--bool", "core.ignorecase"], cwd=root, capture_output=True, text=True).stdout.strip() == "true"
     own = Path(d).resolve().relative_to(Path(root).resolve()).as_posix()
-    specs = pathspecs(patterns(root, base), fold) + [f":(exclude){own}"]
-    # rename は両側の名前を出し（--no-renames）、非 ASCII の名前は引用しない（git_lines の -z と quotePath=false）
+    specs = ["--", *pathspecs(patterns(root, base)), f":(exclude){own}"]
+    diff = ("diff", "--name-only", "--no-renames")  # rename は両側の名前を出す
+    files = set(git(root, *diff, base, *specs)) | set(git(root, *diff, "--cached", base, *specs))
+    if subprocess.run(["git", "rev-parse", "--verify", "-q", "HEAD"], cwd=root, capture_output=True).returncode == 0:
+        files |= set(git(root, *diff, base, "HEAD", *specs))
     # 追っていないファイルも、後で commit すれば PR に入るので数える（git が無視するものは --exclude-standard で外れる）
-    return sorted(set(ap.git_lines(root, "diff", "--name-only", "--no-renames", base, "--", *specs))
-                  | set(ap.git_lines(root, "ls-files", "--others", "--exclude-standard", "--", *specs)))
+    return sorted(files | set(git(root, "ls-files", "--others", "--exclude-standard", *specs)))
 
 
 def errors(d, s):

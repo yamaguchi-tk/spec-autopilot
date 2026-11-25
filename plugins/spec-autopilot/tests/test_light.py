@@ -347,12 +347,13 @@ def test_core_ignorecase_matches_any_case(repo):
 
 
 def test_a_committed_change_restored_only_in_the_worktree_stops(repo):
-    """PR に入るのは HEAD。commit した保護 path を作業ツリーだけ戻しても止める。"""
+    """PR に入るのは HEAD。commit した保護 path を作業ツリーと index だけ戻しても止める。"""
     d = committed_light(repo, {"CLAUDE.md": "# rules\n"})
     (repo / "CLAUDE.md").write_text("# changed\n", encoding="utf-8")
     commit_all(repo, "rules")
-    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
     make_done(repo, d)
+    (repo / "CLAUDE.md").write_text("# rules\n", encoding="utf-8")
+    add(repo, "CLAUDE.md")  # index も起点と同じにする（HEAD だけが違う）
     r = check_pr(repo, d)
     assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
