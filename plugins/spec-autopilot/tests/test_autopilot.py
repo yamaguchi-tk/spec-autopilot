@@ -2654,6 +2654,31 @@ def test_trust_mark_passes_an_originless_queued_command(repo, monkeypatch, comma
     assert state(d)["phase"] == "building"
 
 
+NON_DICT_ORIGINS = [None, "human", ["human"], 1]
+NON_DICT_ORIGIN_IDS = ["null", "string", "list", "number"]
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("queued", [False, True], ids=["user", "queued_command"])
+@pytest.mark.parametrize("origin", NON_DICT_ORIGINS, ids=NON_DICT_ORIGIN_IDS)
+def test_without_the_trust_mark_a_row_whose_origin_is_not_an_object_does_not_pass(repo, monkeypatch, command, queued, origin):
+    """印の無い run は、"origin" の語を含んでも origin が dict でない発言の行（"origin": null など）を人の発言に数えない。
+    origin が human の行は spec.md の変更（resume は wait）より前にだけあり、後はその行だけなら exit 1 で止め、state.json を変えない。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    host_writes({"type": "user", "origin": {"kind": "human"}, "message": {"role": "user", "content": "OK"}})
+    time.sleep(0.05)
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if queued:
+        host_writes({"type": "attachment", "attachment": {"type": "queued_command", "prompt": "OK", "origin": origin}})
+    else:
+        host_writes({"type": "user", "origin": origin, "message": {"role": "user", "content": "OK"}})
+    prompt_hook(repo)
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode == 1 and "Traceback" not in r.stderr and "知らせ" in r.stderr, r.stderr
+    assert state(d) == before
+
+
 BROKEN_ORIGINLESS_LINES = [
     '{"type":"user","message":{"role":"user","content":"O',
     '{"type":"attachment","attachment":{"type":"queued_command","prompt":"x',
