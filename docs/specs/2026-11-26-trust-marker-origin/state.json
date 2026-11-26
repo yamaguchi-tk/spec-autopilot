@@ -4,7 +4,7 @@
   "created_at": 1795694542.6659021,
   "existing": true,
   "start": "c30fc46c6e03f1626bb6df93b6be27601e86b97b",
-  "last_active_at": 1795699255.1251578,
+  "last_active_at": 1795700143.3603761,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795696124.601108,
   "approved_by": "OK、承認（trust の印が、人の発言に origin の無い transcript で効くようにする spec）",
@@ -28,6 +28,11 @@
       ],
       "at": 1795699255.1248,
       "sha": "fc59fd285b5c2cbe75286c5227d3a786d0680fb5"
+    },
+    {
+      "high": [],
+      "at": 1795700143.360367,
+      "sha": "58e4e4a98b1a7718be7c3c6fc7cd051c6ce2fffe"
     }
   ],
   "fails": {
@@ -46,7 +51,7 @@
   },
   "streak": {
     "R1": 0,
-    "R2": 2
+    "R2": 0
   },
   "reworks": {},
   "dispatches": [
@@ -113,6 +118,19 @@
       "agent": "autopilot-implementer",
       "at": 1795697834.81492,
       "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    },
+    {
+      "base": "9068ffc88758709355fe273c6f7553955d8c9503",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer-opus",
+      "at": 1795699258.037365,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
     }
   ],
   "handoffs": [
@@ -147,6 +165,14 @@
       ],
       "dispatch": 4,
       "at": 1795698136.789835
+    },
+    {
+      "tip": "58e4e4a98b1a7718be7c3c6fc7cd051c6ce2fffe",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 5,
+      "at": 1795699533.12462
     }
   ],
   "raises": [
