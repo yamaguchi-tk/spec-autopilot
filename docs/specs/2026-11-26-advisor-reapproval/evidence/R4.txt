@@ -1,0 +1,17 @@
+- commit: 792d965e769d4cd55d3044b2b83faab32a776fde
+
+$ python3 .autopilot-qa/check.py | grep -E '\[R4\]|^R4'
+  [R4] ok: fable-advisor.md の出力の節に 承認し直しの相談のときだけの `承認: 可`/`承認: 否`
+  [R4] ok: commands の「人に戻るとき」に fable-advisor
+  [R4] ok: commands の「人に戻るとき」に advice-checker
+  [R4] ok: commands の「人に戻るとき」に --by-advisor
+  [R4] ok: commands の「人に戻るとき」に lineup.py next
+  [R4] ok: commands の「人に戻るとき」に 朝の報告
+  [R4] ok: commands の「人に戻るとき」に 夜の間
+  [R4] ok: 定義の '承認: 可' をコードが読む: []
+  [R4] ok: 定義の '承認: 否' をコードが読む: ['fable-advisor の最後の返答に `承認: 可` の行が無い（承認: 否）']
+  [R4] ok: advice-checker.md の判定の形がコードの読む形と同じ
+R4 pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py -q -n auto
+43 passed in 8.42s
