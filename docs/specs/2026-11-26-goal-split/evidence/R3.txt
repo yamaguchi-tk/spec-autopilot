@@ -1,34 +1,31 @@
-- commit: ee62a081ad736c5d67c544772b14792601971d65
+- commit: 1810174f7716d450530a2a814c3fc9bdd09daac4
 
-R2 の形から 1 つずつ欠いた子を、場合ごとの一時の repo（.autopilot-qa/run/r3-* の下）で承認した。どれも子の state.json は phase=discovery のままで approved_by なし。NOTE の行は省いた。
+R2 の入力から 1 つずつ欠いた子を、一時の repo（.autopilot-qa/run/r3-<n> の下）で本物の CLI で承認しようとした。どれも rc=1 で欠けた条件を挙げ、子の phase は discovery のまま（check.py が state.json を読んで確かめた）。NOTE の行は省いた。
 
 $ python3 .autopilot-qa/check.py
+== R3
+-- 親が無い
+$ autopilot.py approve …/2026-11-26-child --by 子 OK --queue --by-advisor  -> rc=1
+  ERROR: 親 spec 2026-01-01-nothing が目的として承認されていない（`approve --goal` の記録が無い）
+  ERROR: 親 spec 2026-01-01-nothing の `## 要件` が読めない
+-- 親が目的でない
+$ autopilot.py approve …/2026-11-26-child --by 子 OK --queue --by-advisor  -> rc=1
+  ERROR: 親 spec 2026-11-26-parent が目的として承認されていない（`approve --goal` の記録が無い）
+-- 自走の範囲が違う
+$ autopilot.py approve …/2026-11-26-child --by 子 OK --queue --by-advisor  -> rc=1
+  ERROR: `## 自走の範囲` の節が親の承認のときと違う（子は親と同じ節だけを受ける）
+-- 親に無い番号
+$ autopilot.py approve …/2026-11-26-child --by 子 OK --queue --by-advisor  -> rc=1
+  ERROR: `- 親の要件:` に親 spec 2026-11-26-parent の要件に無い番号がある: R9
+-- 承認: 否
+$ autopilot.py approve …/2026-11-26-child --by 子 OK --queue --by-advisor  -> rc=1
+  ERROR: fable-advisor の最後の返答に `承認: 可` の行が無い（承認: 否）
 R3 pass
 
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r3-親が無い/repo/docs/specs/2026-11-26-child --by 子 OK --queue --by-advisor
-ERROR: 親 spec 2026-01-01-nothing が目的として承認されていない（`approve --goal` の記録が無い）
-ERROR: 親 spec 2026-01-01-nothing の `## 要件` が読めない
-(exit 1)
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r3-親が目的として承認されていない/repo/docs/specs/2026-11-26-child --by 子 OK --queue --by-advisor
-ERROR: 親 spec 2026-11-26-parent が目的として承認されていない（`approve --goal` の記録が無い）
-(exit 1)
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r3-自走の範囲の節が違う/repo/docs/specs/2026-11-26-child --by 子 OK --queue --by-advisor
-ERROR: `## 自走の範囲` の節が親の承認のときと違う（子は親と同じ節だけを受ける）
-(exit 1)
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r3-親に無い要件の番号/repo/docs/specs/2026-11-26-child --by 子 OK --queue --by-advisor
-ERROR: `- 親の要件:` に親 spec 2026-11-26-parent の要件に無い番号がある: R9
-(exit 1)
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r3-承認: 否/repo/docs/specs/2026-11-26-child --by 子 OK --queue --by-advisor
-ERROR: fable-advisor の最後の返答に `承認: 可` の行が無い（承認: 否）
-(exit 1)
-
-変異（.autopilot-qa/mut-R3-1.patch: child_errors の自走の範囲の比較を elif False: にする）:
-$ perl -e 'alarm 200; exec @ARGV' -- python3 -m pytest plugins/spec-autopilot/tests/test_goal_child.py::test_child_whose_scope_section_differs_from_the_parent_is_refused -q
-E         queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+変異（その場で当てて戻した）:
+$ git apply .autopilot-qa/mut-R3-1.patch   # goal.py の `elif g["scope_sha256"] != scope:` を `elif False:` に
+$ python3 -m pytest plugins/spec-autopilot/tests/test_goal_child.py::test_child_whose_scope_section_differs_from_the_parent_is_refused -q
 E       assert (0 == 1)
-1 failed in 1.23s
-（変異の前は 1 passed。git apply -R で戻し、git diff --quiet HEAD が通った）
+1 failed in 1.40s
+$ git apply -R .autopilot-qa/mut-R3-1.patch && git diff --quiet HEAD -- plugins/spec-autopilot/scripts/goal.py
+（戻した）

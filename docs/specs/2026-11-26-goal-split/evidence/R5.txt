@@ -1,21 +1,13 @@
-- commit: ee62a081ad736c5d67c544772b14792601971d65
+- commit: 1810174f7716d450530a2a814c3fc9bdd09daac4
 
-commands/autopilot.md の A の 3 の L の項の「目的の spec」の項が書く呼び出し（CLI approve --by --goal、CLI init、CLI approve --by --queue --by-advisor、lineup.py next、CLI goal）を、本物の argparse と突き合わせた。
+commands/autopilot.md の A の 3 の L の項（目的の spec の手順）の code span から `CLI ...` と `lineup.py ...` の呼び出しを抜き、<..> を x にして、本物の argparse（autopilot.main・lineup.main）に通した（cmd の関数だけ差し替えた）。
 
 $ python3 .autopilot-qa/check.py
+== R5
+  CLI approve x --by x --goal
+  CLI init x
+  CLI approve x --by x --queue --by-advisor
+  lineup.py next
+  CLI goal x
+  parsed: [('approve', True, False, False), ('init', None, None, None), ('approve', False, True, True), ('next', None, None, None), ('goal', None, None, None)]
 R5 pass
-
-$ python3 scripts/autopilot.py approve --help
-usage: autopilot.py approve [-h] --by BY [--queue] [--by-advisor] [--goal] dir
-(exit 0)
-
-$ python3 scripts/autopilot.py goal --help
-usage: autopilot.py goal [-h] dir
-(exit 0)
-
-$ python3 scripts/lineup.py --help
-usage: lineup.py [-h] {next,hold} ...
-(exit 0)
-
-$ python3 -m pytest plugins/spec-autopilot/tests/test_goal_command.py -q
-4 passed in 0.03s

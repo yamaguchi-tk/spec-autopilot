@@ -1,42 +1,16 @@
-- commit: ee62a081ad736c5d67c544772b14792601971d65
+- commit: 1810174f7716d450530a2a814c3fc9bdd09daac4
 
-一時の repo（.autopilot-qa/run/r1 の下。変えるファイル 7・申告 L の既存の repo の spec）で本物の CLI を動かした。NOTE の行（手元の環境の案内）は省いた。
+一時の repo（.autopilot-qa/run/r1 の下。変えるファイル 7・申告 L の既存の repo の spec）で本物の CLI・overnight.py・Stop hook を動かした。NOTE の行（手元の環境の案内）は省いた。…/ は一時の repo の docs/specs/。
 
 $ python3 .autopilot-qa/check.py
+== R1
+$ autopilot.py approve …/2026-11-26-game --by OK  -> rc=1
+  ERROR: 大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする（申告 L・数えた大きさ L（変える 7・呼び出し元 1・別の実装 0））
+$ autopilot.py approve …/2026-11-26-game --by 目的 OK --goal  -> rc=0
+  goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）
+  state.goal = {"at": 1795667904.040898, "by": "目的 OK", "scope_sha256": "ea31c3335bbb01f6886b7e92ec0ee0acb32dee4b9dc350f0b074ad5c45e1af94"} phase = discovery
+$ overnight.py dispatch 2026-11-26-game --task T1 -> rc=1 dispatch は自走中（building）か、承認の前の大きさ S の試作だけ受ける（phase=discovery）
+$ stop.py -> rc=0 stdout=''
+$ autopilot.py approve …/2026-11-26-game --by 目的 2 --goal  -> rc=1
+  spec.md の最後の変更の後に人の発言が記録されていない。人に示して返事を受けてから実行する
 R1 pass
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r1/repo/docs/specs/2026-11-26-game --by OK
-ERROR: 大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする（申告 L・数えた大きさ L（変える 7・呼び出し元 1・別の実装 0））
-(exit 1)
--> ok: --goal なしの approve は L の ERROR で止まる
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r1/repo/docs/specs/2026-11-26-game --by 目的 OK --goal
-goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）
-(exit 0)
--> ok: --goal は記録を残し phase=discovery のまま（goal.by='目的 OK'、goal.at は float、goal.scope_sha256 は 64 桁、approved_at なし）
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/overnight.py dispatch <run>/r1/repo/docs/specs/2026-11-26-game --task T1
-dispatch は自走中（building）か、承認の前の大きさ S の試作だけ受ける（phase=discovery）
-(exit 1)
--> ok: overnight.py dispatch は目的の spec を拒む
-
-$ echo '{"cwd": "<run>/r1/repo", "stop_hook_active": false, "session_id": "s1"}' | python3 hooks/stop.py
-(出力なし)
-(exit 0)
--> ok: Stop hook は放す（decision なし）
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r1-nohuman/repo/docs/specs/2026-11-26-game --by 目的 OK --goal
-spec.md の最後の変更の後に人の発言が記録されていない。人に示して返事を受けてから実行する
-(exit 1)
--> ok: 人の発言が無ければ --goal でも記録を残さない
-
-$ CLAUDE_CODE_SESSION_ID=s1 python3 scripts/autopilot.py approve <run>/r1-nohuman/repo/docs/specs/2026-11-26-game --by 目的 OK --goal
-ERROR: 予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）
-(exit 1)
--> ok: --goal でも L 以外の lint の ERROR では止まる（予算の行を消した spec）
-
-変異（.autopilot-qa/mut-R1-1.patch: cmd_approve の lint 呼び出しを goal=True に固定）:
-$ perl -e 'alarm 200; exec @ARGV' -- python3 -m pytest plugins/spec-autopilot/tests/test_goal.py::test_approve_without_goal_still_stops_a_large_spec -q
-E       AssertionError: assert 0 == 1
-1 failed in 1.12s
-（変異の前は 1 passed。git apply -R で戻し、git diff --quiet HEAD が通った）
