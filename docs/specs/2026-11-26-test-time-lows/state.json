@@ -4,7 +4,7 @@
   "created_at": 1795677378.0410419,
   "existing": true,
   "start": "05b922cd5a14215006c7be8f633a08a69425a24d",
-  "last_active_at": 1795680619.281522,
+  "last_active_at": 1795680851.85781,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795680471.085025,
   "approved_by": "OK（low 2 件: コメントの 2 乗、CLAUDE.md の venv の手順と .gitignore）",
@@ -14,9 +14,18 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795680846.071095,
+      "sha": "a470d13d546fd6390b5966c2b49a60f26a8dd6d5"
+    }
+  ],
   "fails": {},
-  "streak": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0
+  },
   "reworks": {},
   "dispatches": [
     {
@@ -74,6 +83,23 @@
       ],
       "dispatch": 1,
       "at": 1795680612.115795
+    },
+    {
+      "tip": "a470d13d546fd6390b5966c2b49a60f26a8dd6d5",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795680647.296538
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795680851.8578088
     }
   ]
 }
