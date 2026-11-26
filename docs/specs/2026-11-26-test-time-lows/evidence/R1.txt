@@ -1,0 +1,18 @@
+- commit: a470d13d546fd6390b5966c2b49a60f26a8dd6d5
+
+$ git grep -n '2 乗' 05b922cd -- plugins/spec-autopilot/tests/test_qa_evidence.py
+05b922cd:plugins/spec-autopilot/tests/test_qa_evidence.py:129:    # 長すぎる行は正規表現に通さない（TASK は [ の連なりで行の長さの 2 乗の時間がかかる）
+05b922cd:plugins/spec-autopilot/tests/test_qa_evidence.py:180:    # [ が続く tasks.md の行（2 乗）
+05b922cd:plugins/spec-autopilot/tests/test_qa_evidence.py:215:# check が TASK を通す前の正規表現（行の長さの 2 乗の時間がかかる形）。新しい TASK は、これと同じ結果を返す
+
+$ git grep -n '2 乗' a470d13 -- plugins/spec-autopilot/tests/test_qa_evidence.py
+a470d13:plugins/spec-autopilot/tests/test_qa_evidence.py:215:# check が TASK を通す前の正規表現（行の長さの 2 乗の時間がかかる形）。新しい TASK は、これと同じ結果を返す
+
+$ grep -n -e '比例' plugins/spec-autopilot/tests/test_qa_evidence.py plugins/spec-autopilot/scripts/autopilot.py | grep -e ':129:' -e ':180:' -e ':90:' -e ':630:'
+plugins/spec-autopilot/tests/test_qa_evidence.py:129:    # 長すぎる行は正規表現に通さない（今の TASK は [ の連なりも行の長さに比例する時間で読むが、上限を越える行は読まずに断る）
+plugins/spec-autopilot/tests/test_qa_evidence.py:180:    # [ が続く tasks.md の行（今の TASK は行の長さに比例する時間で読む。下の CPU 時間の検査がそれを見る）
+plugins/spec-autopilot/scripts/autopilot.py:90:TASK = re.compile(r"^- \[( |x|X)\] (T\d+):(?:.*\])?[^\[\]]*\[([^\]]*)\]\s*$")  # 最後の ] の前の [ ... ] を、行の長さに比例して読む
+plugins/spec-autopilot/scripts/autopilot.py:630:MAX_ARTIFACT_LINE = 4_000  # 1 行の字数の上限（実データの証拠の欄の最長は 482 字）。TASK は行の長さに比例する
+
+$ bash .autopilot-qa/check.sh 05b922cd5a14215006c7be8f633a08a69425a24d a470d13d546fd6390b5966c2b49a60f26a8dd6d5
+R1 pass
