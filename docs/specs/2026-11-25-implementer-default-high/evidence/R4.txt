@@ -1,0 +1,15 @@
+- commit: faa5a0b664a6eb987776432ec39a6082b9ed978d
+
+$ git show 1e31f5874cf2c73b364e899f36e63496dd4b0eb2:plugins/spec-autopilot/.claude-plugin/plugin.json | grep version
+"version": "0.1.5",
+
+$ grep version plugins/spec-autopilot/.claude-plugin/plugin.json
+"version": "0.1.6",
+
+$ python3 -c '<.claude-plugin/marketplace.json の spec-autopilot の description == plugin.json の description>'
+True
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q
+......                                                                   [100%]
+6 passed in 0.01s
+(exit 0)

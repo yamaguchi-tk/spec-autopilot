@@ -1,0 +1,108 @@
+- commit: faa5a0b664a6eb987776432ec39a6082b9ed978d
+
+一時の repo（`## モデル` の節が無い spec）で、dispatch → 定義どおりの起動の記録 → commit → handoff を繰り返し、R1 の high を review で 3 巡記録した後は実装役の失敗（fail --from impl）で段を上げ続けた（review の巡で上がるのは原因調査・作り直しの 2 回で、それより上は実装役の失敗で上がる。変えていない挙動）。検査: python3 .autopilot-qa/check_idh.py
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
+dispatch: T1 を commit の から実装役に渡す。起動する agent:
+autopilot-implementer
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py handoff <repo>/docs/specs/2026-11-25-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py review <repo>/docs/specs/2026-11-25-game --high R1
+R1: 失敗が 1 巡続いた
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
+dispatch: T1 を 82f65c2a から実装役に渡す。起動する agent:
+autopilot-implementer
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py handoff <repo>/docs/specs/2026-11-25-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py review <repo>/docs/specs/2026-11-25-game --high R1
+R1: 失敗が 2 巡続いた。推測で直さず原因を調べる（references/dead-end.md の 1）
+R1: 実装役の段を上げた: autopilot-implementer→autopilot-implementer-opus（原因調査）
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
+dispatch: T1 を d52c58ec から実装役に渡す。起動する agent:
+autopilot-implementer-opus
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py handoff <repo>/docs/specs/2026-11-25-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py review <repo>/docs/specs/2026-11-25-game --high R1
+R1: 失敗が 3 巡続いた。作り方を変える（references/dead-end.md の 2）
+R1: 実装役の段を上げた: autopilot-implementer-opus→autopilot-implementer-opus-xhigh（作り直し）
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
+dispatch: T1 を 944d33a8 から実装役に渡す。起動する agent:
+autopilot-implementer-opus-xhigh
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py handoff <repo>/docs/specs/2026-11-25-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py fail <repo>/docs/specs/2026-11-25-game --req R1 --from impl --evidence 満たせなかった
+R1: 失敗を記録した。次のレビューの巡で 1 回として数える
+R1: 実装役の段を上げた: autopilot-implementer-opus-xhigh→autopilot-implementer-opus-xhigh（実装役の失敗）
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
+dispatch: T1 を 215ce23c から実装役に渡す。起動する agent:
+autopilot-implementer-opus-xhigh
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py handoff <repo>/docs/specs/2026-11-25-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py fail <repo>/docs/specs/2026-11-25-game --req R1 --from impl --evidence 満たせなかった
+R1: 失敗を記録した。次のレビューの巡で 1 回として数える
+R1: 実装役の段を上げた: autopilot-implementer-opus-xhigh→autopilot-implementer-fable（実装役の失敗）
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
+dispatch: T1 を 2b68aab1 から実装役に渡す。起動する agent:
+autopilot-implementer-fable
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py handoff <repo>/docs/specs/2026-11-25-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py fail <repo>/docs/specs/2026-11-25-game --req R1 --from impl --evidence 満たせなかった
+R1: 失敗を記録した。次のレビューの巡で 1 回として数える
+R1: 一番上の段（autopilot-implementer-fable）でも通らない。その要件を park に積む（overnight.py park <dir> --kind other --req R1 ...）
+(exit 0)
+
+$ python3 plugins/spec-autopilot/scripts/overnight.py dispatch <repo>/docs/specs/2026-11-25-game --task T1
+一番上の段でも通らない。R1 を park に積む（overnight.py park <dir> --kind other --req R<n> ...）
+(exit 1)
+
+（dispatch が出した名前の並び・連続の重複を除く）
+autopilot-implementer → autopilot-implementer-opus → autopilot-implementer-opus-xhigh → autopilot-implementer-fable
+（そのままの並び: autopilot-implementer autopilot-implementer autopilot-implementer-opus autopilot-implementer-opus-xhigh autopilot-implementer-opus-xhigh autopilot-implementer-fable）
+
+別の一時の repo の spec に `## モデル` と `- 実装: sonnet-low` を足した
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint <repo>/docs/specs/2026-11-25-game
+ERROR: モデルの節の `- 実装:` は「sonnet-high」「opus-medium」「opus-xhigh」「fable」のどれか（今は「sonnet-low」）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。（入れ方の行は手元のパスを含むので略す）
+(exit 1)
+
+同じ spec の行を `- 実装: sonnet-high` に直した
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint <repo>/docs/specs/2026-11-25-game
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。（入れ方の行は手元のパスを含むので略す）
+lint: OK
+(exit 0)
