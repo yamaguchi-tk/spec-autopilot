@@ -4,7 +4,7 @@
   "created_at": 1795677453.687808,
   "existing": true,
   "start": "05b922cd5a14215006c7be8f633a08a69425a24d",
-  "last_active_at": 1795680482.472862,
+  "last_active_at": 1795680766.424463,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795680482.471947,
   "approved_by": "OK、承認",
@@ -14,8 +14,50 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795680766.4244401,
+      "sha": "30aa3e570df6980d45defab86965ff1a2d3a72ec"
+    }
+  ],
   "fails": {},
-  "streak": {},
-  "reworks": {}
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "afe57d025ab787e29e0d86efd04a3109aca8636e",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795680488.826692,
+      "session": "6b1180c0-2141-47cc-8591-1fb211d9f871"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "30aa3e570df6980d45defab86965ff1a2d3a72ec",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "dispatch": 0,
+      "at": 1795680590.737671
+    }
+  ]
 }

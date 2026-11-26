@@ -1,0 +1,16 @@
+- commit: 30aa3e5
+
+$ sed -n 12,17p plugins/spec-autopilot/references/playbooks/iac.md
+- 使う資源・引数が入った provider の版を、provider の CHANGELOG で調べ、repo が固定する版（`.terraform.lock.hcl` など）と比べる。結果は「## 前提」に確認日と出典の URL の行つきで残す（URL の行には URL だけを書き、後ろに文字を書かない）。固定の版が古ければ、版を上げることも要件に含めるかを書く。利用者の手元に最新を調べる skill があれば、それに従ってよい
+
+  ```
+  - 前提: <資源>の <引数>は provider <版> で入り、repo の固定は <版>（確認日 2026-11-26）
+    - URL: https://github.com/hashicorp/terraform-provider-aws/blob/main/CHANGELOG.md
+  ```
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass

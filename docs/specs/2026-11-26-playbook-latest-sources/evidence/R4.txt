@@ -1,0 +1,8 @@
+- commit: 30aa3e5
+
+$ grep -n skill plugins/spec-autopilot/references/playbooks/external-service.md plugins/spec-autopilot/references/playbooks/iac.md
+plugins/spec-autopilot/references/playbooks/external-service.md:7:- 要件と前提を書く前に、使う機能ごとに今の公式の文書・変更の履歴（What's New・リリースノート・API の changelog）・事例を調べる。確かめた振る舞いは、「## 前提」に確認日と出典の URL の行つきで残す（URL の行には URL だけを書き、後ろに文字を書かない）。事例は `- 普通のやり方:` の出典に書く。利用者の手元に最新を調べる skill があれば、それに従ってよい
+plugins/spec-autopilot/references/playbooks/iac.md:12:- 使う資源・引数が入った provider の版を、provider の CHANGELOG で調べ、repo が固定する版（`.terraform.lock.hcl` など）と比べる。結果は「## 前提」に確認日と出典の URL の行つきで残す（URL の行には URL だけを書き、後ろに文字を書かない）。固定の版が古ければ、版を上げることも要件に含めるかを書く。利用者の手元に最新を調べる skill があれば、それに従ってよい
+
+$ python3 .autopilot-qa/check.py
+R4 pass
