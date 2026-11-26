@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "blocked",
   "slug": "fix-read-launch",
   "created_at": 1795702975.081048,
   "existing": true,
   "start": "9149045bb4ab1259a7a8053d2bc5aab602547699",
-  "last_active_at": 1795703323.983393,
+  "last_active_at": 1795703451.456536,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795703323.981923,
   "approved_by": "OK（bug-fix: read_launch と advisor_approval を b\"\\n\" で割る。pull は自動で）",
@@ -12,10 +12,45 @@
   "budget_min": 45,
   "post_budget_min": 45,
   "history": [],
-  "blocked": null,
+  "blocked": {
+    "req": "R1",
+    "reason": "止まる条件: この spec の handoff も手元の CLI の同じ欠陥で止まった（spec.md の作り方の行に生の U+2028 が 1 文字あり、spec を読む実装役の transcript が切れる）。pre-pr-review に切り替える",
+    "evidence": "overnight.py handoff: ERROR: autopilot-implementer の起動の記録 agent-a5afb59f25c5120db が読めない。spec.md の U+2028 の数: 1",
+    "at": 1795703451.456532
+  },
   "paused_sec": 0,
   "reviews": [],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "d836829fbd86915f10808f63a28637817cd5f324",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795703324.1786492,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "ff234cf892e2c07a1cd265b66a8b441515a340f5",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795703413.837703,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    }
+  ]
 }
