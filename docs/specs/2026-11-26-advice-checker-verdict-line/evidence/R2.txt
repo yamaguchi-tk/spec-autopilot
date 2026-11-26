@@ -1,0 +1,10 @@
+- commit: cb2960f2ed5dfdb1ec8b0baba489a3ea992e4182
+
+$ sed -n 28p plugins/spec-autopilot/agents/advice-checker.md
+- 反証が見つからなければ、下の出力の形で `反証なし` と判定し、主張ごとの結果は書く。同意の理由は足さない
+
+$ sed -n '/^## 守ること/,/^## 出力/p' plugins/spec-autopilot/agents/advice-checker.md | grep -n '`判定: 反証'; echo "exit=$?"
+exit=1
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_advisors.py -q -n auto
+47 passed in 9.58s

@@ -3,6 +3,7 @@
 import datetime
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -354,3 +355,19 @@ def test_commands_autopilot_gives_the_two_stage_night_procedure_with_flags_the_c
     for word in ("fable-advisor", "advice-checker", "--by-advisor", "lineup.py next", "朝の報告"):
         assert word in section, word
     assert "--by-advisor" in run(repo, "approve", "--help").stdout
+
+
+def test_advice_checker_definition_gives_one_verdict_line_form_that_the_gate_accepts(repo):
+    """advice-checker.md の出力の節の判定の行（`判定:`・`反証なし`・括弧の形）を確かめられない 0 で埋めた行は、門が通す。
+    出力の節の外には、判定の行の形（`判定: 反証あり`・`判定: 反証なし` で始まる literal）が無い（形の正本が 1 か所）。"""
+    before, section = (PLUGIN / "agents" / "advice-checker.md").read_text(encoding="utf-8").split("\n## 出力", 1)
+    head = re.search(r"- `(判定:)` `反証あり` / `(反証なし)` に続けて `(（確かめられない <n> / <主張の数>）)`", section)
+    assert head, "出力の節から `判定:`・`反証なし`・括弧の形が読み出せない"
+    label, verdict, paren = head.groups()
+    line = label + " " + verdict + paren.replace("<n>", "0").replace("<主張の数>", "3")
+    d = blocked_spec(repo)
+    both_ran(checker=line + "\n主張ごとの結果:\n- 主張: 成り立つ — spec.md:3\n")
+    r = by_advisor(repo, d)
+    assert r.returncode == 0, out(r)
+    assert state(d)["phase"] == "building"
+    assert re.findall(r"`判定: 反証(?:あり|なし)", before) == []
