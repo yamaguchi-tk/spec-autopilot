@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "implementer-input-table",
+  "created_at": 1795683419.6408372,
+  "existing": true,
+  "start": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
+  "last_active_at": 1795689416.425487,
+  "scope_sha256": "645ed9095b9b30057507bae62c4c9cf44ff96aa5795507474ea281ddaa4fefd8",
+  "approved_at": 1795689416.423718,
+  "approved_by": "OK、承認（実装役の 4 つの定義に、入力の表のテストの欄だけを埋める規則を足す spec）",
+  "spec_sha256": "ffe8c7dc0511c3a1d3947993eb24dad3a9e0864d87c7b43d7e91b64f6e6be110",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
