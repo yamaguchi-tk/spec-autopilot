@@ -5,13 +5,17 @@
 - テストは、repo の root で `python3 -m venv .venv` を回し、`source .venv/bin/activate` で有効にし（POSIX のシェルの書き方。fish や Windows では読み替える）、`.github/workflows/test.yml` の `pip install` の行を回して道具を入れてから、`python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto` で回す。CI は venv を作らず、同じ `pip install` の行とテストのコマンドを回す。venv の外の `pip install` は、PEP 668 で守られた python3 では拒まれる（版は workflow の 1 か所にだけ書く）
 - 文書（command・reference・agent 定義・README など）に語や文があるかだけを assert するテストは書かない。コードが読む値と文書を突き合わせるテストは書いてよい
 - 実装中に見つけた別の問題は、この PR が変えたファイルの中なら直す（要るリファクタリングは、挙動を変えずに別の commit にする）。変えていないファイルの問題は、再現手順を添えて Issue にする
-- 版数は `plugins/spec-autopilot/.claude-plugin/plugin.json` の `version` で上げる。`.claude-plugin/marketplace.json` の `description` は plugin.json と同じにする（テストが突き合わせる）。版数だけを上げる直し（plugin.json の `version` と、`tests/test_spec_autopilot_wiring.py` の版数のテストだけを変える）は、下の進め方の /autopilot も pre-pr-review も回さず、テストを全部回して PR にする（版数の 1 行に spec・評価役・独立レビューを回すと、20 分を超えた）。マージは人の指示を待つ
+- 版数は `plugins/spec-autopilot/.claude-plugin/plugin.json` の `version` で上げる。`.claude-plugin/marketplace.json` の `description` は plugin.json と同じにする（テストが突き合わせる）
 - この repo は公開している。社外に出せない情報（勤め先の repo 名・社内の計測値・個人のパスやメールアドレス・トークン）を、コード・文書・commit・PR に書かない
 
 ## この plugin 自身を直すときの進め方
 
-- 変えるファイルが全部 `.md` で、root の README.md・CLAUDE.md・`docs/`・`plugins/spec-autopilot/README.md`・`plugins/spec-autopilot/commands/`・`plugins/spec-autopilot/references/`（`playbooks/` を除く）に入る直しは、debug-and-review の pre-pr-review で回す。それ以外（コードやテストが読む `agents/`・`templates/`・`references/playbooks/`、`.claude-plugin/`・`.github/`、`docs/` の中のスクリプトを含む）は `/autopilot` で回す。`/autopilot` が壊れていて回せないときも pre-pr-review で回し、回せなかった理由（コマンドと件数。手元のパスは伏せる）を PR 本文に書く。pre-pr-review を使えない環境では、差分と規則だけを渡した独立レビューを 1 回回す（マージの扱いは pre-pr-review と同じ）
-- 自走の範囲は spec ごとに `## 自走の範囲` の `- 範囲:` で決める。草案は「マージまで」で出し、承認のときに先頭に示す。main へのマージは、marketplace から新しく入れる人に届き、版数を上げたものは入れた人にも届く（デプロイの workflow は無いので「マージ・デプロイ・QA まで」は使わない）。pre-pr-review で回した PR のマージは、人の指示を待つ
+- 直しは、変える中身で次の 3 つに振り分ける。迷ったら下の段（重い方）にする
+  1. 版数だけを上げる（plugin.json の `version` と、`tests/test_spec_autopilot_wiring.py` の版数のテストだけを変える）: spec もレビューも回さず、テストを全部回して PR にする（テストが版数と marketplace.json を突き合わせる。版数の 1 行に /autopilot を回すと、20 分を超えた）
+  2. やる内容が依頼文か Issue で決まっていて、リスクが少ない直し（文書・agent 定義の文言・1 か所の不具合など。hook・lint・check・approve の判定〔通す・止める〕を変えない）: `/autopilot` を回さず、コードを変えるなら TDD で直し、テストを全部回してから debug-and-review の pre-pr-review で PR にする
+  3. それ以外（hook・判定を変える、新しい仕組み、複数の部品にまたがる、やる内容を人と決める必要がある）: `/autopilot` で、人と spec を合意して回す
+- `/autopilot` が壊れていて回せないときも pre-pr-review で回し、回せなかった理由（コマンドと件数。手元のパスは伏せる）を PR 本文に書く。pre-pr-review を使えない環境では、差分と規則だけを渡した独立レビューを 1 回回す（マージの扱いは pre-pr-review と同じ）
+- 自走の範囲は spec ごとに `## 自走の範囲` の `- 範囲:` で決める。草案は「マージまで」で出し、承認のときに先頭に示す。main へのマージは、marketplace から新しく入れる人に届き、版数を上げたものは入れた人にも届く（デプロイの workflow は無いので「マージ・デプロイ・QA まで」は使わない）。1 と 2 で回した PR のマージは、人の指示を待つ
 - plugin を使う手元の checkout（symlink の向け先）の pull は、自走の範囲に入れず、人が頼んだときに `docs/pull-checkout.md` の手順で行う（plugin と `.claude-plugin` の中の差分が plugin の tests と README だけなら取り込み、ほかは差分を人に示して人が決める）。開発は別の worktree で行い、その checkout のブランチを切り替えない
 - `/autopilot` で回すときは pre-pr-review を重ねない。hook か判定を変える spec では、`## 制約` に想定する脅威を 1 行書く（lint は検査せず、評価役にも専用の観点は無い。範囲と直す要否を決めるときの目安）
 - 新しい仕組みや改善を agent が自分で思いついたときは、実際のタスクで観測した失敗（state.json の blocked、見回りの報告、transcript の件数）があるものだけを出す。測っていなければ、先に測る手順を出す。人が頼んだ機能は、この条件で削らない。変えたファイルの中で見つけた不具合は、上の「実装中に見つけた別の問題」に従う
