@@ -1,0 +1,6 @@
+# QA の結果
+
+<!-- 結果は pass / unverified / fail。pass の証拠は `<path>::<テスト名>`（pytest の node id `<path>::<クラス>::<テスト名>` も可。複数は `・` で並べ、同じファイルの続きは `::<テスト名>`。続けて ` と cmd: ...` を書ける。末尾の 1 組の（…）は注記）・`cmd: <実行したことと結果>`・`manual: <操作と結果>`。並べたテストが 1 つでも無ければ check が落ちる。spec の段が手元で実物の要件の pass は `evidence/R<n>.*` に、デプロイ後の pass は `evidence/R<n>.txt` に、`$ <コマンド>` の行とその出力を残す（デプロイ後はデプロイの後に書き、頭に `- commit: <マージの sha>` と `- 結果: Confirmed` を 1 本ずつ）。unverified は spec の `- unverified の承認:` か、その要件を積んだ park があるときだけ通る -->
+| 要件 | 結果 | 証拠 |
+|---|---|---|
+| R1 | pass | plugins/spec-autopilot/tests/test_ladder.py::test_every_rung_has_an_agent_with_the_declared_model_and_the_same_body・::test_the_default_implementer_is_sonnet_high_and_the_rungs_rise_from_it と cmd: 回帰テスト test_ladder.py を回して 36 passed。4 つの定義の frontmatter より後の本文を diff で突き合わせて、3 組とも差分なし（same opus・same opus-xhigh・same fable）。足した手順 8（autopilot-implementer.md:21）を読み、テストの欄だけを `<path>::<テスト名>` で埋めることと、入力の種類・例・期待・今の結果の欄と行の数を変えないことが同じ文にあると確かめた。git grep で、送った手順番号（手順 8・9）を参照する箇所が plugins に無いことも確かめた。cmd: 前提「実装役の定義は入力の表に触れていない（変更前）」は、base で 0 件だったことを差分の `-` 行で確かめた（追加した 21 行目だけが当たる）。cmd: 前提「リハーサルで今の結果を pass に書き換えた」は、リハーサルの repo が手元に無く、この repo から読めないので確かめていない（証拠: docs/specs/2026-11-26-implementer-input-table/evidence/R1.txt） |
