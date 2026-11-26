@@ -1078,3 +1078,31 @@ def test_handoff_refuses_when_the_closed_tip_is_unreadable(repo):
     _g(repo, "commit", "-q", "--allow-empty", "-m", "moved")
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode != 0 and "読めない" in r.stdout
+
+
+def failed_deploy_rows(d, sep, n):
+    """sha の m0..m<n-1> のマージごとに、detail に区切り文字を持つ deploy の failure の行を書く（ensure_ascii=False で await と同じ形）。"""
+    with (d / "awaits.jsonl").open("w", encoding="utf-8") as f:
+        for i in range(n):
+            f.write(json.dumps({"kind": "deploy", "pr": 1, "sha": f"m{i}", "result": "failure", "started_at": 1.0,
+                                "at": 10.0 + i, "detail": [f"deploy{sep}x: 失敗（run 5）"]}, ensure_ascii=False) + "\n")
+    return {"approved_at": 1.0, "merges": [{"sha": f"m{i}"} for i in range(n)]}
+
+
+@pytest.mark.parametrize("sep", LINE_SEPARATORS, ids=["U+2028", "U+2029", "U+0085"])
+def test_a_failed_deploy_row_with_a_line_separator_is_counted(tmp_path, sep):
+    """待ちの記録の文字列に改行に似た文字があっても、deploy の failure を数え、上限と smoke の判定に効かせる。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, sep, overnight.MAX_DEPLOY_FIXES + 1)
+    assert overnight.failed_deploys(tmp_path, s) == overnight.MAX_DEPLOY_FIXES + 1
+    assert overnight.deploy_exhausted(tmp_path, s)
+    assert overnight.deploy_smoke(tmp_path, s) == (True, None)
+
+
+def test_a_cut_await_row_is_still_skipped(tmp_path):
+    """途中で切れた待ちの記録の行は、今までどおり飛ばして落ちない。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, " ", 1)
+    with (tmp_path / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"kind": "deploy", "sha": "m0", "res\n')
+    assert overnight.failed_deploys(tmp_path, s) == 1
