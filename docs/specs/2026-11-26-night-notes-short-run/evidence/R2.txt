@@ -1,0 +1,77 @@
+- commit: 92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5
+
+$ (cwd=r2-90-None-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-90-None-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-90-None-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+lint: OK
+
+$ (cwd=r2-90-None-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-90-None-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-90-None-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+approved: 予算 90 分。ここから自走する
+
+$ (cwd=r2-30-40-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-30-40-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-30-40-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+lint: OK
+
+$ (cwd=r2-30-40-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-30-40-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-30-40-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+approved: 予算 30 分。ここから自走する
+
+$ (cwd=r2-61-0-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-61-0-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-61-0-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+lint: OK
+
+$ (cwd=r2-61-0-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-61-0-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-61-0-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+approved: 予算 61 分。ここから自走する
+
+$ (cwd=r2-None-None-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 1
+ERROR: 予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-None-None-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-None-None-lint/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+
+$ (cwd=r2-None-None-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 1
+ERROR: 予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-None-None-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-None-None-approve/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+
+$ (cwd=r2-queue-20-20) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-a --by OK --queue
+exit 0
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+
+$ (cwd=r2-queue-20-20) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-b --by OK --queue
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <worktree>/plugins/spec-autopilot/scripts/watch.py plist > <worktree>/.autopilot-qa/work/r2-queue-20-20/home/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <worktree>/.autopilot-qa/work/r2-queue-20-20/home/Library/LaunchAgents/com.spec-autopilot.watch.plist
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
