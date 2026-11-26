@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "advice-checker-verdict-line",
   "created_at": 1795689712.854476,
   "existing": true,
   "start": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
-  "last_active_at": 1795690218.307565,
+  "last_active_at": 1795690821.691069,
   "dispatches": [
     {
       "base": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
@@ -75,5 +75,22 @@
       "fixed": 0,
       "at": 1795690218.307564
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 59,
+      "at": 1795690820.714279,
+      "sha": "b32e0cc20c9e9acf5de6ea61df8ddb78ddab9591",
+      "head": "9dac81840ccdde6981489bd23e9daf7fa0ac3940"
+    }
+  ],
+  "merged_at": 1795690820.714283,
+  "paused_at_merge": 0.0,
+  "done_at": 1795690821.681754,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
