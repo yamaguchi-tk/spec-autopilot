@@ -1,0 +1,66 @@
+- commit: f1319c013edcb5f3e59cb4fd4c1a294275bf4297
+
+予算 30 分（マージ後なし → 60 分）の spec で、本物の CLI を .autopilot-qa/check.py から回した。SSO は HOME に ~/.aws/config と SSO のキャッシュ（残り 30 分・100 分）を置き、
+GDD は .claude/gdd-dev.local.md に active: true を置き、user の settings.json で GDD の plugin を有効・無効にした。夜の NOTE の偽物（pmset・defaults）も PATH に置いた。
+<work> は .autopilot-qa/work。
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # SSO 残り 30 分
+exit 1
+ERROR: AWS の profile「dev」の SSO のセッションが残り 30 分で、見込みの夜の終わり（予算とマージ後の予算）より前に切れる。`aws sso login --profile dev` でログインし直してから承認する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # SSO 残り 30 分
+exit 1
+ERROR: AWS の profile「dev」の SSO のセッションが残り 30 分で、見込みの夜の終わり（予算とマージ後の予算）より前に切れる。`aws sso login --profile dev` でログインし直してから承認する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # SSO 残り 100 分
+exit 0
+NOTE: AWS の profile「dev」の SSO のセッションは残り 100 分で、予算の 2 倍までは続かない。切れたら残りの操作を park に積む
+lint: OK
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # SSO 残り 100 分
+exit 0
+NOTE: AWS の profile「dev」の SSO のセッションは残り 100 分で、予算の 2 倍までは続かない。切れたら残りの操作を park に積む
+approved: 予算 30 分。ここから自走する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # GDD の plugin 有効・lock active: true
+exit 1
+ERROR: GDD のワークフローが有効（.claude/gdd-dev.local.md の active: が false 以外）。GDD の hook が自走を止めるので、/gdd-dev を終えるか active: false にしてから承認する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # GDD の plugin 有効・lock active: true
+exit 1
+ERROR: GDD のワークフローが有効（.claude/gdd-dev.local.md の active: が false 以外）。GDD の hook が自走を止めるので、/gdd-dev を終えるか active: false にしてから承認する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # GDD の plugin 無効・lock active: true
+exit 0
+NOTE: <work>/R3-gddFalse-lint/repo/.claude/gdd-dev.local.md の active: が false 以外のまま残っているが、settings.json で GDD の plugin が有効でないので自走は止めない（この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる）。GDD を使わないなら、このファイルは消してよい
+lint: OK
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # GDD の plugin 無効・lock active: true
+exit 0
+NOTE: <work>/R3-gddFalse-approve/repo/.claude/gdd-dev.local.md の active: が false 以外のまま残っているが、settings.json で GDD の plugin が有効でないので自走は止めない（この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる）。GDD を使わないなら、このファイルは消してよい
+approved: 予算 30 分。ここから自走する
+夜の NOTE: なし
+
+変異（拒否の要件なので、証拠のテストが落ちるかを確かめた）: .autopilot-qa/mut-R3-2.patch は preflight.py の check の 1 行目を
+`errors, warnings = sso(text, now or time.time()) if goal or overnight_run(text, now) else ([], [])` に替える（60 分以下の run で SSO の検査を外す）。
+（mut-R3-1.patch は文脈の行が合わず当たらなかったので、同じ箇所を正しい文脈で入れ直した）
+$ git apply .autopilot-qa/mut-R3-2.patch && perl -e 'alarm 200; exec @ARGV' -- python3 -m pytest "plugins/spec-autopilot/tests/test_rollback.py::test_a_30_minute_spec_still_stops_on_an_sso_session_that_ends_before_the_night" -q
+（変異の前: 2 passed in 9.27s）
+E       AssertionError: assert (0 == 1)
+plugins/spec-autopilot/tests/test_rollback.py:893: AssertionError
+E       AssertionError: assert (0 == 1)
+plugins/spec-autopilot/tests/test_rollback.py:893: AssertionError
+2 failed in 1.35s
+$ git apply -R .autopilot-qa/mut-R3-2.patch && git diff --quiet HEAD -- plugins/spec-autopilot/scripts/preflight.py   # 戻した（印も消えた）

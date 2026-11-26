@@ -1,0 +1,50 @@
+- commit: f1319c013edcb5f3e59cb4fd4c1a294275bf4297
+
+pmset（assertions は PreventUserIdleSystemSleep 0、batt は 'Battery Power'）と defaults（AutomaticallyInstallMacOSUpdates = 1）の偽物を PATH に置き、
+HOME に見回り役の plist を置かずに、本物の CLI を .autopilot-qa/check.py から回した（4 つの夜の NOTE がすべて当たる Mac）。
+<work> は .autopilot-qa/work、<repo> は worktree の直下。
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # 予算 30 分（マージ後なし → 60 分）
+exit 0
+lint: OK
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # 予算 30 分
+exit 0
+approved: 予算 30 分。ここから自走する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # 予算 60 分・マージ後 0 分
+exit 0
+lint: OK
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # 予算 60 分・マージ後 0 分
+exit 0
+approved: 予算 60 分。ここから自走する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # 予算 20 分・マージ後 40 分
+exit 0
+lint: OK
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # 予算 20 分・マージ後 40 分
+exit 0
+approved: 予算 20 分。ここから自走する
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-a --by OK --queue   # まとめて承認 1 本目（予算 10 分）
+exit 0
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-b --by OK --queue   # 2 本目（予算 20 分。前に 20 分＋この 40 分＝60 分）
+exit 0
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+夜の NOTE: なし

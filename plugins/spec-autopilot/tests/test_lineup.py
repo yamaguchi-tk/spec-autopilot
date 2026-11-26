@@ -12,7 +12,7 @@ import pytest
 from test_autopilot import (EXISTING_SECTIONS, GOOD_SPEC, PLUGIN, existing_repo, init_spec, repo, run, state, stop_hook,  # noqa: F401
                            user_says)
 from test_overnight import FULL, GIT, gh, scoped  # noqa: F401
-from test_rollback import aws_home, gdd_on
+from test_rollback import NIGHT_NOTES, aws_home, fake_mac, gdd_on, with_budget
 
 LINEUP = PLUGIN / "scripts" / "lineup.py"
 START = PLUGIN / "hooks" / "session_start.py"
@@ -94,6 +94,29 @@ def test_queue_measures_the_sso_session_with_the_budgets_queued_before(repo, tmp
     assert run(repo, "approve", str(a), "--by", "OK", "--queue").returncode == 0
     r = run(repo, "approve", str(b), "--by", "OK", "--queue")
     assert r.returncode == 1 and "aws sso login" in r.stdout and state(b)["phase"] == "discovery"
+
+
+def night_notes_of_the_second(repo, tmp_path, monkeypatch, first, second):
+    """1 本目を first 分（マージ後の予算なし → 見込みは 2 倍）、2 本目を second 分でまとめて承認し、2 本目の承認の出力を返す。"""
+    fake_mac(tmp_path, monkeypatch, batt="Now drawing from 'Battery Power'", autoinstall="1", awake="0")
+    monkeypatch.setenv("HOME", str(tmp_path / "nohome"))
+    a = spec(repo, "a", text=with_budget(scoped(FULL), first))
+    b = spec(repo, "b", text=with_budget(scoped(FULL), second))
+    user_says(repo)
+    assert run(repo, "approve", str(a), "--by", "OK", "--queue").returncode == 0
+    r = run(repo, "approve", str(b), "--by", "OK", "--queue")
+    assert r.returncode == 0, r.stdout + r.stderr
+    return r.stdout
+
+
+def test_queue_gives_no_night_notes_when_the_specs_queued_before_and_this_one_total_an_hour(repo, tmp_path, monkeypatch):
+    out = night_notes_of_the_second(repo, tmp_path, monkeypatch, 10, 20)  # 前に 10＋10 分、この spec は 20＋20 分
+    assert not [w for w in NIGHT_NOTES if w in out], out
+
+
+def test_queue_gives_the_night_notes_when_the_specs_queued_before_push_the_end_past_an_hour(repo, tmp_path, monkeypatch):
+    out = night_notes_of_the_second(repo, tmp_path, monkeypatch, 20, 20)  # 前に 20＋20 分、この spec は 20＋20 分で 80 分
+    assert all(w in out for w in NIGHT_NOTES), out
 
 
 # --- 着手（next） ---

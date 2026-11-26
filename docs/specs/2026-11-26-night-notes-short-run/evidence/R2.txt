@@ -1,0 +1,83 @@
+- commit: f1319c013edcb5f3e59cb4fd4c1a294275bf4297
+
+R1 と同じ偽物（4 つの夜の NOTE がすべて当たる Mac）で、本物の CLI を .autopilot-qa/check.py から回した。
+<work> は .autopilot-qa/work、<repo> は worktree の直下。4 つの NOTE の文は各ケースで同じなので、2 ケース目からは「夜の NOTE」の行に当たった NOTE を並べる（check.py の notes() が出力の文字列から数えた結果）。
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # 予算 90 分
+exit 0
+NOTE: keep-awake が効いていない（pmset の PreventUserIdleSystemSleep・PreventSystemSleep が 0）。夜の間に Mac が眠ると自走が止まる。Claude Desktop の keep-awake か caffeinate を入れてから寝る
+NOTE: Mac がバッテリーで動いている。蓋を閉じるとバッテリーのまま眠り、keep-awake でも止められない。電源につなぎ、蓋を開けておく（閉じるなら外部ディスプレイと電源をつなぐ）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+NOTE: 見回り役が入っていない。夜の間に Claude アプリが再起動すると、止まった run を朝まで誰も起こさない。入れ方: python3 <repo>/plugins/spec-autopilot/scripts/watch.py plist > <work>/R2-90-lint/nohome/Library/LaunchAgents/com.spec-autopilot.watch.plist と launchctl bootstrap gui/$(id -u) <work>/R2-90-lint/nohome/Library/LaunchAgents/com.spec-autopilot.watch.plist
+lint: OK
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # 予算 90 分
+exit 0
+（4 つの NOTE）
+approved: 予算 90 分。ここから自走する
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # 予算 30 分・マージ後 40 分
+exit 0
+（4 つの NOTE）
+lint: OK
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # 予算 30 分・マージ後 40 分
+exit 0
+（4 つの NOTE）
+approved: 予算 30 分。ここから自走する
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # 予算 61 分・マージ後 0 分
+exit 0
+（4 つの NOTE）
+lint: OK
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # 予算 61 分・マージ後 0 分
+exit 0
+（4 つの NOTE）
+approved: 予算 61 分。ここから自走する
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint 2026-11-26-game   # 予算の行なし
+exit 1
+ERROR: 予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）
+（4 つの NOTE）
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK   # 予算の行なし
+exit 1
+ERROR: 予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）
+（4 つの NOTE）
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-a --by OK --queue   # まとめて承認 1 本目（予算 20 分 → 40 分）
+exit 0
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+夜の NOTE: なし
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-b --by OK --queue   # 2 本目（予算 20 分。前に 40 分＋この 40 分＝80 分）
+exit 0
+（4 つの NOTE）
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK --goal   # 目的の spec（大きさ L・予算 30 分）
+exit 0
+（4 つの NOTE）
+goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py approve 2026-11-26-game --by OK --goal   # 目的の spec（大きさ M・予算 30 分）
+exit 0
+（4 つの NOTE）
+goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）
+夜の NOTE: ['keep-awake', 'battery', 'autoupdate', 'watcher']
