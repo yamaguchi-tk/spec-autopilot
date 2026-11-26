@@ -21,6 +21,7 @@
                                                     spec のマージを戻す PR（--rollback）だけを受ける
   overnight.py merged <dir> --pr <n> [--rollback --reason <理由>]   マージを gh で確かめて記録する（冪等）。マージ後の予算はここから数える
   overnight.py qa <dir> --evidence <file> --smoke pass|fail|unknown   デプロイの後に実環境で QA を回した証拠と、変えない挙動の smoke を記録する
+      （`- デプロイの起動: なし（マージした commit で QA）` の spec は、デプロイの代わりに最後のマージの記録の後に書いた証拠を受ける）
   overnight.py notify <dir>                         spec の `- 通知:` の先に、今の状態と本番の状態を 1 行で知らせる（done と block も出す）
   overnight.py park <dir> --kind merge|deploy|qa|ci|other --op <操作> --reason <理由> [--req R<n>]
                                                     範囲の外の操作・満たせない要件を、止めずに積む
@@ -50,6 +51,7 @@ SCOPES = (FULL, MERGE, PR)
 SCOPE_KEYS = ("範囲", "QA の環境", "QA の書き込み先", "デプロイの起動", "デプロイの確かめ", "ロールバック", "AWS の profile")
 REQUIRED_FOR_FULL = ("QA の環境", "QA の書き込み先", "デプロイの起動", "デプロイの確かめ", "ロールバック")  # 空なら ERROR
 AUTO_DEPLOY = "マージで自動"
+NO_DEPLOY = "なし（マージした commit で QA）"  # デプロイの workflow が無い repo: 最後のマージの記録を QA の起点にする
 ROUND_KEYS = ("merges", "merged_at", "paused_at_merge", "parked", "qa_runs", "handoffs", "dispatches", "lenses",
               "rolled_back")
 OPTIONAL_KEYS = ("通知",)  # 無くてよい行（無ければ なし）
@@ -121,8 +123,10 @@ def scope_lint(text):
     if back and back != REVERT and not ROLLBACK_CMD.match(back):
         errors.append(f"自走の範囲の `- ロールバック:` は「{REVERT}」か「コマンド: <1 行のコマンド>」のどちらか（今は「{back}」）")
     start = rows.get("デプロイの起動")
-    if start and start != AUTO_DEPLOY and not ROLLBACK_CMD.match(start):
-        errors.append(f"自走の範囲の `- デプロイの起動:` は「{AUTO_DEPLOY}」か「コマンド: <1 行のコマンド>」のどちらか（今は「{start}」）")
+    if start and start not in (AUTO_DEPLOY, NO_DEPLOY) and not ROLLBACK_CMD.match(start):
+        errors.append(f"自走の範囲の `- デプロイの起動:` は「{AUTO_DEPLOY}」か「コマンド: <1 行のコマンド>」か「{NO_DEPLOY}」のどれか（今は「{start}」）")
+    if start == NO_DEPLOY and rows.get("デプロイの確かめ"):
+        errors.append(f"デプロイの起動が「{NO_DEPLOY}」なので `- デプロイの確かめ:` は空にする（待つデプロイが無い）")
     warnings = []
     deployed = stages.deployed_reqs(autopilot, text)
     if scope in (PR, MERGE):  # 夜の間に届かないデプロイ後の要件は、承認のときに人が見る
@@ -132,6 +136,8 @@ def scope_lint(text):
     if scope == FULL:  # デプロイ後の要件が無ければ、マージ後の QA のループを通らない。マージで起きるデプロイの失敗は拾うので、起動と確かめは要る
         need = REQUIRED_FOR_FULL if deployed else ("QA の書き込み先", "デプロイの起動") + (
             () if start and ROLLBACK_CMD.match(start) else ("デプロイの確かめ",))
+        if start == NO_DEPLOY:
+            need = tuple(k for k in need if k != "デプロイの確かめ")
         errors += [f"範囲が「{FULL}」なので `- {k}:` を書く" for k in need if k in rows and not rows[k]]
     if scope == FULL and deployed:
         if start and ROLLBACK_CMD.match(start):
@@ -179,6 +185,12 @@ def scope_errors(d, s):
         errors.append("範囲がマージを含むのに、今の HEAD を含むマージを確かめていない（references/after-pr.md。"
                       "マージしたら overnight.py merged <dir> --pr <n>、できないなら overnight.py park --kind merge）")
     late = stages.deployed_reqs(autopilot, (d / "spec.md").read_text(encoding="utf-8"))
+    if no_deploy(d):  # 待つデプロイが無い: 最後のマージの後の QA だけを見る
+        origin = qa_origins(d, s)
+        if late and origin and "qa" not in parked and not [q for q in s.get("qa_runs") or [] if float(q["at"]) > max(origin)]:
+            errors.append("マージの後の QA を記録していない（マージした commit で QA を回して qa.md を書き直し、"
+                          "overnight.py qa <dir> --evidence <file>。できないなら overnight.py park --kind qa）")
+        return errors
     smoke = [] if not deploy_stage(d) or late or deploy_smoke(d, s) != (True, None) else [
         "この夜にデプロイが落ちたのに、最後に落ちた後の smoke を記録していない（spec の変えない挙動を本番で確かめて "
         "overnight.py qa <dir> --evidence <file> --smoke <pass|fail|unknown>。fail でも戻さずに積む）"]
@@ -200,11 +212,25 @@ def scope_errors(d, s):
     return errors
 
 
+def no_deploy(d):
+    """範囲が「マージ・デプロイ・QA まで」で、デプロイの起動が「なし（マージした commit で QA）」か。"""
+    text = (d / "spec.md").read_text(encoding="utf-8")
+    return scope_of(d) == FULL and (scope_rows(text) or {}).get("デプロイの起動") == NO_DEPLOY
+
+
+def qa_origins(d, s):
+    """最後のマージの QA の起点の時刻。デプロイの起動が「なし」なら最後のマージの記録、ほかはそのマージの commit のデプロイの成功。"""
+    merges = s.get("merges") or []
+    if no_deploy(d):
+        return [float(merges[-1].get("at", 0))] if merges else []
+    return deploys_of_last_merge(d, s)
+
+
 def deploy_stage(d):
     """デプロイの段を通るか: 範囲が「マージ・デプロイ・QA まで」で、デプロイ後の要件があるか、起動がコマンドの宣言でない
     （マージで本番が変わる。読めない値もこちら）。コマンドで起動しデプロイ後の要件が無い spec は、夜の間にデプロイを起こさない。"""
     text = (d / "spec.md").read_text(encoding="utf-8")
-    if scope_of(d) != FULL:
+    if scope_of(d) != FULL or no_deploy(d):
         return False
     return bool(stages.deployed_reqs(autopilot, text)) or not ROLLBACK_CMD.match((scope_rows(text) or {}).get("デプロイの起動") or "")
 
@@ -278,7 +304,7 @@ def deploys_of_last_merge(d, s):
 def stage_errors(d, s, rows, stage="all"):
     """段ごとの証拠の要求（stages.check）を、検査の時点・積んだ要件・最後のマージとそのデプロイの時刻で当てる。"""
     parked = {p.get("req") for p in parked_ops(d, s) if p.get("req")}
-    deployed = deploys_of_last_merge(d, s)
+    deployed = qa_origins(d, s)
     merges = s.get("merges") or []
     errors = stages.check(autopilot, d, rows, parked, max(deployed) if deployed else None, stage,
                           merges[-1].get("sha") if merges else None, s.get("reviews") or [], s.get("approved_at"))
@@ -315,6 +341,7 @@ def production(d, s):
     merges = s.get("merges") or []
     at_of = {m.get("sha"): float(m.get("at", 0)) for m in merges if m.get("sha")}
     by_command = bool(ROLLBACK_CMD.match((scope_rows(text) or {}).get("デプロイの起動") or ""))
+    merged_is_live = no_deploy(d)  # デプロイが無ければ、マージした commit がそのまま確かめる相手
     parked = {p.get("merges") for p in s.get("parked") or [] if p.get("kind") == "deploy" and not p.get("req")}
     events = [(float(m.get("at", 0)), "merge", m) for n, m in enumerate(merges, 1)
               if not (by_command and n in parked) or m.get("rollback")]
@@ -329,7 +356,7 @@ def production(d, s):
     state, broken_at, deployed = None, None, False
     for at, kind, v in sorted(events, key=lambda e: e[0]):
         if kind == "merge":
-            deployed = False
+            deployed = merged_is_live
             if state != BROKEN:
                 state = UNKNOWN
         elif kind == "deploy":
@@ -1063,8 +1090,11 @@ def cmd_qa(a):
         sys.exit(f"証拠のファイルが無いか空: {f}")
     deployed = [x["at"] for x in awaits(d, s) if x.get("kind") == "deploy"]
     deployed += [float(r["at"]) for r in s.get("rolled_back") or []]
+    if no_deploy(d):
+        deployed += [float(m.get("at", 0)) for m in s.get("merges") or []]
     if not deployed or f.stat().st_mtime <= max(deployed):
-        sys.exit("証拠のファイルが、最後に終わったデプロイの待ちより後に書かれていない。デプロイの後に QA を回す")
+        sys.exit("証拠のファイルが、最後に終わったデプロイの待ち（デプロイの起動が「なし」なら最後のマージ）より後に"
+                 "書かれていない。デプロイ（なしならマージ）の後に QA を回す")
     mtime = f.stat().st_mtime
     if any(q.get("evidence") == str(f) and q.get("mtime") == mtime for q in s.get("qa_runs") or []):
         print("qa: 記録済み")

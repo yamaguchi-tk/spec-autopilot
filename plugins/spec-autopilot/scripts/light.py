@@ -5,7 +5,7 @@
 
 - 入れるのは、受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まるときだけ（commands/autopilot.md の L）
 - 自走の範囲は、合意ありと同じく spec の `- 範囲:` で決める。ただし `デプロイの起動:` と `ロールバック:` はコマンドにできない（人が見ないまま打たない）。
-  デプロイの workflow が無い repo でマージしてから QA する段は無い（限界）
+  デプロイの workflow が無い repo は、`デプロイの起動:` を「なし（マージした commit で QA）」にして、マージの後に QA へ進む（打つコマンドは無い）
 - 止まる条件は、保護された path（下の既定と、起点の commit の `.spec-autopilot/protected-paths`）に触れたとき。init の時点の
   commit から、PR が持ち込む差（HEAD・index・作業ツリー）と追っていないファイルの path で機械的に決め、照合は git の glob pathspec に任せる。
   init より前の commit・git が無視するファイル・途中の commit で触れて戻したもの・spec の置き場の中の `/` を含む pattern は見ない（手元の書き換えは防がない。限界）。承認の前から当たっているなら approve しない。spec.md が承認の後に変わったとき（範囲が広がる）は、合意ありと同じく check が止める
@@ -109,7 +109,7 @@ KEYS = ("デプロイの起動", "ロールバック")
 def command_errors(text, after_approve=False):
     """軽量フローの spec のデプロイ・ロールバックを許可リストで確かめる。合意ありでは承認のときに人がこの 2 行を見るが、
     軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので、agent の書いたコマンドを打たせない。
-    - `## 自走の範囲` の見出し（この綴りのまま。コードブロックやコメントの中も数える）は 1 つだけで、コメントを外した後、`- <キー>: <値>` の行と空行だけ。`デプロイの起動` は「マージで自動」か空、`ロールバック` は revert の PR か空
+    - `## 自走の範囲` の見出し（この綴りのまま。コードブロックやコメントの中も数える）は 1 つだけで、コメントを外した後、`- <キー>: <値>` の行と空行だけ。`デプロイの起動` は「マージで自動」か「なし（マージした commit で QA）」か空、`ロールバック` は revert の PR か空
     - spec のほかの所（散文・綴りの違う見出しの節・閉じたコメント）に書いたコマンドは機械では拾わない。軽量フローの run では after-pr.md の 3・5 が
       「起動のコマンドとコマンドでの戻しは無い」と agent に言う（LLM の指示なので、守れているかは機械で確かめられない。限界）"""
     import overnight
@@ -127,9 +127,9 @@ def command_errors(text, after_approve=False):
     if n > 1:
         out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` の節を 1 つにまとめる（{n} 個ある）。{way}")
     rows = overnight.scope_rows(text) or {}
-    allowed = {"デプロイの起動": (overnight.AUTO_DEPLOY,), "ロールバック": (overnight.REVERT,)}
+    allowed = {"デプロイの起動": (overnight.AUTO_DEPLOY, overnight.NO_DEPLOY), "ロールバック": (overnight.REVERT,)}
     found = {k for k in KEYS if (rows.get(k) or "") not in ("", *allowed[k])}
-    return out + [f"軽量フローでは `- {key}:` は「{allowed[key][0]}」か空だけにする"
+    return out + [f"軽量フローでは `- {key}:` は「{'」か「'.join(allowed[key])}」か空だけにする"
                   f"（人が見ないままコマンドを打つことになる）。{way}" for key in KEYS if key in found]
 
 
