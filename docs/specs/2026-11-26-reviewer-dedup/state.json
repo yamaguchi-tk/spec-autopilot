@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "reviewer-dedup",
+  "created_at": 1795669441.879597,
+  "existing": true,
+  "start": "e272d09d3b163b9bd84e522ae0a784e41716ced1",
+  "last_active_at": 1795671716.3332438,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795671716.331949,
+  "approved_by": "OK（評価役の定義は変えず、CI の並列・TASK の照合の直し・照合役で全体の回帰テストを止める・CLAUDE.md・version）",
+  "spec_sha256": "3f2f23086f074de2c1c66ee66cb166746c481376f5e2a49574788384826de83c",
+  "budget_min": 75,
+  "post_budget_min": 75,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
