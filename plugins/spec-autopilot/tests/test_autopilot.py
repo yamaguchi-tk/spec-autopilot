@@ -2652,6 +2652,64 @@ def test_trust_mark_passes_an_originless_queued_command(repo, monkeypatch, comma
     assert state(d)["phase"] == "building"
 
 
+BROKEN_ORIGINLESS_LINES = [
+    '{"type":"user","message":{"role":"user","content":"O',
+    '{"type":"attachment","attachment":{"type":"queued_command","prompt":"x',
+    '"user"',
+    '{"type":"user","attachment":"x","message":{"role":"user","content":"OK"}}',
+    '{"type":"attachment","attachment":"queued_command"}',
+]
+BROKEN_ORIGINLESS_IDS = ["half-written user", "half-written queued_command", "non-object user", "string attachment on user", "string attachment"]
+
+
+def _append_raw(line):
+    with transcript_of().open("a", encoding="utf-8") as h:
+        h.write(line + "\n")
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("line", BROKEN_ORIGINLESS_LINES, ids=BROKEN_ORIGINLESS_IDS)
+@pytest.mark.parametrize("trusted", [False, True], ids=["no mark", "mark"])
+def test_a_broken_row_without_origin_after_a_human_row_does_not_stop_the_gate(repo, monkeypatch, command, line, trusted):
+    """origin の無い壊れた行（書きかけの user・queued_command など）は、印の有無によらず読み飛ばす。
+    印の無い run は origin を含まない行を読まないので、base と同じく通る。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if trusted:
+        monkeypatch.setenv(TRUST, "1")
+    user_says(repo)
+    _append_raw(line)
+    assert run(repo, *_gate_args(d, command)).returncode == 0
+    assert state(d)["phase"] == "building"
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("trusted", [False, True], ids=["no mark", "mark"])
+def test_a_broken_row_that_has_origin_still_stops_the_gate(repo, monkeypatch, command, trusted):
+    """origin を含む壊れた行は、今までどおり止める（読めない transcript を通さない）。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if trusted:
+        monkeypatch.setenv(TRUST, "1")
+    user_says(repo)
+    _append_raw('{"type": "user", "origin": {"kind": "hu')
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode != 0 and "Traceback" not in r.stderr
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("trusted", [False, True], ids=["no mark", "mark"])
+def test_a_json_array_row_that_mentions_origin_after_a_human_row_does_not_stop_the_gate(repo, monkeypatch, command, trusted):
+    """origin の語を含む JSON の配列の行は、origin のある行が先にあれば今までどおり読み飛ばす。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if trusted:
+        monkeypatch.setenv(TRUST, "1")
+    user_says(repo)
+    _append_raw('["origin", "user"]')
+    assert run(repo, *_gate_args(d, command)).returncode == 0
+    assert state(d)["phase"] == "building"
+
+
 NEW_PREMISES = GOOD_SPEC[GOOD_SPEC.index("## 前提"):GOOD_SPEC.index("## 作り方")]
 CLAIM = "- 前提: 列を消す処理は clearLines だけにある\n"
 PREMISES = """## 前提

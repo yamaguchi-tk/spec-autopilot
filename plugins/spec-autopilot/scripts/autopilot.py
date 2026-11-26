@@ -248,22 +248,28 @@ def _originless_row(o):
     return False
 
 
-def human_said_at(path):
+def human_said_at(path, trusted=False):
     """transcript の (origin が human の行の最後の時刻, origin の無い発言の行の最後の時刻) を返す。host が origin を
-    どの行にも書いていなければ（headless の claude -p など）None を返す。読めなければ例外を投げる。"""
+    どの行にも書いていなければ（headless の claude -p など）None を返す。読めなければ例外を投げる。
+    origin を含まない行は、印を立てた run（trusted）だけが読む。印の無い run の判定は変えない。
+    読む行のうち origin を含まない行が壊れていても、読み飛ばす（origin を含む行が壊れていれば止める）。"""
     human, originless, has_origin = 0.0, 0.0, False
     for line in transcript_lines(path):
-        if '"origin"' not in line and '"user"' not in line and "queued_command" not in line:
+        with_origin = '"origin"' in line
+        if not with_origin and not (trusted and ('"user"' in line or "queued_command" in line)):
             continue
-        o = json.loads(line)
-        if not isinstance(o, dict):
+        try:
+            o = json.loads(line)
+        except ValueError:
+            if with_origin:
+                raise
             continue
-        has_origin = has_origin or isinstance(o.get("origin"), dict) or isinstance((o.get("attachment") or {}).get("origin"), dict)
-        at = _iso_epoch(o.get("timestamp")) or 0.0
+        if with_origin:
+            has_origin = has_origin or isinstance(o.get("origin"), dict) or isinstance((o.get("attachment") or {}).get("origin"), dict)
         if _human_row(o):
-            human = max(human, at)
+            human = max(human, _iso_epoch(o.get("timestamp")) or 0.0)
         elif _originless_row(o):
-            originless = max(originless, at)
+            originless = max(originless, _iso_epoch(o.get("timestamp")) or 0.0)
     return (human, originless) if has_origin else None
 
 
@@ -280,13 +286,13 @@ def require_user_after(d, since, what):
     if at is None or at <= since:
         sys.exit(f"{what}の後に人の発言が記録されていない。人に示して返事を受けてから実行する")
     path = prompt_record(d).get("transcript_path")
+    trusted = prompt_record(d).get("trust") is True
     try:
-        said = human_said_at(path) if isinstance(path, str) and path else None
+        said = human_said_at(path, trusted) if isinstance(path, str) and path else None
         if not isinstance(path, str) or not path:
             raise ValueError("transcript の場所が記録されていない")
     except (OSError, ValueError, AttributeError, TypeError) as e:
         sys.exit(f"人の発言を transcript で確かめられない（{type(e).__name__}）。人に示して返事を受けてから実行する")
-    trusted = prompt_record(d).get("trust") is True
     if said is None:
         if trusted:
             return session
