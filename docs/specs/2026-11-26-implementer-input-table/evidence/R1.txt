@@ -1,0 +1,16 @@
+- commit: 3b78f738d149ac40b6514501de00c1b9cc503420
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ladder.py -q
+....................................                                     [100%]
+36 passed in 43.75s
+
+$ for f in opus opus-xhigh fable; do diff <(awk 'f;/^---$/{c++; if(c==2)f=1}' plugins/spec-autopilot/agents/autopilot-implementer.md) <(awk 'f;/^---$/{c++; if(c==2)f=1}' plugins/spec-autopilot/agents/autopilot-implementer-$f.md) && echo "same $f"; done
+same opus
+same opus-xhigh
+same fable
+
+$ grep -n "inputs\|今の結果" plugins/spec-autopilot/agents/autopilot-implementer.md
+21:8. spec のディレクトリに `inputs/R<n>.md`（入力の種類の表）があるとき、実装役が埋めるのはテストの欄だけで、`<path>::<テスト名>` で書く。入力の種類・例・期待・今の結果の欄と表の行の数は変えない（今の結果は評価役が確かめて書く欄で、直した後の pass に書き換えない。行を足したり消したりもしない）
+
+$ git grep -n "手順 8\|手順 9\|手順の 8" -- plugins
+（出力なし: 送った番号を参照する箇所は無い）
