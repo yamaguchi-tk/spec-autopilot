@@ -4,7 +4,7 @@
   "created_at": 1795668526.243426,
   "existing": true,
   "start": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-  "last_active_at": 1795677376.8653939,
+  "last_active_at": 1795678347.114809,
   "approved_at": 1795677376.86237,
   "approved_by": "OK、承認（目的の spec では予算によらず夜の NOTE を出す直しを含む）",
   "spec_sha256": "b39d23ff3856a14afeba44961baa45f9aa42941f38d3b4ff1a3d8c1771b8c451",
@@ -115,11 +115,46 @@
   ],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795678347.114799,
+      "sha": "f1319c013edcb5f3e59cb4fd4c1a294275bf4297"
+    }
+  ],
   "fails": {},
-  "streak": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0
+  },
   "reworks": {},
   "light": true,
   "light_base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-  "scope_sha256": "d7ae749982309345a4e8ee86ba63a8b6e256b1056f0001a966781de3a5221977"
+  "scope_sha256": "d7ae749982309345a4e8ee86ba63a8b6e256b1056f0001a966781de3a5221977",
+  "dispatches": [
+    {
+      "base": "0d37658855ec2fe18cad52000f7df027a1a0d0d7",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795677392.3192902,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "f1319c013edcb5f3e59cb4fd4c1a294275bf4297",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 0,
+      "at": 1795677669.5056682
+    }
+  ]
 }
