@@ -1,0 +1,25 @@
+{
+  "phase": "discovery",
+  "slug": "night-notes-short-run",
+  "created_at": 1795668526.243426,
+  "existing": true,
+  "start": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
+  "last_active_at": 1795668725.950491,
+  "dispatches": [
+    {
+      "base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795668725.9504561,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff",
+      "prototype": true
+    }
+  ]
+}
