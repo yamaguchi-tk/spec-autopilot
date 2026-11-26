@@ -1,0 +1,19 @@
+- commit: ee62a081ad736c5d67c544772b14792601971d65
+
+$ python3 .autopilot-qa/check.py
+R6 pass
+
+$ git show 9d7c30879f835b33573b037c5bc8660b978417be:plugins/spec-autopilot/.claude-plugin/plugin.json | jq .version
+0.1.7
+$ jq .version plugins/spec-autopilot/.claude-plugin/plugin.json
+0.1.8
+-> ok: version 0.1.7 -> 0.1.8、.claude-plugin/marketplace.json の plugins[spec-autopilot].description が plugin.json の description と同じ
+
+$ git grep -l -F '0.1.7' -- plugins/spec-autopilot/tests .claude-plugin
+(当たりなし)
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q
+6 passed in 0.02s
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1146 passed in 134.95s (0:02:14)

@@ -4,7 +4,7 @@
   "created_at": 1795625349.870097,
   "existing": true,
   "start": "810b95b99080a3be06e055774a19ea961c9906dd",
-  "last_active_at": 1795657927.30176,
+  "last_active_at": 1795665962.845149,
   "queued_at": 1795653661.056182,
   "approved_by": "再開（依る spec の block で止まった列を戻す）",
   "spec_sha256": "709429c4ecea59a89884e9fce78c0f553ec87f26527396172ff5efa9557ad75f",
@@ -43,7 +43,7 @@
       "phase": "blocked"
     }
   ],
-  "paused_sec": 0,
+  "paused_sec": 4270.730567932129,
   "reviews": [
     {
       "high": [
@@ -129,6 +129,18 @@
       "agent": "autopilot-implementer-high",
       "at": 1795656888.921087,
       "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "1396da27274e8394174a1db829645ca2cfe38a4f",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R4"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795657933.536185,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
     }
   ],
   "handoffs": [
@@ -172,5 +184,11 @@
       "dispatch": 3,
       "at": 1795657101.854366
     }
-  ]
+  ],
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 1,
+    "待ちの poll": 0
+  }
 }

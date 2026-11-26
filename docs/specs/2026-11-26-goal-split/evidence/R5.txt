@@ -1,0 +1,21 @@
+- commit: ee62a081ad736c5d67c544772b14792601971d65
+
+commands/autopilot.md の A の 3 の L の項の「目的の spec」の項が書く呼び出し（CLI approve --by --goal、CLI init、CLI approve --by --queue --by-advisor、lineup.py next、CLI goal）を、本物の argparse と突き合わせた。
+
+$ python3 .autopilot-qa/check.py
+R5 pass
+
+$ python3 scripts/autopilot.py approve --help
+usage: autopilot.py approve [-h] --by BY [--queue] [--by-advisor] [--goal] dir
+(exit 0)
+
+$ python3 scripts/autopilot.py goal --help
+usage: autopilot.py goal [-h] dir
+(exit 0)
+
+$ python3 scripts/lineup.py --help
+usage: lineup.py [-h] {next,hold} ...
+(exit 0)
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_goal_command.py -q
+4 passed in 0.03s
