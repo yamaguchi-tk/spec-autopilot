@@ -1,0 +1,12 @@
+- commit: 1810174f7716d450530a2a814c3fc9bdd09daac4
+
+一時の repo（.autopilot-qa/run/r2 の下）で、目的として承認した親と、`- 親 spec:`・`- 親の要件: R1、R2` を書いた子を作り、fable-advisor と advice-checker の起動の記録を host の置き場の形（CLAUDE_CONFIG_DIR/projects/p/s1/subagents の meta.json と jsonl）で置いて本物の CLI を動かした。NOTE の行は省いた。
+
+$ python3 .autopilot-qa/check.py
+== R2
+$ autopilot.py approve …/2026-11-26-parent --by 目的 OK --goal  -> rc=0
+  goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）
+$ autopilot.py approve …/2026-11-26-child --by 子 OK --queue --by-advisor  -> rc=0
+  queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+  child phase = queued approved_by = 相談役（fable-advisor・advice-checker 反証なし）: 子 OK
+R2 pass

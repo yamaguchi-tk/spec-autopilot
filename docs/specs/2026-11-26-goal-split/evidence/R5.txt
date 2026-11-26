@@ -1,0 +1,13 @@
+- commit: 1810174f7716d450530a2a814c3fc9bdd09daac4
+
+commands/autopilot.md の A の 3 の L の項（目的の spec の手順）の code span から `CLI ...` と `lineup.py ...` の呼び出しを抜き、<..> を x にして、本物の argparse（autopilot.main・lineup.main）に通した（cmd の関数だけ差し替えた）。
+
+$ python3 .autopilot-qa/check.py
+== R5
+  CLI approve x --by x --goal
+  CLI init x
+  CLI approve x --by x --queue --by-advisor
+  lineup.py next
+  CLI goal x
+  parsed: [('approve', True, False, False), ('init', None, None, None), ('approve', False, True, True), ('next', None, None, None), ('goal', None, None, None)]
+R5 pass
