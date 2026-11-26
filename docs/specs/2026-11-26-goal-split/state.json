@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "goal-split",
   "created_at": 1795625349.870097,
   "existing": true,
   "start": "810b95b99080a3be06e055774a19ea961c9906dd",
-  "last_active_at": 1795668013.8018508,
+  "last_active_at": 1795668705.945206,
   "queued_at": 1795653661.056182,
   "approved_by": "再開（依る spec の block で止まった列を戻す）",
   "spec_sha256": "709429c4ecea59a89884e9fce78c0f553ec87f26527396172ff5efa9557ad75f",
@@ -223,5 +223,16 @@
     "裏で走った agent": 0,
     "承認後に人へ問い": 1,
     "待ちの poll": 0
-  }
+  },
+  "merges": [
+    {
+      "pr": 47,
+      "at": 1795668705.123418,
+      "sha": "3a27c116bc45409cc0e24f693e96e5670440ad00",
+      "head": "97f801b5d187d67f97567263fc22280005fa0e21"
+    }
+  ],
+  "merged_at": 1795668705.123422,
+  "paused_at_merge": 4270.730567932129,
+  "done_at": 1795668705.815733
 }
