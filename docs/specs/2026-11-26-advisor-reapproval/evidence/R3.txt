@@ -1,9 +1,19 @@
-- commit: a9e79611d6ac783b19f73d101d528d03128fb908
+- commit: 792d965e769d4cd55d3044b2b83faab32a776fde
 
-$ python3 .autopilot-qa/check.py
-  [R3] ok: discovery: rc=1 out=['ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=discovery）。人の返事が要る']
-  [R3] ok: queued: rc=1 out=['ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=queued）。人の返事が要る']
-  [R3] ok: queued（--queue なし）: rc=1 out=['ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=queued）。人の返事が要る']
-  [R3] ok: 範囲の節を変えた: rc=1 out=['ERROR: `## 自走の範囲` の節が最後の承認のときと違う（範囲を変える承認し直し）。人の返事が要る']
-  [R3] ok: 節の記録が無い: rc=1 out=['ERROR: 最後の承認のときの自走の範囲の節の記録が無い（この版より前に承認した spec）。人の返事が要る']
+$ python3 .autopilot-qa/check.py | grep -E '\[R3\]|^R3'
+  [R3] ok: discovery: rc=1 'ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=discovery）。人の返事が要る
+  [R3] ok: discovery --queue: rc=1
+  [R3] ok: queued (): rc=1 'ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=queued）。人の返事が要る
+  [R3] ok: queued ('--queue',): rc=1 'ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=queued）。人の返事が要る
+  [R3] ok: 範囲の節を変えた '- 範囲: マージまで': rc=1 'ERROR: `## 自走の範囲` の節が最後の承認のときと違う（範囲を変える承認し直し）。人の返事が要る
+  [R3] ok: 範囲の節を変えた '- QA の書き込み先: stg の test チャネル': rc=1 'ERROR: `## 自走の範囲` の節が最後の承認のときと違う（範囲を変える承認し直し）。人の返事が要る
+  [R3] ok: 節の記録が無い: rc=1 'ERROR: 最後の承認のときの自走の範囲の節の記録が無い（この版より前に承認した spec）。人の返事が要る
 R3 pass
+
+変異（自走の範囲の節の突き合わせを外す 1 か所）: .autopilot-qa/mut-R3-1.patch
+$ git apply .autopilot-qa/mut-R3-1.patch && python3 -m pytest 'plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_refuses_a_changed_scope_section' -q -p no:xdist; git apply -R .autopilot-qa/mut-R3-1.patch
+（変異の前: 1 passed in 1.54s）
+plugins/spec-autopilot/tests/test_advisor_approval.py:243: AssertionError
+FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_refuses_a_changed_scope_section
+1 failed in 1.49s
+（戻した後 git diff --quiet HEAD -- plugins/spec-autopilot/scripts/advisor_approval.py が通った）
