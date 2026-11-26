@@ -21,6 +21,7 @@
 - 割り方の正本が transcript_lines と別に 2 か所残る（split-transcript の後に別の spec でまとめる）
 
 ## pre-pr-review の範囲
-- 範囲: overnight.read_launch と advisor_approval.launches が subagent の transcript を "\n" だけで割るようにする（JSON の文字列の中の U+2028・U+2029・U+0085 で行を割らない）。壊れた行は今までどおり読めない記録として止める
+- 範囲: overnight.read_launch と advisor_approval.launches が subagent の transcript を、overnight._awaits が awaits.jsonl を、"\n" だけで割るようにする（JSON の文字列の中の U+2028・U+2029・U+0085 で行を割らない）。壊れた行は今までどおり、transcript では読めない記録として止め、awaits.jsonl では飛ばす
+  - _awaits は 1 巡目の独立レビューの high（deploy の failure の行が割れて飛ばされ、failed_deploys・deploy_smoke が数え漏れて ready と check が通す側に倒れる fail-open）で、人に確かめて範囲に入れた
 - 想定する脅威: 事故だけ（subagent が読んだファイルの中身に、改行に似た文字が入っていること）。transcript をわざと書き換える入力は想定しない
-- やらないこと: 割り方の関数を 1 つにまとめること、相談役の返答の本文の割り方（_lines_of）、ほかの splitlines の箇所（transcript の JSONL を読まないもの）、版数
+- やらないこと: 割り方の関数を 1 つにまとめること、相談役の返答の本文の割り方（_lines_of）、ほかの splitlines の箇所（JSONL を読まないもの）、awaits.jsonl の途中で切れた行を飛ばす挙動、版数
