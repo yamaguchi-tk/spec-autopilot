@@ -1,0 +1,48 @@
+{
+  "phase": "building",
+  "slug": "version-0-1-13",
+  "created_at": 1795694521.947647,
+  "existing": true,
+  "start": "76ea6de00d3f47534297a2120128d7327458a0e0",
+  "last_active_at": 1795694727.1253629,
+  "dispatches": [
+    {
+      "base": "76ea6de00d3f47534297a2120128d7327458a0e0",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795694660.310615,
+      "session": "168be700-42c5-4ff5-b72e-3e5e72e262b4"
+    }
+  ],
+  "approved_at": 1795694726.895926,
+  "approved_by": "軽量フロー（人の承認なし）: 人の依頼「版数も上げて」。PR 59 の直しを marketplace から入れた人に届けるため、plugin.json の version を 0.1.12 から 0.1.13 に上げる",
+  "spec_sha256": "f83fdfaaa3482c0cf0026b9498bfe5983be5487912a99ca4a088fadc030811a4",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "light": true,
+  "light_base": "76ea6de00d3f47534297a2120128d7327458a0e0",
+  "handoffs": [
+    {
+      "tip": "8a038faa4226f4ed9a1a6e1c116c0317f78a1a79",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "dispatch": 0,
+      "at": 1795694727.125359
+    }
+  ]
+}
