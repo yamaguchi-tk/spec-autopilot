@@ -566,7 +566,8 @@ def input_dispatch_errors(d, s, reqs):
     return [p for q in high_reqs(s, reqs) for p in input_kinds(d, q)[1]]
 
 
-INPUT_TEST_FORM = "`<path>::<テスト名>` だけを書く（複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない）"
+# 入力の表のテストの欄は qa.md の証拠と形が違う（cmd:・manual: は書けない）ので、EVIDENCE_FORMS は ERROR に出さない
+INPUT_TEST_FORM = "形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない）"
 
 
 def input_handoff_errors(d, s, reqs, root):
