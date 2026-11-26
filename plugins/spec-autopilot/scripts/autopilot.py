@@ -1454,7 +1454,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="autopilot.py")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init").add_argument("slug")
-    for name in ("lint", "done", "status"):
+    for name in ("lint", "done", "status", "goal"):  # goal: 目的の spec の受け持ちの表と親の done（goal.py の cmd）
         sub.add_parser(name).add_argument("dir")
     cp = sub.add_parser("check")
     cp.add_argument("dir")
@@ -1493,7 +1493,7 @@ def main(argv=None):
     sub.add_parser("active")
     sub.add_parser("anomalies").add_argument("paths", nargs="+")
     a = p.parse_args(argv)
-    return globals()[f"cmd_{a.cmd}"](a)
+    return (globals().get(f"cmd_{a.cmd}") or __import__(a.cmd).cmd)(a)  # cmd_ の無い subcommand は同名の module の cmd
 
 
 if __name__ == "__main__":
