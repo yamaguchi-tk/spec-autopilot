@@ -2542,6 +2542,26 @@ def test_the_opt_in_does_not_loosen_a_transcript_with_origin(repo, monkeypatch):
     assert state(d)["phase"] == "discovery"
 
 
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_trust_mark_passes_an_originless_human_row_in_a_transcript_with_origin(repo, monkeypatch, command):
+    """人の役を agent が演じる run で、人の役の発言には origin が無く、subagent の報告の行にだけ origin がある。
+    印を立てた run は、spec.md の変更（resume は wait）より後の origin の無い行で通る。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    d = init_spec(repo)
+    if command == "resume":
+        user_says(repo)
+        assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+        assert run(repo, "wait", str(d), "--reason", "確認").returncode == 0
+    monkeypatch.setenv(TRUST, "1")
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes({"type": "user", "message": {"role": "user", "content": "OK"}})
+    prompt_hook(repo)
+    args = [command, str(d)] + (["--by", "OK"] if command == "approve" else [])
+    r = run(repo, *args)
+    assert r.returncode == 0, r.stderr
+    assert state(d)["phase"] == "building"
+
+
 NEW_PREMISES = GOOD_SPEC[GOOD_SPEC.index("## 前提"):GOOD_SPEC.index("## 作り方")]
 CLAIM = "- 前提: 列を消す処理は clearLines だけにある\n"
 PREMISES = """## 前提
