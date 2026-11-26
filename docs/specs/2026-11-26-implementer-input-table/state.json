@@ -4,7 +4,7 @@
   "created_at": 1795683419.6408372,
   "existing": true,
   "start": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
-  "last_active_at": 1795689416.425487,
+  "last_active_at": 1795689625.70637,
   "scope_sha256": "645ed9095b9b30057507bae62c4c9cf44ff96aa5795507474ea281ddaa4fefd8",
   "approved_at": 1795689416.423718,
   "approved_by": "OK、承認（実装役の 4 つの定義に、入力の表のテストの欄だけを埋める規則を足す spec）",
@@ -14,8 +14,40 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795689625.70636,
+      "sha": "3b78f738d149ac40b6514501de00c1b9cc503420"
+    }
+  ],
   "fails": {},
-  "streak": {},
-  "reworks": {}
+  "streak": {
+    "R1": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "7436ca1268d88aa1ece436760a62d10e91463c2c",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795689422.649882,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "3b78f738d149ac40b6514501de00c1b9cc503420",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795689514.804446
+    }
+  ]
 }
