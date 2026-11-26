@@ -17,6 +17,7 @@
 """
 import argparse
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -108,7 +109,7 @@ KEYS = ("デプロイの起動", "ロールバック")
 def command_errors(text, after_approve=False):
     """軽量フローの spec のデプロイ・ロールバックを許可リストで確かめる。合意ありでは承認のときに人がこの 2 行を見るが、
     軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので、agent の書いたコマンドを打たせない。
-    - 自走の範囲の節は、コメントを外した後、`- <キー>: <値>` の行と空行だけ。`デプロイの起動` は「マージで自動」か空、`ロールバック` は revert の PR か空
+    - 自走の範囲の節は 1 つだけで、コメントを外した後、`- <キー>: <値>` の行と空行だけ。`デプロイの起動` は「マージで自動」か空、`ロールバック` は revert の PR か空
     - spec のほかの所（散文・別の節・コメント）に書いたコマンドは機械では拾わない。軽量フローの run では after-pr.md の 3・5 が
       「起動のコマンドとコマンドでの戻しは無い」と agent に言う（LLM の指示なので、守れているかは機械で確かめられない。限界）"""
     import overnight
@@ -120,6 +121,8 @@ def command_errors(text, after_approve=False):
     _, bad = ap.classify(body, [("row", overnight.SCOPE_ROW)])
     if raw.count("<!--") != raw.count("-->"):  # 閉じていないコメントが、後ろのコメントの閉じまでを隠さないように
         bad.append("<!-- と --> の数が合わない")
+    if len(re.findall(rf"^## {re.escape(overnight.SCOPE_SECTION)}\s*$", text, re.M)) > 1:  # 読み手は最初の節だけを見る
+        bad.append("同じ見出しの節が 2 つある")
     if bad:
         out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` に `- <キー>: <値>` の行のほかを書けない（{bad[0][:40]}）。{way}")
     rows = overnight.scope_rows(text) or {}
