@@ -1,0 +1,6 @@
+# QA の結果
+
+<!-- 結果は pass / unverified / fail。pass の証拠は `<path>::<テスト名>`（pytest の node id `<path>::<クラス>::<テスト名>` も可。複数は `・` で並べ、同じファイルの続きは `::<テスト名>`。続けて ` と cmd: ...` を書ける。末尾の 1 組の（…）は注記）・`cmd: <実行したことと結果>`・`manual: <操作と結果>`。並べたテストが 1 つでも無ければ check が落ちる。spec の段が手元で実物の要件の pass は `evidence/R<n>.*` に、デプロイ後の pass は `evidence/R<n>.txt` に、`$ <コマンド>` の行とその出力を残す（デプロイ後はデプロイの後に書き、頭に `- commit: <マージの sha>` と `- 結果: Confirmed` を 1 本ずつ）。unverified は spec の `- unverified の承認:` か、その要件を積んだ park があるときだけ通る -->
+| 要件 | 結果 | 証拠 |
+|---|---|---|
+| R1 | pass | plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py::test_version_is_raised_past_0_1_13・::test_marketplace_entry_matches_manifest・::test_manifest_has_semver_and_name と cmd: .autopilot-qa/check.py で、置き換えたテストの条件（版数 > 0.1.13）を base の plugin.json（0.1.13）に当てると落ち、tip（0.1.14）では通ること、marketplace.json の項目と name・description が一致すること、plugin.json の version 以外の欄が変わっていないこと、marketplace.json に version の欄が無いことを確かめた。回帰テストは 9 件すべて通った。cmd: 前提「8a038fa の後に plugin の中身が 10 ファイル変わった」を git diff --stat 8a038fa 9149045 -- plugins/ ':!plugins/spec-autopilot/tests' で確かめた → 10 files changed。cmd: 前提「marketplace.json は版数の欄を持たない」を grep -n version .claude-plugin/marketplace.json で確かめた → 当たりなし。cmd: 前提「開いている PR に plugin.json を変えるものは無い」を gh pr list --state open --json number,files で確かめた → [] （証拠は docs/specs/2026-11-26-version-0-1-14/evidence/R1.txt） |
