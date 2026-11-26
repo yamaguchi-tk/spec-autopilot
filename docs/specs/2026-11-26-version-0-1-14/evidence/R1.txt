@@ -1,0 +1,18 @@
+- commit: 5913ad33f5194a58701a95c1ff124a851a7cf5a3
+
+$ .venv/bin/python .autopilot-qa/check.py
+base version=0.1.13 tip version=0.1.14
+R1 pass
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_goal_command.py -q
+.........                                                                [100%]
+9 passed in 0.11s
+
+$ git diff --stat 8a038fa 9149045 -- plugins/ ':!plugins/spec-autopilot/tests'
+ 10 files changed, 82 insertions(+), 31 deletions(-)
+
+$ grep -n version .claude-plugin/marketplace.json
+（当たりなし）
+
+$ gh pr list --state open --json number,files --jq '[.[] | select(any(.files[]; .path|test("plugin.json"))) | .number]'
+[]

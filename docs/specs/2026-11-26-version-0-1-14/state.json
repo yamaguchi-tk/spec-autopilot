@@ -4,7 +4,7 @@
   "created_at": 1795701808.376441,
   "existing": true,
   "start": "9149045bb4ab1259a7a8053d2bc5aab602547699",
-  "last_active_at": 1795702519.682359,
+  "last_active_at": 1795702702.532542,
   "dispatches": [
     {
       "base": "9149045bb4ab1259a7a8053d2bc5aab602547699",
@@ -29,9 +29,17 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795702702.5325298,
+      "sha": "5913ad33f5194a58701a95c1ff124a851a7cf5a3"
+    }
+  ],
   "fails": {},
-  "streak": {},
+  "streak": {
+    "R1": 0
+  },
   "reworks": {},
   "handoffs": [
     {
@@ -42,6 +50,15 @@
       ],
       "dispatch": 0,
       "at": 1795702519.682354
+    },
+    {
+      "tip": "5913ad33f5194a58701a95c1ff124a851a7cf5a3",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "dispatch": 0,
+      "at": 1795702702.368112
     }
   ]
 }
