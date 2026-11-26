@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "advisor-reapproval",
   "created_at": 1795624714.107002,
   "existing": true,
   "start": "f78818b158c1c6b73cb5bc21b4464e8bcb5a217f",
-  "last_active_at": 1795654665.9088058,
+  "last_active_at": 1795655451.7473202,
   "queued_at": 1795650754.75523,
   "approved_by": "再開（作り方に承認・判定の行をちょうど 1 本ずつ読むと書き足した直しで承認し直す）",
   "spec_sha256": "8b360b34d3ca49d86d69534a90db51c07e36a96aaa43509c09149ca3fd2622e8",
@@ -138,5 +138,22 @@
       "dispatch": 0,
       "at": 1795654590.2471628
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 39,
+      "at": 1795655451.127892,
+      "sha": "810b95b99080a3be06e055774a19ea961c9906dd",
+      "head": "aecba185f1db8c4e3a1296675ccfd87fb9027be1"
+    }
+  ],
+  "merged_at": 1795655451.127893,
+  "paused_at_merge": 0.0,
+  "done_at": 1795655451.664022,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
