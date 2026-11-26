@@ -8,6 +8,7 @@ import re
 import resource
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -320,3 +321,25 @@ def test_check_accepts_a_test_name_with_a_separator_before_a_double_colon(repo, 
 def test_check_still_fails_when_a_listed_test_after_a_separator_is_missing(repo, evidence):
     r = check_with_jest(repo, evidence)
     assert r.returncode == 1, r.stdout
+
+
+# check が 1 行ずつ当てる、4,000 字までの行の正規表現。どれも行の長さに比例する時間で終わる（T3 で測り、直す必要は無かった）
+BOUNDED_LINE_REGEXES = ["TASK", "TASK_NOTE", "HEADING", "QA_HEAD", "QA_SEP", "COMMENT", "QA_ROW"]
+BOUNDED_HEADS = ["", "- [x] T9: ", "  - メモ: ", "| R1 | pass |", "| 要件 | 結果 |", "|", "<!--", "#"]
+BOUNDED_FILLS = ["[", "]", " ", "　", "\t", "|", "-", "<!--", "-->", "] [", "| ", "|  ", "x"]
+
+
+@pytest.mark.parametrize("name", BOUNDED_LINE_REGEXES)
+def test_each_line_regex_of_check_ends_in_linear_time_on_the_longest_lines(name):
+    """頭 8 通りに、字の連なり 13 通りを 4,000 字まで足した行（末尾が合う形と外れる形）を当てる。CPU 時間で測る。"""
+    rx = getattr(autopilot, name)
+    lines = []
+    for head in BOUNDED_HEADS:
+        for fill in BOUNDED_FILLS:
+            body = (fill * 4000)[:4000 - len(head)]
+            lines += [head + body, head + body[:-1] + "x", head + body[:-3] + "-->", head + " " * 100 + body[100:]]
+    start = time.process_time()
+    for line in lines:
+        rx.match(line)
+    used = time.process_time() - start
+    assert used < 0.1, f"{name} が {len(lines)} 行で CPU {used:.2f} 秒"
