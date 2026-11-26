@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "version-0-1-13",
   "created_at": 1795694521.947647,
   "existing": true,
   "start": "76ea6de00d3f47534297a2120128d7327458a0e0",
-  "last_active_at": 1795694997.902369,
+  "last_active_at": 1795695360.905947,
   "dispatches": [
     {
       "base": "76ea6de00d3f47534297a2120128d7327458a0e0",
@@ -61,5 +61,22 @@
       "dispatch": 0,
       "at": 1795694737.4948852
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 64,
+      "at": 1795695359.917697,
+      "sha": "140bc9ae8fdfb5092643f609822052d4750f7a3f",
+      "head": "9a64462d396a0b67a7af795fc7f2f7332631a832"
+    }
+  ],
+  "merged_at": 1795695359.917703,
+  "paused_at_merge": 0.0,
+  "done_at": 1795695360.892351,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
