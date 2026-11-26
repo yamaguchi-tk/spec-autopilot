@@ -25,7 +25,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install Python test dependencies
-        run: python3 -m pip install pytest==9.1.1
+        run: python3 -m pip install pytest==9.1.1 pytest-xdist==3.8.0 execnet==2.1.2
 
       - name: Run spec-autopilot plugin tests
-        run: python3 -m pytest plugins/spec-autopilot/tests/ -q
+        run: python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto

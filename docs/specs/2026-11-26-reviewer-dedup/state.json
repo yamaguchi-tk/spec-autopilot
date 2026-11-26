@@ -1,0 +1,148 @@
+{
+  "phase": "building",
+  "slug": "reviewer-dedup",
+  "created_at": 1795669441.879597,
+  "existing": true,
+  "start": "e272d09d3b163b9bd84e522ae0a784e41716ced1",
+  "last_active_at": 1795674281.380179,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795671716.331949,
+  "approved_by": "OK（評価役の定義は変えず、CI の並列・TASK の照合の直し・照合役で全体の回帰テストを止める・CLAUDE.md・version）",
+  "spec_sha256": "3f2f23086f074de2c1c66ee66cb166746c481376f5e2a49574788384826de83c",
+  "budget_min": 75,
+  "post_budget_min": 75,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795674281.285425,
+      "sha": "2662d5a2176180f13cb069a4777c9676b86978c3"
+    }
+  ],
+  "fails": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "74c0e582cbfd0e584eb1e1eff0a10fcffbe25e34",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795671733.62749,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "bbdd931d64c1f9f47b998dcde8bf22cb6806a804",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795671909.112885,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "323e724e15e15511d7f3356a1fe8ac8f47956062",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795672478.95503,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "dc7c4b6756113dfc8910076b1fbed0b3884658e7",
+      "tasks": [
+        "T4"
+      ],
+      "reqs": [
+        "R1",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795672815.932152,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "32dc77ee7ed8d39d3fc3625c75a23546a5fa2a35",
+      "tasks": [
+        "T5"
+      ],
+      "reqs": [
+        "R3",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795673517.8311198,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "bbdd931d64c1f9f47b998dcde8bf22cb6806a804",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795671908.992175
+    },
+    {
+      "tip": "323e724e15e15511d7f3356a1fe8ac8f47956062",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795672478.061142
+    },
+    {
+      "tip": "dc7c4b6756113dfc8910076b1fbed0b3884658e7",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795672815.808332
+    },
+    {
+      "tip": "32dc77ee7ed8d39d3fc3625c75a23546a5fa2a35",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 3,
+      "at": 1795673517.574893
+    },
+    {
+      "tip": "2662d5a2176180f13cb069a4777c9676b86978c3",
+      "tasks": [
+        "T5"
+      ],
+      "dispatch": 4,
+      "at": 1795673638.986023
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795674281.3801768
+    }
+  ]
+}

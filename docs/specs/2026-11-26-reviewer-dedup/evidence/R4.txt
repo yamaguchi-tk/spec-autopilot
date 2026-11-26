@@ -1,0 +1,15 @@
+- commit: 2662d5a2176180f13cb069a4777c9676b86978c3
+
+$ grep -n 'python3 -m pytest' CLAUDE.md
+5:- テストは `python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto` で回す。CI（`.github/workflows/test.yml`）も同じものを回す。手元に道具を入れるときは、その workflow の `pip install` の行を回す（版は workflow の 1 か所にだけ書く）
+
+$ grep -n -E '==\s*[0-9]|[0-9]+\.[0-9]+\.[0-9]+' CLAUDE.md; echo "rc=$?"
+rc=1
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1 failed, 1256 passed in 366.18s (0:06:06)
+（落ちた 1 件は test_overnight.py::test_the_wait_is_not_counted_in_the_budget。spec の非目標の負荷で落ちるテスト〔Issue #28〕で、単独で回すと 1 passed in 2.50s）
+
+$ python3 -m pip install pytest==9.1.1 pytest-xdist==3.8.0 execnet==2.1.2
+error: externally-managed-environment
+（手元の python3 は PEP 668 で pip install を拒む。道具はすでに同じ版が入っている: execnet 2.1.2・pytest-xdist 3.8.0・pytest 9.1.1）
