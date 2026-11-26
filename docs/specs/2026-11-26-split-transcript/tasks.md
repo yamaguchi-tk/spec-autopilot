@@ -1,3 +1,6 @@
 # タスク
 
-<!-- `- [ ] T1: <やること> [R1, R2]` の形。終えたら [x]。すべての要件をどれかのタスクが受け持つ -->
+- [x] T1: autopilot.py:1304-1442（区画の説明のコメントと、ANOMALY_KINDS から anomaly_line まで）を scripts/transcript.py に移し、autopilot.py・hooks/stop.py・scripts/overnight.py・tests/test_stop_bounds.py の参照を transcript へ向け直す [R1]
+  - メモ: 1304-1305 の「自走の異常」の説明のコメントも transcript.py の冒頭へ移す（残すと session_transcript の上に浮く）
+  - メモ: stop.py:400-408 は anomaly_notice の中で import transcript し、transcript.anomalies をモジュール属性で参照する（test_stop_bounds.py:88 の monkeypatch が効く形）
+  - メモ: autopilot.py は re・time・datetime・json を区画の外でも使うので、その import は消さない
