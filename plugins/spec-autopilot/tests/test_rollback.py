@@ -613,7 +613,7 @@ def test_lint_warns_when_nothing_keeps_the_mac_awake(repo, tmp_path, monkeypatch
                                 encoding="utf-8")
     (fake / "pmset").chmod(0o755)
     monkeypatch.setenv("PATH", f"{fake}{os.pathsep}{os.environ['PATH']}")
-    _, r = approve_text(repo, scoped(FULL))
+    _, r = approve_text(repo, with_budget(scoped(FULL), 90))
     assert "keep-awake" in r.stdout
 
 
@@ -801,12 +801,17 @@ def test_a_demanded_rollback_by_command_is_recorded_even_while_the_smoke_passes(
     assert "本番: 戻して確かめた" in night(repo, "report", str(d)).stdout.splitlines()[1]
 
 
-def fake_mac(tmp_path, monkeypatch, batt="Now drawing from 'AC Power'", autoinstall="0"):
-    """pmset（assertions は keep-awake が効いている形）と defaults を PATH に置く。"""
+def with_budget(text, budget, post=None):
+    """GOOD_SPEC 由来の spec の予算（30 分）を差し替える。post があればマージ後の予算も書く。"""
+    return text.replace("- 予算: 30 分\n", f"- 予算: {budget} 分\n" + (f"- マージ後の予算: {post} 分\n" if post is not None else ""), 1)
+
+
+def fake_mac(tmp_path, monkeypatch, batt="Now drawing from 'AC Power'", autoinstall="0", awake="1"):
+    """pmset（assertions は既定で keep-awake が効いている形）と defaults を PATH に置く。"""
     fake = tmp_path / "fakemac"
     fake.mkdir()
     (fake / "pmset").write_text("#!/bin/sh\nif [ \"$2\" = batt ]; then echo \"" + batt + "\"; "
-                                "else echo '   PreventUserIdleSystemSleep     1'; fi\n", encoding="utf-8")
+                                "else echo '   PreventUserIdleSystemSleep     " + awake + "'; fi\n", encoding="utf-8")
     (fake / "defaults").write_text(f"#!/bin/sh\necho {autoinstall}\n", encoding="utf-8")
     for f in fake.iterdir():
         f.chmod(0o755)
@@ -815,13 +820,13 @@ def fake_mac(tmp_path, monkeypatch, batt="Now drawing from 'AC Power'", autoinst
 
 def test_approve_notes_a_mac_running_on_battery(repo, tmp_path, monkeypatch):
     fake_mac(tmp_path, monkeypatch, batt="Now drawing from 'Battery Power'")
-    _, r = approve_text(repo, scoped(FULL))
+    _, r = approve_text(repo, with_budget(scoped(FULL), 90))
     assert r.returncode == 0 and "電源につなぎ" in r.stdout and "蓋" in r.stdout
 
 
 def test_approve_notes_automatic_macos_update_installs(repo, tmp_path, monkeypatch):
     fake_mac(tmp_path, monkeypatch, autoinstall="1")
-    _, r = approve_text(repo, scoped(FULL))
+    _, r = approve_text(repo, with_budget(scoped(FULL), 90))
     assert r.returncode == 0 and "自動インストール" in r.stdout
 
 
@@ -829,6 +834,89 @@ def test_approve_says_nothing_on_ac_power_without_automatic_installs(repo, tmp_p
     fake_mac(tmp_path, monkeypatch)
     _, r = approve_text(repo, scoped(FULL))
     assert r.returncode == 0 and "電源につなぎ" not in r.stdout and "自動インストール" not in r.stdout
+
+
+NIGHT_NOTES = ("keep-awake", "電源につなぎ", "自動インストール", "見回り役")
+
+
+def night_mac(tmp_path, monkeypatch):
+    """4 つの夜の NOTE がすべて当たる Mac（keep-awake 無し・バッテリー・自動更新あり・見回り役の plist 無し）。"""
+    fake_mac(tmp_path, monkeypatch, batt="Now drawing from 'Battery Power'", autoinstall="1", awake="0")
+    monkeypatch.setenv("HOME", str(tmp_path / "nohome"))
+
+
+def lint_or_approve(repo, how, text):
+    if how == "approve":
+        return approve_text(repo, text)[1]
+    d = init_spec(repo)
+    (d / "spec.md").write_text(text, encoding="utf-8")
+    return run(repo, "lint", str(d))
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+def test_a_30_minute_spec_gets_none_of_the_night_notes(repo, tmp_path, monkeypatch, how):
+    night_mac(tmp_path, monkeypatch)
+    r = lint_or_approve(repo, how, scoped(FULL))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not [w for w in NIGHT_NOTES if w in r.stdout], r.stdout
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+@pytest.mark.parametrize("budget, post", [(60, 0), (30, None), (20, 40)])
+def test_a_spec_expected_to_end_within_an_hour_gets_none_of_the_night_notes(repo, tmp_path, monkeypatch, how, budget, post):
+    night_mac(tmp_path, monkeypatch)
+    r = lint_or_approve(repo, how, with_budget(scoped(FULL), budget, post))
+    assert not [w for w in NIGHT_NOTES if w in r.stdout], r.stdout
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+@pytest.mark.parametrize("budget, post", [(90, None), (30, 40), (61, 0), (60, 1)])
+def test_a_spec_expected_to_run_over_an_hour_gets_every_night_note_that_applies(repo, tmp_path, monkeypatch, how, budget, post):
+    night_mac(tmp_path, monkeypatch)
+    r = lint_or_approve(repo, how, with_budget(scoped(FULL), budget, post))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert all(w in r.stdout for w in NIGHT_NOTES), r.stdout
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+def test_a_spec_with_no_readable_budget_still_gets_the_night_notes(repo, tmp_path, monkeypatch, how):
+    night_mac(tmp_path, monkeypatch)
+    r = lint_or_approve(repo, how, scoped(FULL).replace("- 予算: 30 分\n", ""))
+    assert all(w in r.stdout for w in NIGHT_NOTES), r.stdout
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+def test_a_30_minute_spec_still_stops_on_an_sso_session_that_ends_before_the_night(repo, tmp_path, monkeypatch, how):
+    night_mac(tmp_path, monkeypatch)
+    aws_home(tmp_path, monkeypatch, 30)
+    r = lint_or_approve(repo, how, scoped(FULL, **{"AWS の profile": "dev"}))
+    assert r.returncode == 1 and "aws sso login" in r.stdout and "見込みの夜の終わり" in r.stdout
+    assert not [w for w in NIGHT_NOTES if w in r.stdout], r.stdout
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+def test_a_30_minute_spec_still_notes_an_sso_session_that_ends_before_twice_the_budget(repo, tmp_path, monkeypatch, how):
+    aws_home(tmp_path, monkeypatch, 100)  # 60 分の見込みには足り、2 倍（120 分）には足りない
+    r = lint_or_approve(repo, how, scoped(FULL, **{"AWS の profile": "dev"}))
+    assert r.returncode == 0 and "2 倍までは続かない" in r.stdout, r.stdout
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+def test_a_30_minute_spec_still_stops_on_an_active_gdd_marker(repo, tmp_path, monkeypatch, how):
+    night_mac(tmp_path, monkeypatch)
+    gdd_on(repo)
+    gdd_marker(repo)
+    r = lint_or_approve(repo, how, scoped(FULL))
+    assert r.returncode == 1 and "GDD のワークフローが有効" in r.stdout
+    assert not [w for w in NIGHT_NOTES if w in r.stdout], r.stdout
+
+
+@pytest.mark.parametrize("how", ["lint", "approve"])
+def test_a_30_minute_spec_still_notes_a_gdd_marker_left_after_gdd_was_removed(repo, tmp_path, monkeypatch, how):
+    fake_mac(tmp_path, monkeypatch)
+    gdd_marker(repo)
+    r = lint_or_approve(repo, how, scoped(FULL))
+    assert r.returncode == 0 and "gdd-dev.local.md" in r.stdout, r.stdout
 
 
 # --- デプロイの起動がコマンドの spec では、マージだけでは本番の中身が変わらない ---
