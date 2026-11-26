@@ -557,8 +557,8 @@ def size_errors(d, impact_text, stated, first_agreement, at_approve):
     return [f"大きさ {stated} は{detail}より小さい。「## 制約」を `- 大きさ: {size}` に直し、予算と実装の分け方も合わせる"], []
 
 
-def lint(d, at_approve=False, preflight=False, base=None, ahead=0):
-    """(errors, warnings) を返す。base が偽なら init の時点との突き合わせを外し、書式だけを見る（依る spec の着手で回す）。
+def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
+    """(errors, warnings) を返す。goal なら大きさ L を理由に止めない（目的の spec の承認）。base が偽なら init の時点との突き合わせを外し、書式だけを見る（依る spec の着手で回す）。
     base が None なら、着手の前の依る spec（「## 制約」に `- 依る spec:`）だけ外す。ahead は前に並ぶ spec の分。"""
     text = (d / "spec.md").read_text(encoding="utf-8")
     if base is None:
@@ -591,7 +591,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0):
     constraints = COMMENT_BLOCK.sub("", section(text, "制約") or "")
     stated, size_err = stated_size(constraints)
     errors += ([size_err] if size_err else []) + __import__("playbooks").lint(constraints)
-    first_agreement = load_state(d).get("phase") in ("discovery", "queued")
+    first_agreement = load_state(d).get("phase") in ("discovery", "queued") and not goal  # L を止めるのは初回の合意だけ。目的の spec（--goal）は止めない
     if load_state(d).get("existing"):
         body = {name: COMMENT_BLOCK.sub("", section(text, name) or "") for name in EXISTING_SECTIONS}
         for name in EXISTING_SECTIONS:
@@ -931,17 +931,17 @@ def cmd_lint(a):
 
 def cmd_approve(a):
     d = Path(a.dir)
-    import advisor_approval
-    import lineup
-    errors, warnings = lineup.queue_lint(d) if a.queue else lint(d, at_approve=True)
+    import advisor_approval, goal, lineup  # noqa: E401
+    goal.refuse_mix(a)
+    errors, warnings = lineup.queue_lint(d) if a.queue else lint(d, at_approve=True, goal=a.goal)
     if not a.queue and lineup.after_name(d) and load_state(d).get("phase") == "discovery":
         errors.append("依る spec のある spec は --queue で承認する（着手のときに lineup.py next が依る spec の先端に載せ替える）")
     if errors:
-        report(errors, warnings, "")
-        return 1
+        return report(errors, warnings, "")
     s = load_state(d)
     scope = advisor_approval.scope_sha(section((d / "spec.md").read_text(encoding="utf-8"), "自走の範囲"))
-    if a.by_advisor and (errors := advisor_approval.human_errors(s, scope)):
+    child = a.by_advisor and a.queue and s.get("phase") == "discovery"  # 目的の spec の子の承認（親の記録と相談役 2 本で通す）
+    if a.by_advisor and not child and (errors := advisor_approval.human_errors(s, scope)):
         return report(errors, warnings, "")
     if s.get("phase") not in ("discovery", "blocked", "done"):
         sys.exit(f"approve は壁打ち中（discovery）・block の後・done の後だけ受ける（phase={s.get('phase')}）")
@@ -949,9 +949,10 @@ def cmd_approve(a):
         sys.exit(f"{adr}。作り方の選択を ADR に書いてから承認する")
     since, what = advisor_approval.since_of(s, (d / "spec.md").stat().st_mtime)
     session = os.environ.get("CLAUDE_CODE_SESSION_ID") if a.by_advisor else require_user_after(d, since, what)
-    if a.by_advisor and (errors := advisor_approval.reply_errors(session, since)):
+    if a.by_advisor and (errors := goal.child_errors(d, scope, session) if child else advisor_approval.reply_errors(session, since)):
         return report(errors, warnings, "")
     by = advisor_approval.BY_PREFIX + a.by if a.by_advisor else a.by
+    if a.goal: return goal.approve(d, by, scope, warnings)  # noqa: E701
     s["scope_sha256"] = scope  # 次の --by-advisor が「最後の承認のときの節」と突き合わせる（enqueue・begin はそのまま save する）
     if a.queue:
         return lineup.enqueue(d, s, by, session, warnings)
@@ -1453,7 +1454,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="autopilot.py")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init").add_argument("slug")
-    for name in ("lint", "done", "status"):
+    for name in ("lint", "done", "status", "goal"):  # goal: 目的の spec の受け持ちの表と親の done（goal.py の cmd）
         sub.add_parser(name).add_argument("dir")
     cp = sub.add_parser("check")
     cp.add_argument("dir")
@@ -1463,6 +1464,7 @@ def main(argv=None):
     ap.add_argument("--by", required=True)
     ap.add_argument("--queue", action="store_true")  # 承認だけして着手は lineup.py next に回す
     ap.add_argument("--by-advisor", action="store_true")  # 夜の間の承認し直し: 人の発言の代わりに相談役 2 本の記録を受ける
+    ap.add_argument("--goal", action="store_true")  # 目的の spec の承認: 大きさ L を止めず、目的として承認した記録だけを残す（phase は discovery のまま）
     bp = sub.add_parser("block")
     bp.add_argument("dir")
     for flag in ("--req", "--reason", "--evidence"):
@@ -1491,7 +1493,7 @@ def main(argv=None):
     sub.add_parser("active")
     sub.add_parser("anomalies").add_argument("paths", nargs="+")
     a = p.parse_args(argv)
-    return globals()[f"cmd_{a.cmd}"](a)
+    return (globals().get(f"cmd_{a.cmd}") or __import__(a.cmd).cmd)(a)  # cmd_ の無い subcommand は同名の module の cmd
 
 
 if __name__ == "__main__":

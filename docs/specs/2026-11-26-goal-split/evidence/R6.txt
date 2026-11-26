@@ -1,0 +1,9 @@
+- commit: 1810174f7716d450530a2a814c3fc9bdd09daac4
+
+$ python3 .autopilot-qa/check.py
+== R6
+  version 0.1.9 -> 0.1.10; marketplace description same = True
+R6 pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q
+6 passed in 0.02s

@@ -1,0 +1,22 @@
+- commit: 1810174f7716d450530a2a814c3fc9bdd09daac4
+
+一時の repo（.autopilot-qa/run/r4-* の下）で、親と子を作り、子の phase を置いて本物の `autopilot.py goal` を打った。全部 done のときだけ親が done になり、runs.jsonl に kind=done の 1 行が書かれた（check.py が state.json と runs.jsonl を読んで確かめた）。ほかは親が discovery のまま、runs.jsonl は空。NOTE の行は省いた。
+
+$ python3 .autopilot-qa/check.py
+== R4
+-- 全部 done
+$ autopilot.py goal …/2026-11-26-parent  -> rc=0
+  R1: 2026-11-26-child0（done）
+  R2: 2026-11-26-child1（done）
+  goal: 2026-11-26-parent を done にした（要件 2 件を、子が全部 done で受け持った）
+-- 1 本 queued
+$ autopilot.py goal …/2026-11-26-parent  -> rc=1
+  R1: 2026-11-26-child0（done）
+  R2: 2026-11-26-child1（queued）
+  ERROR: 2026-11-26-child1 が done でない（phase=queued。R2 の子）
+-- R2 を受け持たない
+$ autopilot.py goal …/2026-11-26-parent  -> rc=1
+  R1: 2026-11-26-child0（done）
+  R2: 子なし
+  ERROR: R2 を `- 親の要件:` に挙げた子が無い（子の無い要件）
+R4 pass
