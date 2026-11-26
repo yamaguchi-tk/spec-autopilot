@@ -1,0 +1,12 @@
+- commit: 2662d5a2176180f13cb069a4777c9676b86978c3
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_qa_evidence.py -q -n auto
+（test_ci_workflow.py・test_spec_autopilot_wiring.py と合わせて）98 passed in 16.52s
+
+$ python3 -m pytest .autopilot-qa/test_check.py -q -s -p no:cacheprovider
+R2 pass
+.cpu base=2.04s rc=1 tip=0.17s rc=1
+R2 pass
+.
+2 passed in 16.37s
+（1 本目: 旧い TASK と新しい TASK を、[・]・空白・全角空白・x・R・タブ・a の 0〜40 字の乱数の行 20 万本で比べ、全部同じ。2 本目: `- [x] T9: ` + `[`×3980 を 49 行足した tasks.md で check を base〔e272d09 の autopilot.py〕と tip の CLI で回し、子プロセスの CPU 時間を getrusage(RUSAGE_CHILDREN) の差で測った。load average 約 60 の下）
