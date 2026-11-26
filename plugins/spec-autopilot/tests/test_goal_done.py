@@ -114,3 +114,60 @@ def test_two_goal_calls_at_once_write_one_done_row(repo):
     ps = [subprocess.Popen([sys.executable, str(CLI), "goal", str(parent)], cwd=repo, env=env, stdout=subprocess.PIPE, text=True) for _ in range(4)]
     assert [p.wait() for p in ps] == [0, 0, 0, 0]
     assert len(rows()) == 1 and state(parent)["phase"] == "done"
+
+
+def unreadable_child_result(repo, what):
+    parent, (a, b) = family(repo, [("done", "R1"), ("done", "R2")])
+    if what == "state":
+        (b / "state.json").write_text("{broken", encoding="utf-8")
+    else:
+        (b / "spec.md").write_bytes(b"\xff\xfe\x00broken")
+    return parent, b, run(repo, "goal", str(parent))
+
+
+def test_goal_names_a_child_whose_state_json_cannot_be_read_and_does_not_finish_the_parent(repo):
+    parent, b, r = unreadable_child_result(repo, "state")
+    assert r.returncode == 1 and f"ERROR: {b.name} が読めない（JSONDecodeError）" in r.stdout, r.stdout + r.stderr
+    assert state(parent)["phase"] == "discovery" and "done_at" not in state(parent) and rows() == []
+
+
+def test_goal_names_a_child_whose_spec_md_cannot_be_read_and_does_not_finish_the_parent(repo):
+    parent, b, r = unreadable_child_result(repo, "spec")
+    assert r.returncode == 1 and f"ERROR: {b.name} が読めない（UnicodeDecodeError）" in r.stdout, r.stdout + r.stderr
+    assert state(parent)["phase"] == "discovery" and "done_at" not in state(parent) and rows() == []
+
+
+def test_goal_names_a_child_whose_state_json_is_not_an_object(repo):
+    parent, (a,) = family(repo, [("done", "R1、R2")])
+    (a / "state.json").write_text("[1]", encoding="utf-8")
+    r = run(repo, "goal", str(parent))
+    assert r.returncode == 1 and f"ERROR: {a.name} が読めない（ValueError）" in r.stdout, r.stdout + r.stderr
+    assert state(parent)["phase"] == "discovery"
+
+
+def test_goal_leaves_no_file_in_the_spec_directory(repo):
+    parent, (a, b) = family(repo, [("done", "R1"), ("queued", "R2")])
+    before = sorted(x.name for x in parent.iterdir())
+    assert run(repo, "goal", str(parent)).returncode == 1
+    assert sorted(x.name for x in parent.iterdir()) == before
+    set_phase(b, "done")
+    assert run(repo, "goal", str(parent)).returncode == 0
+    assert sorted(x.name for x in parent.iterdir()) == before
+
+
+def test_goal_on_a_missing_directory_is_one_error_line_not_a_traceback(repo):
+    r = run(repo, "goal", str(repo / "docs" / "specs" / "2026-01-01-nothing"))
+    assert r.returncode == 1 and r.stdout.startswith("ERROR") and "2026-01-01-nothing" in r.stdout, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr and r.stdout.count("\n") == 1
+
+
+def test_goal_lists_the_requirements_in_the_order_of_the_parent_spec(repo):
+    parent = parent_goal(repo)
+    ids = ["R7", "R3", "R9", "R1", "R5", "R8", "R2", "R6", "R4"]
+    spec = (parent / "spec.md").read_text(encoding="utf-8")
+    old = spec[spec.index("- R1:"):spec.index("## 非目標")]
+    (parent / "spec.md").write_text(spec.replace(old, "".join(f"- {r}: 要件 {r} を満たす。\n" for r in ids) + "\n"), encoding="utf-8")
+    child_spec(repo, parent, slug="all", reqs="、".join(sorted(ids)))
+    r = run(repo, "goal", str(parent))
+    assert r.returncode == 1, r.stdout + r.stderr  # 子が queued でなく discovery のままなので done にならない
+    assert [x.split(":")[0] for x in r.stdout.splitlines() if x.startswith("R")] == ids

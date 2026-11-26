@@ -29,6 +29,7 @@ def child_spec(repo, parent, slug="child", reqs="R1、R2", extra="", scope_line=
     if scope_line:
         text = text.replace("- AWS の profile: なし", f"- AWS の profile: なし\n{scope_line}")
     (d / "spec.md").write_text(text, encoding="utf-8")
+    time.sleep(0.02)  # 相談役の記録の時刻はミリ秒に切り捨てるので、spec.md の mtime より前にならないよう離す
     return d
 
 
@@ -46,6 +47,17 @@ def test_child_is_queued_by_advisor_records_when_the_parent_is_a_goal(repo):
     assert s["phase"] == "queued"
     assert s["approved_by"] == PREFIX + "子 OK"
     assert "goal" not in s
+    assert state(parent)["phase"] == "discovery"
+
+
+def test_goal_spec_naming_itself_as_its_parent_is_not_queued_as_a_child(repo):
+    parent = parent_goal(repo)
+    text = (parent / "spec.md").read_text(encoding="utf-8").replace("- 大きさ: S", f"- 大きさ: S\n- 親 spec: {parent.name}\n- 親の要件: R1、R2")
+    (parent / "spec.md").write_text(text, encoding="utf-8")
+    time.sleep(0.02)
+    both_ran()
+    r = queue_by_advisor(repo, parent)
+    assert r.returncode == 1 and r.stdout.startswith("ERROR") and "自分自身" in r.stdout, out(r)
     assert state(parent)["phase"] == "discovery"
 
 
