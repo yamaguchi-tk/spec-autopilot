@@ -234,19 +234,37 @@ def _human_row(o):
     return isinstance(origin, dict) and origin.get("kind") == "human"
 
 
+def _originless_row(o):
+    """origin の無い発言の候補の行か（_human_row と同じ候補。会話の要約は除く）。印を立てた run だけが人の役の発言に数える。"""
+    if not isinstance(o, dict) or o.get("isSidechain") or o.get("isMeta") or o.get("isCompactSummary"):
+        return False
+    if o.get("type") == "user":
+        content = (o.get("message") or {}).get("content") if isinstance(o.get("message"), dict) else None
+        if isinstance(content, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in content):
+            return False
+        return not isinstance(o.get("origin"), dict)
+    if o.get("type") == "attachment" and isinstance(o.get("attachment"), dict) and o["attachment"].get("type") == "queued_command":
+        return not isinstance(o["attachment"].get("origin"), dict)
+    return False
+
+
 def human_said_at(path):
-    """transcript の、人の最後の発言の時刻。host が origin をどの行にも書いていなければ（headless の claude -p など）
-    None を返す。読めなければ例外を投げる。"""
-    last, has_origin = 0.0, False
+    """transcript の (origin が human の行の最後の時刻, origin の無い発言の行の最後の時刻) を返す。host が origin を
+    どの行にも書いていなければ（headless の claude -p など）None を返す。読めなければ例外を投げる。"""
+    human, originless, has_origin = 0.0, 0.0, False
     for line in transcript_lines(path):
-        if '"origin"' not in line:
+        if '"origin"' not in line and '"user"' not in line and "queued_command" not in line:
             continue
         o = json.loads(line)
+        if not isinstance(o, dict):
+            continue
         has_origin = has_origin or isinstance(o.get("origin"), dict) or isinstance((o.get("attachment") or {}).get("origin"), dict)
+        at = _iso_epoch(o.get("timestamp")) or 0.0
         if _human_row(o):
-            at = _iso_epoch(o.get("timestamp"))
-            last = max(last, at or 0.0)
-    return last if has_origin else None
+            human = max(human, at)
+        elif _originless_row(o):
+            originless = max(originless, at)
+    return (human, originless) if has_origin else None
 
 
 def require_user_after(d, since, what):
@@ -255,24 +273,26 @@ def require_user_after(d, since, what):
     UserPromptSubmit hook は、background の終わりの知らせや subagent の報告でも動くので、hook の記録だけでは人の発言と
     分からない。記録が指す transcript の、origin が human の行の時刻で確かめる。host が origin をどの行にも書かない
     transcript では見分けられないので止める。人の役を別の agent が演じる run だけは、hook が記録に書いた印（trust が
-    true）があれば、記録の時刻で確かめる。印は hook が自分の環境（Claude Code を起動した側）で書くので、agent が
-    Bash でこの CLI に環境変数を立てても通らない。"""
+    true）があれば、記録の時刻で確かめる。origin のある transcript でも、印があれば origin の無い発言の行を人の役の
+    発言に数える（origin の付いた知らせ・subagent の報告だけでは通さない）。印は hook が自分の環境（Claude Code を
+    起動した側）で書くので、agent が Bash でこの CLI に環境変数を立てても通らない。"""
     at, session = last_user_prompt(d)
     if at is None or at <= since:
         sys.exit(f"{what}の後に人の発言が記録されていない。人に示して返事を受けてから実行する")
     path = prompt_record(d).get("transcript_path")
     try:
-        human = human_said_at(path) if isinstance(path, str) and path else None
+        said = human_said_at(path) if isinstance(path, str) and path else None
         if not isinstance(path, str) or not path:
             raise ValueError("transcript の場所が記録されていない")
     except (OSError, ValueError, AttributeError, TypeError) as e:
         sys.exit(f"人の発言を transcript で確かめられない（{type(e).__name__}）。人に示して返事を受けてから実行する")
-    if human is None:
-        if prompt_record(d).get("trust") is True:
+    trusted = prompt_record(d).get("trust") is True
+    if said is None:
+        if trusted:
             return session
         sys.exit("transcript に発言の出どころ（origin）が無いので、人の発言か確かめられない（headless の claude -p など）。"
                  "対話のセッションで人の返事を受けてから実行する")
-    if human <= since:
+    if (max(said) if trusted else said[0]) <= since:
         sys.exit(f"{what}の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する")
     return session
 
