@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "input-table-test-cell",
   "created_at": 1795680495.657296,
   "existing": true,
   "start": "05b922cd5a14215006c7be8f633a08a69425a24d",
-  "last_active_at": 1795683299.286222,
+  "last_active_at": 1795683627.290805,
   "scope_sha256": "645ed9095b9b30057507bae62c4c9cf44ff96aa5795507474ea281ddaa4fefd8",
   "approved_at": 1795681191.422385,
   "approved_by": "OK、承認（入力表のテストの欄が使えないとき、入力表で使える形だけを示す）",
@@ -68,5 +68,16 @@
     "裏で走った agent": 0,
     "承認後に人へ問い": 1,
     "待ちの poll": 0
-  }
+  },
+  "parked": [
+    {
+      "kind": "merge",
+      "op": "gh pr merge 57",
+      "reason": "マージの操作を auto mode の判定が拒んだ（CI・ready は通っている）。人がマージする",
+      "req": null,
+      "merges": 0,
+      "at": 1795683617.362118
+    }
+  ],
+  "done_at": 1795683627.2333171
 }
