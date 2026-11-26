@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "trust-marker-origin",
   "created_at": 1795694542.6659021,
   "existing": true,
   "start": "c30fc46c6e03f1626bb6df93b6be27601e86b97b",
-  "last_active_at": 1795700143.3603761,
+  "last_active_at": 1795700497.3165598,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795696124.601108,
   "approved_by": "OK、承認（trust の印が、人の発言に origin の無い transcript で効くようにする spec）",
@@ -184,5 +184,22 @@
       "from": "autopilot-implementer",
       "to": "autopilot-implementer-opus"
     }
-  ]
+  ],
+  "parked": [
+    {
+      "kind": "merge",
+      "op": "gh pr merge 66",
+      "reason": "auto mode の判定が同じ repo の PR のマージ（gh pr merge 57）を拒んだので、再試行せず人に戻す",
+      "req": null,
+      "merges": 0,
+      "at": 1795700497.020017
+    }
+  ],
+  "done_at": 1795700497.264989,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
