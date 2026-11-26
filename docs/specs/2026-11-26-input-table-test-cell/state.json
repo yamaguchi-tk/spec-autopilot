@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "input-table-test-cell",
+  "created_at": 1795680495.657296,
+  "existing": true,
+  "start": "05b922cd5a14215006c7be8f633a08a69425a24d",
+  "last_active_at": 1795681191.423213,
+  "scope_sha256": "645ed9095b9b30057507bae62c4c9cf44ff96aa5795507474ea281ddaa4fefd8",
+  "approved_at": 1795681191.422385,
+  "approved_by": "OK、承認（入力表のテストの欄が使えないとき、入力表で使える形だけを示す）",
+  "spec_sha256": "65b1838ed5a50221039ee847d803a5cedee4f7552430c5c4189882fc6928b722",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
