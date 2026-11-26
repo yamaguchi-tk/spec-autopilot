@@ -155,6 +155,52 @@ def test_lint_requires_the_rows_for_deploy_and_qa(repo, row):
     assert r.returncode == 1 and row in r.stdout
 
 
+def workflows(repo, files):
+    """repo の .github/workflows に {ファイル名: 本文} を書く。"""
+    w = repo / ".github" / "workflows"
+    w.mkdir(parents=True, exist_ok=True)
+    for name, body in files.items():
+        (w / name).write_text(body, encoding="utf-8")
+
+
+LAMBDA_DEPLOY = {"lambda-deploy.yaml": "name: lambda deploy\non:\n  push:\n    branches: [main]\njobs: {}\n"}
+
+
+def test_lint_accepts_a_deploy_check_that_names_the_workflow(repo):
+    # await --kind deploy は gh の workflowName と照らすので、`name:` の値なら通る
+    workflows(repo, LAMBDA_DEPLOY)
+    d = init_spec(repo)
+    (d / "spec.md").write_text(deployed(scoped(FULL, **{"デプロイの確かめ": "lambda deploy"})), encoding="utf-8")
+    r = run(repo, "lint", str(d))
+    assert r.returncode == 0, r.stdout
+
+
+def test_lint_rejects_a_deploy_check_that_names_the_workflow_file(repo):
+    # 2026-11-26 の事例: ファイル名を書くと await が照合できず、承認の後は直せない
+    workflows(repo, LAMBDA_DEPLOY)
+    d = init_spec(repo)
+    (d / "spec.md").write_text(deployed(scoped(FULL, **{"デプロイの確かめ": "lambda-deploy"})), encoding="utf-8")
+    r = run(repo, "lint", str(d))
+    assert r.returncode == 1 and "lambda-deploy" in r.stdout and "`lambda deploy`" in r.stdout
+
+
+def test_lint_rejects_a_deploy_check_that_names_no_workflow(repo):
+    workflows(repo, LAMBDA_DEPLOY)
+    d = init_spec(repo)
+    (d / "spec.md").write_text(deployed(scoped(FULL, **{"デプロイの確かめ": "lambda deploy、nope"})), encoding="utf-8")
+    r = run(repo, "lint", str(d))
+    assert r.returncode == 1 and "nope" in r.stdout
+
+
+def test_lint_reads_an_unnamed_workflow_by_its_path(repo):
+    # `name:` の無い workflow は、GitHub が workflow のパスを workflowName にする
+    workflows(repo, {"deploy.yml": "on: push\njobs: {}\n"})
+    d = init_spec(repo)
+    (d / "spec.md").write_text(deployed(scoped(FULL, **{"デプロイの確かめ": ".github/workflows/deploy.yml"})),
+                               encoding="utf-8")
+    assert run(repo, "lint", str(d)).returncode == 0
+
+
 def test_lint_lets_the_merge_scope_leave_the_deploy_rows_empty(repo):
     d = init_spec(repo)
     (d / "spec.md").write_text(scoped("マージまで", **{"QA の環境": "", "デプロイの起動": "", "ロールバック": ""}),
