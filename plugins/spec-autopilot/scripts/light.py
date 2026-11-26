@@ -17,10 +17,8 @@
 """
 import argparse
 import os
-import re
 import subprocess
 import sys
-import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -105,15 +103,14 @@ def hits(d, s):
 
 
 KEYS = ("デプロイの起動", "ロールバック")
-TEMPLATE = ap.TEMPLATES / "spec.md"  # init が写すもの
 
 
 def command_errors(text, after_approve=False):
     """軽量フローの spec のデプロイ・ロールバックを許可リストで確かめる。合意ありでは承認のときに人がこの 2 行を見るが、
     軽量フローでは誰も見ない（block の後の返事も spec の全体を見たものではない）ので、agent の書いたコマンドを打たせない。
     - 自走の範囲の節は、コメントを外した後、`- <キー>: <値>` の行と空行だけ。`デプロイの起動` は「マージで自動」か空、`ロールバック` は revert の PR か空
-    - 2 つの語は、spec の全体（NFKC。コメントの中も見る）で、その節の許可した行と、init が写すテンプレートのコメント（一字一句同じもの）にだけ置ける
-      （見出しや行の形を数えず、語の置き場所で決める。語を使わない散文のコマンドは拾わない。限界）"""
+    - spec のほかの所（散文・別の節・コメント）に書いたコマンドは機械では拾わない。軽量フローの run では after-pr.md の 3・5 が
+      「起動のコマンドとコマンドでの戻しは無い」と agent に言う（LLM の指示なので、守れているかは機械で確かめられない。限界）"""
     import overnight
     way = ("`autopilot.py block` で記録して人に戻る" if after_approve else
            "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
@@ -128,19 +125,7 @@ def command_errors(text, after_approve=False):
     rows = overnight.scope_rows(text) or {}
     allowed = {"デプロイの起動": (overnight.AUTO_DEPLOY,), "ロールバック": (overnight.REVERT,)}
     found = {k for k in KEYS if (rows.get(k) or "") not in ("", *allowed[k])}
-    # 確かめた節から、許可した 4 つの行と完全に同じ行だけを外す（ほかの行の値・行に付けたコメントは残す）
-    ok = re.compile(rf"- (?:デプロイの起動:(?: {re.escape(overnight.AUTO_DEPLOY)})?|ロールバック:(?: {re.escape(overnight.REVERT)})?)[ \t]*")
-    spans, kept, pos = [m.span() for m in ap.COMMENT_BLOCK.finditer(raw)], [], 0
-    for x in raw.split("\n"):  # コメントに重なる行は、許可した形でも外さない
-        if not (ok.fullmatch(x) and not any(a < pos + len(x) and pos < b for a, b in spans)):
-            kept.append(x)
-        pos += len(x) + 1
-    kept = "\n".join(kept)
-    rest = unicodedata.normalize("NFKC", text.replace(raw, kept, 1) if raw else text)
-    for c in ap.COMMENT_BLOCK.findall(TEMPLATE.read_text(encoding="utf-8")):  # テンプレートのコメントは、自分の行だけを占めるときに外す
-        rest = re.sub(r"(?m)^" + re.escape(unicodedata.normalize("NFKC", c)) + r"[ \t]*$", "", rest)
-    found |= {k for k in KEYS if k in rest}
-    return out + [f"軽量フローでは `- {key}:` は「{allowed[key][0]}」か空だけにし、spec のほかの所にこの語を書かない"
+    return out + [f"軽量フローでは `- {key}:` は「{allowed[key][0]}」か空だけにする"
                   f"（人が見ないままコマンドを打つことになる）。{way}" for key in KEYS if key in found]
 
 
