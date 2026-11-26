@@ -1,0 +1,8 @@
+- commit: 30aa3e5
+
+$ grep -n version plugins/spec-autopilot/.claude-plugin/plugin.json
+3:  "version": "0.1.12",
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_playbooks.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_playbook_sources.py -q
+............................                                             [100%]
+28 passed in 7.24s
