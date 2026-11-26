@@ -1,0 +1,142 @@
+{
+  "phase": "building",
+  "slug": "advisor-reapproval",
+  "created_at": 1795624714.107002,
+  "existing": true,
+  "start": "f78818b158c1c6b73cb5bc21b4464e8bcb5a217f",
+  "last_active_at": 1795654665.9088058,
+  "queued_at": 1795650754.75523,
+  "approved_by": "再開（作り方に承認・判定の行をちょうど 1 本ずつ読むと書き足した直しで承認し直す）",
+  "spec_sha256": "8b360b34d3ca49d86d69534a90db51c07e36a96aaa43509c09149ca3fd2622e8",
+  "after": null,
+  "approved_at": 1795653602.574719,
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [
+    {
+      "approved_at": 1795650768.5744672,
+      "approved_by": "OK（2 本をこの順でまとめて承認）",
+      "blocked": {
+        "req": "R3",
+        "reason": "評価役の変異の印 .autopilot-qa/mut-R3-1.applied の patch が壊れていて git apply -R --check が通らない（corrupt patch at line 11）。手順どおり実装役を起動せずに人に戻す。plugins の下は git diff HEAD で差分なし（patch は当たっていない）。あわせて R2 の high 3 件（複数の 承認:・判定: 行の最後だけを見る 2 件、meta.json が読めないと黙って読み飛ばす 1 件）を .autopilot-qa/check.py で再現した",
+        "evidence": ".autopilot-qa/mut-R3-1.patch、.autopilot-qa/check.py の出力",
+        "at": 1795652066.447838
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": [],
+      "fails": {},
+      "streak": {},
+      "reworks": {},
+      "post_budget_min": 90,
+      "paused_sec": 0,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": null,
+      "qa_runs": null,
+      "handoffs": [
+        {
+          "tip": "97cdb3201a8d5ae3d5523f4924d2fc6d1c40b928",
+          "tasks": [
+            "T1"
+          ],
+          "dispatch": 0,
+          "at": 1795651111.373794
+        },
+        {
+          "tip": "f86150a4d9d23df1c64d8d439f7288338169e942",
+          "tasks": [
+            "T2"
+          ],
+          "dispatch": 1,
+          "at": 1795651279.397278
+        }
+      ],
+      "dispatches": [
+        {
+          "base": "b1e770519eb197935e4d46fc560606d40cf21609",
+          "tasks": [
+            "T1"
+          ],
+          "reqs": [
+            "R1",
+            "R2",
+            "R3"
+          ],
+          "agent": "autopilot-implementer-high",
+          "at": 1795650781.129004,
+          "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+        },
+        {
+          "base": "ab3630123277521119ba8c15dd06c125e9b82456",
+          "tasks": [
+            "T2"
+          ],
+          "reqs": [
+            "R4",
+            "R5"
+          ],
+          "agent": "autopilot-implementer-high",
+          "at": 1795651115.609983,
+          "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+        }
+      ],
+      "lenses": null,
+      "rolled_back": null,
+      "phase": "blocked"
+    }
+  ],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795654590.44401,
+      "sha": "792d965e769d4cd55d3044b2b83faab32a776fde"
+    }
+  ],
+  "fails": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "18b7101c433b7ffb482f71b87c9525341fc5bae8",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795653644.3982909,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "16fda496244d72e9b9ea677cb4fd25dfbc5e6753",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795653893.985879
+    },
+    {
+      "tip": "792d965e769d4cd55d3044b2b83faab32a776fde",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795654590.2471628
+    }
+  ]
+}
