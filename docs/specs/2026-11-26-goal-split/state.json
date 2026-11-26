@@ -4,7 +4,7 @@
   "created_at": 1795625349.870097,
   "existing": true,
   "start": "810b95b99080a3be06e055774a19ea961c9906dd",
-  "last_active_at": 1795656336.8170052,
+  "last_active_at": 1795656632.75822,
   "queued_at": 1795653661.056182,
   "approved_by": "再開（依る spec の block で止まった列を戻す）",
   "spec_sha256": "709429c4ecea59a89884e9fce78c0f553ec87f26527396172ff5efa9557ad75f",
@@ -60,6 +60,19 @@
       "agent": "autopilot-implementer-high",
       "at": 1795656066.6876311,
       "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    },
+    {
+      "base": "f9ff3bcbe323fa9501e9855c979de5eb9c2d22e1",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer-high",
+      "at": 1795656337.029024,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
     }
   ],
   "handoffs": [
@@ -70,6 +83,14 @@
       ],
       "dispatch": 0,
       "at": 1795656336.8170009
+    },
+    {
+      "tip": "632ad355640d0e39d0e60f741f59a5e2be96550a",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795656632.758218
     }
   ]
 }
