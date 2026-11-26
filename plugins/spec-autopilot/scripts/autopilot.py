@@ -719,7 +719,7 @@ def check(d, stage="all"):
     import overnight
     errors += ladder_errors(s) + overnight.review_errors(d, s)
     errors += overnight.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage)
-    return errors + (overnight.scope_errors(d, s) if stage != "pr" else []), notes
+    return errors + (overnight.scope_errors(d, s) if stage != "pr" else []) + __import__("light").errors(d, s), notes
 
 
 def ladder_errors(s):

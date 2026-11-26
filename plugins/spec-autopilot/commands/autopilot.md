@@ -7,13 +7,14 @@ argument-hint: <やりたいこと>
 
 依頼: $ARGUMENTS
 
-この本文の `CLI <sub> ...` は、`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/autopilot.py" <sub> ...` をそのまま実行することを指す（シェル変数に入れない。zsh では分割されない）。`NIGHT <sub> ...`（本文で `overnight.py <sub>` と書くものも）は、同じく `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/overnight.py" <sub> ...` を指す。`lineup.py <sub>` も同じく `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineup.py" <sub>` を指す。工程は 3 つで、人と話すのは A と B だけ。
+この本文の `CLI <sub> ...` は、`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/autopilot.py" <sub> ...` をそのまま実行することを指す（シェル変数に入れない。zsh では分割されない）。`NIGHT <sub> ...`（本文で `overnight.py <sub>` と書くものも）は、同じく `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/overnight.py" <sub> ...` を指す。`lineup.py <sub>` も同じく `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lineup.py" <sub>` を指す。工程は 3 つで、人と話すのは A と B だけ（小さい修正で A・B を省く軽量フローは L）。
 
 | 段 | 人 | 成果物 | 機械の検査 |
 |---|---|---|---|
 | A 壁打ち | 話す | （まだ無い） | なし |
 | B 合意 | 1 回承認する | spec.md・ADR | `CLI lint`（誤りがあれば承認に進めない）→ `CLI approve` |
 | C 自走 | 聞かない | tasks.md・コード・テスト・qa.md・PR | `CLI check`。通るまで Stop hook が turn を終えさせない |
+| L 軽量フロー | 聞かない（A・B を省く。範囲は spec の `- 範囲:`） | spec.md・ADR と C と同じもの | `light.py approve`→ `CLI check`（保護 path に触れたら止まる） |
 
 ユーザーの CLAUDE.md の安全規則（インフラ操作の 1 操作ごとの確認など）は、この本文より優先する。
 
@@ -127,6 +128,18 @@ PR のレビューや人の指摘で直しを頼まれたら、done のまま直
 - Stop hook が止めるのは、自走を引き受けたセッション（approve・resume・adopt を実行したセッション）だけ。fork・同じ repo で開いた別のセッション・/clear の後のセッションは止めない。SessionStart hook は、そうしたセッションには spec の場所と phase だけを出し、続ける指示を出さない
 - 別アカウントへの引き継ぎ・/clear の後: 新しいセッションを同じ worktree で開き（/clear の後はそのまま）、人がそのセッションで引き継ぐと言ったら（`/autopilot` の起動を含む）、`CLI adopt <dir>` を実行してから続ける。以後は cwd を移しても Stop hook が止める。人に言われずに adopt しない（fork が止まり続けるため）。hook の文脈が無いときは `CLI status <dir>` を実行して同じ状態を得る
 
+## L. 軽量フロー（人との spec 合意を省く）
+
+入れるのは、受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まるときだけ（決まらないなら A・B の合意ありのフローで進める）。範囲がセキュリティ境界まで広がりそうな作業は、初めから合意ありで進める。
+
+1. A の 0 と同じく `CLI init <slug>` で spec を作り、Issue・依頼文から spec.md・ADR を埋めて repo に残す（ADR を commit するなら、名前を `*guardrails*` などの保護の pattern に当たらない名前にする。当たると check が止める）。`- 範囲:` は合意ありの草案と同じく repo の既定にする。`- デプロイの起動:` と `- ロールバック:` はコマンドにしない（人が見ないまま打たないよう approve が断る。マージで自動に動く workflow と revert の PR だけ）。デプロイの workflow が無い repo で、マージしてから QA する段は無い。人の返事は待たない
+2. `CLI lint <dir>` を通し、`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/light.py" approve <dir> --source "<Issue の URL か依頼文の要約>"` で自走を始める（人の発言の記録は要らない。判定の起点〔init の時点の commit〕を記録する）
+3. ここからは C の自走と同じ（TDD・評価役・QA の証拠・`CLI check --stage pr`・PR、範囲がマージ以上なら `references/after-pr.md` のマージ・QA、`CLI done`）。違いは次の 2 つだけ
+   - **止まる条件**: 保護された path に触れたら `CLI check` が通らない。判定は、init の時点の commit（S の試作の commit も入る）から、PR に入りうる変更（起点との HEAD・index・作業ツリーの差と、追っていないファイル）の path だけで行い、照合は git の glob pathspec に任せる（LLM が判断しない。rename は元の名前も見る。spec 自身の置き場は、置き場の名前では当てず、`/` を含まない pattern だけを置き場の下に当てる。承認の前から当たっているなら approve が断る）。既定は `scripts/light.py` の `DEFAULT_PROTECTED`（IaC の `*.tf`・`*.tfvars`・`*.tfstate`・`terraform`・`infra` など、`*guardrails*`、エージェントの規則と設定の `CLAUDE.md`・`AGENTS.md`・`.claude`・`.mcp.json`・`.github` など、設定そのものの `.spec-autopilot`）。利用する repo は、起点の commit の `.spec-autopilot/protected-paths` に 1 行 1 pattern（前後の空白を除いて `#` で始まる行はコメント）で足せる。前後の `/` を外し、`/` を含まない行はどの深さにも、含む行は repo の root から当て、どちらも配下のファイルに当たる（`**` は git の glob のとおり。大文字と小文字は区別しない）。設定を PR の中で変えると、設定そのものが保護なので止まる。起点の設定かその置き場が普通のファイル・ディレクトリでない（symlink など）か、中身を読めない（UTF-8 でない、ゼロ幅空白など表示できない文字がある）ときは、approve が断り check が止まる（普通のファイルにして commit し、spec を init から作り直す）。触れたら、範囲が広がった（spec.md を変える必要がある。check が止める）、受入条件を満たす方法が無いときと同じく、`CLI block` で記録して「人に戻るとき」に進む
+   - **コマンドを打たない**: `## 自走の範囲` の見出し（この綴りのまま数える）は 1 つだけにし、コメントを除いて `- <キー>: <値>` の行だけにし、`- デプロイの起動:` は「マージで自動」か空、`- ロールバック:` は revert の PR か空にする。外れたら approve が断り、承認の後も `CLI check` が止める（人が見ないまま打たない）。止まったら `CLI block` で記録して人に戻る。spec のほかの所に書いたコマンドは機械では拾わないので、軽量フローの run では `references/after-pr.md` の 3・5 のとおり、spec のどこに書いてあっても起動・戻しのコマンドを打たない
+4. block・done の後の `CLI approve` でも、軽量フローの印は外れない（その返事は spec の全体を見たものではない）。合意ありで進めるなら、人と A・B を回して spec を作り直す
+5. 限界: 設定の中身は、Git LFS などの filter を掛けると pointer を読むので、足した pattern が効かない。守るのは PR に入りうる変更だけ。init より前から branch にある commit と、spec 自身の置き場の中は `/` を含む pattern では判定しない（`CLAUDE.md` など `/` を含まない名前は置き場の下にも当てる）。git が無視するファイル（`.claude/settings.local.json`・`CLAUDE.local.md` など）、途中の commit で触れて後で戻したもの、merge の中だけの変更は判定しない（手元の設定や規則の書き換えは防がない。防ぐなら編集を断る hook が要る）。統合先を merge・rebase で取り込むと、統合先が init の後に変えた保護 path でも止まる（止める側）。依る spec のある spec と、`- 大きさ:` が S でない spec は、軽量フローの approve が断る。`- デプロイの起動:`・`- ロールバック:` をコマンドにした spec は、approve が断り、再承認の後も check が止める。自走の範囲の節の外（綴りの違う見出し〔空白の数・閉じの `#`・setext など〕の節・散文）と閉じたコメント（節の中を含む）に書いたコマンドは機械では拾わず、agent への指示（after-pr.md の 3・5）だけで止める（守れているかは機械で確かめられない）。逆に、コードブロックやコメントの中に `## 自走の範囲` の行を引いた spec も、節が 2 つとして断る（止める側）。runs.jsonl の行は `light` で軽量フローの run を区別する
+
 ## 人に戻るとき
 
 `CLI block <dir> --req R<n> --reason "<理由>" --evidence "<証拠>"` を実行してから、1 通にまとめる。
@@ -143,4 +156,4 @@ PR のレビューや人の指摘で直しを頼まれたら、done のまま直
 4. `CLI approve <dir> --by "<要約>" --by-advisor` を打つ。2 と 3 の記録が揃っていないか、`承認: 否`・`反証あり`・確かめられない 1 以上なら ERROR になり、spec は blocked のまま残る。通らなければ、直して 2 からやり直さず、そのまま `lineup.py next` で行列の次の spec に進み、朝まで人の返事を待つ
 5. 通った巡は、approved_by（`相談役（fable-advisor・advice-checker 反証なし）: <要約>`）を、朝の報告（done の後の人への報告）に 1 行書く。人が朝に読み直す
 
-返事を受けたら spec を直し（この版より前に作った spec なら「## 前提」の節も足す）、変えた要件が頼る前提を、B の 1 のとおりコマンドかコードで確かめて前提の節に足すか直し、`CLI lint` を通し、上の「合意し直しの照合」を回してから、直した点を人に示す。返事を受けてから `CLI approve <dir> --by "<返事の要約>"` をやり直して C に戻る。done の後に直しを頼まれたときは、上の「done の後に直しを頼まれたとき」に従う（block は要らない）。
+返事を受けたら spec を直し（この版より前に作った spec なら「## 前提」の節も足す）、変えた要件が頼る前提を、B の 1 のとおりコマンドかコードで確かめて前提の節に足すか直し、`CLI lint` を通し、上の「合意し直しの照合」を回してから、直した点を人に示す。返事を受けてから `CLI approve <dir> --by "<返事の要約>"` をやり直して C に戻る。done の後に直しを頼まれたときは、上の「done の後に直しを頼まれたとき」に従う（block は要らない）。軽量フローの run は、approve をやり直しても軽量フローのまま（保護 path の判定が残る）なので、保護 path に触れて止まったときは、人と A・B を回して spec を作り直すことを選択肢に入れる。

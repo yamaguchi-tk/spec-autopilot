@@ -12,6 +12,10 @@
 2. **合意**: `docs/specs/<日付>-<slug>/spec.md` と ADR（`docs/adr/`）を書き、1 回だけ承認を求めます
 3. **自走**: Sonnet 5.5 の実装者が TDD で実装し、経緯を知らない Opus の評価役が要件ごとに自分で動かして確かめます（QA とレビューを兼ね、high none まで回し直す）。評価の結果を `qa.md` に写し、PR を作ります。範囲がマージ以上なら、CI とデプロイを `scripts/overnight.py await` で待ち（待つ間は Stop hook が止めない）、マージ・実環境の QA まで進めます（`references/after-pr.md`）
 
+## 軽量フロー（合意を省く）
+
+受入条件が Issue に書いてあるか、依頼文だけで要件・範囲・完了が決まる小さい修正は、`scripts/light.py approve` で人との spec 合意を省いて自走できる（spec は自動で作って repo に残す）。自走の範囲は合意ありと同じく spec の `- 範囲:` で決まり、マージ・QA まで進む。ただし人が spec を見ないので、`- デプロイの起動:` と `- ロールバック:` をコマンドにした spec は approve が断る（マージで自動に動く workflow と revert の PR だけ。`## 自走の範囲` の見出しは 1 つだけ。spec のほかの所や節の中の閉じたコメントに書いたコマンドは機械では拾わず、agent に打たないよう指示するだけ）。デプロイの workflow が無い repo で、マージしてから QA する段はまだ無い。保護された path（既定の一覧は `scripts/light.py` の `DEFAULT_PROTECTED`。IaC の主な拡張子とディレクトリ、名前に guardrails を含むもの、エージェントの規則と設定、`.github`、設定そのものの `.spec-autopilot`。起点の commit の `.spec-autopilot/protected-paths` で足せる。普通のファイルでないか読めないと止まる。Git LFS などの filter を掛けた設定は効かない）に触れたら、変更ファイルの path で機械的に止まり、人に戻る。判定するのは init の時点から PR に入りうる変更（HEAD・index・作業ツリーの差と追っていないファイル）だけで、init より前の commit・git が無視するファイル・途中の commit で触れて戻したもの・spec の置き場の中の `/` を含む pattern は見ないので、手元の設定の書き換えは防がない。手順は `commands/autopilot.md` の「L. 軽量フロー」。
+
 ## かっちりさの作り方
 
 LLM の多段レビューや人への中間確認ではなく、成果物の型と機械の検査で固めます。
