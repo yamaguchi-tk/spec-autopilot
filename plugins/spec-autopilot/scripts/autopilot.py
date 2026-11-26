@@ -931,6 +931,7 @@ def cmd_lint(a):
 
 def cmd_approve(a):
     d = Path(a.dir)
+    import advisor_approval
     import lineup
     errors, warnings = lineup.queue_lint(d) if a.queue else lint(d, at_approve=True)
     if not a.queue and lineup.after_name(d) and load_state(d).get("phase") == "discovery":
@@ -939,24 +940,22 @@ def cmd_approve(a):
         report(errors, warnings, "")
         return 1
     s = load_state(d)
+    scope = advisor_approval.scope_sha(section((d / "spec.md").read_text(encoding="utf-8"), "自走の範囲"))
+    if a.by_advisor and (errors := advisor_approval.human_errors(s, scope)):
+        return report(errors, warnings, "")
     if s.get("phase") not in ("discovery", "blocked", "done"):
         sys.exit(f"approve は壁打ち中（discovery）・block の後・done の後だけ受ける（phase={s.get('phase')}）")
-    adr = adr_error(d)
-    if adr:
+    if adr := adr_error(d):
         sys.exit(f"{adr}。作り方の選択を ADR に書いてから承認する")
-    since, what = (d / "spec.md").stat().st_mtime, "spec.md の最後の変更"
-    if s.get("phase") == "blocked" and float((s.get("blocked") or {}).get("at", 0)) > since:
-        since, what = float(s["blocked"]["at"]), "block"
-    if s.get("phase") == "done":  # done の前の発言では戻さない。done の時刻が読めなければ戻さない
-        done_at = s.get("done_at")
-        if isinstance(done_at, bool) or not isinstance(done_at, (int, float)):
-            sys.exit("done の時刻（state.json の done_at）が読めないので approve しない")
-        if done_at > since:
-            since, what = float(done_at), "done"
-    session = require_user_after(d, since, what)
+    since, what = advisor_approval.since_of(s, (d / "spec.md").stat().st_mtime)
+    session = os.environ.get("CLAUDE_CODE_SESSION_ID") if a.by_advisor else require_user_after(d, since, what)
+    if a.by_advisor and (errors := advisor_approval.reply_errors(session, since)):
+        return report(errors, warnings, "")
+    by = advisor_approval.BY_PREFIX + a.by if a.by_advisor else a.by
+    s["scope_sha256"] = scope  # 次の --by-advisor が「最後の承認のときの節」と突き合わせる（enqueue・begin はそのまま save する）
     if a.queue:
-        return lineup.enqueue(d, s, a.by, session, warnings)
-    budget = lineup.begin(d, s, a.by, s.get("phase"))
+        return lineup.enqueue(d, s, by, session, warnings)
+    budget = lineup.begin(d, s, by, s.get("phase"))
     take_over(d, session, "承認")
     save_state(d, s)
     report([], warnings, f"approved: 予算 {budget} 分。ここから自走する")
@@ -1463,6 +1462,7 @@ def main(argv=None):
     ap.add_argument("dir")
     ap.add_argument("--by", required=True)
     ap.add_argument("--queue", action="store_true")  # 承認だけして着手は lineup.py next に回す
+    ap.add_argument("--by-advisor", action="store_true")  # 夜の間の承認し直し: 人の発言の代わりに相談役 2 本の記録を受ける
     bp = sub.add_parser("block")
     bp.add_argument("dir")
     for flag in ("--req", "--reason", "--evidence"):

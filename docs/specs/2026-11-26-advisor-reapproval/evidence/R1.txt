@@ -1,0 +1,13 @@
+- commit: 792d965e769d4cd55d3044b2b83faab32a776fde
+
+$ python3 .autopilot-qa/check.py | grep -E '\[R1\]|real forms|^R1'
+  [R1] ok: text: rc=0 phase=building approved_by='相談役（fable-advisor・advice-checker 反証なし）: 前提を直した'
+  [R1] ok: handback: rc=0 phase=building approved_by='相談役（fable-advisor・advice-checker 反証なし）: 前提を直した'
+  real forms with non-empty reply: [(('advice-checker', 'handback'), 67), (('advice-checker', 'text'), 1), (('fable-advisor', 'handback'), 142), (('fable-advisor', 'text'), 3)]
+  [R1] ok: 実物の記録から最後の返答が取れた形: ['handback', 'text']
+R1 pass
+
+（一時の repo を .autopilot-qa/tmp/ に作り、approve → block → spec.md を直す → host の置き場の形で fable-advisor・advice-checker の meta.json と transcript を置き → approve --by-advisor。実物の記録は手元の host の置き場の subagents/*.meta.json を読むだけで、advisor_approval.reply_of を当てた）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py -q -n auto
+43 passed in 8.42s
