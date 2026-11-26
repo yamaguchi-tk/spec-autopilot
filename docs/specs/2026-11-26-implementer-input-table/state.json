@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "implementer-input-table",
   "created_at": 1795683419.6408372,
   "existing": true,
   "start": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
-  "last_active_at": 1795689625.70637,
+  "last_active_at": 1795689983.627063,
   "scope_sha256": "645ed9095b9b30057507bae62c4c9cf44ff96aa5795507474ea281ddaa4fefd8",
   "approved_at": 1795689416.423718,
   "approved_by": "OK、承認（実装役の 4 つの定義に、入力の表のテストの欄だけを埋める規則を足す spec）",
@@ -49,5 +49,22 @@
       "dispatch": 0,
       "at": 1795689514.804446
     }
-  ]
+  ],
+  "parked": [
+    {
+      "kind": "merge",
+      "op": "gh pr merge 58",
+      "reason": "auto mode の判定が同じ repo の PR のマージ（gh pr merge 57）を拒んだので、再試行せず人に戻す",
+      "req": null,
+      "merges": 0,
+      "at": 1795689731.365435
+    }
+  ],
+  "done_at": 1795689983.5833862,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
