@@ -12,7 +12,7 @@
 
 - 変えるファイルが全部 `.md` で、root の README.md・CLAUDE.md・`docs/`・`plugins/spec-autopilot/README.md`・`plugins/spec-autopilot/commands/`・`plugins/spec-autopilot/references/`（`playbooks/` を除く）に入る直しは、debug-and-review の pre-pr-review で回す。それ以外（コードやテストが読む `agents/`・`templates/`・`references/playbooks/`、`.claude-plugin/`・`.github/`、`docs/` の中のスクリプトを含む）は `/autopilot` で回す。`/autopilot` が壊れていて回せないときも pre-pr-review で回し、回せなかった理由（コマンドと件数。手元のパスは伏せる）を PR 本文に書く。pre-pr-review を使えない環境では、差分と規則だけを渡した独立レビューを 1 回回す（マージの扱いは pre-pr-review と同じ）
 - 自走の範囲は spec ごとに `## 自走の範囲` の `- 範囲:` で決める。草案は「マージまで」で出し、承認のときに先頭に示す。main へのマージは、marketplace から新しく入れる人に届き、版数を上げたものは入れた人にも届く（デプロイの workflow は無いので「マージ・デプロイ・QA まで」は使わない）。pre-pr-review で回した PR のマージは、人の指示を待つ
-- plugin を使う手元の checkout（symlink の向け先）の pull は、自走の範囲に入れず、人が頼んだときに `docs/pull-checkout.md` の手順で行う（自走中のセッションがあっても、走っている run の続きを変えない変更なら取り込む）。開発は別の worktree で行い、その checkout のブランチを切り替えない
+- plugin を使う手元の checkout（symlink の向け先）の pull は、自走の範囲に入れず、人が頼んだときに `docs/pull-checkout.md` の手順で行う（いつも走っている run があるものとして、その続きを変えない変更だけを取り込む）。開発は別の worktree で行い、その checkout のブランチを切り替えない
 - `/autopilot` で回すときは pre-pr-review を重ねない。hook か判定を変える spec では、`## 制約` に想定する脅威を 1 行書く（lint は検査せず、評価役にも専用の観点は無い。範囲と直す要否を決めるときの目安）
 - 新しい仕組みや改善を agent が自分で思いついたときは、実際のタスクで観測した失敗（state.json の blocked、見回りの報告、transcript の件数）があるものだけを出す。測っていなければ、先に測る手順を出す。人が頼んだ機能は、この条件で削らない。変えたファイルの中で見つけた不具合は、上の「実装中に見つけた別の問題」に従う
 - この進め方は、`/autopilot` で回した最初の 5 本で、`SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-autopilot`）の `runs.jsonl` を読んで決める（承認からの分数、blocked の回数と理由、マージ後の手戻りの PR の数）。予算を超えるのが 5 本中 3 本以上なら、ここに規則を足さず、`/autopilot` の欠陥として直す
