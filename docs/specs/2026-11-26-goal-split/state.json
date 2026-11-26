@@ -1,0 +1,19 @@
+{
+  "phase": "queued",
+  "slug": "goal-split",
+  "created_at": 1795625349.870097,
+  "existing": true,
+  "start": "584f545b12778c69f2c0624c4710341d82613c45",
+  "last_active_at": 1795653661.0570052,
+  "queued_from": "blocked",
+  "queued_at": 1795653661.056182,
+  "approved_by": "再開（依る spec の block で止まった列を戻す）",
+  "spec_sha256": "709429c4ecea59a89884e9fce78c0f553ec87f26527396172ff5efa9557ad75f",
+  "after": "/Users/takashi-yamaguchi/repository/other/spec-autopilot/.claude/worktrees/session-analysis-root-cause-96d2a5/docs/specs/2026-11-26-advisor-reapproval",
+  "blocked": {
+    "req": "着手",
+    "reason": "依る spec 2026-11-26-advisor-reapproval が block",
+    "evidence": "lineup.py next",
+    "at": 1795652066.791897
+  }
+}
