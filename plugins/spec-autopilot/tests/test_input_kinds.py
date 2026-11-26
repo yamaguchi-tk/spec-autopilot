@@ -163,11 +163,18 @@ def test_check_from_the_entrance_names_the_fail_row_and_reruns_the_reviewer(repo
     assert "R1" in t and "絶対パス" in t and "評価役を回し直" in t
 
 
-@pytest.mark.parametrize("cell", ["cmd: 手で見た", "manual: 見た", "test_rule.py::test_absolute。加えて cmd: x"])
+# 入力の表のテストの欄に書けるのは <path>::<テスト名> だけ。ERROR は qa.md の証拠の形（cmd:・manual: を使える形に挙げる）を借りない
+@pytest.mark.parametrize("cell", ["cmd: 手で見た", "manual: 見た", "test_rule.py::test_absolute。加えて cmd: x", "-", "test_rule.py"],
+                         ids=["cmd", "manual", "test-then-cmd", "dash", "no-colons"])
 def test_handoff_refuses_a_free_text_test_cell(repo, cell):
     d = dispatched(repo, GOOD, [cell, "test_rule.py::test_relative"])
     r = handoff(repo, d)
+    out = r.stdout + r.stderr
     assert r.returncode != 0 and len(state(d)["handoffs"]) == 1
+    assert "inputs/R1.md のテストの欄が使えない" in out
+    assert "`<path>::<テスト名>`" in out and "書けない" in out
+    for offered in ("` と cmd: ...`", "`cmd: ...`", "`manual: ...`"):
+        assert offered not in out
 
 
 def test_handoff_takes_a_row_whose_cell_has_an_escaped_pipe(repo):
