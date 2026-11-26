@@ -1,0 +1,2 @@
+{"kind": "ci", "pr": 39, "sha": "aecba185f1db8c4e3a1296675ccfd87fb9027be1", "result": "error", "started_at": 1795654761.249835, "at": 1795654762.3547552, "detail": ["RuntimeError: gh pr checks 39 --json name,bucket,link が読めない（exit 1）: no checks reported on the 'claude/advisor-reapproval' branch"]}
+{"kind": "ci", "pr": 39, "sha": "aecba185f1db8c4e3a1296675ccfd87fb9027be1", "result": "success", "started_at": 1795654778.696772, "at": 1795655433.2663748, "detail": ["spec-autopilot"]}
