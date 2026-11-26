@@ -943,13 +943,14 @@ def test_handoff_refuses_an_unreadable_implementer_record(repo):
 LINE_SEPARATORS = ["\u2028", "\u2029", "\x85"]
 
 
-def implementer_read(text):
-    """implementer_ran() の後に、user の tool_result の行と assistant の行を足す（text は生のまま JSON の文字列に残る）。"""
+def implementer_read(text, model=None):
+    """implementer_ran() の後に、user の tool_result の行と assistant の行を足す（text は生のまま JSON の文字列に残る）。
+    model を渡すと、足す assistant の行だけをその model にする（その行が実際に読まれたかを見分ける）。"""
     log = max((Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents").glob("*.jsonl"), key=lambda f: f.name)
     rows = [{"type": "user", "timestamp": "2099-01-01T00:00:00Z",
              "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t", "content": text}]}},
             {"type": "assistant", "timestamp": "2099-01-01T00:00:00Z", "effort": json.loads(log.read_text(encoding="utf-8").splitlines()[1])["effort"],
-             "message": {"model": json.loads(log.read_text(encoding="utf-8").splitlines()[1])["message"]["model"],
+             "message": {"model": model or json.loads(log.read_text(encoding="utf-8").splitlines()[1])["message"]["model"],
                          "content": [{"type": "text", "text": text}]}}]
     with log.open("a", encoding="utf-8", newline="") as f:
         f.write("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
@@ -964,6 +965,16 @@ def test_handoff_reads_a_record_with_a_line_separator_in_a_string(repo, sep):
     implementer_read(f"読んだ行 a{sep}b 終わり")
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("sep", LINE_SEPARATORS, ids=["U+2028", "U+2029", "U+0085"])
+def test_handoff_judges_the_model_of_a_row_after_a_line_separator(repo, sep):
+    """区切り文字を持つ行も読み飛ばさずに判定に使う（その行の model が定義と違えば止める）。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    implementer_read(f"a{sep}b", model="claude-opus-5-5")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "claude-opus-5-5" in r.stdout and "読めない" not in r.stdout
 
 
 def test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator(repo):
