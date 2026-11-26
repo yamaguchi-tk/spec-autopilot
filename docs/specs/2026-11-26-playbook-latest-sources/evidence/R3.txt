@@ -1,0 +1,12 @@
+- commit: 30aa3e5
+
+$ python3 .autopilot-qa/check.py
+（autopilot.py init で作った一時の spec の「## 前提」に 2 つの playbook の例を写し、autopilot.py lint を回した。lint の NOTE は手元の環境の注意で、本文は省く）
+R3 pass
+  lint ext: rc=0 （ERROR なし。NOTE は macOS の更新・見回り役の 2 件だけ）
+  lint iac: rc=0 （ERROR なし。NOTE は同じ 2 件だけ）
+  対照: rc=1 ERROR: 前提の行の形が読めない（URL の行の後ろに文字を足した例）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_playbook_sources.py -q
+..                                                                       [100%]
+2 passed in 1.61s

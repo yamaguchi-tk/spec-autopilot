@@ -1,0 +1,16 @@
+- commit: 30aa3e5
+
+$ sed -n 7,12p plugins/spec-autopilot/references/playbooks/external-service.md
+- 要件と前提を書く前に、使う機能ごとに今の公式の文書・変更の履歴（What's New・リリースノート・API の changelog）・事例を調べる。確かめた振る舞いは、「## 前提」に確認日と出典の URL の行つきで残す（URL の行には URL だけを書き、後ろに文字を書かない）。事例は `- 普通のやり方:` の出典に書く。利用者の手元に最新を調べる skill があれば、それに従ってよい
+
+  ```
+  - 前提: <機能>は <確かめた振る舞い>（確認日 2026-11-26）
+    - URL: https://docs.aws.amazon.com/<doc-path>
+  ```
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass
