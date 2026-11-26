@@ -2542,6 +2542,201 @@ def test_the_opt_in_does_not_loosen_a_transcript_with_origin(repo, monkeypatch):
     assert state(d)["phase"] == "discovery"
 
 
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_trust_mark_passes_an_originless_human_row_in_a_transcript_with_origin(repo, monkeypatch, command):
+    """人の役を agent が演じる run で、人の役の発言には origin が無く、subagent の報告の行にだけ origin がある。
+    印を立てた run は、spec.md の変更（resume は wait）より後の origin の無い行で通る。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    d = init_spec(repo)
+    if command == "resume":
+        user_says(repo)
+        assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+        assert run(repo, "wait", str(d), "--reason", "確認").returncode == 0
+    monkeypatch.setenv(TRUST, "1")
+    time.sleep(0.01)
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes({"type": "user", "message": {"role": "user", "content": "OK"}})
+    prompt_hook(repo)
+    args = [command, str(d)] + (["--by", "OK"] if command == "approve" else [])
+    r = run(repo, *args)
+    assert r.returncode == 0, r.stderr
+    assert state(d)["phase"] == "building"
+
+
+def _trusted_run_at_the_gate(repo, monkeypatch, command):
+    """印を立てた run で、approve（または approve・wait の後の resume）の手前まで進める。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    d = init_spec(repo)
+    if command == "resume":
+        user_says(repo)
+        assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+        assert run(repo, "wait", str(d), "--reason", "確認").returncode == 0
+    time.sleep(0.01)  # 後の行の時刻（ミリ秒）が、spec.md の変更・wait より後になるように
+    return d
+
+
+def _gate_args(d, command):
+    return [command, str(d)] + (["--by", "OK"] if command == "approve" else [])
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("rows", [["task-notification", "peer"], ["queued task-notification", "peer"]])
+def test_trust_mark_refuses_when_only_notifications_and_reports_arrived(repo, monkeypatch, command, rows):
+    """印があっても、spec.md の変更（resume は wait）より後の行が origin の付いた知らせ・subagent の報告だけなら止める。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    for kind in rows:
+        host_writes(NOT_HUMAN_ROWS[kind])
+    prompt_hook(repo)
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode != 0 and "Traceback" not in r.stderr and "知らせ" in r.stderr
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_without_the_trust_mark_an_originless_row_does_not_pass(repo, monkeypatch, command):
+    """印の無い run は、peer の行と origin の無い行だけなら今までどおり止める。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes({"type": "user", "message": {"role": "user", "content": "OK"}})
+    prompt_hook(repo)
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode != 0 and "Traceback" not in r.stderr
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("row", [
+    {"type": "user", "isCompactSummary": True, "message": {"role": "user", "content": "This session is being continued"}},
+    {"type": "user", "isMeta": True, "message": {"role": "user", "content": "OK"}},
+    {"type": "user", "isSidechain": True, "message": {"role": "user", "content": "OK"}},
+    {"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t", "content": "OK"}]}},
+    {"type": "assistant", "message": {"role": "assistant", "content": "OK"}},
+], ids=["compact summary", "meta", "sidechain", "tool result", "assistant"])
+def test_trust_mark_does_not_count_originless_rows_that_are_not_speech(repo, monkeypatch, command, row):
+    """印があっても、会話の要約・meta・sidechain・tool_result・assistant の行は人の役の発言に数えない。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes(row)
+    prompt_hook(repo)
+    before = state(d)
+    assert run(repo, *_gate_args(d, command)).returncode != 0
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_trust_mark_ignores_an_originless_row_older_than_the_change(repo, monkeypatch, command):
+    """印があっても、origin の無い行の時刻が spec.md の変更（resume は wait）より前なら通さない（前の発言の持ち越し）。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    host_writes({"type": "user", "message": {"role": "user", "content": "OK"}})
+    time.sleep(0.05)
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    prompt_hook(repo)
+    before = state(d)
+    assert run(repo, *_gate_args(d, command)).returncode != 0
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_trust_mark_passes_an_originless_queued_command(repo, monkeypatch, command):
+    """作業中に送られた人の役の発言（origin の無い queued_command）も、印を立てた run では通す。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes({"type": "attachment", "attachment": {"type": "queued_command", "prompt": "OK"}})
+    prompt_hook(repo)
+    assert run(repo, *_gate_args(d, command)).returncode == 0
+    assert state(d)["phase"] == "building"
+
+
+NON_DICT_ORIGINS = [None, "human", ["human"], 1]
+NON_DICT_ORIGIN_IDS = ["null", "string", "list", "number"]
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("queued", [False, True], ids=["user", "queued_command"])
+@pytest.mark.parametrize("origin", NON_DICT_ORIGINS, ids=NON_DICT_ORIGIN_IDS)
+def test_without_the_trust_mark_a_row_whose_origin_is_not_an_object_does_not_pass(repo, monkeypatch, command, queued, origin):
+    """印の無い run は、"origin" の語を含んでも origin が dict でない発言の行（"origin": null など）を人の発言に数えない。
+    origin が human の行は spec.md の変更（resume は wait）より前にだけあり、後はその行だけなら exit 1 で止め、state.json を変えない。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    host_writes({"type": "user", "origin": {"kind": "human"}, "message": {"role": "user", "content": "OK"}})
+    time.sleep(0.05)
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if queued:
+        host_writes({"type": "attachment", "attachment": {"type": "queued_command", "prompt": "OK", "origin": origin}})
+    else:
+        host_writes({"type": "user", "origin": origin, "message": {"role": "user", "content": "OK"}})
+    prompt_hook(repo)
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode == 1 and "Traceback" not in r.stderr and "知らせ" in r.stderr, r.stderr
+    assert state(d) == before
+
+
+BROKEN_ORIGINLESS_LINES = [
+    '{"type":"user","message":{"role":"user","content":"O',
+    '{"type":"attachment","attachment":{"type":"queued_command","prompt":"x',
+    '"user"',
+    '{"type":"user","attachment":"x","message":{"role":"user","content":"OK"}}',
+    '{"type":"attachment","attachment":"queued_command"}',
+]
+BROKEN_ORIGINLESS_IDS = ["half-written user", "half-written queued_command", "non-object user", "string attachment on user", "string attachment"]
+
+
+def _append_raw(line):
+    with transcript_of().open("a", encoding="utf-8") as h:
+        h.write(line + "\n")
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("line", BROKEN_ORIGINLESS_LINES, ids=BROKEN_ORIGINLESS_IDS)
+@pytest.mark.parametrize("trusted", [False, True], ids=["no mark", "mark"])
+def test_a_broken_row_without_origin_after_a_human_row_does_not_stop_the_gate(repo, monkeypatch, command, line, trusted):
+    """origin の無い壊れた行（書きかけの user・queued_command など）は、印の有無によらず読み飛ばす。
+    印の無い run は origin を含まない行を読まないので、base と同じく通る。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if trusted:
+        monkeypatch.setenv(TRUST, "1")
+    user_says(repo)
+    _append_raw(line)
+    assert run(repo, *_gate_args(d, command)).returncode == 0
+    assert state(d)["phase"] == "building"
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("trusted", [False, True], ids=["no mark", "mark"])
+def test_a_broken_row_that_has_origin_still_stops_the_gate(repo, monkeypatch, command, trusted):
+    """origin を含む壊れた行は、今までどおり止める（読めない transcript を通さない）。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if trusted:
+        monkeypatch.setenv(TRUST, "1")
+    user_says(repo)
+    _append_raw('{"type": "user", "origin": {"kind": "hu')
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode != 0 and "Traceback" not in r.stderr
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("trusted", [False, True], ids=["no mark", "mark"])
+def test_a_json_array_row_that_mentions_origin_after_a_human_row_does_not_stop_the_gate(repo, monkeypatch, command, trusted):
+    """origin の語を含む JSON の配列の行は、origin のある行が先にあれば今までどおり読み飛ばす。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    if trusted:
+        monkeypatch.setenv(TRUST, "1")
+    user_says(repo)
+    _append_raw('["origin", "user"]')
+    assert run(repo, *_gate_args(d, command)).returncode == 0
+    assert state(d)["phase"] == "building"
+
+
 NEW_PREMISES = GOOD_SPEC[GOOD_SPEC.index("## 前提"):GOOD_SPEC.index("## 作り方")]
 CLAIM = "- 前提: 列を消す処理は clearLines だけにある\n"
 PREMISES = """## 前提

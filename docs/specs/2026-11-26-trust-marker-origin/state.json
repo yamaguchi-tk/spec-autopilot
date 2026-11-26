@@ -1,0 +1,205 @@
+{
+  "phase": "done",
+  "slug": "trust-marker-origin",
+  "created_at": 1795694542.6659021,
+  "existing": true,
+  "start": "c30fc46c6e03f1626bb6df93b6be27601e86b97b",
+  "last_active_at": 1795700497.3165598,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795696124.601108,
+  "approved_by": "OK、承認（trust の印が、人の発言に origin の無い transcript で効くようにする spec）",
+  "spec_sha256": "7f72e63dc9ab46830a2b484c75b999d98e07e14e1ca9b6544b81ecfb1a949adc",
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795697235.4849,
+      "sha": "69420feeb8d813a40de0462c0a3ddacabf3bcbe6"
+    },
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795699255.1248,
+      "sha": "fc59fd285b5c2cbe75286c5227d3a786d0680fb5"
+    },
+    {
+      "high": [],
+      "at": 1795700143.360367,
+      "sha": "58e4e4a98b1a7718be7c3c6fc7cd051c6ce2fffe"
+    }
+  ],
+  "fails": {
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795697235.484896
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795699255.124798
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "0f721c4fccc983d0eca2b37d77618653e327d4da",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795696124.840814,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    },
+    {
+      "base": "242f78b17e61ea1acea1e537928cc48ceb92c6c7",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795696278.475351,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    },
+    {
+      "base": "871186009d65619d9494e66e234b267710f0c0c0",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795696621.7283032,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    },
+    {
+      "base": "69420feeb8d813a40de0462c0a3ddacabf3bcbe6",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795697235.621263,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    },
+    {
+      "base": "319b2bc1bd5449604ac25fa8a2267fc135c186f7",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795697834.81492,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    },
+    {
+      "base": "9068ffc88758709355fe273c6f7553955d8c9503",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer-opus",
+      "at": 1795699258.037365,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "242f78b17e61ea1acea1e537928cc48ceb92c6c7",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795696278.351166
+    },
+    {
+      "tip": "871186009d65619d9494e66e234b267710f0c0c0",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795696621.5694458
+    },
+    {
+      "tip": "69420feeb8d813a40de0462c0a3ddacabf3bcbe6",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795696707.085711
+    },
+    {
+      "tip": "fc59fd285b5c2cbe75286c5227d3a786d0680fb5",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 4,
+      "at": 1795698136.789835
+    },
+    {
+      "tip": "58e4e4a98b1a7718be7c3c6fc7cd051c6ce2fffe",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 5,
+      "at": 1795699533.12462
+    }
+  ],
+  "raises": [
+    {
+      "role": "impl",
+      "req": "R2",
+      "reason": "原因調査",
+      "at": 1795699255.1248,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-opus"
+    }
+  ],
+  "parked": [
+    {
+      "kind": "merge",
+      "op": "gh pr merge 66",
+      "reason": "auto mode の判定が同じ repo の PR のマージ（gh pr merge 57）を拒んだので、再試行せず人に戻す",
+      "req": null,
+      "merges": 0,
+      "at": 1795700497.020017
+    }
+  ],
+  "done_at": 1795700497.264989,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
+}

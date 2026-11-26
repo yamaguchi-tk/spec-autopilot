@@ -1,0 +1,35 @@
+- commit: 58e4e4a98b1a7718be7c3c6fc7cd051c6ce2fffe
+$ .venv/bin/python3 .autopilot-qa/check.py -v
+（R1 と同じ一時の repo の作り方で、本物の hook と CLI を tip で回した。R2 の行の抜粋。「不変」は state.json のバイト列が実行の前後で同じこと）
+R2 pass
+  ok  tip approve 印あり・知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip approve 印あり・queued の知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip approve 印なし・R1 と同じ transcript: 期待 exit 1・state.json 不変、実際 1・不変=True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip resume 印あり・知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip resume 印あり・queued の知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip resume 印なし・R1 と同じ transcript: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+NG pass（109 件すべて base と同じ）
+  （印の無い run の 26 種の行〔origin が null・文字列・入れ子、timestamp が数・年 0、壊れた行、配列の行など〕× 4 つの並びの 104 件と、
+   origin の無い transcript で印のある run の 5 種の行について、base と tip の approve の終了コード・stderr・phase が同じ）
+
+$ bash .autopilot-qa/mut.sh mut-R2-9 plugins/spec-autopilot/scripts/autopilot.py test_without_the_trust_mark_a_row_whose_origin_is_not_an_object_does_not_pass
+（変異: require_user_after の `(max(said) if trusted else said[0]) <= since` を `max(said) <= since` にする。印の無い run の判定の条件を外す。前の巡で生き残った変異と同じ書き換え）
+== before mutation
+16 passed in 2.33s
+APPLIED
+== after mutation
+   1 16 failed in 2.51s
+  16 E       AssertionError:
+  16 plugins/spec-autopilot/tests/test_autopilot.py:2678: AssertionError
+（戻した。git diff --quiet HEAD -- plugins/spec-autopilot/scripts/autopilot.py が通り、印 .applied は残っていない）
+
+$ bash .autopilot-qa/mut.sh mut-R2-8 plugins/spec-autopilot/scripts/autopilot.py test_trust_mark_refuses_when_only_notifications_and_reports_arrived
+（変異: _originless_row の user 行で `return not isinstance(o.get("origin"), dict)` を `return True` にする。印のある run で origin の付いた知らせ・peer を人の役の発言に数える）
+== before mutation
+4 passed in 2.15s
+APPLIED
+== after mutation
+   1 4 failed in 2.23s
+   4 E       AssertionError: assert (0 != 0)
+   4 plugins/spec-autopilot/tests/test_autopilot.py:2593: AssertionError
+（戻した。git diff --stat HEAD -- plugins/ は空）
