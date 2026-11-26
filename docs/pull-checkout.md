@@ -12,11 +12,11 @@ plugin を使う手元の checkout（symlink の向け先）を pull すると�
 2. 次のコマンドを回す（コマンドは変えない。入れる値は `<checkout>` と sha だけ）
 
    ```
-   git -C "<checkout>" diff --quiet --no-renames HEAD <sha> -- plugins/spec-autopilot ':(exclude)plugins/spec-autopilot/tests' ':(exclude)plugins/spec-autopilot/README.md'
+   git -C "<checkout>" diff --quiet --no-renames HEAD <sha> -- plugins/spec-autopilot .claude-plugin ':(exclude)plugins/spec-autopilot/tests' ':(exclude)plugins/spec-autopilot/README.md'
    ```
 
-3. 終了コードが 0（取り込む差分が、plugin の外か、plugin の tests と README だけ）なら、`git -C "<checkout>" merge --ff-only <sha>` で取り込む
-4. 0 以外（plugin の中の差分がある、またはエラー）なら取り込まない。`git -C "<checkout>" diff --no-renames HEAD <sha>` を checkout の外の一時ファイルに書き出し、`git -C "<checkout>" diff --name-status --no-renames HEAD <sha>` の一覧と、控えた sha を人に示す（要約を添えるなら参考と書く）。人が取り込むと言ったら、その sha を `git -C "<checkout>" merge --ff-only <sha>` で取り込む
+3. 終了コードが 0（取り込む差分が、plugin と `.claude-plugin` の外か、plugin の tests と README だけ）なら、`git -C "<checkout>" merge --ff-only <sha>` で取り込む
+4. 終了コードが 1（plugin か `.claude-plugin` の中の差分がある）なら取り込まない。`git -C "<checkout>" diff --no-renames HEAD <sha>` を checkout の外の一時ファイルに書き出し、`git -C "<checkout>" diff --name-status --no-renames HEAD <sha>` の一覧と、控えた sha を、取り込むと走っているセッションの hook・CLI がその場で変わることと一緒に人に示す（要約を添えるなら参考と書く）。人が取り込むと言ったら、その sha を `git -C "<checkout>" merge --ff-only <sha>` で取り込む。0 と 1 のほか（git のエラー）は、出力を添えて人に返す
 
 `git merge --ff-only` が通らないときは、reset・rebase・stash など別の方法で取り込まず、出力を添えて人に返す。
 
