@@ -2562,6 +2562,96 @@ def test_trust_mark_passes_an_originless_human_row_in_a_transcript_with_origin(r
     assert state(d)["phase"] == "building"
 
 
+def _trusted_run_at_the_gate(repo, monkeypatch, command):
+    """印を立てた run で、approve（または approve・wait の後の resume）の手前まで進める。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    d = init_spec(repo)
+    if command == "resume":
+        user_says(repo)
+        assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+        assert run(repo, "wait", str(d), "--reason", "確認").returncode == 0
+    return d
+
+
+def _gate_args(d, command):
+    return [command, str(d)] + (["--by", "OK"] if command == "approve" else [])
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("rows", [["task-notification", "peer"], ["queued task-notification", "peer"]])
+def test_trust_mark_refuses_when_only_notifications_and_reports_arrived(repo, monkeypatch, command, rows):
+    """印があっても、spec.md の変更（resume は wait）より後の行が origin の付いた知らせ・subagent の報告だけなら止める。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    for kind in rows:
+        host_writes(NOT_HUMAN_ROWS[kind])
+    prompt_hook(repo)
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode != 0 and "Traceback" not in r.stderr and "知らせ" in r.stderr
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_without_the_trust_mark_an_originless_row_does_not_pass(repo, monkeypatch, command):
+    """印の無い run は、peer の行と origin の無い行だけなら今までどおり止める。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes({"type": "user", "message": {"role": "user", "content": "OK"}})
+    prompt_hook(repo)
+    before = state(d)
+    r = run(repo, *_gate_args(d, command))
+    assert r.returncode != 0 and "Traceback" not in r.stderr
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+@pytest.mark.parametrize("row", [
+    {"type": "user", "isCompactSummary": True, "message": {"role": "user", "content": "This session is being continued"}},
+    {"type": "user", "isMeta": True, "message": {"role": "user", "content": "OK"}},
+    {"type": "user", "isSidechain": True, "message": {"role": "user", "content": "OK"}},
+    {"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t", "content": "OK"}]}},
+    {"type": "assistant", "message": {"role": "assistant", "content": "OK"}},
+], ids=["compact summary", "meta", "sidechain", "tool result", "assistant"])
+def test_trust_mark_does_not_count_originless_rows_that_are_not_speech(repo, monkeypatch, command, row):
+    """印があっても、会話の要約・meta・sidechain・tool_result・assistant の行は人の役の発言に数えない。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes(row)
+    prompt_hook(repo)
+    before = state(d)
+    assert run(repo, *_gate_args(d, command)).returncode != 0
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_trust_mark_ignores_an_originless_row_older_than_the_change(repo, monkeypatch, command):
+    """印があっても、origin の無い行の時刻が spec.md の変更（resume は wait）より前なら通さない（前の発言の持ち越し）。"""
+    monkeypatch.delenv(TRUST, raising=False)
+    host_writes({"type": "user", "message": {"role": "user", "content": "OK"}})
+    time.sleep(0.05)
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    prompt_hook(repo)
+    before = state(d)
+    assert run(repo, *_gate_args(d, command)).returncode != 0
+    assert state(d) == before
+
+
+@pytest.mark.parametrize("command", ["approve", "resume"])
+def test_trust_mark_passes_an_originless_queued_command(repo, monkeypatch, command):
+    """作業中に送られた人の役の発言（origin の無い queued_command）も、印を立てた run では通す。"""
+    d = _trusted_run_at_the_gate(repo, monkeypatch, command)
+    monkeypatch.setenv(TRUST, "1")
+    host_writes(NOT_HUMAN_ROWS["peer"])
+    host_writes({"type": "attachment", "attachment": {"type": "queued_command", "prompt": "OK"}})
+    prompt_hook(repo)
+    assert run(repo, *_gate_args(d, command)).returncode == 0
+    assert state(d)["phase"] == "building"
+
+
 NEW_PREMISES = GOOD_SPEC[GOOD_SPEC.index("## 前提"):GOOD_SPEC.index("## 作り方")]
 CLAIM = "- 前提: 列を消す処理は clearLines だけにある\n"
 PREMISES = """## 前提

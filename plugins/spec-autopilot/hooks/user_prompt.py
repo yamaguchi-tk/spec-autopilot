@@ -5,8 +5,9 @@ autopilot.py の approve と resume は、この時刻と、記録した transcr
 spec.md の変更（block・done の後はその時刻、resume は wait）より後のときだけ通る。この hook は background の終わりの
 知らせや subagent の報告でも動き、payload に出どころの欄が無いので、人の発言かは transcript の側で確かめる
 （origin の無い transcript では止める。この hook の環境で SPEC_AUTOPILOT_TRUST_PROMPT_RECORD がちょうど 1 のときだけ、
-記録に trust: true を書き、origin の無い transcript でも記録の時刻で確かめさせる。hook の環境は Claude Code を起動した
-側のもので、agent の Bash の環境変数は届かない）。
+記録に trust: true を書き、origin の無い transcript でも記録の時刻で確かめさせる。印は origin のある transcript でも、
+origin の無い発言の行の時刻で効く。origin の付いた知らせ・subagent の報告だけでは通らない。hook の環境は Claude Code を
+起動した側のもので、agent の Bash の環境変数は届かない）。
 agent が事故で自分を承認し直すのを止めるためのもので、agent が意図してこのファイル・spec.md の mtime・
 state.json を書けば通る（同じ権限のファイルなので、plugin の中では閉じられない）。
 記録できないときは何もしない（発言は止めない）。
