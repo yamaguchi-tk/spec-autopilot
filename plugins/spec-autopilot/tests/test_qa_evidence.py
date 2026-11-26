@@ -126,7 +126,7 @@ def quick(monkeypatch, sec=3):
 
 
 LONG = {
-    # 長すぎる行は正規表現に通さない（TASK は [ の連なりで行の長さの 2 乗の時間がかかる）
+    # 長すぎる行は正規表現に通さない（今の TASK は [ の連なりも行の長さに比例する時間で読むが、上限を越える行は読まずに断る）
     "qa-spaces": ("qa.md", "| R1 | pass | x" + " " * 50000 + "x |"),
     "tasks-brackets": ("tasks.md", "- [x] T9: " + "[" * 50000),
 }
@@ -177,7 +177,7 @@ def test_check_rejects_a_line_just_over_the_limit(repo):
 WORST = {
     # 閉じの | が無く空白が続く qa.md の行（行の長さの 3 乗の時間がかかる形があった）
     "qa-open-row": ("qa.md", ["| R1 | pass |" + " " * 3980 + "x"] * 49),
-    # [ が続く tasks.md の行（2 乗）
+    # [ が続く tasks.md の行（今の TASK は行の長さに比例する時間で読む。下の CPU 時間の検査がそれを見る）
     "tasks-brackets": ("tasks.md", ["- [x] T9: " + "[" * 3980] * 49),
 }
 
