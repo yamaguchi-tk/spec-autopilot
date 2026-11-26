@@ -281,3 +281,30 @@ def test_reply_errors_is_a_function_of_the_session_and_since_only(repo):
     both_ran()
     assert advisor_approval.reply_errors("s1", 0.0) == []
     assert advisor_approval.reply_errors("s1", time.time() + 10)  # 記録より後の since なら、起動の記録が無い
+
+
+# --- 文書の形とコードが読む形の突き合わせ ---
+
+def _advisor_output_section():
+    text = (PLUGIN / "agents" / "fable-advisor.md").read_text(encoding="utf-8")
+    return text.split("\n## 出力", 1)[1]
+
+
+def test_fable_advisor_definition_names_the_approval_lines_the_code_reads(repo):
+    """fable-advisor.md の出力の欄に書いた `承認: 可`・`承認: 否` の文字列を、そのまま返答に使うと、コードがそのとおりに読む。"""
+    section = _advisor_output_section()
+    assert "`承認: 可`" in section and "`承認: 否`" in section
+    d = blocked_spec(repo)
+    both_ran(advisor="推奨: 案 A\n" + "承認: 否" + "\n")
+    r = by_advisor(repo, d)
+    assert r.returncode != 0 and "承認: 可" in out(r) and state(d)["phase"] == "blocked"
+    both_ran(advisor="推奨: 案 A\n" + "承認: 可" + "\n")
+    assert by_advisor(repo, d).returncode == 0
+
+
+def test_commands_autopilot_gives_the_two_stage_night_procedure_with_flags_the_cli_accepts(repo):
+    text = (PLUGIN / "commands" / "autopilot.md").read_text(encoding="utf-8")
+    section = text.split("\n## 人に戻るとき", 1)[1]
+    for word in ("fable-advisor", "advice-checker", "--by-advisor", "lineup.py next", "朝の報告"):
+        assert word in section, word
+    assert "--by-advisor" in run(repo, "approve", "--help").stdout
