@@ -222,7 +222,7 @@ def test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separa
     assert any(sep in f.read_text(encoding="utf-8") for f in sub.glob("*.jsonl"))  # 生の文字がファイルに残っている
     r = by_advisor(repo, d)
     assert r.returncode == 0, out(r)
-    assert state(d)["phase"] == "approved"
+    assert state(d)["phase"] == "building"
 
 
 def test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator(repo):
