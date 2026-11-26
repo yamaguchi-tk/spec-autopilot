@@ -4,7 +4,7 @@
   "created_at": 1795677378.0410419,
   "existing": true,
   "start": "05b922cd5a14215006c7be8f633a08a69425a24d",
-  "last_active_at": 1795680471.088026,
+  "last_active_at": 1795680481.0416808,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795680471.085025,
   "approved_by": "OK（low 2 件: コメントの 2 乗、CLAUDE.md の venv の手順と .gitignore）",
@@ -17,5 +17,20 @@
   "reviews": [],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "ab95a3b5f8cf92f261f78211ac74f46d5b446b58",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795680471.299438,
+      "session": "452114ec-3945-4df0-ae90-041e8b307cec"
+    }
+  ]
 }
