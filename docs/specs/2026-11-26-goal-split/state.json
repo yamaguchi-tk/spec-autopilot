@@ -4,7 +4,7 @@
   "created_at": 1795625349.870097,
   "existing": true,
   "start": "810b95b99080a3be06e055774a19ea961c9906dd",
-  "last_active_at": 1795657095.525743,
+  "last_active_at": 1795657927.30176,
   "queued_at": 1795653661.056182,
   "approved_by": "再開（依る spec の block で止まった列を戻す）",
   "spec_sha256": "709429c4ecea59a89884e9fce78c0f553ec87f26527396172ff5efa9557ad75f",
@@ -44,9 +44,40 @@
     }
   ],
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
+  "reviews": [
+    {
+      "high": [
+        "R2",
+        "R4"
+      ],
+      "at": 1795657927.301738,
+      "sha": "ee62a081ad736c5d67c544772b14792601971d65"
+    }
+  ],
+  "fails": {
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795657927.301733
+      }
+    ],
+    "R4": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795657927.301738
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 1,
+    "R3": 0,
+    "R4": 1,
+    "R5": 0,
+    "R6": 0
+  },
   "reworks": {},
   "dispatches": [
     {
@@ -132,6 +163,14 @@
       ],
       "dispatch": 3,
       "at": 1795657095.525741
+    },
+    {
+      "tip": "ee62a081ad736c5d67c544772b14792601971d65",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 3,
+      "at": 1795657101.854366
     }
   ]
 }
