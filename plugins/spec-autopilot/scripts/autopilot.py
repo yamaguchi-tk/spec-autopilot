@@ -937,11 +937,11 @@ def cmd_approve(a):
     if not a.queue and lineup.after_name(d) and load_state(d).get("phase") == "discovery":
         errors.append("依る spec のある spec は --queue で承認する（着手のときに lineup.py next が依る spec の先端に載せ替える）")
     if errors:
-        report(errors, warnings, "")
-        return 1
+        return report(errors, warnings, "")
     s = load_state(d)
     scope = advisor_approval.scope_sha(section((d / "spec.md").read_text(encoding="utf-8"), "自走の範囲"))
-    if a.by_advisor and (errors := advisor_approval.human_errors(s, scope)):
+    child = a.by_advisor and a.queue and s.get("phase") == "discovery"  # 目的の spec の子の承認（親の記録と相談役 2 本で通す）
+    if a.by_advisor and not child and (errors := advisor_approval.human_errors(s, scope)):
         return report(errors, warnings, "")
     if s.get("phase") not in ("discovery", "blocked", "done"):
         sys.exit(f"approve は壁打ち中（discovery）・block の後・done の後だけ受ける（phase={s.get('phase')}）")
@@ -949,7 +949,7 @@ def cmd_approve(a):
         sys.exit(f"{adr}。作り方の選択を ADR に書いてから承認する")
     since, what = advisor_approval.since_of(s, (d / "spec.md").stat().st_mtime)
     session = os.environ.get("CLAUDE_CODE_SESSION_ID") if a.by_advisor else require_user_after(d, since, what)
-    if a.by_advisor and (errors := advisor_approval.reply_errors(session, since)):
+    if a.by_advisor and (errors := goal.child_errors(d, scope, session) if child else advisor_approval.reply_errors(session, since)):
         return report(errors, warnings, "")
     by = advisor_approval.BY_PREFIX + a.by if a.by_advisor else a.by
     if a.goal: return goal.approve(d, by, scope, warnings)  # noqa: E701
