@@ -1,0 +1,21 @@
+- commit: cb2960f2ed5dfdb1ec8b0baba489a3ea992e4182
+
+$ python3 -m pytest "plugins/spec-autopilot/tests/test_advisor_approval.py::test_advice_checker_definition_gives_one_verdict_line_form_that_the_gate_accepts" -q
+1 passed in 1.21s
+
+# base の 28 行目に戻す patch（.autopilot-qa/mut-R1-1.patch）を当てて同じテストを回し、git apply -R で戻した
+$ git apply .autopilot-qa/mut-R1-1.patch && python3 -m pytest "plugins/spec-autopilot/tests/test_advisor_approval.py::test_advice_checker_definition_gives_one_verdict_line_form_that_the_gate_accepts" -q; git apply -R .autopilot-qa/mut-R1-1.patch
+>       assert re.findall(r"`判定: 反証(?:あり|なし)", before) == []
+E       AssertionError: assert ['`判定: 反証なし'] == []
+1 failed
+
+# 出力の節の括弧の形を門と合わない形（`（確かめられない <n>）`）に変える patch（.autopilot-qa/mut-R1-2.patch）を当てて回し、戻した
+$ git apply .autopilot-qa/mut-R1-2.patch && python3 -m pytest "plugins/spec-autopilot/tests/test_advisor_approval.py::test_advice_checker_definition_gives_one_verdict_line_form_that_the_gate_accepts" -q; git apply -R .autopilot-qa/mut-R1-2.patch
+E       AssertionError: 出力の節から `判定:`・`反証なし`・括弧の形が読み出せない
+1 failed in 0.29s
+
+$ git diff --quiet HEAD -- plugins/spec-autopilot/agents/advice-checker.md && echo clean-md
+clean-md
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_goal_child.py plugins/spec-autopilot/tests/test_advisors.py plugins/spec-autopilot/tests/test_advisor_approval.py -q -n auto
+70 passed in 7.98s
