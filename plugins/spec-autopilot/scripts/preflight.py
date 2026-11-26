@@ -8,6 +8,8 @@
   GDD の plugin が有効なら ERROR（GDD の hook が自走を止める）。有効でなければ、GDD を外した後に残った lock なので NOTE。
   設定は user（CLAUDE_CONFIG_DIR か ~/.claude）・project・local の settings.json の順に後が勝つ。読めない設定は有効とみなす。
   この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる（NOTE の文でもそう知らせる）。
+- 夜の NOTE（keep-awake・バッテリー・macOS の更新・見回り役）は、見込みの長さ（予算とマージ後の予算と前に並ぶ分）が 60 分を超えるか、
+  予算が読めないときだけ出す。1 時間以内の昼の run には関係しない。SSO と GDD は長さによらず検査する。
 - keep-awake: pmset があり、PreventUserIdleSystemSleep も PreventSystemSleep も 0 なら NOTE（承認のときに人に示す）。
   `pmset -g batt` がバッテリー駆動（'Battery Power'）なら NOTE（蓋を閉じるとバッテリーのまま眠り、keep-awake では止められない）。
 - macOS の更新: SoftwareUpdate の AutomaticallyInstallMacOSUpdates が 1 なら NOTE（夜に更新が入ると再起動しうる。システムの
@@ -24,6 +26,7 @@ from datetime import datetime
 from pathlib import Path
 
 GDD_ACTIVE = re.compile(r"^\s*active\s*:\s*(.*?)\s*(?:#.*)?$", re.M | re.I)
+NIGHT_MINUTES = 60  # 見込みの長さがこれ以下なら、夜通し向けの NOTE を出さない
 AWAKE = re.compile(r"^\s*(PreventUserIdleSystemSleep|PreventSystemSleep)\s+(\d+)\s*$", re.M)
 
 
@@ -40,8 +43,19 @@ def check(text, now=None, cwd=None):
             warnings.append(f"{gdd} の active: が false 以外のまま残っているが、settings.json で GDD の plugin が有効でないので"
                             "自走は止めない（この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる）。"
                             "GDD を使わないなら、このファイルは消してよい")
-    warnings += keep_awake() + power() + auto_update() + watcher()
+    if overnight_run(text, now):
+        warnings += keep_awake() + power() + auto_update() + watcher()
     return errors, warnings
+
+
+def overnight_run(text, now):
+    """夜通し回しうる run か。予算が読めなければ長さが分からないので True。now は前に並ぶ分を足した時刻。"""
+    import overnight  # sso と同じ読み手（overnight.budgets）で読む
+    budget, post = overnight.budgets(text)
+    if budget is None:
+        return True
+    ahead = max(0, ((now or time.time()) - time.time()) / 60)
+    return budget + post + ahead > NIGHT_MINUTES
 
 
 def gdd_plugin_on(root):
