@@ -1,10 +1,10 @@
 {
-  "phase": "discovery",
+  "phase": "building",
   "slug": "night-notes-short-run",
   "created_at": 1795668526.243426,
   "existing": true,
   "start": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-  "last_active_at": 1795668725.950491,
+  "last_active_at": 1795671854.6769989,
   "dispatches": [
     {
       "base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
@@ -18,8 +18,21 @@
       ],
       "agent": "autopilot-implementer",
       "at": 1795668725.9504561,
-      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff",
-      "prototype": true
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
     }
-  ]
+  ],
+  "approved_at": 1795671854.6764019,
+  "approved_by": "軽量フロー（人の承認なし）: 体験会向け: 予算とマージ後の予算の合計が 60 分以下の spec では夜通し向けの NOTE を出さない（依頼文）",
+  "spec_sha256": "106a0670cccd9b2dc4214f24bb543f7268fd2bcfcd8333e25933bf911c02ed33",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "light": true,
+  "light_base": "1486ede7397e4ed4d47e062e233662a05cf6fcde"
 }
