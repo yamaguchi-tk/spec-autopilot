@@ -87,7 +87,7 @@ VAGUE = ("適切", "正しく", "十分", "なるべく", "柔軟", "いい感�
 REQ = re.compile(r"^- (R\d+):\s*(\S.*)$", re.M)
 QA_PLAN_ROW = re.compile(r"^\|\s*(R\d+)\s*\|", re.M)
 BUDGET = re.compile(r"^- 予算:\s*(\d+)\s*分\s*$", re.M)
-TASK = re.compile(r"^- \[( |x|X)\] (T\d+):.*?\[([^\]]*)\]\s*$")
+TASK = re.compile(r"^- \[( |x|X)\] (T\d+):(?:.*\])?[^\[\]]*\[([^\]]*)\]\s*$")  # 最後の ] の前の [ ... ] を、行の長さに比例して読む
 TASK_NOTE = re.compile(r"^\s+- メモ:")
 HEADING = re.compile(r"^#{1,6}\s")
 QA_HEAD = re.compile(r"^\|\s*要件\s*\|\s*結果\s*\|\s*証拠\s*\|\s*$")
@@ -627,7 +627,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
 
 
 MAX_ARTIFACT_BYTES = 200_000  # check が解析する qa.md・tasks.md の大きさの上限
-MAX_ARTIFACT_LINE = 4_000  # 1 行の字数の上限（実データの証拠の欄の最長は 482 字）。TASK は行の長さの 2 乗の時間がかかる
+MAX_ARTIFACT_LINE = 4_000  # 1 行の字数の上限（実データの証拠の欄の最長は 482 字）。TASK は行の長さに比例する
 MAX_EVIDENCE_FILE = 2_000_000  # 証拠が指すファイルの大きさの上限
 MAX_EVIDENCE_SCAN = 256_000_000  # 1 回の check で、証拠の名前を探すために走査するバイト数の合計の上限
 

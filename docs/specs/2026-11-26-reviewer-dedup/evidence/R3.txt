@@ -1,0 +1,8 @@
+- commit: 2662d5a2176180f13cb069a4777c9676b86978c3
+
+$ grep -n -o 'コマンドがテストの置き場そのもの.*全体は CI に任せる）」と書く' plugins/spec-autopilot/agents/autopilot-spec-checker.md
+12:コマンドがテストの置き場そのもの（`tests/` のディレクトリや、テスト全体を指すもの）を回すなら、変えるモジュールを参照していても `ng` にし、直し方に「変えるモジュールを参照するテストのファイルを並べる（全体は CI に任せる）」と書く
+
+$ grep -n '回帰テスト' docs/specs/2026-11-26-goal-split/spec.md
+50:- 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+（`plugins/spec-autopilot/tests/` のディレクトリそのものを回すので、12 行目の文の「`tests/` のディレクトリ」に当たり ng になる）
