@@ -9,7 +9,7 @@
   設定は user（CLAUDE_CONFIG_DIR か ~/.claude）・project・local の settings.json の順に後が勝つ。読めない設定は有効とみなす。
   この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる（NOTE の文でもそう知らせる）。
 - 夜の NOTE（keep-awake・バッテリー・macOS の更新・見回り役）は、見込みの長さ（予算とマージ後の予算と前に並ぶ分）が 60 分を超えるか、
-  予算が読めないときだけ出す。1 時間以内の昼の run には関係しない。SSO と GDD は長さによらず検査する。
+  予算が読めないときか、目的の spec の承認（goal）のときだけ出す。1 時間以内の昼の run には関係しない。SSO と GDD は長さによらず検査する。
 - keep-awake: pmset があり、PreventUserIdleSystemSleep も PreventSystemSleep も 0 なら NOTE（承認のときに人に示す）。
   `pmset -g batt` がバッテリー駆動（'Battery Power'）なら NOTE（蓋を閉じるとバッテリーのまま眠り、keep-awake では止められない）。
 - macOS の更新: SoftwareUpdate の AutomaticallyInstallMacOSUpdates が 1 なら NOTE（夜に更新が入ると再起動しうる。システムの
@@ -30,7 +30,7 @@ NIGHT_MINUTES = 60  # 見込みの長さがこれ以下なら、夜通し向け�
 AWAKE = re.compile(r"^\s*(PreventUserIdleSystemSleep|PreventSystemSleep)\s+(\d+)\s*$", re.M)
 
 
-def check(text, now=None, cwd=None):
+def check(text, now=None, cwd=None, goal=False):
     errors, warnings = sso(text, now or time.time())
     root = git_root(cwd)
     gdd = (root / ".claude" / "gdd-dev.local.md") if root else None
@@ -43,7 +43,7 @@ def check(text, now=None, cwd=None):
             warnings.append(f"{gdd} の active: が false 以外のまま残っているが、settings.json で GDD の plugin が有効でないので"
                             "自走は止めない（この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる）。"
                             "GDD を使わないなら、このファイルは消してよい")
-    if overnight_run(text, now):
+    if goal or overnight_run(text, now):  # 目的の spec の予算は、子を夜通し回す長さを表さない
         warnings += keep_awake() + power() + auto_update() + watcher()
     return errors, warnings
 

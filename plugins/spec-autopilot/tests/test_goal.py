@@ -7,6 +7,7 @@ import sys
 import pytest
 
 from test_autopilot import GOOD_SPEC, PLUGIN, approved, existing_spec, init_spec, repo, run, state, stop_hook, user_says, write_files  # noqa: F401
+from test_rollback import NIGHT_NOTES, night_mac
 from test_size import six_changed_files
 
 sys.path.insert(0, str(PLUGIN / "scripts"))
@@ -116,3 +117,22 @@ def test_record_keeps_what_another_process_wrote_after_the_caller_read_the_state
     s = state(d)
     assert s["wait"]["reason"] == "別のプロセスが書いた"
     assert s["goal"]["by"] == "目的 OK" and s["goal"]["scope_sha256"] == "a" * 64
+
+
+def test_approve_goal_gives_every_night_note_for_a_30_minute_goal_spec(repo, tmp_path, monkeypatch):
+    night_mac(tmp_path, monkeypatch)
+    d = init_spec(repo)
+    (d / "spec.md").write_text(GOOD_SPEC.replace("- 大きさ: S", "- 大きさ: L"), encoding="utf-8")  # 予算 30 分
+    r = goal_approve(repo, d)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert all(w in r.stdout for w in NIGHT_NOTES), r.stdout
+
+
+def test_approve_without_goal_gives_no_night_note_for_the_same_30_minute_spec(repo, tmp_path, monkeypatch):
+    night_mac(tmp_path, monkeypatch)
+    d = init_spec(repo)
+    (d / "spec.md").write_text(GOOD_SPEC, encoding="utf-8")
+    user_says(repo)
+    r = run(repo, "approve", str(d), "--by", "OK")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not [w for w in NIGHT_NOTES if w in r.stdout], r.stdout
