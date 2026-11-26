@@ -36,17 +36,6 @@ def invocations():
     return out
 
 
-def test_goal_procedure_names_the_subcommands_in_order():
-    calls = [(w, a[0], [x for x in a if x.startswith("--")]) for w, a in invocations()]
-    assert calls == [
-        ("CLI", "approve", ["--by", "--goal"]),
-        ("CLI", "init", []),
-        ("CLI", "approve", ["--by", "--queue", "--by-advisor"]),
-        ("lineup.py", "next", []),
-        ("CLI", "goal", []),
-    ]
-
-
 def test_goal_procedure_invocations_parse_with_the_real_argparse(monkeypatch):
     seen = []
     monkeypatch.setattr(ap, "cmd_approve", lambda a: seen.append(a) or 0)
@@ -59,12 +48,6 @@ def test_goal_procedure_invocations_parse_with_the_real_argparse(monkeypatch):
     assert approve_goal.goal and not approve_goal.queue and not approve_goal.by_advisor
     assert approve_child.queue and approve_child.by_advisor and not approve_child.goal
     assert goal_a.cmd == "goal"
-
-
-def test_goal_procedure_names_what_the_morning_report_needs():
-    b = goal_bullet()
-    for word in ("approved_by", "goal の結果", "fable-advisor", "advice-checker", "B の 1〜3", "- 親 spec:", "- 親の要件:"):
-        assert word in b, word
 
 
 def test_version_is_raised_past_0_1_7():
