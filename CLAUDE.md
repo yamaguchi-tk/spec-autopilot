@@ -5,7 +5,7 @@
 - テストは、repo の root で `python3 -m venv .venv` を回し、`source .venv/bin/activate` で有効にし（POSIX のシェルの書き方。fish や Windows では読み替える）、`.github/workflows/test.yml` の `pip install` の行を回して道具を入れてから、`python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto` で回す。CI は venv を作らず、同じ `pip install` の行とテストのコマンドを回す。venv の外の `pip install` は、PEP 668 で守られた python3 では拒まれる（版は workflow の 1 か所にだけ書く）
 - 文書（command・reference・agent 定義・README など）に語や文があるかだけを assert するテストは書かない。コードが読む値と文書を突き合わせるテストは書いてよい
 - 実装中に見つけた別の問題は、この PR が変えたファイルの中なら直す（要るリファクタリングは、挙動を変えずに別の commit にする）。変えていないファイルの問題は、再現手順を添えて Issue にする
-- 版数は `plugins/spec-autopilot/.claude-plugin/plugin.json` の `version` で上げる。`.claude-plugin/marketplace.json` の `description` は plugin.json と同じにする（テストが突き合わせる）
+- 版数は `plugins/spec-autopilot/.claude-plugin/plugin.json` の `version` で上げる。`.claude-plugin/marketplace.json` の `description` は plugin.json と同じにする（テストが突き合わせる）。版数だけを上げる直し（plugin.json の `version` と、`tests/test_spec_autopilot_wiring.py` の版数のテストだけを変える）は、下の進め方の /autopilot も pre-pr-review も回さず、テストを全部回して PR にする（版数の 1 行に spec・評価役・独立レビューを回すと、20 分を超えた）。マージは人の指示を待つ
 - この repo は公開している。社外に出せない情報（勤め先の repo 名・社内の計測値・個人のパスやメールアドレス・トークン）を、コード・文書・commit・PR に書かない
 
 ## この plugin 自身を直すときの進め方
