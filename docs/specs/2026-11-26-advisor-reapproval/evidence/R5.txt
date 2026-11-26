@@ -1,9 +1,12 @@
-- commit: a9e79611d6ac783b19f73d101d528d03128fb908
+- commit: 792d965e769d4cd55d3044b2b83faab32a776fde
 
-$ python3 .autopilot-qa/check.py
-  [R5] ok: version 0.1.6 -> 0.1.7、description 一致=True
-  [R5] ok: wiring: 6 passed in 0.01s
+$ python3 .autopilot-qa/check.py | grep -E '\[R5\]|^R5'
+  [R5] ok: version 0.1.6 -> 0.1.7
+  [R5] ok: marketplace の description が plugin.json と同じ
 R5 pass
 
 $ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q
-6 passed
+6 passed in 0.02s
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1100 passed in 121.28s (0:02:01)
