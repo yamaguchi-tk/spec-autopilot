@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "blocked",
   "slug": "advisor-reapproval",
   "created_at": 1795624714.107002,
   "existing": true,
   "start": "f78818b158c1c6b73cb5bc21b4464e8bcb5a217f",
-  "last_active_at": 1795651279.397281,
+  "last_active_at": 1795652066.447839,
   "queued_at": 1795650754.75523,
   "approved_by": "OK（2 本をこの順でまとめて承認）",
   "spec_sha256": "d7c6d941abd3ad6347492b56eadec603981f607eed19f1200e6bacc697c02056",
@@ -13,7 +13,12 @@
   "budget_min": 90,
   "post_budget_min": 90,
   "history": [],
-  "blocked": null,
+  "blocked": {
+    "req": "R3",
+    "reason": "評価役の変異の印 .autopilot-qa/mut-R3-1.applied の patch が壊れていて git apply -R --check が通らない（corrupt patch at line 11）。手順どおり実装役を起動せずに人に戻す。plugins の下は git diff HEAD で差分なし（patch は当たっていない）。あわせて R2 の high 3 件（複数の 承認:・判定: 行の最後だけを見る 2 件、meta.json が読めないと黙って読み飛ばす 1 件）を .autopilot-qa/check.py で再現した",
+    "evidence": ".autopilot-qa/mut-R3-1.patch、.autopilot-qa/check.py の出力",
+    "at": 1795652066.447838
+  },
   "paused_sec": 0,
   "reviews": [],
   "fails": {},
