@@ -1,0 +1,21 @@
+- commit: 2662d5a2176180f13cb069a4777c9676b86978c3
+
+$ grep -n 'run:' .github/workflows/test.yml
+28:        run: python3 -m pip install pytest==9.1.1 pytest-xdist==3.8.0 execnet==2.1.2
+31:        run: python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+
+$ python3 -c "import execnet,xdist,pytest;print(execnet.__version__, xdist.__version__, pytest.__version__)"
+2.1.2 3.8.0 9.1.1
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_the_wait_is_not_counted_in_the_budget
+1 failed, 1256 passed in 366.18s (0:06:06)
+(load averages: 61.43 57.89 59.57。落ちた 1 件は spec の非目標に挙げた負荷で落ちるテストで、Issue #28「時間に依存するテストが、マシンが混んでいると落ちる」が OPEN)
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_the_wait_is_not_counted_in_the_budget -q
+1 passed in 2.50s
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ci_workflow.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_qa_evidence.py -q -n auto
+98 passed in 16.52s
+
+(PR の CI の時間は、spec のとおり main がマージの前に PR の CI で見る)
