@@ -62,3 +62,8 @@ def test_cli_messages_point_to_existing_command_sections():
     assert names, "autopilot.py に /autopilot の節を指す案内が無い"
     heads = {m.strip() for m in re.findall(r"^#+ (?:[A-Z0-9]+\. )?(.+)$", (PLUGIN / "commands" / "autopilot.md").read_text(encoding="utf-8"), re.M)}
     assert not names - heads, f"見出しに無い節: {sorted(names - heads)}"
+
+
+def test_version_is_raised_past_0_1_12():
+    v = _load(MANIFEST)["version"]
+    assert tuple(int(x) for x in v.split(".")) > (0, 1, 12)
