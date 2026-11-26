@@ -114,7 +114,8 @@ def command_errors(text, after_approve=False):
       「起動のコマンドとコマンドでの戻しは無い」と agent に言う（LLM の指示なので、守れているかは機械で確かめられない。限界）"""
     import overnight
     way = ("`autopilot.py block` で記録して人に戻る" if after_approve else
-           "マージで自動に動く workflow か revert の PR にする（範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
+           "マージで自動に動く workflow か revert の PR にする（デプロイの workflow が無ければ起動を「なし（マージした commit で QA）」、"
+           "範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
     out = []
     raw = ap.section(text, overnight.SCOPE_SECTION) or ""
     body = ap.COMMENT_BLOCK.sub("", raw)
