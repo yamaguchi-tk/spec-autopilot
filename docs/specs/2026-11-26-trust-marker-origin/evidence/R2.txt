@@ -1,4 +1,4 @@
-- commit: fc59fd285b5c2cbe75286c5227d3a786d0680fb5
+- commit: 58e4e4a98b1a7718be7c3c6fc7cd051c6ce2fffe
 $ .venv/bin/python3 .autopilot-qa/check.py -v
 （R1 と同じ一時の repo の作り方で、本物の hook と CLI を tip で回した。R2 の行の抜粋。「不変」は state.json のバイト列が実行の前後で同じこと）
 R2 pass
@@ -8,16 +8,28 @@ R2 pass
   ok  tip resume 印あり・知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
   ok  tip resume 印あり・queued の知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
   ok  tip resume 印なし・R1 と同じ transcript: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
-NG pass
-  （印の無い run の 18 種の行 × 4 つの並び、origin の無い transcript で印のある run の 10 種の行について、base と tip の approve の終了コードと stderr が同じ。82 件すべて ok）
+NG pass（109 件すべて base と同じ）
+  （印の無い run の 26 種の行〔origin が null・文字列・入れ子、timestamp が数・年 0、壊れた行、配列の行など〕× 4 つの並びの 104 件と、
+   origin の無い transcript で印のある run の 5 種の行について、base と tip の approve の終了コード・stderr・phase が同じ）
 
-$ sh .autopilot-qa/mutate.sh .autopilot-qa/mut-R2-6.patch "origin or trust or human or approve or resume"
-（変異: require_user_after の `(max(said) if trusted else said[0]) <= since` を `max(said) <= since` にする。印の無い run の判定の条件を外す）
---- 変異の前 ---
-138 passed, 298 deselected in 117.47s (0:01:57)
---- 変異の後 ---
-138 passed, 298 deselected in 110.87s (0:01:50)
+$ bash .autopilot-qa/mut.sh mut-R2-9 plugins/spec-autopilot/scripts/autopilot.py test_without_the_trust_mark_a_row_whose_origin_is_not_an_object_does_not_pass
+（変異: require_user_after の `(max(said) if trusted else said[0]) <= since` を `max(said) <= since` にする。印の無い run の判定の条件を外す。前の巡で生き残った変異と同じ書き換え）
+== before mutation
+16 passed in 2.33s
+APPLIED
+== after mutation
+   1 16 failed in 2.51s
+  16 E       AssertionError:
+  16 plugins/spec-autopilot/tests/test_autopilot.py:2678: AssertionError
 （戻した。git diff --quiet HEAD -- plugins/spec-autopilot/scripts/autopilot.py が通り、印 .applied は残っていない）
 
-$ （mut-R2-6 を当てて）.venv/bin/python3 .autopilot-qa/check.py --ng -v
-NG fail: 印なし・origin が null の user・古い human の後に行だけ: base=1 tip=0 / 印なし・入れ子の origin・古い human の後に行だけ: base=1 tip=0 / 印なし・origin が null の queued_command・古い human の後に行だけ: base=1 tip=0 / 印なし・attachment が文字列で origin が null・古い human の後に行だけ: base=1 tip=0
+$ bash .autopilot-qa/mut.sh mut-R2-8 plugins/spec-autopilot/scripts/autopilot.py test_trust_mark_refuses_when_only_notifications_and_reports_arrived
+（変異: _originless_row の user 行で `return not isinstance(o.get("origin"), dict)` を `return True` にする。印のある run で origin の付いた知らせ・peer を人の役の発言に数える）
+== before mutation
+4 passed in 2.15s
+APPLIED
+== after mutation
+   1 4 failed in 2.23s
+   4 E       AssertionError: assert (0 != 0)
+   4 plugins/spec-autopilot/tests/test_autopilot.py:2593: AssertionError
+（戻した。git diff --stat HEAD -- plugins/ は空）
