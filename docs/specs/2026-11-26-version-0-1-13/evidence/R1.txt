@@ -1,0 +1,19 @@
+- commit: 79d7df3b4e9909cd38a0c0e61c601ec3d24c307e
+
+$ .venv/bin/python .autopilot-qa/check.py
+base version=0.1.12 tip version=0.1.13
+9 passed in 1.43s
+R1 pass
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1263 passed in 159.83s (0:02:39)
+
+$ git diff --stat 30aa3e5 76ea6de -- plugins/ ':!plugins/spec-autopilot/tests'
+ plugins/spec-autopilot/agents/advice-checker.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ grep -n version .claude-plugin/marketplace.json
+(当たりなし)
+
+$ git grep -l -F '0.1.12' -- plugins/spec-autopilot/tests
+(当たりなし)
