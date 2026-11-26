@@ -1,0 +1,79 @@
+{
+  "phase": "building",
+  "slug": "advice-checker-verdict-line",
+  "created_at": 1795689712.854476,
+  "existing": true,
+  "start": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
+  "last_active_at": 1795690218.307565,
+  "dispatches": [
+    {
+      "base": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
+      "tasks": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795689923.697668,
+      "session": "168be700-42c5-4ff5-b72e-3e5e72e262b4"
+    }
+  ],
+  "approved_at": 1795690021.213807,
+  "approved_by": "軽量フロー（人の承認なし）: 人の依頼「判定の行の括弧が欠ける件を直して」（PR 39 の直していない low の 2）。相談役 2 段で案 B（28 行目の literal を外し出力の節を指す）を推奨、検証役は反証なし（確かめられない 0 / 9）",
+  "spec_sha256": "ae32092d81a1b02eee672e40b92b092de60596d886d71298cd7159cee3a530cb",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795690218.2136161,
+      "sha": "cb2960f2ed5dfdb1ec8b0baba489a3ea992e4182"
+    }
+  ],
+  "fails": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0
+  },
+  "reworks": {},
+  "light": true,
+  "light_base": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
+  "handoffs": [
+    {
+      "tip": "8542a24e4531e8dc0a295689864240bb3b3c6732",
+      "tasks": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "dispatch": 0,
+      "at": 1795690021.467523
+    },
+    {
+      "tip": "cb2960f2ed5dfdb1ec8b0baba489a3ea992e4182",
+      "tasks": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "dispatch": 0,
+      "at": 1795690218.061731
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795690218.307564
+    }
+  ]
+}
