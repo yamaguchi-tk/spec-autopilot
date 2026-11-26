@@ -5,7 +5,8 @@
   `## 自走の範囲` の節と今の節が同じ）。初回の承認（discovery・queued）と、範囲を変える承認し直しは人の返事が要る
 - 条件は、spec.md の最後の変更（block の後ならその時刻）より後に、このセッションで fable-advisor が起動し、その後に
   advice-checker が起動していて、fable-advisor の最後の返答に `承認: 可`、advice-checker の最後の返答に
-  `判定: 反証なし（確かめられない 0 / <n>）` の行があること。許可の形はこの 1 つだけで、ほかは全部止める
+  `判定: 反証なし（確かめられない 0 / <n>）` の行が、行の先頭が `承認:`・`判定:` の行のうち
+  ちょうど 1 本としてあること。許可の形はこの 1 つだけで、ほかは全部止める
 - 返答は subagent の transcript の最後の assistant の行の text か、SubagentHandback の `input.message`
 - 想定するのは事故（main が人の返事も相談役の検証も無いまま承認し直すこと）。subagent の記録の偽造は守らない
 """
@@ -69,6 +70,14 @@ def reply_of(rows):
     return ""
 
 
+def _written_since(path, since):
+    """path が since 以後に書かれたか。mtime が読めなければ、後に書かれたとして扱う。"""
+    try:
+        return path.stat().st_mtime >= since
+    except OSError:
+        return True
+
+
 def launches(session, since):
     """session で since 以後に起動した fable-advisor・advice-checker の [(名前, 起動の時刻, 最後の返答)]。
     記録は overnight.launches と同じ <config>/projects/*/<session>/subagents/。形が読めない記録は、since の後に
@@ -79,6 +88,8 @@ def launches(session, since):
         try:
             name = json.loads(meta.read_text(encoding="utf-8"))["agentType"].split(":")[-1]
         except READ_ERRORS:
+            if _written_since(meta, since):
+                raise ValueError(f"{meta.name} の記録が読めない") from None
             continue
         if name not in (ADVISOR, CHECKER):
             continue
@@ -89,13 +100,14 @@ def launches(session, since):
             if start >= since:
                 out.append((name, start, reply_of(rows)))
         except READ_ERRORS:
-            try:
-                late = (log if log.exists() else meta).stat().st_mtime >= since
-            except OSError:
-                late = True
-            if late:
+            if _written_since(log if log.exists() else meta, since):
                 raise ValueError(f"{log.stem} の記録が読めない") from None
     return out
+
+
+def _lines_of(reply, head):
+    """返答の中の、行の先頭が head の行（前後の空白は外す）。"""
+    return [x for x in (y.strip() for y in reply.splitlines()) if x.startswith(head)]
 
 
 def reply_errors(session, since):
@@ -111,17 +123,19 @@ def reply_errors(session, since):
     if all(last.values()) and last[CHECKER][1] <= last[ADVISOR][1]:
         errors.append(f"{CHECKER} の起動が {ADVISOR} の起動より前（{ADVISOR} の推奨を {CHECKER} が検証した順になっていない）")
     if last[ADVISOR]:
-        lines = [x.strip() for x in last[ADVISOR][2].splitlines()]
-        verdicts = [m.group(1) for m in map(re.compile(r"承認: (可|否)").fullmatch, lines) if m]
-        if not verdicts or verdicts[-1] != "可":
-            errors.append(f"{ADVISOR} の最後の返答に `承認: 可` の行が無い（{'承認: ' + verdicts[-1] if verdicts else '承認: の行が無い'}）")
+        approvals = _lines_of(last[ADVISOR][2], "承認:")
+        if len(approvals) != 1:
+            errors.append(f"{ADVISOR} の最後の返答の `承認:` の行が {len(approvals)} 本（ちょうど 1 本の `承認: 可` が要る）")
+        elif approvals[0] != "承認: 可":
+            errors.append(f"{ADVISOR} の最後の返答に `承認: 可` の行が無い（{approvals[0]}）")
     if last[CHECKER]:
-        lines = [x.strip() for x in last[CHECKER][2].splitlines()]
-        judged = [m for m in map(re.compile(r"判定: (反証あり|反証なし)(.*)").fullmatch, lines) if m]
-        if not judged:
-            errors.append(f"{CHECKER} の最後の返答に `判定:` の行が無い")
-        elif judged[-1].group(1) == "反証あり":
+        judged = _lines_of(last[CHECKER][2], "判定:")
+        if len(judged) != 1:
+            errors.append(f"{CHECKER} の最後の返答の `判定:` の行が {len(judged)} 本（ちょうど 1 本の `判定: 反証なし（確かめられない 0 / <n>）` が要る）")
+        elif not (m := re.fullmatch(r"判定: (反証あり|反証なし)(.*)", judged[0])):
+            errors.append(f"{CHECKER} の判定が `判定: 反証なし（確かめられない 0 / <n>）` の形でない（{judged[0]}）")
+        elif m.group(1) == "反証あり":
             errors.append(f"{CHECKER} の判定が反証あり")
-        elif not re.fullmatch(r"（確かめられない 0 / \d+）", judged[-1].group(2)):
-            errors.append(f"{CHECKER} の判定が `判定: 反証なし（確かめられない 0 / <n>）` の形でない（確かめられない 1 以上か、形が違う: {judged[-1].group(0)}）")
+        elif not re.fullmatch(r"（確かめられない 0 / \d+）", m.group(2)):
+            errors.append(f"{CHECKER} の判定が `判定: 反証なし（確かめられない 0 / <n>）` の形でない（確かめられない 1 以上か、形が違う: {judged[0]}）")
     return errors

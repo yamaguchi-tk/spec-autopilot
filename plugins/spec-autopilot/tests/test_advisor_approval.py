@@ -111,6 +111,52 @@ def test_approve_by_advisor_refuses_when_a_condition_is_missing(repo, missing, a
     assert state(d)["phase"] == "blocked"
 
 
+@pytest.mark.parametrize("name, advisor, checker, word", [
+    ("否の後に別の問の可", "承認: 否\n理由: x\n承認: 可\n", OK_CHECKER, "承認:"),
+    ("可の後に否", "承認: 可\n承認: 否\n", OK_CHECKER, "承認:"),
+    ("可が 2 本", "承認: 可\n承認: 可\n", OK_CHECKER, "承認:"),
+    ("否に理由を続けた行と可", "承認: 否（理由）\n承認: 可\n", OK_CHECKER, "承認:"),
+    ("可に理由を続けた 1 本", "承認: 可（理由）\n", OK_CHECKER, "承認: 可"),
+    ("反証ありの後に別の問の反証なし", OK_ADVISOR, "判定: 反証あり（確かめられない 0 / 3）\n判定: 反証なし（確かめられない 0 / 2）\n", "判定:"),
+    ("反証なしの後に反証あり", OK_ADVISOR, "判定: 反証なし（確かめられない 0 / 3）\n判定: 反証あり（確かめられない 0 / 2）\n", "判定:"),
+    ("反証なしが 2 本", OK_ADVISOR, OK_CHECKER + OK_CHECKER, "判定:"),
+    ("形の外れた判定と反証なし", OK_ADVISOR, "判定: 保留\n判定: 反証なし（確かめられない 0 / 2）\n", "判定:"),
+])
+def test_approve_by_advisor_needs_exactly_one_approval_line_and_one_verdict_line(repo, name, advisor, checker, word):
+    d = blocked_spec(repo)
+    subagent_ran("fable-advisor", advisor)
+    subagent_ran("advice-checker", checker)
+    r = by_advisor(repo, d)
+    assert r.returncode == 1 and r.stdout.startswith("ERROR") and word in r.stdout, out(r)
+    assert state(d)["phase"] == "blocked"
+
+
+@pytest.mark.parametrize("late_name, late_reply", [("fable-advisor", "承認: 否\n"), ("advice-checker", OK_CHECKER)])
+def test_approve_by_advisor_refuses_when_a_later_record_has_an_unreadable_meta_json(repo, late_name, late_reply):
+    d = blocked_spec(repo)
+    both_ran()
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    for bad in ("{", "[]", '{"agentType": 3}', ""):
+        (sub / "agent-zzmeta.meta.json").write_text(bad, encoding="utf-8")
+        (sub / "agent-zzmeta.jsonl").write_text(json.dumps({"type": "assistant", "timestamp": stamp(), "message": {"content": [{"type": "text", "text": late_reply}]}}) + "\n", encoding="utf-8")
+        r = by_advisor(repo, d)
+        assert r.returncode == 1 and "読めない" in r.stdout and state(d)["phase"] == "blocked", (bad, out(r))
+
+
+def test_approve_by_advisor_ignores_an_unreadable_meta_json_written_before_the_last_change(repo):
+    d = approved(repo)
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    sub.mkdir(parents=True)
+    (sub / "agent-zzold.meta.json").write_text("{", encoding="utf-8")
+    time.sleep(0.05)
+    assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y").returncode == 0
+    time.sleep(0.02)
+    (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8").replace("休憩中に遊べる", "休憩中に手軽に遊べる"), encoding="utf-8")
+    time.sleep(0.02)
+    both_ran()
+    assert by_advisor(repo, d).returncode == 0
+
+
 def test_approve_by_advisor_refuses_a_checker_launched_before_the_advisor(repo):
     d = blocked_spec(repo)
     subagent_ran("advice-checker", OK_CHECKER)
