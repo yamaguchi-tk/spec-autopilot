@@ -159,6 +159,7 @@ def test_a_passing_smoke_without_a_merge_leaves_production_broken(repo, gh, tmp_
     assert night(repo, "qa", str(d), "--evidence", str(evidence(tmp_path, "again.txt")), "--smoke", "pass").returncode == 0
     assert overnight.production(Path(d), state(d)) == overnight.BROKEN  # 抜けるのは壊れた後のマージだけ
     r = run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "again.txt")
-    assert r.returncode != 0
+    assert r.returncode != 0 and "本番が良くない" in r.stderr
     gh.answers("pr view", [{"out": {"state": "OPEN", "headRefOid": git_head(repo)}}])
-    assert night(repo, "ready", str(d), "--pr", "8").returncode != 0  # 戻す PR でない直しは通さない
+    r = night(repo, "ready", str(d), "--pr", "8")
+    assert r.returncode == 1 and "戻す PR でなければマージしない" in r.stdout  # 戻す PR でない直しは通さない
