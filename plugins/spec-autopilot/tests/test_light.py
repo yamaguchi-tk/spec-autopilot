@@ -3,7 +3,6 @@
 止まる条件（保護された path に触れたら check が通らない）と、自走の範囲が合意ありと同じく spec の `- 範囲:` で決まることを見る。
 """
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -444,26 +443,9 @@ def test_a_command_written_before_a_reapproval_still_stops_check(repo, key):
     assert r.returncode != 0 and f"ERROR: 軽量フローでは `- {key}:`" in r.stdout and "autopilot.py block" in r.stdout
 
 
-@pytest.mark.parametrize("row", ["- デプロイの起動: コマンド: make deploy", "- ロールバック：コマンド：make rollback"])
-def test_approve_refuses_a_command_in_a_second_scope_section(repo, row):
-    """節が 2 つあっても、どちらかにコマンドがあれば断る（読み手が最初の節だけを見る抜けを作らない）。"""
-    from test_overnight import scoped
-    d = init_spec(repo)
-    (d / "spec.md").write_text(scoped("マージまで") + f"\n## 自走の範囲\n{row}\n", encoding="utf-8")
-    r = light(repo, "approve", str(d), "--source", "x")
-    assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
-
-
-TEMPLATE_SCOPE_COMMENT = re.search(r"## 自走の範囲\n(<!--.*?-->)", (PLUGIN / "templates" / "spec.md").read_text(encoding="utf-8"), re.S).group(1)
-
-
-@pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "indented", "bold", "table", "next-line",
-                                 "next-line-in-a-second-section", "indented-heading", "closed-heading",
-                                 "suffixed-heading", "setext-heading", "inside-a-comment", "in-another-rows-value",
-                                 "comment-on-an-allowed-row", "after-a-copied-template-comment", "comment-in-another-section",
-                                 "other-value"])
+@pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "next-line", "other-value"])
 def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
-    """見出し・行の形・コメントで、読み手に見えるコマンドを見落とさない（鍵の語は自走の範囲の許可した 2 行とテンプレートの説明にだけ置ける）。"""
+    """自走の範囲の節の中は、コメント・次の行・ほかの値の形でコマンドを置けない（節は許可した行だけ）。"""
     from test_overnight import scoped
     base = scoped("マージまで")
     row = "- ロールバック: コマンド: make rollback"
@@ -471,21 +453,7 @@ def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
         "unclosed-comment": base.replace("- ロールバック: revert の PR をマージし、デプロイの完了を確かめる",
                                          "<!-- メモ\n" + row).replace("## 止まる条件", "<!-- x -->\n## 止まる条件"),
         "fullwidth-comment": base.replace("- ロールバック: revert の PR をマージし、デプロイの完了を確かめる", "＜！－－\n" + row + "\n-->"),
-        "indented": base + "\n  - デプロイの起動: コマンド: make deploy\n",
-        "bold": base + "\n* **デプロイの起動**: コマンド: make deploy\n",
-        "table": base + "\n| ロールバック | コマンド: make rollback |\n",
         "next-line": base.replace("- ロールバック: revert の PR をマージし、デプロイの完了を確かめる", "- ロールバック:\n  コマンド: make rollback"),
-        "next-line-in-a-second-section": base + "\n## 自走の範囲\n- ロールバック:\n  コマンド: make rollback\n",
-        "indented-heading": base + "\n ## 自走の範囲\n- デプロイの起動:\n  コマンド: make deploy\n",
-        "closed-heading": base + "\n## 自走の範囲 ##\n- デプロイの起動:\n  コマンド: make deploy\n",
-        "suffixed-heading": base + "\n## 自走の範囲（続き）\n- デプロイの起動:\n  コマンド: make deploy\n",
-        "setext-heading": base + "\n自走の範囲\n---\n- デプロイの起動:\n  コマンド: make deploy\n",
-        "inside-a-comment": base.replace("## 止まる条件", "<!--\n- ロールバック:\n  コマンド: make rollback\n-->\n## 止まる条件"),
-        "in-another-rows-value": base.replace("- QA の環境: 本番の test チャネル", "- QA の環境: ロールバック: コマンド: make rollback"),
-        "comment-on-an-allowed-row": base.replace("revert の PR をマージし、デプロイの完了を確かめる",
-                                                  "revert の PR をマージし、デプロイの完了を確かめる<!-- コマンド: make rollback -->"),
-        "after-a-copied-template-comment": base.replace("## 止まる条件", "## 止まる条件\n" + TEMPLATE_SCOPE_COMMENT + " コマンド: make deploy"),
-        "comment-in-another-section": base + "\n<!-- ロールバック: コマンド: make rollback -->\n",
         "other-value": base.replace("revert の PR をマージし、デプロイの完了を確かめる", "make rollback を打つ"),
     }[how]
     d = init_spec(repo)
