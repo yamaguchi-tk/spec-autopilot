@@ -2553,6 +2553,7 @@ def test_trust_mark_passes_an_originless_human_row_in_a_transcript_with_origin(r
         assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
         assert run(repo, "wait", str(d), "--reason", "確認").returncode == 0
     monkeypatch.setenv(TRUST, "1")
+    time.sleep(0.01)
     host_writes(NOT_HUMAN_ROWS["peer"])
     host_writes({"type": "user", "message": {"role": "user", "content": "OK"}})
     prompt_hook(repo)
@@ -2570,6 +2571,7 @@ def _trusted_run_at_the_gate(repo, monkeypatch, command):
         user_says(repo)
         assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
         assert run(repo, "wait", str(d), "--reason", "確認").returncode == 0
+    time.sleep(0.01)  # 後の行の時刻（ミリ秒）が、spec.md の変更・wait より後になるように
     return d
 
 
