@@ -52,7 +52,7 @@
 ## 作り方
 この spec の ADR のとおり、read_launch と advisor_approval.launches が transcript を、手本の transcript_lines と同じくバイトで読んで b"\n" だけで割る（`read_bytes().split(b"\n")` を行ごとに utf-8 で読む。text mode の改行の変換を通さない。空の行は今までどおり飛ばす）。autopilot.py の transcript_lines は呼ばない（split-transcript がそれを transcript.py に移すので、ここで参照を足すと載せ替えで衝突する）。
 
-- テストは、U+2028 などを生の文字で書かず、Python の `" "` のエスケープで書く（生の文字で書くと、このテストのファイルを読んだ実装役の transcript が、直っていない手元の CLI で同じ所で切れる）
+- テストは、U+2028 などを生の文字で書かず、Python の `"\u2028"` のエスケープで書く（生の文字で書くと、このテストのファイルを読んだ実装役の transcript が、直っていない手元の CLI で同じ所で切れる）
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |

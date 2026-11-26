@@ -95,7 +95,7 @@ def launches(session, since):
             continue
         log = meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl")
         try:
-            rows = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines() if x.strip()]
+            rows = [json.loads(x) for x in log.read_bytes().decode("utf-8").split("\n") if x.strip()]  # "\n" だけで割る（本文の U+2028 で割らない）
             start = datetime.fromisoformat(rows[0]["timestamp"].replace("Z", "+00:00")).timestamp()
             if start >= since:
                 out.append((name, start, reply_of(rows)))

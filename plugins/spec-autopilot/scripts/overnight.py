@@ -931,7 +931,7 @@ def launches(session, since):
 def read_launch(name, log, since):
     """1 つの subagent の (名前, {model}, {effort}, None)。since より前に起動したものは None。形が違えば例外を投げる。
     model は transcript から読む（meta.json に無いことがある。<synthetic> は host が足す行）。"""
-    lines = [line for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = [line for line in log.read_bytes().decode("utf-8").split("\n") if line.strip()]  # "\n" だけで割る（本文の U+2028 で割らない）
     if datetime.fromisoformat(json.loads(lines[0])["timestamp"].replace("Z", "+00:00")).timestamp() < since:
         return None
     models, efforts = set(), set()
