@@ -1,0 +1,70 @@
+{
+  "phase": "done",
+  "slug": "implementer-input-table",
+  "created_at": 1795683419.6408372,
+  "existing": true,
+  "start": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
+  "last_active_at": 1795689983.627063,
+  "scope_sha256": "645ed9095b9b30057507bae62c4c9cf44ff96aa5795507474ea281ddaa4fefd8",
+  "approved_at": 1795689416.423718,
+  "approved_by": "OK、承認（実装役の 4 つの定義に、入力の表のテストの欄だけを埋める規則を足す spec）",
+  "spec_sha256": "ffe8c7dc0511c3a1d3947993eb24dad3a9e0864d87c7b43d7e91b64f6e6be110",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795689625.70636,
+      "sha": "3b78f738d149ac40b6514501de00c1b9cc503420"
+    }
+  ],
+  "fails": {},
+  "streak": {
+    "R1": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "7436ca1268d88aa1ece436760a62d10e91463c2c",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795689422.649882,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "3b78f738d149ac40b6514501de00c1b9cc503420",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795689514.804446
+    }
+  ],
+  "parked": [
+    {
+      "kind": "merge",
+      "op": "gh pr merge 58",
+      "reason": "auto mode の判定が同じ repo の PR のマージ（gh pr merge 57）を拒んだので、再試行せず人に戻す",
+      "req": null,
+      "merges": 0,
+      "at": 1795689731.365435
+    }
+  ],
+  "done_at": 1795689983.5833862,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
+}
