@@ -615,7 +615,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0):
     import overnight  # 範囲と段の規則は PR の後のループと一緒に置く（このファイルの行の予算のため）
     import stages
     errors += stages.lint(sys.modules[__name__], text, reqs) + __import__("ladder").lint(section(text, "モデル"))
-    more_err, more_warn = overnight.scope_lint(text)
+    more_err, more_warn = overnight.scope_lint(text, repo_root(d))
     pre_err, pre_warn = __import__("preflight").check(text, time.time() + ahead * 60) if at_approve or preflight else ([], [])  # 夜通しの前提は人がいる lint と承認のとき
     errors += more_err + pre_err
     warnings += more_warn + pre_warn
