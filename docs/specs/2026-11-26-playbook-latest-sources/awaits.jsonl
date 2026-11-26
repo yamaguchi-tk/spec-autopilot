@@ -1,0 +1,3 @@
+{"kind": "ci", "pr": 52, "sha": "64b6064ba734fe2ccf3389ec22b082f64947636b", "result": "error", "started_at": 1795680904.494076, "at": 1795680905.66431, "detail": ["RuntimeError: gh pr checks 52 --json name,bucket,link が読めない（exit 1）: no checks reported on the 'claude/aws-latest-playbook' branch"]}
+{"kind": "ci", "pr": 52, "sha": "64b6064ba734fe2ccf3389ec22b082f64947636b", "result": "success", "started_at": 1795680925.492967, "at": 1795681145.4852679, "detail": ["spec-autopilot"]}
+{"kind": "review", "pr": 52, "sha": null, "result": "not_required", "started_at": 1795681152.010707, "at": 1795681152.511488, "detail": ["reviewDecision が「」。レビューの承認はこの PR の要件ではない（承認を待たずにマージを試す）"]}
