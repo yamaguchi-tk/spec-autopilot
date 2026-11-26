@@ -19,3 +19,8 @@
 ## Consequences
 - split-transcript は pull まで blocked のまま
 - 割り方の正本が transcript_lines と別に 2 か所残る（split-transcript の後に別の spec でまとめる）
+
+## pre-pr-review の範囲
+- 範囲: overnight.read_launch と advisor_approval.launches が subagent の transcript を "\n" だけで割るようにする（JSON の文字列の中の U+2028・U+2029・U+0085 で行を割らない）。壊れた行は今までどおり読めない記録として止める
+- 想定する脅威: 事故だけ（subagent が読んだファイルの中身に、改行に似た文字が入っていること）。transcript をわざと書き換える入力は想定しない
+- やらないこと: 割り方の関数を 1 つにまとめること、相談役の返答の本文の割り方（_lines_of）、ほかの splitlines の箇所（transcript の JSONL を読まないもの）、版数
