@@ -1,0 +1,37 @@
+- commit: 92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5
+
+$ (cwd=r3-sso-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 1
+ERROR: AWS の profile「dev」の SSO のセッションが残り 30 分で、見込みの夜の終わり（予算とマージ後の予算）より前に切れる。`aws sso login --profile dev` でログインし直してから承認する
+
+$ (cwd=r3-sso-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 1
+ERROR: AWS の profile「dev」の SSO のセッションが残り 30 分で、見込みの夜の終わり（予算とマージ後の予算）より前に切れる。`aws sso login --profile dev` でログインし直してから承認する
+
+$ (cwd=r3-sso-note-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+NOTE: AWS の profile「dev」の SSO のセッションは残り 100 分で、予算の 2 倍までは続かない。切れたら残りの操作を park に積む
+lint: OK
+
+$ (cwd=r3-sso-note-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+NOTE: AWS の profile「dev」の SSO のセッションは残り 100 分で、予算の 2 倍までは続かない。切れたら残りの操作を park に積む
+approved: 予算 30 分。ここから自走する
+
+$ (cwd=r3-gdd-True-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 1
+ERROR: GDD のワークフローが有効（.claude/gdd-dev.local.md の active: が false 以外）。GDD の hook が自走を止めるので、/gdd-dev を終えるか active: false にしてから承認する
+
+$ (cwd=r3-gdd-True-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 1
+ERROR: GDD のワークフローが有効（.claude/gdd-dev.local.md の active: が false 以外）。GDD の hook が自走を止めるので、/gdd-dev を終えるか active: false にしてから承認する
+
+$ (cwd=r3-gdd-False-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+NOTE: <worktree>/.autopilot-qa/work/r3-gdd-False-lint/repo/.claude/gdd-dev.local.md の active: が false 以外のまま残っているが、settings.json で GDD の plugin が有効でないので自走は止めない（この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる）。GDD を使わないなら、このファイルは消してよい
+lint: OK
+
+$ (cwd=r3-gdd-False-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+NOTE: <worktree>/.autopilot-qa/work/r3-gdd-False-approve/repo/.claude/gdd-dev.local.md の active: が false 以外のまま残っているが、settings.json で GDD の plugin が有効でないので自走は止めない（この判定は user・project・local の settings.json だけを読む。それ以外の経路（--plugin-dir・--setting-sources・--settings など）で GDD が読み込まれていれば、GDD の hook が止めうる）。GDD を使わないなら、このファイルは消してよい
+approved: 予算 30 分。ここから自走する

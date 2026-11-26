@@ -1,0 +1,33 @@
+- commit: 92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5
+
+$ (cwd=r1-30-None-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+lint: OK
+
+$ (cwd=r1-30-None-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+approved: 予算 30 分。ここから自走する
+
+$ (cwd=r1-60-0-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+lint: OK
+
+$ (cwd=r1-60-0-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+approved: 予算 60 分。ここから自走する
+
+$ (cwd=r1-20-40-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
+exit 0
+lint: OK
+
+$ (cwd=r1-20-40-approve) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-s --by OK
+exit 0
+approved: 予算 20 分。ここから自走する
+
+$ (cwd=r1-queue-10-20) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-a --by OK --queue
+exit 0
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+
+$ (cwd=r1-queue-10-20) python3 plugins/spec-autopilot/scripts/autopilot.py approve docs/specs/2026-11-26-b --by OK --queue
+exit 0
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）

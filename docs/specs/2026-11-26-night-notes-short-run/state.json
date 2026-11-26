@@ -4,7 +4,7 @@
   "created_at": 1795668526.243426,
   "existing": true,
   "start": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-  "last_active_at": 1795671854.6769989,
+  "last_active_at": 1795672979.010368,
   "dispatches": [
     {
       "base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
@@ -29,10 +29,39 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795672978.653831,
+      "sha": "92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5"
+    }
+  ],
   "fails": {},
-  "streak": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0
+  },
   "reworks": {},
   "light": true,
-  "light_base": "1486ede7397e4ed4d47e062e233662a05cf6fcde"
+  "light_base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
+  "handoffs": [
+    {
+      "tip": "92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795671873.82621
+    }
+  ],
+  "lenses": [
+    {
+      "name": "観点なし",
+      "found": 1,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795672979.010366
+    }
+  ]
 }
