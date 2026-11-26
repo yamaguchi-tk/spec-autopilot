@@ -443,9 +443,19 @@ def test_a_command_written_before_a_reapproval_still_stops_check(repo, key):
     assert r.returncode != 0 and f"ERROR: 軽量フローでは `- {key}:`" in r.stdout and "autopilot.py block" in r.stdout
 
 
+@pytest.mark.parametrize("row", ["- デプロイの起動: コマンド: make deploy", "- ロールバック: コマンド: make rollback"])
+def test_approve_refuses_a_second_scope_section(repo, row):
+    """同じ見出しの節が 2 つあれば断る（機械の読み手は最初の節だけを見るので、2 つ目の行は誰も確かめない）。"""
+    from test_overnight import scoped
+    d = init_spec(repo)
+    (d / "spec.md").write_text(scoped("マージまで") + f"\n## 自走の範囲\n{row}\n", encoding="utf-8")
+    r = light(repo, "approve", str(d), "--source", "x")
+    assert r.returncode != 0 and "ERROR: 軽量フローでは" in r.stdout, r.stdout
+
+
 @pytest.mark.parametrize("how", ["unclosed-comment", "fullwidth-comment", "next-line", "other-value"])
 def test_approve_refuses_a_command_in_any_shape_the_agent_may_read(repo, how):
-    """自走の範囲の節の中は、コメント・次の行・ほかの値の形でコマンドを置けない（節は許可した行だけ）。"""
+    """自走の範囲の節の中は、閉じていない・全角のコメント、次の行、ほかの値の形でコマンドを置けない（閉じたコメントは外してから見る）。"""
     from test_overnight import scoped
     base = scoped("マージまで")
     row = "- ロールバック: コマンド: make rollback"
