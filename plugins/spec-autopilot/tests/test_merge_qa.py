@@ -85,12 +85,14 @@ def test_qa_refuses_evidence_from_before_the_merge(repo, gh, tmp_path):
     time.sleep(0.02)
     gh.answers("pr view", [merged_pr(git_head(repo))])
     assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
-    assert night(repo, "qa", str(d), "--evidence", str(old), "--smoke", "pass").returncode != 0
+    r = night(repo, "qa", str(d), "--evidence", str(old), "--smoke", "pass")
+    assert r.returncode == 1 and "より後に書かれていない" in r.stderr
 
 
 def test_qa_without_a_merge_is_refused(repo, tmp_path):
     d = agreed(repo)
-    assert night(repo, "qa", str(d), "--evidence", str(evidence(tmp_path)), "--smoke", "pass").returncode != 0
+    r = night(repo, "qa", str(d), "--evidence", str(evidence(tmp_path)), "--smoke", "pass")
+    assert r.returncode == 1 and "より後に書かれていない" in r.stderr
 
 
 def test_smoke_after_the_merge_confirms_production(repo, gh, tmp_path):
