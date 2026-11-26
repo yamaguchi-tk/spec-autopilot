@@ -1,0 +1,24 @@
+{
+  "phase": "discovery",
+  "slug": "version-0-1-14",
+  "created_at": 1795701808.376441,
+  "existing": true,
+  "start": "9149045bb4ab1259a7a8053d2bc5aab602547699",
+  "last_active_at": 1795701922.6002629,
+  "dispatches": [
+    {
+      "base": "9149045bb4ab1259a7a8053d2bc5aab602547699",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795701922.600236,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff",
+      "prototype": true
+    }
+  ]
+}
