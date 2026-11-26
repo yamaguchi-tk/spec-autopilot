@@ -1,18 +1,23 @@
-- commit: 69420feeb8d813a40de0462c0a3ddacabf3bcbe6
+- commit: fc59fd285b5c2cbe75286c5227d3a786d0680fb5
 $ .venv/bin/python3 .autopilot-qa/check.py -v
-（R1 と同じ一時の repo の作り方。印あり: spec.md の変更（resume は wait）の後に task-notification と peer の行だけ。印なし: R1 と同じ transcript〔peer + origin の無い user 行〕。
- state.json のバイト列を CLI の前後で比べた）
+（R1 と同じ一時の repo の作り方で、本物の hook と CLI を tip で回した。R2 の行の抜粋。「不変」は state.json のバイト列が実行の前後で同じこと）
 R2 pass
-  ok  tip approve 印あり・知らせ+peer: 期待 exit 1・state 不変、実際 1・True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
-  ok  tip approve 印なし・peer+origin なし: 期待 exit 1・state 不変、実際 1・True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
-  ok  tip resume 印あり・知らせ+peer: 期待 exit 1・state 不変、実際 1・True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
-  ok  tip resume 印なし・peer+origin なし: 期待 exit 1・state 不変、実際 1・True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
-N1 fail: 印なし approve human のあとに origin の無い壊れた user 行（書きかけ）: 期待 base と同じ exit 0、実際 tip 1 人の発言を transcript で確かめられない（JSONDecodeError）。人に示して返事を受けてから実行する / 印なし resume（同じ） / 印なし approve・resume human のあとに origin の無い queued_command の壊れた行: 期待 base と同じ exit 0、実際 tip 1（JSONDecodeError）
+  ok  tip approve 印あり・知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip approve 印あり・queued の知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip approve 印なし・R1 と同じ transcript: 期待 exit 1・state.json 不変、実際 1・不変=True spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip resume 印あり・知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip resume 印あり・queued の知らせと peer だけ: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip resume 印なし・R1 と同じ transcript: 期待 exit 1・state.json 不変、実際 1・不変=True waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+NG pass
+  （印の無い run の 18 種の行 × 4 つの並び、origin の無い transcript で印のある run の 10 種の行について、base と tip の approve の終了コードと stderr が同じ。82 件すべて ok）
 
-$ git apply .autopilot-qa/mut-R2-2.patch && perl -e 'alarm 200; exec @ARGV' -- .venv/bin/python3 -m pytest "plugins/spec-autopilot/tests/test_autopilot.py::test_trust_mark_refuses_when_only_notifications_and_reports_arrived" -q; git apply -R .autopilot-qa/mut-R2-2.patch
-（変異の前: 4 passed）
-E       AssertionError: assert (0 != 0)
-FAILED plugins/spec-autopilot/tests/test_autopilot.py::test_trust_mark_refuses_when_only_notifications_and_reports_arrived[rows1-approve]
-FAILED plugins/spec-autopilot/tests/test_autopilot.py::test_trust_mark_refuses_when_only_notifications_and_reports_arrived[rows1-resume]
-2 failed, 2 passed in 3.08s
-RESTORED（git diff --stat HEAD -- plugins/spec-autopilot/scripts/autopilot.py は空）
+$ sh .autopilot-qa/mutate.sh .autopilot-qa/mut-R2-6.patch "origin or trust or human or approve or resume"
+（変異: require_user_after の `(max(said) if trusted else said[0]) <= since` を `max(said) <= since` にする。印の無い run の判定の条件を外す）
+--- 変異の前 ---
+138 passed, 298 deselected in 117.47s (0:01:57)
+--- 変異の後 ---
+138 passed, 298 deselected in 110.87s (0:01:50)
+（戻した。git diff --quiet HEAD -- plugins/spec-autopilot/scripts/autopilot.py が通り、印 .applied は残っていない）
+
+$ （mut-R2-6 を当てて）.venv/bin/python3 .autopilot-qa/check.py --ng -v
+NG fail: 印なし・origin が null の user・古い human の後に行だけ: base=1 tip=0 / 印なし・入れ子の origin・古い human の後に行だけ: base=1 tip=0 / 印なし・origin が null の queued_command・古い human の後に行だけ: base=1 tip=0 / 印なし・attachment が文字列で origin が null・古い human の後に行だけ: base=1 tip=0
