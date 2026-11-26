@@ -1,0 +1,64 @@
+{
+  "phase": "building",
+  "slug": "version-0-1-14",
+  "created_at": 1795701808.376441,
+  "existing": true,
+  "start": "9149045bb4ab1259a7a8053d2bc5aab602547699",
+  "last_active_at": 1795702702.532542,
+  "dispatches": [
+    {
+      "base": "9149045bb4ab1259a7a8053d2bc5aab602547699",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795701922.600236,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    }
+  ],
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795702518.8334951,
+  "approved_by": "OK、承認（版数を 0.1.14 に上げる spec）",
+  "spec_sha256": "d2a8643990fe7acad558163c4014172103e3dd6a3be18f84c37be337610a5f91",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795702702.5325298,
+      "sha": "5913ad33f5194a58701a95c1ff124a851a7cf5a3"
+    }
+  ],
+  "fails": {},
+  "streak": {
+    "R1": 0
+  },
+  "reworks": {},
+  "handoffs": [
+    {
+      "tip": "24f237cf1f5ad720bae68d2f275a6d513db6484a",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "dispatch": 0,
+      "at": 1795702519.682354
+    },
+    {
+      "tip": "5913ad33f5194a58701a95c1ff124a851a7cf5a3",
+      "tasks": [
+        "T1",
+        "T2"
+      ],
+      "dispatch": 0,
+      "at": 1795702702.368112
+    }
+  ]
+}
