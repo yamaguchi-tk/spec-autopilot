@@ -114,3 +114,50 @@ def test_two_goal_calls_at_once_write_one_done_row(repo):
     ps = [subprocess.Popen([sys.executable, str(CLI), "goal", str(parent)], cwd=repo, env=env, stdout=subprocess.PIPE, text=True) for _ in range(4)]
     assert [p.wait() for p in ps] == [0, 0, 0, 0]
     assert len(rows()) == 1 and state(parent)["phase"] == "done"
+
+
+def test_goal_reports_a_child_whose_state_cannot_be_read_and_does_not_mark_the_parent_done(repo):
+    parent, (a, b) = family(repo, [("done", "R1、R2"), ("done", "R2")])
+    (b / "state.json").write_text("{broken", encoding="utf-8")
+    r = run(repo, "goal", str(parent))
+    assert r.returncode == 1 and f"ERROR: {b.name} が読めない（JSONDecodeError）" in r.stdout, r.stdout + r.stderr
+    assert state(parent)["phase"] == "discovery" and rows() == []
+
+
+def test_goal_reports_a_child_whose_spec_cannot_be_read_and_does_not_mark_the_parent_done(repo):
+    parent, (a, b) = family(repo, [("done", "R1、R2"), ("done", "R2")])
+    (b / "spec.md").write_bytes(b"\xff\xfe\x00broken")
+    r = run(repo, "goal", str(parent))
+    assert r.returncode == 1 and f"ERROR: {b.name} が読めない（UnicodeDecodeError）" in r.stdout, r.stdout + r.stderr
+    assert state(parent)["phase"] == "discovery" and rows() == []
+
+
+def test_goal_leaves_no_untracked_file_in_the_spec_directory(repo):
+    parent, (a,) = family(repo, [("queued", "R1、R2")])
+    before = sorted(x.name for x in parent.iterdir())
+    assert run(repo, "goal", str(parent)).returncode == 1
+    assert sorted(x.name for x in parent.iterdir()) == before
+    set_phase(a, "done")
+    assert run(repo, "goal", str(parent)).returncode == 0
+    assert sorted(x.name for x in parent.iterdir()) == before
+    assert run(repo, "goal", str(parent)).returncode == 0
+    assert sorted(x.name for x in parent.iterdir()) == before
+
+
+def test_goal_on_a_missing_directory_is_one_error_line_not_a_traceback(repo):
+    r = run(repo, "goal", str(repo / "docs" / "specs" / "2026-01-01-nothing"))
+    assert r.returncode == 1 and r.stdout.startswith("ERROR") and "2026-01-01-nothing" in r.stdout, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr and r.stdout.count("\n") == 1
+
+
+def test_goal_table_follows_the_requirement_order_of_the_parent_spec(repo):
+    parent = parent_goal(repo)
+    order = ["R3", "R1", "R2", "R5", "R4", "R7", "R6"]
+    text = (parent / "spec.md").read_text(encoding="utf-8")
+    body = "".join(f"- {r}: 要件 {r}。\n" for r in order)
+    (parent / "spec.md").write_text(text.replace("- R1: 横 1 列がそろったとき、ゲームはその列を消す。\n- R2: ゲームオーバーのとき、Enter で再開できる。\n", body), encoding="utf-8")
+    for seed in ("0", "1", "2", "3", "4"):
+        r = subprocess.run([sys.executable, str(CLI), "goal", str(parent)], cwd=repo, capture_output=True, text=True,
+                           env={**os.environ, "CLAUDE_CODE_SESSION_ID": "s1", "PYTHONHASHSEED": seed})
+        shown = [x.split(":")[0] for x in r.stdout.splitlines() if x[:1] == "R"]
+        assert shown == order, (seed, r.stdout)
