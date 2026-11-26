@@ -4,7 +4,7 @@
   "created_at": 1795680495.657296,
   "existing": true,
   "start": "05b922cd5a14215006c7be8f633a08a69425a24d",
-  "last_active_at": 1795681191.423213,
+  "last_active_at": 1795682550.7905998,
   "scope_sha256": "645ed9095b9b30057507bae62c4c9cf44ff96aa5795507474ea281ddaa4fefd8",
   "approved_at": 1795681191.422385,
   "approved_by": "OK、承認（入力表のテストの欄が使えないとき、入力表で使える形だけを示す）",
@@ -14,8 +14,40 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795682550.7905889,
+      "sha": "0c16a0134937387a3b8882a5e9030b45e2e6e909"
+    }
+  ],
   "fails": {},
-  "streak": {},
-  "reworks": {}
+  "streak": {
+    "R1": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "efe9ceda0716eb9a956199348fb0862b38ac4eb9",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795681191.689117,
+      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "0c16a0134937387a3b8882a5e9030b45e2e6e909",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795681407.9375691
+    }
+  ]
 }
