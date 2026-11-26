@@ -1,6 +1,7 @@
 {
   "name": "spec-autopilot",
   "version": "0.1.10",
+  "description": "要件を人と壁打ちで詰め、要件・作り方・QA の方向性・制約・予算を 1 つの spec で 1 回合意したら、TDD 実装→レビュー→QA→PR 作成まで人に聞かずに進める /autopilot。人に戻るのは要件を満たす方法が無いときだけ。spec・ADR・QA の証拠を repo に残し、要件→タスク→証拠の対応を script で検査し、通るまで Stop hook が終えさせない。小さい修正は合意を省く軽量フロー（spec の範囲どおりマージ・QA まで進み、保護 path に触れたら人に戻る）も選べる。",
   "author": {
     "name": "yamaguchi-tk"
   },
