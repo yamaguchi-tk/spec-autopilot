@@ -46,7 +46,7 @@ def merge_then_qa(repo, gh, tmp_path, d):
     assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
     r = run(repo, "check", str(d))
     assert r.returncode == 1 and "overnight.py qa" in r.stdout
-    assert "--kind deploy" not in r.stdout  # デプロイを待てとは言わない
+    assert "--kind deploy" not in r.stdout and "デプロイを待ち" not in r.stdout  # デプロイを待てとは言わない
     r = night(repo, "qa", str(d), "--evidence", str(evidence(tmp_path)), "--smoke", "pass")
     assert r.returncode == 0, r.stdout + r.stderr
     (d / "evidence" / "R2.txt").write_text("- commit: m1\n- 結果: Confirmed\n$ run the merged commit\nR2 ok\n", encoding="utf-8")
@@ -149,3 +149,16 @@ def test_the_report_says_production_is_the_merged_commit(repo, gh, tmp_path):
     merge_then_qa(repo, gh, tmp_path, d)
     line = night(repo, "report", str(d)).stdout.splitlines()[1]
     assert "本番: 確かめた" in line and "デプロイは無い" in line
+
+
+def test_a_passing_smoke_without_a_merge_leaves_production_broken(repo, gh, tmp_path):
+    import overnight
+    from pathlib import Path
+    d = agreed(repo)
+    broken_without_deploy(repo, gh, tmp_path, d)
+    assert night(repo, "qa", str(d), "--evidence", str(evidence(tmp_path, "again.txt")), "--smoke", "pass").returncode == 0
+    assert overnight.production(Path(d), state(d)) == overnight.BROKEN  # 抜けるのは壊れた後のマージだけ
+    r = run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "again.txt")
+    assert r.returncode != 0
+    gh.answers("pr view", [{"out": {"state": "OPEN", "headRefOid": git_head(repo)}}])
+    assert night(repo, "ready", str(d), "--pr", "8").returncode != 0  # 戻す PR でない直しは通さない
