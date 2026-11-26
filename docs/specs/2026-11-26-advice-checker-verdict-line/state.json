@@ -4,7 +4,7 @@
   "created_at": 1795689712.854476,
   "existing": true,
   "start": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
-  "last_active_at": 1795690021.4675279,
+  "last_active_at": 1795690218.307565,
   "dispatches": [
     {
       "base": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
@@ -30,9 +30,18 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795690218.2136161,
+      "sha": "cb2960f2ed5dfdb1ec8b0baba489a3ea992e4182"
+    }
+  ],
   "fails": {},
-  "streak": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0
+  },
   "reworks": {},
   "light": true,
   "light_base": "ca2c095f6aa854ffe4ca50d8fa1b2abd50211e5f",
@@ -46,6 +55,25 @@
       ],
       "dispatch": 0,
       "at": 1795690021.467523
+    },
+    {
+      "tip": "cb2960f2ed5dfdb1ec8b0baba489a3ea992e4182",
+      "tasks": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "dispatch": 0,
+      "at": 1795690218.061731
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795690218.307564
     }
   ]
 }
