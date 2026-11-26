@@ -1,0 +1,9 @@
+- commit: a9e79611d6ac783b19f73d101d528d03128fb908
+
+$ python3 .autopilot-qa/check.py
+  [R3] ok: discovery: rc=1 out=['ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=discovery）。人の返事が要る']
+  [R3] ok: queued: rc=1 out=['ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=queued）。人の返事が要る']
+  [R3] ok: queued（--queue なし）: rc=1 out=['ERROR: 相談役で承認し直せるのは、人が承認した spec の block の後だけ（phase=queued）。人の返事が要る']
+  [R3] ok: 範囲の節を変えた: rc=1 out=['ERROR: `## 自走の範囲` の節が最後の承認のときと違う（範囲を変える承認し直し）。人の返事が要る']
+  [R3] ok: 節の記録が無い: rc=1 out=['ERROR: 最後の承認のときの自走の範囲の節の記録が無い（この版より前に承認した spec）。人の返事が要る']
+R3 pass

@@ -1,0 +1,13 @@
+- commit: a9e79611d6ac783b19f73d101d528d03128fb908
+
+$ python3 .autopilot-qa/check.py
+  [R4] ok: fable-advisor.md の出力の節に `承認: 可`・`承認: 否`、コードは fullmatch 承認: (可|否)
+  [R4] ok: commands の人に戻るときに欠けた語: []
+R4 pass
+
+$ grep -n -o -E '`承認: 可` か `承認: 否`|lineup.py next|朝の報告|--by-advisor' plugins/spec-autopilot/agents/fable-advisor.md plugins/spec-autopilot/commands/autopilot.md | grep -E 'fable-advisor.md|autopilot.md:14[0-9]'
+plugins/spec-autopilot/agents/fable-advisor.md:85:`承認: 可` か `承認: 否`
+plugins/spec-autopilot/commands/autopilot.md:141:`承認: 可` か `承認: 否`
+plugins/spec-autopilot/commands/autopilot.md:143:--by-advisor
+plugins/spec-autopilot/commands/autopilot.md:143:lineup.py next
+plugins/spec-autopilot/commands/autopilot.md:144:朝の報告
