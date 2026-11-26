@@ -1,4 +1,4 @@
-- commit: 92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5
+- commit: 6a375e2
 
 $ (cwd=r1-30-None-lint) python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-26-s
 exit 0

@@ -4,64 +4,122 @@
   "created_at": 1795668526.243426,
   "existing": true,
   "start": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-  "last_active_at": 1795672979.010368,
-  "dispatches": [
-    {
-      "base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-      "tasks": [
-        "T1"
-      ],
-      "reqs": [
-        "R1",
-        "R2",
-        "R3"
-      ],
-      "agent": "autopilot-implementer",
-      "at": 1795668725.9504561,
-      "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
-    }
-  ],
-  "approved_at": 1795671854.6764019,
-  "approved_by": "軽量フロー（人の承認なし）: 体験会向け: 予算とマージ後の予算の合計が 60 分以下の spec では夜通し向けの NOTE を出さない（依頼文）",
-  "spec_sha256": "106a0670cccd9b2dc4214f24bb543f7268fd2bcfcd8333e25933bf911c02ed33",
+  "last_active_at": 1795677376.8653939,
+  "approved_at": 1795677376.86237,
+  "approved_by": "OK、承認（目的の spec では予算によらず夜の NOTE を出す直しを含む）",
+  "spec_sha256": "b39d23ff3856a14afeba44961baa45f9aa42941f38d3b4ff1a3d8c1771b8c451",
   "budget_min": 30,
   "post_budget_min": 30,
-  "history": [],
-  "blocked": null,
-  "paused_sec": 0,
-  "reviews": [
+  "history": [
     {
-      "high": [],
-      "at": 1795672978.653831,
-      "sha": "92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5"
+      "approved_at": 1795671854.6764019,
+      "approved_by": "軽量フロー（人の承認なし）: 体験会向け: 予算とマージ後の予算の合計が 60 分以下の spec では夜通し向けの NOTE を出さない（依頼文）",
+      "blocked": {
+        "req": "R2",
+        "reason": "載せ替えで main から入った approve --goal（子を夜通し回す目的の spec の承認）で、目的の spec の予算が 60 分以下だと夜の NOTE が消える。目的の spec では予算によらず出すよう R1・R2 の文を変える必要があり、軽量フローでは承認の後に spec を変えられない",
+        "evidence": "python3 .autopilot-qa/check.py 6a375e2 → R2 fail: approve --goal（予算 30 分の L の目的の spec）: exit 0, 出なかった夜の NOTE 4 つ / exit=1",
+        "at": 1795674057.9404821
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": [
+        {
+          "high": [],
+          "at": 1795672978.653831,
+          "sha": "92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5"
+        },
+        {
+          "high": [
+            "R2"
+          ],
+          "at": 1795674056.725906,
+          "sha": "6a375e28320674e0addef9a97a87406b82c9e926"
+        }
+      ],
+      "fails": {
+        "R2": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795674056.725899
+          }
+        ]
+      },
+      "streak": {
+        "R1": 0,
+        "R2": 1,
+        "R3": 0
+      },
+      "reworks": {},
+      "post_budget_min": 30,
+      "paused_sec": 0,
+      "light": true,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": null,
+      "qa_runs": null,
+      "handoffs": [
+        {
+          "tip": "92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5",
+          "tasks": [
+            "T1"
+          ],
+          "dispatch": 0,
+          "at": 1795671873.82621
+        },
+        {
+          "tip": "6a375e28320674e0addef9a97a87406b82c9e926",
+          "tasks": [
+            "T1"
+          ],
+          "dispatch": 0,
+          "at": 1795673249.1037598
+        }
+      ],
+      "dispatches": [
+        {
+          "base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
+          "tasks": [
+            "T1"
+          ],
+          "reqs": [
+            "R1",
+            "R2",
+            "R3"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795668725.9504561,
+          "session": "35dddf82-1b30-41ea-9039-8fe39fc6c3ff"
+        }
+      ],
+      "lenses": [
+        {
+          "name": "観点なし",
+          "found": 1,
+          "reproduced": 0,
+          "fixed": 0,
+          "at": 1795672979.010366
+        },
+        {
+          "name": "観点なし",
+          "found": 1,
+          "reproduced": 1,
+          "fixed": 0,
+          "at": 1795674057.5242538
+        }
+      ],
+      "rolled_back": null,
+      "phase": "blocked"
     }
   ],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
   "fails": {},
-  "streak": {
-    "R1": 0,
-    "R2": 0,
-    "R3": 0
-  },
+  "streak": {},
   "reworks": {},
   "light": true,
   "light_base": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-  "handoffs": [
-    {
-      "tip": "92446b2b0b60e9294b0b9286f5e4ec05c5cde7f5",
-      "tasks": [
-        "T1"
-      ],
-      "dispatch": 0,
-      "at": 1795671873.82621
-    }
-  ],
-  "lenses": [
-    {
-      "name": "観点なし",
-      "found": 1,
-      "reproduced": 0,
-      "fixed": 0,
-      "at": 1795672979.010366
-    }
-  ]
+  "scope_sha256": "d7ae749982309345a4e8ee86ba63a8b6e256b1056f0001a966781de3a5221977"
 }

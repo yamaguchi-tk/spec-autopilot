@@ -22,3 +22,4 @@ preflight の check は、keep-awake・バッテリー・macOS の自動更新�
 ## Consequences
 - 体験会の S の run では、lint と承認の出力から夜の 4 つの NOTE が消える
 - SSO と GDD の検査は長さによらず今のまま
+- 目的の spec の承認（approve --goal）は、子の spec を夜通し回す前に人が見る唯一の承認なので、予算によらず夜の NOTE を出す（評価の 2 巡目で、main から入った --goal の経路で消えると分かった）
