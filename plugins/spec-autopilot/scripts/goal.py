@@ -9,6 +9,7 @@
 - 想定するのは事故（main が人の承認の無い子を回すこと）。承認の記録の書き換えは守らない
 """
 import fcntl
+import os
 import re
 import sys
 import time
@@ -59,7 +60,7 @@ def parent_lines(d):
 
 
 def parent_facts(parent):
-    """親の (目的の承認の記録 or None, 親の要件の番号の集合 or None)。読めなければ None（親が無い・壊れた）。"""
+    """親の (目的の承認の記録 or None, 親の要件の番号の `## 要件` の順のリスト or None)。読めなければ None（親が無い・壊れた）。"""
     try:
         g = ap.load_state(parent).get("goal")
         g = g if isinstance(g, dict) and isinstance(g.get("scope_sha256"), str) else None
@@ -67,7 +68,7 @@ def parent_facts(parent):
         g = None
     try:
         body = ap.COMMENT_BLOCK.sub("", ap.section((parent / "spec.md").read_text(encoding="utf-8"), "要件") or "")
-        return g, {m[0] for m in ap.REQ.findall(body)}
+        return g, list(dict.fromkeys(m[0] for m in ap.REQ.findall(body)))
     except OSError:
         return g, None
 
@@ -97,6 +98,9 @@ def child_errors(d, scope, session):
     if name is None or name != Path(name).name or name in (".", ".."):
         errors.append(f"`## 制約` に `- 親 spec: <親の spec のディレクトリ名>` が 1 行要る（{len(names)} 行。子の承認は目的の spec の子だけ）")
         name = None
+    elif name == d.name:
+        errors.append("`- 親 spec:` が自分自身を指している（子の親は別の目的の spec）")
+        name = None
     reqs = parse_reqs(reqs_lines[0]) if len(reqs_lines) == 1 else None
     if reqs is None:
         errors.append("`## 制約` に `- 親の要件: R<n>、…` が 1 行要る（`R1、R2` の形。空・区切りの違い・複数行は受けない）")
@@ -115,10 +119,11 @@ def child_errors(d, scope, session):
 
 
 def cover(parent):
-    """({親の要件: [(子のディレクトリ名, 子の phase)]}, 親の要件の番号の並び or None)。
-    `- 親 spec:` が親で、`- 親の要件:` が読める子だけを数える。state.json はそのたびに読む。"""
+    """({親の要件: [(子のディレクトリ名, 子の phase)]}, 親の要件の番号の並び or None, 読めない子の [(ディレクトリ名, 例外の型)])。
+    `- 親 spec:` が親で、`- 親の要件:` が読める子だけを数える。state.json はそのたびに読む。
+    spec.md が読めない子は親が分からないので、読めない子として挙げる。state.json が読めない子は、spec.md が親を指すときだけ挙げる。"""
     _, ids = parent_facts(parent)
-    table = {}
+    table, unreadable = {}, []
     for x in sorted(parent.parent.iterdir()):
         if x.resolve() == parent.resolve() or not (x / "state.json").is_file() or not (x / "spec.md").is_file():
             continue
@@ -127,30 +132,40 @@ def cover(parent):
             reqs = parse_reqs(lines[0]) if len(lines) == 1 else None
             if names != [parent.name] or reqs is None:
                 continue
-            phase = ap.load_state(x).get("phase")
-        except (OSError, ValueError):
+            s = ap.load_state(x)
+            if not isinstance(s, dict):
+                raise ValueError("state.json が object でない")
+            phase = s.get("phase")
+        except (OSError, ValueError) as e:  # UnicodeDecodeError・JSONDecodeError は ValueError
+            unreadable.append((x.name, type(e).__name__))
             continue
         for r in reqs:
             table.setdefault(r, []).append((x.name, phase))
-    return table, ids
+    return table, ids, unreadable
 
 
 def cmd(a):
     """goal <親>。受け持ちの表を出し、親の要件が全部どれかの子に挙がり、挙げた子が全部 done なら親を done にする。
-    判定と書き込みは state.json の隣のロックの中で、その時点の子と親の記録から求める（同時の呼び出しで done の行を 2 つ書かない）。"""
+    判定と書き込みは spec のディレクトリに掛けたロックの中で、その時点の子と親の記録から求める（同時の呼び出しで done の行を 2 つ書かない）。"""
     d = Path(a.dir)
-    with (d / ".state.lock").open("a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        s = ap.load_state(d)
+    if not d.is_dir():
+        return ap.report([f"{d} が無い（spec のディレクトリではない）"], [], "")
+    fd = os.open(d, os.O_RDONLY)  # ロックは spec のディレクトリ自身に掛ける（隣にロックファイルを残さない）
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        try:
+            s = ap.load_state(d)
+        except (OSError, ValueError) as e:
+            return ap.report([f"{d.name} の state.json が読めない（{type(e).__name__}）"], [], "")
         g = s.get("goal")
         if not isinstance(g, dict):
             return ap.report([f"{d.name} は目的として承認されていない（`approve --goal` の記録が無い）"], [], "")
         if s.get("phase") == "done":
             return ap.report([], [], "goal: 親はすでに done")
-        table, ids = cover(d)
+        table, ids, unreadable = cover(d)
         if not ids:
             return ap.report([f"{d.name} の `## 要件` が読めない"], [], "")
-        errors = []
+        errors = [f"{n} が読めない（{t}）" for n, t in unreadable]
         for r in ids:
             print(f"{r}: " + ("、".join(f"{n}（{p}）" for n, p in table.get(r, [])) or "子なし"))
             if r not in table:
@@ -163,6 +178,8 @@ def cmd(a):
             return ap.report(errors, [], "")
         s.update(phase="done", done_at=time.time())
         ap.save_state(d, s)
+    finally:
+        os.close(fd)
     ap.release(d)
     __import__("runlog").record(d, {**s, "approved_at": g.get("at")}, "done", s["done_at"])  # 親に approved_at は無いので、目的の承認の時刻から数える
     print(f"goal: {d.name} を done にした（要件 {len(ids)} 件を、子が全部 done で受け持った）")
