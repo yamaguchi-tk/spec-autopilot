@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "night-notes-short-run",
   "created_at": 1795668526.243426,
   "existing": true,
   "start": "1486ede7397e4ed4d47e062e233662a05cf6fcde",
-  "last_active_at": 1795678347.114809,
+  "last_active_at": 1795678597.538785,
   "approved_at": 1795677376.86237,
   "approved_by": "OK、承認（目的の spec では予算によらず夜の NOTE を出す直しを含む）",
   "spec_sha256": "b39d23ff3856a14afeba44961baa45f9aa42941f38d3b4ff1a3d8c1771b8c451",
@@ -156,5 +156,12 @@
       "dispatch": 0,
       "at": 1795677669.5056682
     }
-  ]
+  ],
+  "done_at": 1795678597.5162702,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
