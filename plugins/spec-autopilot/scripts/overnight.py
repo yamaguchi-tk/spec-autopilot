@@ -102,8 +102,39 @@ def rollback_cmd(text):
     return m.group(1) if m else None
 
 
-def scope_lint(text):
-    """(errors, warnings)。"""
+WORKFLOW_NAME = re.compile(r"^name:[ \t]*(.+?)[ \t]*(?:#.*)?$", re.M)  # 字下げの無い最上位の `name:` だけ
+
+
+def workflow_names(root):
+    """repo の workflow の名前（gh の workflowName。`name:` が無ければ GitHub が付ける workflow のパス）と、
+    ファイル名・その幹からその名前への対応。.github/workflows が無ければ None（GitHub の外の repo では照らさない）。"""
+    w = Path(root) / ".github" / "workflows"
+    if not w.is_dir():
+        return None
+    names, by_file = set(), {}
+    for f in sorted(w.glob("*.y*ml")):
+        m = WORKFLOW_NAME.search(f.read_text(encoding="utf-8", errors="replace"))
+        name = m.group(1).strip("'\"") if m else f".github/workflows/{f.name}"
+        names.add(name)
+        by_file[f.name] = by_file[f.stem] = name
+    return names, by_file
+
+
+def deploy_check_lint(text, root):
+    """`- デプロイの確かめ:` の名前が workflow の名前にあるか。await --kind deploy は gh の workflowName で照らし、
+    承認の後は spec を直せないので、合わない名前は承認の前に止める（2026-11-26、ファイル名を書いて記録できなかった事例）。"""
+    known = workflow_names(root) if root else None
+    if not known:
+        return []
+    names, by_file = known
+    return [f"自走の範囲の `- デプロイの確かめ:` の「{n}」は .github/workflows の workflow の名前に無い"
+            "（await は gh の workflowName〔`name:` の値〕で照らす）"
+            + (f"。ファイル {n} の workflow の名前は `{by_file[n]}`" if n in by_file else "")
+            for n in deploy_workflows(text) if n not in names]
+
+
+def scope_lint(text, root=None):
+    """(errors, warnings)。root は spec の repo の root（workflow の名前を照らす。None なら照らさない）。"""
     rows = scope_rows(text)
     if rows is None:
         return [f"spec.md に「## {SCOPE_SECTION}」の節が無い（{'・'.join(SCOPE_KEYS)} の 6 行）"], []
@@ -133,6 +164,7 @@ def scope_lint(text):
         need = REQUIRED_FOR_FULL if deployed else ("QA の書き込み先", "デプロイの起動") + (
             () if start and ROLLBACK_CMD.match(start) else ("デプロイの確かめ",))
         errors += [f"範囲が「{FULL}」なので `- {k}:` を書く" for k in need if k in rows and not rows[k]]
+        errors += deploy_check_lint(text, root)
     if scope == FULL and deployed:
         if start and ROLLBACK_CMD.match(start):
             warnings.append(f"デプロイの起動が「{AUTO_DEPLOY}」でない（{start}）。夜の間に agent がこのコマンドを打つ。"
