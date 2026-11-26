@@ -213,7 +213,11 @@ def scope_errors(d, s):
 
 
 def no_deploy(d):
-    """範囲が「マージ・デプロイ・QA まで」で、デプロイの起動が「なし（マージした commit で QA）」か。"""
+    """範囲が「マージ・デプロイ・QA まで」で、デプロイの起動が「なし（マージした commit で QA）」か。
+
+    範囲: デプロイの workflow が無い repo で、最後のマージの記録（merged の時刻と commit）をデプロイの成功の代わりに QA の起点にする
+    想定する脅威: 事故（agent がデプロイを待たずに QA を記録する・マージの前の証拠で通す）。敵対的な agent が state.json を書き換えることは防がない
+    やらないこと: マージした commit を実際に checkout して QA したかの機械の確かめ（証拠の頭の `- commit:` を stages.check が見るだけ）"""
     text = (d / "spec.md").read_text(encoding="utf-8")
     return scope_of(d) == FULL and (scope_rows(text) or {}).get("デプロイの起動") == NO_DEPLOY
 
