@@ -1,0 +1,40 @@
+- commit: a7e1c210e1f68c0e12196d38053e1c9abe3ca6d9
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_input_kinds.py -q
+40 passed in 124.97s (0:02:04)
+
+$ python3 .autopilot-qa/check.py   # tip と base（9248c34 の plugins/spec-autopilot を git archive で .autopilot-qa/base に展開）の本物の overnight.py handoff を、テストの欄を変えた入力の表で回す
+tip: 13 passed in 7.80s
+base: 11 failed, 2 passed in 8.46s
+R1 pass
+
+$ grep -E '^--- |^ERROR: inputs' .autopilot-qa/tip.log   # tip の handoff の出力
+--- cell='manual: 見た' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | manual: 見た |
+--- cell='' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail |  |
+--- cell='test_rule.py' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | test_rule.py |
+--- cell='-' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | - |
+--- cell='MANUAL: 見た' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | MANUAL: 見た |
+--- cell='cmd: 手で見た' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | cmd: 手で見た |
+--- cell='test_rule.py::test_absolute。加えて cmd: x' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | test_rule.py::test_absolute。加えて cmd: x |
+--- cell='test_rule.py::' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | test_rule.py:: |
+--- cell='`cmd: x`' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | `cmd: x` |
+--- missing rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（test_rule.py に「test_nowhere」が無い）: | 絶対パス | /a/spec.md | 通る | fail | test_rule.py::test_nowhere |
+--- good rc=0
+--- cell='test_rule.py::test_absolute と cmd: x' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | test_rule.py::test_absolute と cmd: x |
+--- cell='test_rule.py::test_absolute。test_rule.py::test_relative' rc=1
+ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない））: | 絶対パス | /a/spec.md | 通る | fail | test_rule.py::test_absolute。test_rule.py::test_relative |
+
+$ grep -o 'ERROR: inputs/R1.md[^|]*' .autopilot-qa/base.log | sort | uniq -c   # base の handoff の出力
+   1 ERROR: inputs/R1.md のテストの欄が使えない（test_rule.py に「test_nowhere」が無い）:
+  33 ERROR: inputs/R1.md のテストの欄が使えない（形が読めない（`<path>::<テスト名>` を `・` で並べ、続けて ` と cmd: ...` か、`cmd: ...`・`manual: ...`））:

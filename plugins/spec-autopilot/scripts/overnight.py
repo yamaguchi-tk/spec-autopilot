@@ -566,6 +566,10 @@ def input_dispatch_errors(d, s, reqs):
     return [p for q in high_reqs(s, reqs) for p in input_kinds(d, q)[1]]
 
 
+# 入力の表のテストの欄は qa.md の証拠と形が違う（cmd:・manual: は書けない）ので、EVIDENCE_FORMS は ERROR に出さない
+INPUT_TEST_FORM = "形が読めない（テストの欄には `<path>::<テスト名>` だけを書く。複数は `・` で並べる。`-`・`cmd:`・`manual:`・文は書けない）"
+
+
 def input_handoff_errors(d, s, reqs, root):
     """R2: 表の各行のテストの欄が <path>::<テスト名> で、repo にあるか。"""
     errors, seen = [], {"texts": {}, "found": set(), "scanned": 0}
@@ -574,6 +578,8 @@ def input_handoff_errors(d, s, reqs, root):
         errors += problems
         for r in rows:
             bad = autopilot.EVIDENCE_FORMS if not r["テスト"] or autopilot.EVIDENCE_FREE.search(r["テスト"]) else autopilot.evidence_problem(root, r["テスト"], seen)
+            if bad == autopilot.EVIDENCE_FORMS:
+                bad = INPUT_TEST_FORM
             if bad:
                 errors.append(f"inputs/{q}.md のテストの欄が使えない（{bad}）: {r['raw']}")
     return errors
