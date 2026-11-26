@@ -11,6 +11,7 @@
 - R1: dispatch の後に起動した実装役の transcript のどれかの行（読んだファイルの中身が入る user の tool_result の行を含む）の文字列の中に、JSON の文字列に生のまま残る改行に似た文字（U+2028・U+2029・U+0085）があるとき、`overnight.py handoff` は、その記録を読めないとせず、ほかの条件（model・effort・commit）だけで判定する。
 - R2: 相談役（fable-advisor・advice-checker）の transcript のどれかの行（user の tool_result の行を含む）の文字列の中に R1 の文字があるとき、`autopilot.py approve --by-advisor` は、その記録を読めないとせず、返答の `承認:`・`判定:` の行で判定する。
 - R3: transcript の 1 行が JSON として壊れているとき（書きかけ・途中で切れた行）、handoff と approve --by-advisor は今までどおり読めない記録として止める。
+- R4: 待ちの記録（awaits.jsonl）の行の文字列の中に R1 の文字があるとき、deploy の failure を数える判定（failed_deploys・deploy_exhausted・deploy_smoke）は、その行を飛ばさずに数える。途中で切れた行は今までどおり飛ばす。
 
 ## 非目標
 - 2026-11-26-split-transcript の実装を変えること（resume の後に handoff からやり直す）
@@ -22,6 +23,7 @@
 ## 影響範囲
 - 変える: plugins/spec-autopilot/scripts/overnight.py:931-946（read_launch）
 - 変える: plugins/spec-autopilot/scripts/advisor_approval.py:96-103（launches）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:653-663（_awaits。1 巡目の独立レビューの high を人に確かめて足した）
 - 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:919
 - 呼び出し元: plugins/spec-autopilot/scripts/advisor_approval.py:118
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1349-1356（transcript_lines。b"\n" だけで割る）
@@ -60,6 +62,7 @@
 | R1 | 手元で実物 | user の tool_result の行と assistant の行の文字列に R1 の文字を持つ実装役の transcript を tmp の CLAUDE_CONFIG_DIR に置き、`overnight.py handoff` を回す | base で「読めない」で落ち、tip で通る |
 | R2 | 手元で実物 | user の tool_result の行の文字列に R1 の文字を持つ相談役の transcript を置き、`autopilot.py approve --by-advisor` を回す | base で「読めない」で落ち、tip で通る |
 | R3 | 手元で実物 | 途中で切れた行の transcript で、handoff と approve --by-advisor を回す | tip でも読めない記録として止まる |
+| R4 | 手元で実物 | detail に R1 の文字を持つ deploy の failure の行を awaits.jsonl に書き、failed_deploys・deploy_exhausted・deploy_smoke を呼ぶ | base で数え漏れ、tip で数える。途中で切れた行は tip でも飛ばす |
 
 ## 制約
 - 予算: 45 分

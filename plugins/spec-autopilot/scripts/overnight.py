@@ -653,7 +653,7 @@ def awaits(d, s):
 def _awaits(d):
     f = d / AWAITS_LOG
     out = []
-    for line in f.read_text(encoding="utf-8").splitlines() if f.exists() else []:
+    for line in f.read_bytes().decode("utf-8").split("\n") if f.exists() else []:  # "\n" だけで割る（記録の文字列の U+2028 で割らない）
         try:
             r = json.loads(line)
             if isinstance(r, dict) and isinstance(r.get("at"), (int, float)):

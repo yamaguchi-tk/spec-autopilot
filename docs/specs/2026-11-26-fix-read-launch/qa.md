@@ -6,3 +6,4 @@
 | R1 | pass | plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string・::test_handoff_judges_the_model_of_a_row_after_a_line_separator（U+2028・U+2029・U+0085 の 3 通り） |
 | R2 | pass | plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator（3 通り） |
 | R3 | pass | plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator・plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator |
+| R4 | pass | plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted・::test_a_cut_await_row_is_still_skipped（3 通り） |
