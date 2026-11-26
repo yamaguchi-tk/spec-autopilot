@@ -10,7 +10,7 @@
 できあがったら、人が一度承認した spec の承認し直しは、夜の間に、fable-advisor が価値観で決め、advice-checker が根拠の反証を探して、反証が無いときだけ通る。通らなければ、その spec は朝まで block のまま残り、行列の次の spec に進む。人の初回の承認は今のまま残る。
 
 ## 要件
-- R1: phase が blocked で、最後の承認（`--queue` を含む）のときの `## 自走の範囲` の節の記録が state.json にある spec で、`autopilot.py approve <dir> --by "<要約>" --by-advisor` を打ったとき、spec.md の最後の変更（block の後ならその時刻）より後に、このセッションで fable-advisor が起動し、その後に advice-checker が起動していて、fable-advisor の最後の返答に `承認: 可` の行があり、advice-checker の最後の返答に `判定: 反証なし（確かめられない 0 / <n>）` の行があれば、approve は承認を記録して自走に戻し、approved_by に `相談役（fable-advisor・advice-checker 反証なし）: <要約>` を書く。
+- R1: phase が blocked で、最後の承認（`--queue` を含む）のときの `## 自走の範囲` の節が記録されている spec で、`autopilot.py approve <dir> --by "<要約>" --by-advisor` を打ったとき、spec.md の最後の変更（block の後ならその時刻）より後に、このセッションで fable-advisor が起動し、その後に advice-checker が起動していて、fable-advisor の最後の返答に `承認: 可` の行があり、advice-checker の最後の返答に `判定: 反証なし（確かめられない 0 / <n>）` の行があれば、approve は承認を記録して自走に戻し、approved_by に `相談役（fable-advisor・advice-checker 反証なし）: <要約>` を書く。
 - R2: R1 の条件のどれかが欠けたとき（どちらかの起動の記録が無い・読めない、advice-checker の起動が fable-advisor の起動より前、`承認: 否`、`承認:` の行が無い、`反証あり`、確かめられない が 1 以上）、approve は ERROR で終わり、欠けた条件を挙げ、spec は blocked のまま残る。
 - R3: phase が discovery か queued の spec（初回の合意）か、最後の承認のときと今の spec.md で `## 自走の範囲` の節の中身が違う spec か、最後の承認のときの節の記録が無い spec で `--by-advisor` を打ったとき、approve は人の返事が要ると言って ERROR で終わる。
 - R4: agents/fable-advisor.md の出力に、承認し直しの相談のときだけ `承認: 可` か `承認: 否` の 1 行を書く欄がある。commands/autopilot.md の「人に戻るとき」に、夜の間（人の返事を待てないとき）に承認し直しが要るなら、fable-advisor → advice-checker の 2 段を回してから `approve --by-advisor` を打ち、通らなければ block のまま `lineup.py next` で次の spec に進み、通った巡は approved_by を朝の報告（done の後の人への報告）に 1 行書く手順がある。
@@ -79,7 +79,7 @@
 この spec の ADR のとおり、承認の門に、人の発言の代わりとして「相談役 2 本の起動の記録」を受ける道を足す。
 
 - `advisor_approval.py` に、spec.md の最後の変更（block の後ならその時刻）より後に起動した fable-advisor と advice-checker の、最後の返答を読む関数を置く。起動の記録は `overnight.launches` と同じ置き場（`<config>/projects/*/<session>/subagents/`）から読み、返答は transcript の最後の assistant の行の文から取る
-- 判定は、`承認: 可` の行と、`判定: 反証なし（確かめられない 0 / <n>）` の行の両方があるときだけ通す（許可の形を 1 つに決め、ほかは全部止める）
+- 判定は、`承認: 可` の行と、`判定: 反証なし（確かめられない 0 / <n>）` の行の両方があるときだけ通す（許可の形を 1 つに決め、ほかは全部止める）。行の先頭が `承認:` の行と `判定:` の行を、それぞれの最後の返答で数え、どちらもちょうど 1 本のときだけ判定に進む（0 本と 2 本以上は止める）。起動の記録の meta.json が読めないときも、transcript と同じく、spec.md の最後の変更より後に書かれたものなら止める
 - approve は `--by-advisor` があるときだけこの判定を使い、無いときは今の人の発言の門のまま
 - R3 の「自走の範囲の節が同じか」は、承認した時点の spec の中身を持っていないので、cmd_approve が門を通った後、`lineup.enqueue`・`lineup.begin` を呼ぶ前に、spec.md の `## 自走の範囲` の節のハッシュを s に入れる（enqueue・begin がそのまま save する。begin は history に移すキーを選ぶので、このキーは最上位に残る）。`--by-advisor` の判定は、その上書きの前に、s に残る前の値と突き合わせる。残っていない（この版より前に承認した）spec は、`--by-advisor` を受けない（lineup.py は変えない）。lineup の着手の block（approved_at が None になる）でも、この記録は残るので対象になる
 - 返答は、最後の assistant の行の text の文か、SubagentHandback の tool_use の `input.message` から取る（実物の記録で両方の形を見た）
