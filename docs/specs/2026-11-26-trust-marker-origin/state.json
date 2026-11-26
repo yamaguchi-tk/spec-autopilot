@@ -4,7 +4,7 @@
   "created_at": 1795694542.6659021,
   "existing": true,
   "start": "c30fc46c6e03f1626bb6df93b6be27601e86b97b",
-  "last_active_at": 1795697953.75743,
+  "last_active_at": 1795699255.1251578,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795696124.601108,
   "approved_by": "OK、承認（trust の印が、人の発言に origin の無い transcript で効くようにする spec）",
@@ -21,6 +21,13 @@
       ],
       "at": 1795697235.4849,
       "sha": "69420feeb8d813a40de0462c0a3ddacabf3bcbe6"
+    },
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795699255.1248,
+      "sha": "fc59fd285b5c2cbe75286c5227d3a786d0680fb5"
     }
   ],
   "fails": {
@@ -29,12 +36,17 @@
         "from": "review",
         "evidence": "最後のレビューの high",
         "at": 1795697235.484896
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795699255.124798
       }
     ]
   },
   "streak": {
     "R1": 0,
-    "R2": 1
+    "R2": 2
   },
   "reworks": {},
   "dispatches": [
@@ -127,6 +139,24 @@
       ],
       "dispatch": 2,
       "at": 1795696707.085711
+    },
+    {
+      "tip": "fc59fd285b5c2cbe75286c5227d3a786d0680fb5",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 4,
+      "at": 1795698136.789835
+    }
+  ],
+  "raises": [
+    {
+      "role": "impl",
+      "req": "R2",
+      "reason": "原因調査",
+      "at": 1795699255.1248,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-opus"
     }
   ]
 }

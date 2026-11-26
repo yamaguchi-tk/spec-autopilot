@@ -1,32 +1,26 @@
-- commit: 69420feeb8d813a40de0462c0a3ddacabf3bcbe6
+- commit: fc59fd285b5c2cbe75286c5227d3a786d0680fb5
 $ .venv/bin/python3 .autopilot-qa/check.py -v
 （一時の repo を .autopilot-qa/work/ に作り、本物の hooks/user_prompt.py を SPEC_AUTOPILOT_TRUST_PROMPT_RECORD=1 の環境で動かし、
  transcript に origin の付いた peer の行と origin の無い人の役の行（user 行 / queued_command）を書いてから、本物の autopilot.py を回した。
- base は c30fc46 の plugins/spec-autopilot を git archive で .autopilot-qa/base に出したもの）
+ base は c30fc46 の plugins/spec-autopilot を git archive で .autopilot-qa/base に出したもの。R1 の行の抜粋）
 R1 pass
-  ok  base approve: 期待 exit 1、実際 1 spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
-  ok  tip approve: 期待 exit 0・building、実際 0・building
+  ok  base approve: 期待 exit 1（知らせ）、実際 1 spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip approve user 行: 期待 exit 0・building、実際 0・building
   ok  tip approve queued_command: 期待 exit 0・building、実際 0・building
-  ok  base resume: 期待 exit 1、実際 1 waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
-  ok  tip resume: 期待 exit 0・building、実際 0・building
+  ok  base resume: 期待 exit 1（知らせ）、実際 1 waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する
+  ok  tip resume user 行: 期待 exit 0・building、実際 0・building
   ok  tip resume queued_command: 期待 exit 0・building、実際 0・building
 --- log（抜粋）---
 [base] $ autopilot.py approve 2026-11-26-game --by OK
 exit=1 stderr='spec.md の最後の変更の後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する'
 [tip] $ autopilot.py approve 2026-11-26-game --by OK
-exit=0 stdout='NOTE: macOS の更新の自動インストールが有効 ...' stderr=''
-[base] $ autopilot.py wait 2026-11-26-game --reason 確認
-exit=0 stdout='wait: 確認を人に 1 通で示す。返事を受けたら resume で戻る'
+exit=0 stderr=''
 [base] $ autopilot.py resume 2026-11-26-game
 exit=1 stderr='waitの後に人の発言が記録されていない（届いたのは知らせ・subagent の報告だけ）。人に示して返事を受けてから実行する'
-[tip] $ autopilot.py wait 2026-11-26-game --reason 確認
-exit=0 stdout='wait: 確認を人に 1 通で示す。返事を受けたら resume で戻る'
-[tip] $ autopilot.py resume 2026-11-26-game
-exit=0 stdout='resume: 自走に戻る' stderr=''
 
 $ ls -t ~/.claude/projects/*spec-autopilot*/*.jsonl | head -5 | xargs .venv/bin/python3 .autopilot-qa/count_rows.py
-35dddf82 {'origin:human': 11, 'origin:peer': 30, 'origin:task-notification': 66, 'originless compact summary': 2, 'originless speech queued': 1}
-74d0a488 {'origin:human': 2, 'origin:peer': 2, 'origin:task-notification': 3}
-168be700 {'origin:human': 7, 'origin:peer': 12, 'origin:task-notification': 14, 'originless speech queued': 4, 'originless speech user': 1}
-136c63da {'originless speech user': 1}
-6b1180c0 {'origin:human': 16, 'origin:peer': 20, 'origin:task-notification': 23, 'originless compact summary': 2, 'originless speech queued': 3}
+transcript#1 {'queued_command origin なし': 1, 'queued_command origin=task-notification': 44, 'user origin なし（要約）': 2, 'user origin=human': 11, 'user origin=task-notification': 27}
+transcript#2 {'queued_command origin=human': 1, 'queued_command origin=task-notification': 6, 'user origin=human': 2, 'user origin=task-notification': 1}
+transcript#3 {'queued_command origin なし': 3, 'queued_command origin=peer': 1, 'queued_command origin=task-notification': 21, 'user origin なし': 1, 'user origin なし（要約）': 2, 'user origin=human': 17, 'user origin=task-notification': 2}
+transcript#4 {'queued_command origin なし': 4, 'queued_command origin=task-notification': 12, 'user origin なし': 1, 'user origin=human': 7, 'user origin=task-notification': 2}
+transcript#5 {'user origin なし': 1}
