@@ -1,0 +1,28 @@
+- commit: 030e0f9
+
+$ gh pr view 105 --json state,mergedAt,mergeCommit,baseRefName,headRefName --jq '[.state,.mergedAt,.mergeCommit.oid,.baseRefName,.headRefName]|@tsv'
+MERGED	2026-11-27T16:51:06Z	542d70eca70e71ebad7686a7cc66689ceb1b5586	main	claude/reapproval-carry-dispatch
+
+$ gh pr view 106 --json state,mergedAt,mergeCommit,baseRefName,headRefName --jq '[.state,.mergedAt,.mergeCommit.oid,.baseRefName,.headRefName]|@tsv'
+MERGED	2026-11-27T17:44:50Z	4a2edcf0820d23f399f39b0df33bb535bae5fda8	main	claude/size-note-at-pr
+
+$ jq -r .phase docs/specs/2026-11-28-reapproval-carry-dispatch/state.json docs/specs/2026-11-28-size-note-at-pr/state.json
+building
+building
+
+$ python3 .autopilot-qa/check_goal_merged.py
+real gh: 2026-11-28-reapproval-carry-dispatch -> ('claude/reapproval-carry-dispatch', 105)
+real gh: 2026-11-28-size-note-at-pr -> ('claude/size-note-at-pr', 106)
+R1 pass
+failing gh: stdout='ret None' stderr='merged_child: 2026-11-28-size-note-at-pr の PR 106 を gh で確かめられない（exit 4）。作業ツリーの phase で読む'
+R1-log pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_goal.py plugins/spec-autopilot/tests/test_goal_done.py plugins/spec-autopilot/tests/test_goal_child.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_goal_merged.py -q -n auto
+87 passed in 9.78s
+
+$ bash .autopilot-qa/mut-R1-3.sh   # merged_ok の head のブランチ名の照合を外す変異
+--- 変異の前: pass
+--- 変異の後
+E       assert (0 == 1)
+FAILED plugins/spec-autopilot/tests/test_goal_merged.py::test_goal_does_not_read_a_child_whose_pr_head_differs_from_the_branch_read
+1 failed in 2.63s
