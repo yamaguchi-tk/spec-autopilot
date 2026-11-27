@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "evidence-commit-spec-only",
   "created_at": 1795798330.0249338,
   "existing": true,
   "start": "542d70eca70e71ebad7686a7cc66689ceb1b5586",
-  "last_active_at": 1795823192.8873742,
+  "last_active_at": 1795823514.049149,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795821930.0052822,
   "approved_by": "人が「承認する」と返した（直した spec を示した後）",
@@ -92,5 +92,22 @@
   ],
   "review_launches": [
     1795822691.155864
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 109,
+      "at": 1795823513.701577,
+      "sha": "5ab1d5cd62f29ddbb257c0360f2a6b1db51f96a5",
+      "head": "00046751a36bdb0ee7cc365c911692a05760a02a"
+    }
+  ],
+  "merged_at": 1795823513.7015822,
+  "paused_at_merge": 0.0,
+  "done_at": 1795823513.994539,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
