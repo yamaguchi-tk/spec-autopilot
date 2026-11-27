@@ -1,0 +1,14 @@
+{
+  "phase": "queued",
+  "slug": "lint-origin",
+  "created_at": 1795821439.061122,
+  "existing": true,
+  "start": "7bc23c1821287f08dbb9716097e51dd93e927e33",
+  "last_active_at": 1795822313.380192,
+  "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
+  "queued_from": "discovery",
+  "queued_at": 1795822313.379647,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 目的の spec の子 2（親 R4〜R6）。相談役は承認: 可、検証は反証なし（確かめられない 0 / 12）",
+  "spec_sha256": "ea57d6c5c927a42257a069eb8c499c2e7834e7252762f1862a1d8fcab8783e98",
+  "after": null
+}
