@@ -2,6 +2,7 @@
 入口（autopilot.py・lineup.py の CLI、Stop hook、SessionStart hook）から通して確かめる。"""
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -9,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from test_autopilot import (EXISTING_SECTIONS, GOOD_SPEC, PLUGIN, existing_repo, init_spec, repo, run, state, stop_hook,  # noqa: F401
-                           user_says)
+from test_autopilot import (EXISTING_SECTIONS, GOOD_SPEC, PLUGIN, existing_repo, init_spec, make_done, repo, run, state,  # noqa: F401
+                           stop_hook, user_says)
 from test_overnight import FULL, GIT, gh, scoped  # noqa: F401
 from test_rollback import NIGHT_NOTES, aws_home, fake_mac, gdd_on, with_budget
 
@@ -323,6 +324,94 @@ def test_stop_hook_does_not_demand_next_for_a_dependent_spec_whose_dependency_ca
     set_phase(b, after="2026-01-01-no-such-spec")
     reason = decision(repo).get("reason", "")
     assert "lineup.py next" not in reason and "読めない" not in reason
+
+
+# --- 依る spec が done・block で記録から外れた後も、enqueue で repo の外に書いた対から引く ---
+
+def finish(repo, d):
+    """next で着手した spec を、実物の cmd_done で終える（記録から外れる）。"""
+    make_done(repo, d)
+    r = run(repo, "done", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert str(d.resolve()) not in record()
+
+
+def dependent_pair(repo, tmp_path, same_worktree):
+    """a（依る spec）と、a に依る b を承認し、a に着手して返す。b は別の worktree のこともある。"""
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "c0"], cwd=repo, check=True)
+    a = spec(repo, "a")
+    queue(repo, a)
+    home = repo
+    if not same_worktree:
+        home = tmp_path / "wb"
+        subprocess.run([*GIT, "worktree", "add", "-q", "-b", "b", str(home)], cwd=repo, check=True)
+    b = spec(home, "b", after=a, size="M")
+    queue(home, b)
+    assert line(repo, "next").returncode == 0 and state(a)["phase"] == "building"
+    return a, b
+
+
+@pytest.mark.parametrize("same_worktree", [True, False], ids=["same_worktree", "other_worktree"])
+def test_next_starts_a_dependent_spec_after_cmd_done_dropped_its_dependency_from_the_record(repo, tmp_path, same_worktree):
+    a, b = dependent_pair(repo, tmp_path, same_worktree)
+    finish(repo, a)
+    if not same_worktree:  # 載せ替えで a の commit が持ち込む ADR を、b の worktree の未追跡の写しが塞がないようにする
+        (b.parents[2] / "docs" / "adr" / "2026-01-01-game.md").unlink()
+    assert "lineup.py next" in decision(repo).get("reason", "")  # Stop hook も b を着手できるものに数える
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "building" and state(b)["after"] == a.name, state(b).get("blocked", {}).get("reason")
+
+
+def test_next_blocks_a_dependent_spec_after_cmd_block_dropped_its_dependency_from_the_record(repo, tmp_path):
+    a, b = dependent_pair(repo, tmp_path, True)
+    r = run(repo, "block", str(a), "--req", "R1", "--reason", "x", "--evidence", "y")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert str(a.resolve()) not in record()
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "blocked" and "が block" in state(b)["blocked"]["reason"]
+
+
+def test_next_blocks_when_the_pair_written_at_the_queue_names_another_spec_than_after(repo, tmp_path):
+    a, b = dependent_pair(repo, tmp_path, True)
+    finish(repo, a)
+    set_phase(b, after="2026-01-01-no-such-spec")  # 対の先の名前が after と違うので使わない
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "blocked" and "2026-01-01-no-such-spec" in state(b)["blocked"]["reason"]
+
+
+def test_next_blocks_when_the_dependency_directory_of_the_pair_is_gone(repo, tmp_path):
+    a, b = dependent_pair(repo, tmp_path, True)
+    finish(repo, a)
+    shutil.rmtree(a)
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "blocked" and a.name in state(b)["blocked"]["reason"]
+
+
+def test_demand_does_not_count_a_dependent_spec_whose_dependency_directory_of_the_pair_is_gone(repo, tmp_path):
+    sys.path.insert(0, str(PLUGIN / "scripts"))
+    import lineup
+
+    a, b = dependent_pair(repo, tmp_path, True)
+    finish(repo, a)
+    assert lineup.demand([(b, state(b))], set()) is not None
+    shutil.rmtree(a)
+    assert lineup.demand([(b, state(b))], set()) is None
+
+
+def test_concurrent_queues_keep_every_pair_written_to_the_file_outside_the_repo(repo):
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import lineup; from pathlib import Path; "
+            "lineup.remember(Path(sys.argv[2]), Path(sys.argv[3]))")
+    procs = [subprocess.Popen([sys.executable, "-c", code, str(PLUGIN / "scripts"), f"/x/later-{i}", f"/y/dep-{i}"])
+             for i in range(8)]
+    assert [p.wait(timeout=60) for p in procs] == [0] * 8
+    sys.path.insert(0, str(PLUGIN / "scripts"))
+    import lineup
+
+    assert lineup.pairs() == {f"/x/later-{i}": f"/y/dep-{i}" for i in range(8)}
 
 
 # --- 依る spec の lint（承認の前は書式だけ、着手で突き合わせる） ---
