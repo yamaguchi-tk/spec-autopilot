@@ -1,0 +1,26 @@
+- commit: 33fb694
+- 結果: pass（送信から試作の提示まで 7:20。試作の dispatch の時点で大きさは M）
+
+試走: 手元の一時のディレクトリの空の git repo（空の commit が 1 つ）で、tmux の中で claude --plugin-dir <この tip の plugins/spec-autopilot の写し> --model claude-sonnet-5-5 --permission-mode auto を起動し、spec の QA の方向性の依頼文を送った。写しは 14679c7 の git archive で、14679c7 から上の commit の tip まで plugins の差分は無い（git diff --stat 14679c7 HEAD -- plugins が空）。フォルダの信頼の確認は人が選び、時間は依頼文の送信から測った。下は入れ子の transcript から人の発言と main の文・試作の dispatch の時刻を抜き出した出力（UTC。手元のパスは伏せた）。
+
+$ python3 times.py <入れ子の transcript の jsonl>
+2026-11-27T09:03:51.533Z USER <command-message>spec-autopilot:autopilot</command-message> <command-name>/spec-autopilot:autopilot<
+2026-11-27T09:03:51.533Z USER # /autopilot  依頼: ブラウザで遊べるシンプルなテトリスのようなゲームを作りたい。基本の操作（移動・回転・落下・行の消去・スコア）だけでよい。自走の範囲は PR まで。GitHub に 
+2026-11-27T09:03:55.487Z TEXT spec-autopilot の手順で進めます。目的は「ブラウザで遊べるシンプルなテトリス風ゲーム」、前提は「基本操作のみ・自走の範囲は PR まで・GitHub に repo は作らない」と理解しました。まず repo の状態を確認します。
+2026-11-27T09:05:17.026Z AGENT spec-autopilot:autopilot-spec-checker
+2026-11-27T09:05:19.218Z TEXT spec の草案と ADR を書いて lint を通しました。いまは、人に示す前の照合役が spec を確認していて、結果を待っています。そのあと動く試作を作ってお見せします。
+2026-11-27T09:07:15.955Z TEXT 照合役が `ng` を 3 点返しました（前提の確かめ方が無い、「普通のやり方」に出典が無い、見積もりが約 205 行で S の目安を超える）。直します。
+2026-11-27T09:07:33.641Z DISPATCH -autopilot/scripts/overnight.py" dispatch docs/specs/2026-11-27-tetris --task T1
+2026-11-27T09:07:39.461Z AGENT spec-autopilot:autopilot-implementer
+2026-11-27T09:07:42.239Z TEXT 試作の実装を実装役に渡しました。照合役の指摘は直してあり、大きさは S から M（予算 90 分）に上げています。実装が終わったら、動く試作と spec をまとめてお見せします。
+2026-11-27T09:11:11.470Z TEXT 動く試作ができました。触ってみてください。この下の内容でよければ、**「OK」と返してください。それがこの spec の承認になります。** 直したい点があれば、そのまま書いてください。  ## 試作の開き方  ``` open "<path>…
+
+$ grep -n "大きさ" <入れ子の spec.md>; state.json の dispatches
+69:- 大きさ: M
+phase discovery existing False dispatch [(['T1'], 'autopilot-implementer', True)]
+
+試作の dispatch（09:07:33）は、同じ Bash の中で spec.md の大きさの行を S から M に書き換え、lint の後に overnight.py dispatch を打った。dispatch は M のまま受けた（この spec の前の plugin では、discovery の M は拒まれる）。
+
+計算:
+- 試作を開き方つきで示した文 − 送信 = 09:11:11.470 − 09:03:51.533 = 7:20（10 分以内）
+- 内訳: 照合役の起動まで 1:26、照合役 1:50、直しと dispatch まで 0:26、試作の実装役 3:38

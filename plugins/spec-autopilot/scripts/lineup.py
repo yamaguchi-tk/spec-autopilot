@@ -126,7 +126,7 @@ def begin(d, s, by, prev):
         history.append({**{k: s.get(k) for k in ("approved_at", "approved_by", "blocked", "done_at", "anomalies", "reviews",
                                                  "fails", "streak", "reworks", "post_budget_min", "paused_sec", "light", *overnight.ROUND_KEYS)}, "phase": prev})
     ds = s.get("dispatches") or []
-    keep = ("dispatches", "handoffs") if ds and all(x.get("prototype") for x in ds) else ()  # 承認の前の S の試作の dispatch（印は dispatch が打つ）は、承認の後の handoff で閉じる
+    keep = ("dispatches", "handoffs") if ds and all(x.get("prototype") for x in ds) else ()  # 承認の前の試作の dispatch（印は dispatch が打つ）は、承認の後の handoff で閉じる
     for x in ds if keep else ():
         x.pop("prototype")  # 持ち越したら印を外す。次の巡の再承認では history に移す
     for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", "awaits_since", *(k for k in overnight.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した

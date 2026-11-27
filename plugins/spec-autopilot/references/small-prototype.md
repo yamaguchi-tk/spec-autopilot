@@ -1,11 +1,16 @@
-# S の試作（大きさが S の spec）
+# 承認の前の試作（大きさ S の spec と、新しく作る repo の M の spec）
 
-大きさが S の spec では、承認の前に動く試作を作って人に触ってもらう（`commands/autopilot.md` の A の 2 から読む。playbook の名前ではなく、`- 大きさ: S` で決まる）。
+次のどちらかの spec では、承認の前に動く試作を作って人に触ってもらう（`commands/autopilot.md` の A の 2 から読む。playbook の名前ではなく、大きさの行と repo の種類で決まる）。
+
+- `- 大きさ: S`
+- `- 大きさ: M` で、新しく作る repo（state.json の `existing` が偽。docs/specs・docs/adr の外に git が追うファイルが無い）で、「## 制約」に `- 依る spec:` の行が無い。依る spec のある M は、前の spec の変更がまだ載っていない木に書くことになるので作らない。既存の repo の M・L も承認の前にコードを書かない
+
+M の試作も実装役 1 本に全要件を渡す（新しく作る repo の M の実装と同じ）。草案の提示は S より遅れうるので、予算の 10 分に触れるまでを数えて報告に書く。
 
 ## いつ・誰が作るか
 
 - 草案の要件どおりに動く版を、草案の `## モデル` の `- 実装:` の段の agent（無ければ `autopilot-implementer`。名前は `scripts/ladder.py` の RUNGS）に書かせる。渡すのは spec のディレクトリと「全要件」だけ。単体テスト込み、作業ブランチに commit。tasks.md の先頭に playbook のタスクがあれば、その順に 1 タスク 1 commit で書かせる（bug-fix なら、落ちる再現のテストを直しと別の commit にする）
-- 起動の前に: tasks.md に全要件を受け持つタスクを書き（playbook のタスクがあれば先頭に）、`overnight.py dispatch <dir> --task T<n>...` を打つ（discovery の大きさ S だけ受ける。最後の行が起動する agent の名前。打たずに起動すると hook が deny する）
+- 起動の前に: tasks.md に全要件を受け持つタスクを書き（playbook のタスクがあれば先頭に）、`overnight.py dispatch <dir> --task T<n>...` を打つ（discovery では上の 2 種類だけ受ける。最後の行が起動する agent の名前。打たずに起動すると hook が deny する）
 - 起動の時機: spec.md の要件を書いて `CLI lint` を通し、B の 3 の照合役が返って `ng` を直した後。ADR を書く Write と同じメッセージに並べる（どちらも前景で、並行に走る。implementer は ADR を読まない。照合役は作業ツリーを読むので、試作が書き換えている間には回さない）
 - 依存は入れない（承認の前なので）
 

@@ -1,4 +1,4 @@
-"""大きさ S の spec で、承認の前（discovery）に実装役の試作を起動できる門（overnight.py dispatch・hooks/agent_gate.py・承認の持ち越し・handoff）を、
+"""大きさ S の spec と、新しく作る repo で依る spec の無い大きさ M の spec で、承認の前（discovery）に実装役の試作を起動できる門（overnight.py dispatch・hooks/agent_gate.py・承認の持ち越し・handoff）を、
 入口（CLI と hook）から通して確かめる。"""
 import json
 import subprocess
@@ -15,12 +15,19 @@ from test_overnight import night
 TASKS = "# タスク\n\n- [ ] T1: 規則 [R1, R2]\n"
 
 
-def draft(repo, size="- 大きさ: S", slug="game"):
+DEPENDENT_M = "- 大きさ: M\n- 依る spec: 2026-01-01-base"
+
+
+def draft(repo, size="- 大きさ: S", slug="game", existing=False):
+    if existing:  # git が追うコードのある repo にしてから init する（state.json の existing が真になる）
+        (repo / "app.py").write_text("print('hi')\n", encoding="utf-8")
+        subprocess.run([*GIT, "add", "app.py"], cwd=repo, check=True)
+        subprocess.run([*GIT, "commit", "-q", "-m", "app"], cwd=repo, check=True)
     d = init_spec(repo, slug)
     text = GOOD_SPEC.replace("- 大きさ: S", size) if size is not None else GOOD_SPEC.replace("- 大きさ: S\n", "")
     (d / "spec.md").write_text(text, encoding="utf-8")
     (d / "tasks.md").write_text(TASKS, encoding="utf-8")
-    assert state(d)["phase"] == "discovery"
+    assert state(d)["phase"] == "discovery" and bool(state(d).get("existing")) == existing
     return d
 
 
@@ -45,13 +52,27 @@ def test_dispatch_in_discovery_accepts_a_small_spec_and_prints_the_implementer(r
     assert len(state(d)["dispatches"]) == 1
 
 
-@pytest.mark.parametrize("size", ["- 大きさ: M", "- 大きさ: L", None, "- 大きさ: 小", "- 大きさ: S\n- 大きさ: S"])
-def test_dispatch_in_discovery_refuses_a_spec_that_is_not_small_and_keeps_state(repo, size):
-    d = draft(repo, size)
+def test_dispatch_in_discovery_accepts_a_medium_spec_in_a_new_repo_and_prints_the_implementer(repo):
+    d = draft(repo, "- 大きさ: M")
+    r = dispatch(repo, d)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert r.stdout.strip().splitlines()[-1] == "autopilot-implementer"
+    assert len(state(d)["dispatches"]) == 1
+
+
+@pytest.mark.parametrize("size, existing", [
+    ("- 大きさ: M", True), (DEPENDENT_M, False), ("- 大きさ: L", False), (None, False), ("- 大きさ: 小", False), ("- 大きさ: M\n- 大きさ: M", False)])
+def test_dispatch_in_discovery_refuses_a_spec_that_is_not_allowed_a_prototype_and_keeps_state(repo, size, existing):
+    d = draft(repo, size, existing=existing)
     before = (d / "state.json").read_text(encoding="utf-8")
     r = dispatch(repo, d)
     assert r.returncode != 0
     assert (d / "state.json").read_text(encoding="utf-8") == before
+
+
+def test_dispatch_in_discovery_accepts_a_small_spec_in_an_existing_repo(repo):
+    d = draft(repo, existing=True)
+    assert dispatch(repo, d).returncode == 0
 
 
 def test_gate_allows_the_implementer_dispatched_in_discovery(repo):
@@ -60,9 +81,15 @@ def test_gate_allows_the_implementer_dispatched_in_discovery(repo):
     assert decision(fire(repo, f"spec: {d}。T1")) is None
 
 
-@pytest.mark.parametrize("size", ["- 大きさ: M", "- 大きさ: L", None])
-def test_gate_denies_in_discovery_when_the_size_is_not_small_even_with_a_dispatch_record(repo, size):
-    d = draft(repo, size)
+def test_gate_allows_the_implementer_dispatched_for_a_medium_spec_in_a_new_repo(repo):
+    d = draft(repo, "- 大きさ: M")
+    assert dispatch(repo, d).returncode == 0
+    assert decision(fire(repo, f"spec: {d}。T1")) is None
+
+
+@pytest.mark.parametrize("size, existing", [("- 大きさ: M", True), (DEPENDENT_M, False), ("- 大きさ: L", False), (None, False)])
+def test_gate_denies_in_discovery_when_no_prototype_is_allowed_even_with_a_dispatch_record(repo, size, existing):
+    d = draft(repo, size, existing=existing)
     st = state(d)
     st["dispatches"] = [{"base": None, "tasks": ["T1"], "reqs": ["R1"], "agent": "autopilot-implementer", "at": 1}]
     (d / "state.json").write_text(json.dumps(st), encoding="utf-8")
@@ -92,6 +119,18 @@ def test_handoff_closes_the_prototype_dispatch_after_approval(repo):
     assert r.returncode == 0, r.stdout + r.stderr
     s = state(d)
     assert s["phase"] == "building" and s["handoffs"][-1]["dispatch"] == 0
+
+
+def test_handoff_closes_the_prototype_dispatch_of_a_medium_spec_in_a_new_repo_after_approval(repo):
+    d = draft(repo, "- 大きさ: M")
+    implement(repo, d)
+    user_says(repo)
+    r = run(repo, "approve", str(d), "--by", "OK")
+    assert r.returncode == 0, r.stdout + r.stderr
+    (d / "tasks.md").write_text(TASKS.replace("[ ]", "[x]"), encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(d)["handoffs"][-1]["dispatch"] == 0
 
 
 def test_handoff_closes_the_prototype_dispatch_after_a_queued_approval_starts(repo):

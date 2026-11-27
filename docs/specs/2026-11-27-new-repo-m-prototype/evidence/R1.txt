@@ -1,0 +1,30 @@
+- commit: 33fb69451127134edae40d37729b87ea5fd1c6f8
+
+$ .venv/bin/python .autopilot-qa/check.py
+new-S: ok 期待=通す rc=0 last=autopilot-implementer gate=allow gate(Task)=allow
+new-M: ok 期待=通す rc=0 last=autopilot-implementer gate=allow gate(Task)=allow
+existing-S: ok 期待=通す rc=0 last=autopilot-implementer gate=allow gate(Task)=allow
+new-M-dep-in-comment: ok 期待=通す rc=0 last=autopilot-implementer gate=allow gate(Task)=allow
+existing-M: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+new-M-dependent: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+existing-M-dependent: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+new-L: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+existing-L: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+new-nosize: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+new-badsize: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+new-dupM: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+new-M-size-in-comment: ok 期待=拒む rc=1 state_same=True gate(偽の dispatch あり)=deny msg=dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）
+R1 pass
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1508 passed in 331.29s (0:05:31)
+
+$ git apply .autopilot-qa/mut-R1-3.patch（existing の条件を外す）; pytest plugins/spec-autopilot/tests/test_prototype_gate.py; git apply -R
+FAILED plugins/spec-autopilot/tests/test_prototype_gate.py::test_dispatch_in_discovery_refuses_a_spec_that_is_not_allowed_a_prototype_and_keeps_state[- 大きさ: M-True]
+FAILED plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_denies_in_discovery_when_no_prototype_is_allowed_even_with_a_dispatch_record[- 大きさ: M-True]
+2 failed, 25 passed in 27.71s
+
+$ git apply .autopilot-qa/mut-R1-4.patch（依る spec の条件を外す）; pytest plugins/spec-autopilot/tests/test_prototype_gate.py; git apply -R
+FAILED plugins/spec-autopilot/tests/test_prototype_gate.py::test_dispatch_in_discovery_refuses_a_spec_that_is_not_allowed_a_prototype_and_keeps_state[- 大きさ: M\n- 依る spec: 2026-01-01-base-False]
+FAILED plugins/spec-autopilot/tests/test_prototype_gate.py::test_gate_denies_in_discovery_when_no_prototype_is_allowed_even_with_a_dispatch_record[- 大きさ: M\n- 依る spec: 2026-01-01-base-False]
+2 failed, 25 passed in 10.73s
