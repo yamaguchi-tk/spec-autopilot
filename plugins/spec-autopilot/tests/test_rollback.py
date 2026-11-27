@@ -2,6 +2,7 @@
 入口（CLI と hook）から確かめる。gh と osascript は PATH に置いた偽物で答える。"""
 import json
 import os
+import re
 import subprocess
 import time
 
@@ -1082,6 +1083,7 @@ def test_a_note_that_is_not_a_dm_names_the_unreadable_await_row(repo, gh, tmp_pa
         broken(repo, gh, d, tmp_path)
     cut_await_row(d)
     note = overnight.notify(d)
-    assert note.count("awaits.jsonl:2 ") == 1 and f"本番: {overnight.UNREADABLE_PROD}" in note
+    named = re.compile(r"awaits\.jsonl:\d+ ")  # 切れた行の番号は、範囲（前に書いた記録の数）で変わる
+    assert len(named.findall(note)) == 1 and f"本番: {overnight.UNREADABLE_PROD}" in note
     if where == "デスクトップ":
-        assert osascript.read_text(encoding="utf-8").count("awaits.jsonl:2 ") == 1
+        assert len(named.findall(osascript.read_text(encoding="utf-8"))) == 1
