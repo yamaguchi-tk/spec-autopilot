@@ -7,10 +7,14 @@
 
 - 順はこのセッションの記録の並び（承認した順）。依る spec は spec.md の「## 制約」の `- 依る spec: <ディレクトリ名>` に書く
 - 着手は、承認のときのハッシュが同じで、着手の時点の lint が通るときだけ。通らなければ blocked にする（queued のまま残さない）
+- state.json の `after` は依る spec のディレクトリ名だけ（パスは commit されるので書かない）。このセッションの記録から名前で引く。
+  done・block で記録から外れた依る spec は、承認のときに repo の外（SPEC_AUTOPILOT_HOME の lineup-after.json）に書いた「後の spec → 依る spec」の対から引く。1 本に決まらなければ blocked にする
 - 依る spec が block なら blocked。依る spec が終わっていれば、その先端（マージしたならマージの commit、レビュー待ちならその PR の head）の上に載せ替えて着手する
 - レビュー待ちは、GitHub の承認が付き、head が記録と同じなら building に戻す（人の発言の代わりに GitHub の承認を根拠にする）
 """
 import argparse
+import fcntl
+import json
 import os
 import re
 import subprocess
@@ -61,10 +65,50 @@ def queue_lint(d):
     return errors, warnings
 
 
+def pairs_file():
+    return Path(os.environ.get("SPEC_AUTOPILOT_HOME") or Path.home() / ".claude" / "spec-autopilot") / "lineup-after.json"
+
+
+def pairs():
+    """「後の spec の絶対パス → 依る spec の絶対パス」。repo の外に置く（state.json は commit されるので、パスは書けない）。無ければ {}、壊れていれば例外。"""
+    f = pairs_file()
+    if not f.exists():
+        return {}
+    try:
+        v = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ValueError(f"{f.name} が読めない（{type(e).__name__}）") from e  # block の理由は state.json に入るので、パスは書かず名前だけ
+    if not isinstance(v, dict) or not all(isinstance(k, str) and isinstance(x, str) for k, x in v.items()):
+        raise ValueError(f"{f.name} の形が読めない")
+    return v
+
+
+def remember(d, dep):
+    """後の spec d と依る spec dep の対を足す。ほかのプロセスが足した対を残すため、ロックの中で読み直して足す。
+    壊れていた中身は別の名前に退避し、NOTE を出して空から続ける。"""
+    f = pairs_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    with open(f.with_name(f.name + ".lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            cur = pairs()
+        except (OSError, ValueError) as e:
+            kept = f.with_name(f"{f.name}.broken-{time.time_ns()}")
+            f.replace(kept)
+            print(f"NOTE: {f.name} が読めない（{type(e).__name__}）。元の中身は {kept.name} に残し、空から続ける")
+            cur = {}
+        cur[str(d.resolve())] = str(dep.resolve())
+        tmp = f.with_name(f"{f.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(cur, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        tmp.replace(f)
+
+
 def enqueue(d, s, by, session, warnings):
     name = after_name(d)
-    after = next((str(x.resolve()) for x in ap.recorded_specs(session) if x.name == name), None) if name else None
-    s.update(phase="queued", queued_from=s.get("phase"), queued_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), after=after)
+    deps = [x for x in ap.recorded_specs(session) if x.name == name]
+    if name and len(deps) == 1:  # 依る spec が done・block で記録から外れても引けるよう、承認のときに対を残す
+        remember(d, deps[0])
+    s.update(phase="queued", queued_from=s.get("phase"), queued_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), after=name)  # state.json は commit されるので、パスは書かず名前だけ
     ap.take_over(d, session, "承認")
     ap.save_state(d, s)
     return ap.report([], warnings, f"queued: 承認した。{NEXT} で承認した順に着手する（人の発言は要らない）")
@@ -134,20 +178,41 @@ def put_on(d, base):
     return None
 
 
-def dependency(s):
-    """(依る spec のディレクトリ, その state)。依る spec が無ければ (None, None)。"""
+def released(d, name):
+    """記録から外れた依る spec を、承認のときに書いた対から引く（対の先の名前が name と同じときだけ）。[(ディレクトリ, state)] か []。
+    対が無い・対の先のディレクトリが消えた（state.json が無い）ときは []。対のファイルか対の先の state.json が壊れているときは、
+    「対が無い」と区別できるよう ValueError（理由の文つき）を上げる。"""
+    dep = pairs().get(str(d.resolve()))
+    if not dep or Path(dep).name != name:
+        return []
+    dep = Path(dep)
+    try:
+        ds = ap.load_state(dep)
+        if not isinstance(ds, dict):
+            raise ValueError("dict でない")
+    except FileNotFoundError:
+        return []
+    except (OSError, ValueError) as e:
+        raise ValueError(f"依る spec {name} の state.json が読めない（{type(e).__name__}）") from e
+    return [(dep, ds)]
+
+
+def dependency(d, s, rows):
+    """(d が依る spec のディレクトリ, その state)。依る spec が無ければ (None, None)。rows は記録した spec と state の組。
+    `after` の名前（前の版の絶対パスなら最後の要素）で、まず記録から、無ければ対から引き、1 本に決まらなければ (Path(名前), None) を返す。
+    対のファイルか対の先の state.json が壊れているときは、released の ValueError をそのまま上げる（呼び出し元が読めない理由として扱う）。"""
     if not s.get("after"):
         return None, None
-    dep = Path(s["after"])
-    return dep, ap.load_state(dep)
+    name = Path(s["after"]).name
+    found = [(x, xs) for x, xs in rows if x.name == name] or released(d, name)
+    return found[0] if len(found) == 1 else (Path(name), None)
 
 
-def start(d, s):
-    """queued の spec に着手する。着手できたら True。着手できないなら blocked にして False。"""
+def start(d, s, dep, ds):
+    """queued の spec に着手する（dep・ds は dependency の答え。引けないときは呼ばない）。着手できたら True。着手できないなら blocked にして False。"""
     if ap.sha(d) != s.get("spec_sha256"):
         block(d, s, "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける")
         return False
-    dep, ds = dependency(s)
     if dep is not None:
         base = base_of(dep, ds)
         err = put_on(d, base) if base else f"依る spec {dep.name} の先端が読めない"
@@ -170,12 +235,12 @@ def specs(session):
     return [(d, ap.load_state(d)) for d in ap.recorded_specs(session)]
 
 
-def startable(s):
-    """queued の spec に今着手してよいか（依る spec が終わったか block か、依る spec が無い）。"""
+def startable(d, s, rows):
+    """queued の spec に今着手してよいか（依る spec が終わったか block か、依る spec が無い）。依る spec が引けなければ数えない。"""
     if s.get("phase") != "queued":
         return False
-    dep, ds = dependency(s)
-    return dep is None or ds.get("phase") not in WAITING or review_wait(ds)
+    dep, ds = dependency(d, s, rows)
+    return dep is None or (ds is not None and (ds.get("phase") not in WAITING or review_wait(ds)))
 
 
 def review_wait(s):
@@ -184,7 +249,7 @@ def review_wait(s):
 
 def demand(rows, over_budget):
     """Stop hook の要求の文か None。rows は (dir, state)。over_budget は予算の 2 倍を過ぎた building の dir の集合。"""
-    if not any(startable(s) or review_wait(s) for _, s in rows):
+    if not any(startable(d, s, rows) or review_wait(s) for d, s in rows):
         return None
     building = [d for d, s in rows if s.get("phase") == "building"]
     if any(d not in over_budget for d in building):
@@ -226,13 +291,23 @@ def cmd_next(a):
             return 0
     for d, _ in rows:
         s = ap.load_state(d)  # 前の spec の block で、依る spec の phase が変わっている
-        if not startable(s):
+        if s.get("phase") != "queued":
             continue
-        dep, ds = dependency(s)
+        cur = specs(session)
+        try:
+            dep, ds = dependency(d, s, cur)
+        except ValueError as e:  # 対のファイルか依る spec の state.json が読めない。「1 本に決められない」と区別して理由に出す
+            block(d, s, str(e))
+            continue
+        if dep is not None and ds is None:
+            block(d, s, f"依る spec {dep.name} を名前で 1 本に決められない（このセッションの記録に無いか、2 本以上ある）")
+            continue
+        if not startable(d, s, cur):
+            continue
         if dep is not None and ds.get("phase") == "blocked":
             block(d, s, f"依る spec {dep.name} が block")
             continue
-        if start(d, s):
+        if start(d, s, dep, ds):
             return 0
     for d, s in rows:
         if review_wait(s):

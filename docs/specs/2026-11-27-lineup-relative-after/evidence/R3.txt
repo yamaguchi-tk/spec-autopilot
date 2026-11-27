@@ -1,0 +1,9 @@
+- commit: c200798ace6a832a21281ec4fd26e5f3ba3fddc5
+$ <venv>/bin/python .autopilot-qa/check.py
+R3 pass (test_r3_broken_pair_file_reaches_the_block_reason)
+R3 pass (test_r3_broken_pair_file_reaches_the_stop_hook)
+R3 pass (test_r3_pair_file_not_a_dict_reaches_the_block_reason)
+R3 pass (test_r3_broken_dependency_state_reaches_the_block_reason)
+$ python -m pytest plugins/spec-autopilot/tests/test_lineup.py -q -n auto
+....................................................................     [100%]
+68 passed in 46.92s
