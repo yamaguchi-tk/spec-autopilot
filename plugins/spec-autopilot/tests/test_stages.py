@@ -362,3 +362,57 @@ def test_head_rows_stay_linear_on_a_long_run_of_spaces_in_a_value():
     assert stages.head_rows(text) == [("commit", "x" + " " * 200000 + "y")]
     assert time.monotonic() - start < 2
     assert stages.head_rows("- 結果:  Confirmed \t\n- commit:abc\nx\n- z: 1\n") == [("結果", "Confirmed"), ("commit", "abc")]
+
+
+# --- 証拠の commit を git で照合するときの縁（T3） ---
+
+def git_calls(monkeypatch, stages, answer):
+    """stages が呼ぶ git を代役にし、呼ばれた引数を集める。answer(args) が CompletedProcess か例外を返す。"""
+    calls = []
+
+    def fake(args, **kw):
+        calls.append(args)
+        out = answer(args)
+        if isinstance(out, Exception):
+            raise out
+        return out
+
+    monkeypatch.setattr(stages.subprocess, "run", fake)
+    return calls
+
+
+def done(code, out=""):
+    return subprocess.CompletedProcess([], code, stdout=out, stderr="")
+
+
+def rounds(*shas):
+    return [{"at": 1.0 + i, "sha": s, "high": []} for i, s in enumerate(shas)]
+
+
+def test_a_git_timeout_drops_the_evidence_without_trying_the_older_rounds(monkeypatch):
+    import stages
+    calls = git_calls(monkeypatch, stages, lambda args: subprocess.TimeoutExpired(args, 5))
+    text = "- commit: feedface\n$ a\nok\n"
+    assert stages.checked_in_review(text, 10.0, "R1", rounds("a" * 40, "b" * 40, "c" * 40), 0, ".") is False
+    assert len(calls) == 1
+
+
+def test_a_round_without_a_sha_is_skipped_and_an_older_round_is_still_tried(monkeypatch):
+    import stages
+    old, resolved = "a" * 40, "d" * 40
+    reviews = rounds(old) + [{"at": 5.0, "high": []}, {"at": 6.0, "sha": None, "high": []}]
+
+    def answer(args):
+        return done(0, resolved + "\n") if args[1] == "rev-parse" else done(0)
+
+    calls = git_calls(monkeypatch, stages, answer)
+    assert stages.checked_in_review("- commit: feedface\n$ a\nok\n", 10.0, "R1", reviews, 0, ".") is True
+    assert [c[1] for c in calls] == ["rev-parse", "diff"] and calls[1][3:5] == [resolved, old]
+
+
+@pytest.mark.parametrize("out", ["--output=x", "abc1234", "a" * 40 + "\n" + "b" * 40, ""])
+def test_a_rev_parse_output_that_is_not_one_full_sha_is_never_passed_to_diff(monkeypatch, out):
+    import stages
+    calls = git_calls(monkeypatch, stages, lambda args: done(0, out + "\n"))
+    assert stages.checked_in_review("- commit: feedface\n$ a\nok\n", 10.0, "R1", rounds("a" * 40), 0, ".") is False
+    assert all(c[1] == "rev-parse" for c in calls)
