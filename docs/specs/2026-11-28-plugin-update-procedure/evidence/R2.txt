@@ -1,0 +1,10 @@
+- commit: 4974e51
+
+$ git rev-parse HEAD
+4974e51c1901ab6a71e138bc5faecbd269e6365d
+
+$ git grep -n pull-checkout -- ':(exclude)docs/specs' ':(exclude)docs/adr'; echo "grep exit=$?"
+grep exit=1
+
+$ test -e docs/pull-checkout.md; echo "test exit=$?"
+test exit=1
