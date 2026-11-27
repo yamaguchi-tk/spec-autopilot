@@ -18,4 +18,4 @@ reapproval-carry-merge は、承認し直しでマージとデプロイの記録
 ## Consequences
 - spec の文だけを直した承認し直しは、handoff を打ち直して評価役へ進める
 - 前の巡の dispatch の記録は history にも残る（数え方は今までどおり）
-- 子 2 で、/autopilot の手順に「持ち越したら dispatch を打たない」を書く
+- 子 2 で、/autopilot の手順に「`dispatch を引き継いだ: ` の行が出たら dispatch を打たない」を書く
