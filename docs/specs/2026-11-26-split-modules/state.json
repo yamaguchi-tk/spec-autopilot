@@ -1,13 +1,14 @@
 {
-  "phase": "discovery",
+  "phase": "done",
   "slug": "split-modules",
   "created_at": 1795697565.400598,
   "existing": true,
   "start": "1350656b88cae591434cf91bec31db4621984fff",
-  "last_active_at": 1795701292.629013,
+  "last_active_at": 1795781183.2732742,
   "goal": {
     "at": 1795701292.6290119,
     "by": "OK（目的の spec: 子 1 transcript.py、子 2 deploy.py は #51/#63/#57 のマージ後）",
     "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e"
-  }
+  },
+  "done_at": 1795781183.273271
 }
