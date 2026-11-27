@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "values-driven-main",
+  "created_at": 1795821924.745016,
+  "existing": true,
+  "start": "aff73f4d514344093a38b34dae36343f3bffc4bd",
+  "last_active_at": 1795822232.5689821,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795822232.5674372,
+  "approved_by": "人が spec をそのまま OK と承認（範囲: マージまで）",
+  "spec_sha256": "adf509f33c56a108a9d277042335b8fbebc01caf0dcbf9c0c6aab64f00916a29",
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
