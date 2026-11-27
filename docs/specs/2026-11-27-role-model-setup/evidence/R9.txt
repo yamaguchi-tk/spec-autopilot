@@ -1,0 +1,6 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+$ python3 -c 'import json;print(json.load(open("plugins/spec-autopilot/.claude-plugin/plugin.json"))["version"])'
+0.1.15
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1393 passed in 200.18s (0:03:20)
+（test_spec_autopilot_wiring.py::test_version_is_raised_past_0_1_14 を含む）

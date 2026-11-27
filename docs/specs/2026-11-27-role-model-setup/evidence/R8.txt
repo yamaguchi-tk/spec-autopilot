@@ -1,0 +1,21 @@
+- commit: b89ae767a7c158dceb8112d99c8079b6f0dba310
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/h3 python3 plugins/spec-autopilot/scripts/ladder.py show
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 なし
+評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 なし
+設定のファイル: <worktree>/.autopilot-qa/h3/models.md
+
+$ python3 .autopilot-qa/check_r8.py
+（setup.md の手順 2 のとおりに、役ごと・今の段ごとに選択肢を組み、各選択肢について手順 3 のコマンド〔setup --impl/--review <段>、setup --reset 実装/評価〕を一時の置き場で打ち、show で後の段と他方の役の行を確かめた。続けて --impl と --review を 1 回にまとめる形と、両方を戻す setup --reset を打ち、README の節を読んだ）
+実装 今 なし: ['keep:sonnet-high', 'rung:opus-medium', 'rung:opus-xhigh', 'rung:fable']
+実装 今 sonnet-high: ['keep:sonnet-high', 'rung:opus-medium', 'rung:opus-xhigh', 'rung:fable']
+実装 今 opus-medium: ['keep:opus-medium', 'reset:sonnet-high', 'rung:opus-xhigh', 'rung:fable']
+実装 今 opus-xhigh: ['keep:opus-xhigh', 'reset:sonnet-high', 'rung:opus-medium', 'rung:fable']
+実装 今 fable: ['keep:fable', 'reset:sonnet-high', 'rung:opus-medium', 'rung:opus-xhigh']
+評価 今 なし: ['keep:opus-high', 'rung:opus-xhigh', 'rung:fable']
+評価 今 opus-high: ['keep:opus-high', 'rung:opus-xhigh', 'rung:fable']
+評価 今 opus-xhigh: ['keep:opus-xhigh', 'reset:opus-high', 'rung:fable']
+評価 今 fable: ['keep:fable', 'reset:opus-high', 'rung:opus-xhigh']
+状態 9 通りを確かめた
+R8 pass
+exit 0
