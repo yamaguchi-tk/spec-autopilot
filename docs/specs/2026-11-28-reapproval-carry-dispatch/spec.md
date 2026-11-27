@@ -67,7 +67,7 @@
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |
 |---|---|---|---|
-| R1 | 手元で実物 | 一時の git repo で spec を building → dispatch → 実装の commit → handoff → blocked にし、spec の文だけを直して承認し直し、handoff と review を CLI で回す。spec の外を 1 行変えた場合と、最後の dispatch を閉じずに blocked にした場合も回す。文だけの場合は `--queue` で承認し直して `lineup.py next` でも回す | 文だけの場合は dispatch なしで handoff と review が終了コード 0 で通り、approve が `dispatch を引き継いだ: ` の行を出す。ほかの 2 つは approve が `dispatch を引き継がなかった: ` の理由を出し、dispatch なしの handoff が今までどおり拒まれる |
+| R1 | 手元で実物 | 一時の git repo で spec を building → dispatch → 実装の commit → handoff → blocked にし、spec の文だけを直して承認し直し、handoff と review を CLI で回す。spec の外を 1 行変えた場合と、最後の dispatch を閉じずに blocked にした場合も回す。文だけの場合は `--queue` で承認し直して `lineup.py next` でも回す | 文だけの場合は dispatch なしで handoff と review が終了コード 0 で通り、approve（`--queue` の場合は `lineup.py next`）が `dispatch を引き継いだ: ` の行を出す。ほかの 2 つは同じコマンドが `dispatch を引き継がなかった: ` の理由を出し、dispatch なしの handoff が今までどおり拒まれる |
 
 ## 制約
 - 予算: 60 分
