@@ -1,0 +1,7 @@
+# QA の結果
+
+<!-- 結果は pass / unverified / fail。pass の証拠は `<path>::<テスト名>`（pytest の node id `<path>::<クラス>::<テスト名>` も可。複数は `・` で並べ、同じファイルの続きは `::<テスト名>`。続けて ` と cmd: ...` を書ける。末尾の 1 組の（…）は注記）・`cmd: <実行したことと結果>`・`manual: <操作と結果>`。並べたテストが 1 つでも無ければ check が落ちる。spec の段が手元で実物の要件の pass は `evidence/R<n>.*` に、デプロイ後の pass は `evidence/R<n>.txt` に、`$ <コマンド>` の行とその出力を残す（デプロイ後はデプロイの後に書き、頭に `- commit: <マージの sha>` と `- 結果: Confirmed` を 1 本ずつ）。unverified は spec の `- unverified の承認:` か、その要件を積んだ park があるときだけ通る -->
+| 要件 | 結果 | 証拠 |
+|---|---|---|
+| R1 | pass | plugins/spec-autopilot/tests/test_overnight.py::test_handoff_prompts_the_playable_line_only_when_every_task_is_checked::test_handoff_prompts_the_playable_line_when_the_last_task_closes::test_handoff_requires_a_new_commit_and_checked_tasks::test_handoff_rejects_uncommitted_code と cmd: 一時の repo で 12 の場面（[ ] が残る・全部 [x]・[X]・記録済みで全部 [x]・記録済みで [ ] が残る・最後のタスクを閉じた・閉じた後に HEAD が動いた・閉じた後に main がコードを書いた・エラー 4 種）の handoff を、tip と base の overnight.py で打ち比べた。どの場面も、各回の終了コードと handoffs は base と同じだった。通って全部 [x] のときだけ、OK の行の次の最後の 1 行に「遊べます」の促しが出た。ほかの場面の出力は base と一字一句同じだった → 12 passed。回帰テストは tip で 168 passed。test_the_wait_is_not_counted_in_the_budget は、待ちを予算に数える変異で assert が落ちた。直した後も退行を落とせる（evidence/R1.txt） |
+| R2 | unverified | park: 試走の実測は 10 分を超えたので満たしていない。人が R1 の PR を先に出し、承認の前の M の試作を別の spec にすると決めた。cmd: 1 本目と 2 本目の変更が載った plugin を --plugin-dir で読ませ、同じ依頼文で試走し、入れ子の transcript の時刻を読んだ → 草案まで 8:49 + 人の OK 3:00 + OK から「遊べます」の行まで 1:02 = 12:51 で、10 分を超えた。最初に触れた時点は、承認の前の試作を示した 8:49（草案が S の間に作った試作で、278 行になり提示の時点で M に変わった）（evidence/R2.txt） |
