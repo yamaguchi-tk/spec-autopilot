@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "reapproval-carry-merge",
   "created_at": 1795753067.4874592,
   "existing": true,
   "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
-  "last_active_at": 1795771972.6240158,
+  "last_active_at": 1795772392.06672,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795757261.842288,
   "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
@@ -320,5 +320,22 @@
       "fixed": 0,
       "at": 1795771972.624015
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 91,
+      "at": 1795772389.6702259,
+      "sha": "4fb0099675121a79051c9d7a870a2d03144c8983",
+      "head": "d7aafcadf19d20c312a120a043555a7715cfddd3"
+    }
+  ],
+  "merged_at": 1795772389.67023,
+  "paused_at_merge": 0.0,
+  "done_at": 1795772391.956054,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
