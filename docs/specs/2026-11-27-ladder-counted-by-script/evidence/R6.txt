@@ -1,11 +1,13 @@
-- commit: f77f152e40e470ee19c03abbc45ab1a944ca0823
+- commit: 68b50cd
 $ python3 .autopilot-qa/check.py
   [R6] 段落: 戻さない: True
   [R6] 段落: 記録しないと止まる: True
+  [R6] 段落: 記録できない状態で評価役が止まり handoff を打ち直す: True
   [R6] 見出し 1: 累計 2 巡: True
   [R6] 見出し 2: 累計 3 巡: True
   [R6] C の 3: 累計・戻さない: True
   [R6] C の 3: hook で止まる: True
+  [R6] C の 3: 評価役の起動が止まり handoff を打ち直す: True
   [R6] autopilot.py に「巡続い」が無い: True
   [R6] ok: 全部ある
 R6 pass

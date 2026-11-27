@@ -4,7 +4,7 @@
   "created_at": 1795757450.3576891,
   "existing": true,
   "start": "4e24634d1098d330647a3b4f9efa865854b4f2a2",
-  "last_active_at": 1795764762.419754,
+  "last_active_at": 1795766746.521421,
   "scope_sha256": "58676828b121b2deb615692cfe754906b3d906b304da66ada561e3e3af72d03b",
   "approved_at": 1795764762.3724759,
   "approved_by": "R1 を C（review を記録できない状態の評価役の起動は deny）に直し、R6 を広げ、R7・T5 を足し、大きさ L・予算 150 分で合意し直す",
@@ -211,9 +211,27 @@
   ],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
+  "reviews": [
+    {
+      "high": [
+        "R1"
+      ],
+      "at": 1795766746.52134,
+      "sha": "68b50cd986de373b96947a3a675376fa8b3c24ed"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795766746.521336
+      }
+    ]
+  },
+  "streak": {
+    "R1": 1
+  },
   "reworks": {},
   "wait": null,
   "raises": [
@@ -224,6 +242,38 @@
       "at": 1795762082.071242,
       "from": "autopilot-implementer",
       "to": "autopilot-implementer-opus"
+    }
+  ],
+  "dispatches": [
+    {
+      "base": "60ead0bff7c01c0c20b0e7e206fb6c102c7f0ae6",
+      "tasks": [
+        "T5"
+      ],
+      "reqs": [
+        "R1",
+        "R6",
+        "R7"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795764786.16925,
+      "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
+    }
+  ],
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 2,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  },
+  "handoffs": [
+    {
+      "tip": "68b50cd986de373b96947a3a675376fa8b3c24ed",
+      "tasks": [
+        "T5"
+      ],
+      "dispatch": 0,
+      "at": 1795765524.7564359
     }
   ]
 }

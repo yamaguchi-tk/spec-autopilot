@@ -1,4 +1,4 @@
-- commit: f77f152e40e470ee19c03abbc45ab1a944ca0823
+- commit: 68b50cd
 $ python3 .autopilot-qa/check.py
   [R4] review --high R1: rc=0 streak=1 out='R1: 失敗のあった巡が累計 1 巡'
   [R4] review --high none: rc=0 streak=1 out='review: high なし'
