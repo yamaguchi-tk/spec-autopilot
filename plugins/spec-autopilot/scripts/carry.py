@@ -6,6 +6,8 @@ import subprocess
 
 OUTSIDE = (".", ":(exclude)docs/specs", ":(exclude)docs/adr")
 NOT_CARRIED = "持ち越さなかった: "
+DISPATCH_CARRIED = "dispatch を引き継いだ: "
+DISPATCH_NOT_CARRIED = "dispatch を引き継がなかった: "
 
 
 def same_outside(root, head):
@@ -46,6 +48,24 @@ def plan(root, s, prev):
     if reason:
         return [], NOT_CARRIED + reason
     return list(merges), f"持ち越した: マージ {len(merges)} 件（PR {'、'.join(str(m.get('pr')) for m in merges)}）"
+
+
+def dispatch_plan(root, d, s, prev):
+    """(dispatch と handoff を持ち越すか, print する 1 行)。blocked の承認し直しだけ。最後の dispatch を閉じた handoff のうち最後のものの tip と
+    今の HEAD で、spec の置き場の外が同じなら持ち越す（docs/adr/2026-11-28-reapproval-carry-dispatch.md）。前の phase が blocked でなければ (False, None)。"""
+    if prev != "blocked":
+        return False, None
+    dispatches = s.get("dispatches") or []
+    if not dispatches:
+        return False, DISPATCH_NOT_CARRIED + "前の巡に dispatch が無い"
+    n = len(dispatches) - 1
+    closed = [h for h in s.get("handoffs") or [] if h.get("dispatch") == n]
+    if not closed:
+        return False, DISPATCH_NOT_CARRIED + "最後の dispatch が handoff で閉じていない"
+    if not same_outside(root, closed[-1].get("tip")):
+        return False, DISPATCH_NOT_CARRIED + "最後の handoff の後に、spec の置き場の外のファイルが変わったか、git で比べられない"
+    tasks = dispatches[-1].get("tasks") or []
+    return True, f"{DISPATCH_CARRIED}{', '.join(tasks)}。dispatch を打たずに overnight.py handoff {d} {' '.join(f'--task {t}' for t in tasks)} から進む"
 
 
 def holds_head(root, s, merge_head):

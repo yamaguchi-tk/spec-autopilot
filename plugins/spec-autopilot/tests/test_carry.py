@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from test_autopilot import PLUGIN, make_done, repo, run, state, user_says  # noqa: F401（repo は fixture）
+from test_autopilot import PLUGIN, make_done, real_run, repo, run, state, user_says  # noqa: F401（repo は fixture）
 from test_lineup import line
 from test_overnight import GIT, deploy_ok, full_spec, gh, git_head, merged_pr, night  # noqa: F401
 
@@ -80,9 +80,10 @@ def test_a_carried_round_counts_reviews_qa_and_dispatches_again(repo, gh):
     reapprove(repo, d)
     s = state(d)
     assert s["reviews"] == [] and s["fails"] == {} and s["streak"] == {} and s["reworks"] == {}
-    for k in ("qa_runs", "dispatches", "handoffs", "parked", "lenses", "rolled_back"):
+    for k in ("qa_runs", "parked", "lenses", "rolled_back"):
         assert not s.get(k), k
-    assert s["history"][-1]["dispatches"]  # 前の巡は今までどおり history に写す
+    assert len(s["dispatches"]) == 1 and len(s["handoffs"]) == 1  # 閉じた dispatch と handoff は持ち越す（spec の外が同じ）
+    assert s["history"][-1]["dispatches"] and s["history"][-1]["handoffs"]  # 前の巡は今までどおり history にも写す
 
 
 def test_check_counts_a_carried_merge_while_only_docs_changed_and_asks_again_after_a_code_change(repo, gh):
@@ -156,6 +157,87 @@ def test_a_spec_without_a_merge_prints_nothing_about_carrying(repo):
     block(repo, d)
     r = reapprove(repo, d)
     assert "持ち越" not in r.stdout and not state(d).get("merges")
+
+
+CARRIED_DISPATCH = "dispatch を引き継いだ: "
+NOT_CARRIED_DISPATCH = "dispatch を引き継がなかった: "
+
+
+def blocked_after_handoff(repo):
+    """dispatch → 実装の commit → handoff → review まで進んで blocked にした spec（マージの記録は無い）。"""
+    d = full_spec(repo)
+    make_done(repo, d)
+    block(repo, d)
+    return d
+
+
+def test_reapproval_after_a_words_only_fix_carries_the_closed_dispatch_and_handoff_and_review_passes_without_a_new_dispatch(repo):
+    d = blocked_after_handoff(repo)
+    fix_the_words(repo, d)
+    r = reapprove(repo, d)
+    out = [x for x in r.stdout.splitlines() if x.startswith(CARRIED_DISPATCH)]
+    assert len(out) == 1 and "T1" in out[0] and f"overnight.py handoff {d} --task T1" in out[0], r.stdout
+    assert NOT_CARRIED_DISPATCH not in r.stdout and "持ち越" not in r.stdout
+    s = state(d)
+    assert len(s["dispatches"]) == 1 and len(s["handoffs"]) == 1 and "prototype" not in s["dispatches"][0]
+    h = night(repo, "handoff", str(d), "--task", "T1")  # dispatch は打たない
+    assert h.returncode == 0, h.stdout + h.stderr
+    assert len(state(d)["dispatches"]) == 1 and len(state(d)["handoffs"]) == 2
+    for rid in ("R1", "R2"):
+        real_run(repo, d, rid)
+    v = run(repo, "review", str(d), "--high", "none")
+    assert v.returncode == 0, v.stdout + v.stderr
+
+
+def test_reapproval_does_not_carry_the_dispatch_when_a_file_outside_the_spec_changed_and_handoff_is_refused_without_a_dispatch(repo):
+    d = blocked_after_handoff(repo)
+    fix_the_words(repo, d)
+    spoil_code(repo, d)
+    r = reapprove(repo, d)
+    assert NOT_CARRIED_DISPATCH in r.stdout and CARRIED_DISPATCH not in r.stdout
+    s = state(d)
+    assert not s.get("dispatches") and not s.get("handoffs") and s["history"][-1]["dispatches"]
+    h = night(repo, "handoff", str(d), "--task", "T1")
+    assert h.returncode != 0 and "dispatch の記録が無い" in h.stdout + h.stderr
+
+
+def test_reapproval_does_not_carry_a_dispatch_that_no_handoff_closed(repo):
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [ ] T1: 規則のモジュール [R1, R2]\n", encoding="utf-8")
+    r = night(repo, "dispatch", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    block(repo, d)
+    fix_the_words(repo, d)
+    r = reapprove(repo, d)
+    assert NOT_CARRIED_DISPATCH in r.stdout and "閉じていない" in r.stdout and CARRIED_DISPATCH not in r.stdout
+    assert not state(d).get("dispatches")
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode != 0
+
+
+def test_reapproval_of_a_spec_without_a_dispatch_says_why_it_carried_no_dispatch(repo):
+    d = full_spec(repo)
+    block(repo, d)
+    r = reapprove(repo, d)
+    assert f"{NOT_CARRIED_DISPATCH}前の巡に dispatch が無い" in r.stdout and CARRIED_DISPATCH not in r.stdout
+    assert not state(d).get("dispatches")
+
+
+def test_queued_reapproval_carries_the_dispatch_when_lineup_next_starts_it(repo):
+    d = blocked_after_handoff(repo)
+    fix_the_words(repo, d)
+    r = reapprove(repo, d, "--queue")
+    assert CARRIED_DISPATCH not in r.stdout and state(d)["phase"] == "queued"
+    r = line(repo, "next")
+    assert r.returncode == 0 and CARRIED_DISPATCH in r.stdout and "--task T1" in r.stdout, r.stdout + r.stderr
+    s = state(d)
+    assert s["phase"] == "building" and len(s["dispatches"]) == 1 and len(s["handoffs"]) == 1
+    assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
+
+
+@pytest.mark.parametrize("prev", ["done", "building", "queued"])
+def test_only_a_blocked_spec_carries_the_dispatch(repo, prev):
+    s = {"dispatches": [{"tasks": ["T1"]}], "handoffs": [{"dispatch": 0, "tip": git_head(repo)}]}
+    assert carry.dispatch_plan(repo, "d", s, prev) == (False, None)
 
 
 def test_a_second_reapproval_keeps_the_first_start_of_the_carried_records(repo, gh):

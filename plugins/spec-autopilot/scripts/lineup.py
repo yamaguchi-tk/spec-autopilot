@@ -129,6 +129,8 @@ def begin(d, s, by, prev):
     keep = ("dispatches", "handoffs") if ds and all(x.get("prototype") for x in ds) else ()  # 承認の前の試作の dispatch（印は dispatch が打つ）は、承認の後の handoff で閉じる
     for x in ds if keep else ():
         x.pop("prototype")  # 持ち越したら印を外す。次の巡の再承認では history に移す
+    dispatch_kept, dispatch_note = (False, None) if keep else __import__("carry").dispatch_plan(ap.repo_root(d), d, s, prev)  # 閉じた dispatch で spec の外が同じなら、実装役を起こさず handoff から進める
+    keep = ("dispatches", "handoffs") if dispatch_kept else keep
     for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", "awaits_since", *(k for k in deploy.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
         s.pop(k, None)
     now = time.time()
@@ -138,6 +140,8 @@ def begin(d, s, by, prev):
         s.update(merges=kept, merged_at=now, paused_at_merge=0, awaits_since=since)  # マージ後の予算の時計は自走に戻した時刻から数え直す
     if note:
         print(note)
+    if dispatch_note:
+        print(dispatch_note)
     return budget
 
 
