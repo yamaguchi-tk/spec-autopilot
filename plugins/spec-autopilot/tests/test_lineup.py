@@ -419,6 +419,61 @@ def test_demand_does_not_count_a_dependent_spec_whose_dependency_directory_of_th
     assert lineup.demand([(b, state(b))], set()) is None
 
 
+BROKEN_PAIRS = [("{broken", "lineup-after.json が読めない"), ("", "lineup-after.json が読めない"),
+                ("[]", "lineup-after.json の形が読めない"), ("null", "lineup-after.json の形が読めない"),
+                ('"x"', "lineup-after.json の形が読めない"), ('{"/x": 1}', "lineup-after.json の形が読めない")]
+BROKEN_STATES = ["{broken", "", "[]", "null"]
+
+
+def broken_pairs(repo, tmp_path, content):
+    """a を done で記録から外し、repo の外の対のファイルを content に書き換える。"""
+    a, b = dependent_pair(repo, tmp_path, True)
+    finish(repo, a)
+    (Path(os.environ["SPEC_AUTOPILOT_HOME"]) / "lineup-after.json").write_text(content, encoding="utf-8")
+    return a, b
+
+
+def broken_dependency_state(repo, tmp_path, content):
+    a, b = dependent_pair(repo, tmp_path, True)
+    finish(repo, a)
+    (a / "state.json").write_text(content, encoding="utf-8")
+    return a, b
+
+
+@pytest.mark.parametrize("content,phrase", BROKEN_PAIRS)
+def test_next_blocks_with_the_reason_that_lineup_after_json_cannot_be_read(repo, tmp_path, content, phrase):
+    a, b = broken_pairs(repo, tmp_path, content)
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    reason = state(b)["blocked"]["reason"]
+    assert state(b)["phase"] == "blocked" and phrase in reason and "記録に無いか" not in reason, reason
+    assert str(repo) not in reason and str(Path.home()) not in reason  # state.json は commit されるので、手元のパスを書かない
+
+
+@pytest.mark.parametrize("content,phrase", BROKEN_PAIRS)
+def test_stop_hook_says_the_line_cannot_be_read_when_lineup_after_json_is_broken(repo, tmp_path, content, phrase):
+    broken_pairs(repo, tmp_path, content)
+    out = decision(repo)
+    assert out.get("decision") == "block" and "行列を読めない" in out["reason"], out
+
+
+@pytest.mark.parametrize("content", BROKEN_STATES)
+def test_next_blocks_with_the_reason_that_the_state_json_of_the_dependency_cannot_be_read(repo, tmp_path, content):
+    a, b = broken_dependency_state(repo, tmp_path, content)
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    reason = state(b)["blocked"]["reason"]
+    assert state(b)["phase"] == "blocked" and f"依る spec {a.name} の state.json が読めない" in reason and "記録に無いか" not in reason, reason
+    assert str(repo) not in reason and str(Path.home()) not in reason
+
+
+@pytest.mark.parametrize("content", BROKEN_STATES)
+def test_stop_hook_says_the_line_cannot_be_read_when_the_state_json_of_the_dependency_is_broken(repo, tmp_path, content):
+    broken_dependency_state(repo, tmp_path, content)
+    out = decision(repo)
+    assert out.get("decision") == "block" and "行列を読めない" in out["reason"], out
+
+
 def test_concurrent_queues_keep_every_pair_written_to_the_file_outside_the_repo(repo):
     code = ("import sys; sys.path.insert(0, sys.argv[1]); import lineup; from pathlib import Path; "
             "lineup.remember(Path(sys.argv[2]), Path(sys.argv[3]))")

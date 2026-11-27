@@ -74,9 +74,12 @@ def pairs():
     f = pairs_file()
     if not f.exists():
         return {}
-    v = json.loads(f.read_text(encoding="utf-8"))
+    try:
+        v = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ValueError(f"{f.name} が読めない（{type(e).__name__}）") from e  # block の理由は state.json に入るので、パスは書かず名前だけ
     if not isinstance(v, dict) or not all(isinstance(k, str) and isinstance(x, str) for k, x in v.items()):
-        raise ValueError(f"{f} の形が読めない")
+        raise ValueError(f"{f.name} の形が読めない")
     return v
 
 
@@ -176,17 +179,28 @@ def put_on(d, base):
 
 
 def released(d, name):
-    """記録から外れた依る spec を、承認のときに書いた対から引く（対の先の名前が name と同じときだけ）。[(ディレクトリ, state)] か []。"""
-    try:
-        dep = Path(pairs().get(str(d.resolve()), ""))
-        return [(dep, ap.load_state(dep))] if dep.name == name else []
-    except (OSError, ValueError):
+    """記録から外れた依る spec を、承認のときに書いた対から引く（対の先の名前が name と同じときだけ）。[(ディレクトリ, state)] か []。
+    対が無い・対の先のディレクトリが消えた（state.json が無い）ときは []。対のファイルか対の先の state.json が壊れているときは、
+    「対が無い」と区別できるよう ValueError（理由の文つき）を上げる。"""
+    dep = pairs().get(str(d.resolve()))
+    if not dep or Path(dep).name != name:
         return []
+    dep = Path(dep)
+    try:
+        ds = ap.load_state(dep)
+        if not isinstance(ds, dict):
+            raise ValueError("dict でない")
+    except FileNotFoundError:
+        return []
+    except (OSError, ValueError) as e:
+        raise ValueError(f"依る spec {name} の state.json が読めない（{type(e).__name__}）") from e
+    return [(dep, ds)]
 
 
 def dependency(d, s, rows):
     """(d が依る spec のディレクトリ, その state)。依る spec が無ければ (None, None)。rows は記録した spec と state の組。
-    `after` の名前（前の版の絶対パスなら最後の要素）で、まず記録から、無ければ対から引き、1 本に決まらなければ (Path(名前), None) を返す。"""
+    `after` の名前（前の版の絶対パスなら最後の要素）で、まず記録から、無ければ対から引き、1 本に決まらなければ (Path(名前), None) を返す。
+    対のファイルか対の先の state.json が壊れているときは、released の ValueError をそのまま上げる（呼び出し元が読めない理由として扱う）。"""
     if not s.get("after"):
         return None, None
     name = Path(s["after"]).name
@@ -280,7 +294,11 @@ def cmd_next(a):
         if s.get("phase") != "queued":
             continue
         cur = specs(session)
-        dep, ds = dependency(d, s, cur)
+        try:
+            dep, ds = dependency(d, s, cur)
+        except ValueError as e:  # 対のファイルか依る spec の state.json が読めない。「1 本に決められない」と区別して理由に出す
+            block(d, s, str(e))
+            continue
         if dep is not None and ds is None:
             block(d, s, f"依る spec {dep.name} を名前で 1 本に決められない（このセッションの記録に無いか、2 本以上ある）")
             continue
