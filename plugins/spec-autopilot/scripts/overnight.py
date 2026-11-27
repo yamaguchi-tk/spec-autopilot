@@ -422,7 +422,10 @@ def production_errors(d, s, done=True):
     """本番を壊れたまま・確かめないまま朝にしない。止める側（check・Stop hook・ready・block・wait）が読む唯一の述語。
     done=False（ready・block・wait の門）は、壊れたまま・戻した後の未確認・予算を過ぎた未確認・直せないデプロイ後の要件だけを言う。
     done=True（check・Stop hook）は、確かめていない本番も言う。"""
-    prod = production(d, s)
+    try:
+        prod = production(d, s)
+    except UnreadableAwaits as e:  # 本番を確かめられない。止める側に倒し、block --no-rollback で人に戻せるようにする
+        return [str(e)]
     if prod is None:
         return []
     cmd = rollback_cmd((d / "spec.md").read_text(encoding="utf-8"))
@@ -650,21 +653,26 @@ def awaits(d, s):
     return [r for r in _awaits(d) if r["at"] > since]
 
 
+class UnreadableAwaits(ValueError):
+    """awaits.jsonl に記録として読めない行がある（production_errors が「本番が良くない」として受け、block で人に戻せるようにする）。"""
+
+
 def _awaits(d):
     """待ちの記録の行。空でないのに記録として読めない行（書き込みの途中で切れたものなど）があれば、数えずに通さないよう、
-    ファイルと行番号を名指しして ValueError で止める（人がその行を直すか消すまで、その spec の判定は止まる）。"""
+    ファイルと行番号を名指しして UnreadableAwaits で止める（人がその行を直すか消すまで、その spec の判定は止まる）。"""
     f = d / AWAITS_LOG
     out = []
-    lines = f.read_bytes().decode("utf-8").split("\n") if f.exists() else []  # "\n" だけで割る（記録の文字列の U+2028 で割らない）
+    lines = f.read_bytes().split(b"\n") if f.exists() else []  # "\n" だけで割る（記録の文字列の U+2028 で割らない）
     for n, line in enumerate(lines, 1):
         if not line.strip():
             continue
         try:
-            r = json.loads(line)
-        except ValueError:
+            r = json.loads(line.decode("utf-8"))
+        except ValueError:  # UnicodeDecodeError（マルチバイトの途中で切れた行）も ValueError の子
             r = None
         if not (isinstance(r, dict) and isinstance(r.get("at"), (int, float))):
-            raise ValueError(f"{f}:{n} の待ちの記録が読めない。その行を直すか消してから続ける")
+            raise UnreadableAwaits(f"{f}:{n} の待ちの記録が読めないので、数えずに止める。行は人が直すか消す"
+                                   "（agent が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す")
         out.append(r)
     return out
 
@@ -1357,9 +1365,12 @@ def notify(d):
     rows = scope_rows((d / "spec.md").read_text(encoding="utf-8")) or {}
     where = rows.get("通知") or "なし"
     s = autopilot.load_state(d)
-    line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
-    if where == "Slack の DM":
-        line = "\n".join([line, *report(d)[1:]])  # DM は朝の報告の行を載せる（読んで判断できるように）
+    try:
+        line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
+        if where == "Slack の DM":
+            line = "\n".join([line, *report(d)[1:]])  # DM は朝の報告の行を載せる（読んで判断できるように）
+    except UnreadableAwaits as e:  # block の後の知らせを、読めない待ちの記録で落とさない
+        line = f"{d.name}: {s.get('phase')}。{e}"
     if where == "デスクトップ":
         try:
             r = subprocess.run(["osascript", "-e", f"display notification {json.dumps(line, ensure_ascii=False)} with title \"spec-autopilot\""],
