@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -13,6 +14,7 @@ from test_overnight import full_spec, night
 
 GATE = PLUGIN / "hooks" / "agent_gate.py"
 IMPL = "spec-autopilot:autopilot-implementer"
+REVIEWER = "spec-autopilot:autopilot-reviewer"
 GIT = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
 
 
@@ -105,6 +107,49 @@ def test_gate_stays_silent_for_an_agent_that_is_not_an_implementer(repo):
     (d / "state.json").write_text("{broken", encoding="utf-8")  # 読めば deny になる状態でも、読まない
     assert decision(fire(repo, f"{d}", agent="spec-autopilot:autopilot-reviewer")) is None
     assert decision(fire(repo, "x", agent="general-purpose")) is None
+
+
+def test_gate_records_a_reviewer_launch_in_the_building_spec_and_allows_it(repo):
+    d = building(repo)
+    assert not state(d).get("review_launches")
+    before = time.time()
+    assert decision(fire(repo, f"spec: {d}。base..tip を評価して", agent=REVIEWER)) is None
+    launches = state(d)["review_launches"]
+    assert len(launches) == 1 and launches[0] >= before
+    assert decision(fire(repo, f"spec: {d}", agent="autopilot-reviewer-fable")) is None
+    assert len(state(d)["review_launches"]) == 2
+
+
+def test_gate_leaves_state_alone_when_the_reviewer_names_no_building_spec(repo):
+    d = building(repo)
+    other = init_spec(repo, "draft")  # discovery
+    before = {p: (p / "state.json").read_bytes() for p in (d, other)}
+    assert decision(fire(repo, "評価して", agent=REVIEWER)) is None
+    assert decision(fire(repo, f"spec: {other}", agent=REVIEWER)) is None
+    assert {p: (p / "state.json").read_bytes() for p in (d, other)} == before
+
+
+def test_gate_denies_an_implementer_while_a_reviewer_result_is_not_recorded(repo):
+    d = dispatched(repo, building(repo))
+    assert decision(fire(repo, f"{d}")) is None
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    kind, why = decision(fire(repo, f"{d}"))
+    assert kind == "deny" and "autopilot.py review" in why and str(d) in why
+    assert run(repo, "review", str(d), "--high", "none").returncode == 0
+    assert decision(fire(repo, f"{d}")) is None
+
+
+def test_reapproval_moves_review_launches_to_history_and_starts_empty(repo):
+    d = building(repo)
+    st = state(d)
+    st.update(phase="done", done_at=time.time(), review_launches=[time.time()])
+    (d / "state.json").write_text(json.dumps(st), encoding="utf-8")
+    user_says(repo)
+    r = run(repo, "approve", str(d), "--by", "OK")
+    assert r.returncode == 0, r.stdout + r.stderr
+    s = state(d)
+    assert s["phase"] == "building" and not s.get("review_launches")
+    assert any(len(h.get("review_launches") or []) == 1 for h in s["history"]), s["history"]
 
 
 def test_hooks_json_registers_the_gate_on_agent_and_task():
