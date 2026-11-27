@@ -1,0 +1,143 @@
+{
+  "phase": "building",
+  "slug": "role-model-setup",
+  "created_at": 1795739013.467732,
+  "existing": true,
+  "start": "1416cb843a5dd25001a438e53d7b4f8f5aa05d76",
+  "last_active_at": 1795741454.4101,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795739411.491934,
+  "approved_by": "推奨のまま OK、承認",
+  "spec_sha256": "c3b101516d1cef165e8d12b5764ad7a0a76a11a7205ab04defffea9d5f12ec1c",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R8"
+      ],
+      "at": 1795740728.167339,
+      "sha": "475a8f081b13ba36fba46fd5c517f936fc275097"
+    },
+    {
+      "high": [],
+      "at": 1795741454.410084,
+      "sha": "b89ae767a7c158dceb8112d99c8079b6f0dba310"
+    }
+  ],
+  "fails": {
+    "R8": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795740728.1673348
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0,
+    "R8": 0,
+    "R9": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "0a0891ab5a9dd69964dad15d7536c70172364e22",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795739430.227129,
+      "session": "199d4129-7605-43cf-a024-7e4ed0d0a21f"
+    },
+    {
+      "base": "4af97188c5f020dcaa76fea31722c18c604a5d3f",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R5",
+        "R6",
+        "R7"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795739685.75181,
+      "session": "199d4129-7605-43cf-a024-7e4ed0d0a21f"
+    },
+    {
+      "base": "f055e944bcfaf6395a87601015970d5b675f9366",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R8",
+        "R9"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795739894.735757,
+      "session": "199d4129-7605-43cf-a024-7e4ed0d0a21f"
+    },
+    {
+      "base": "475a8f081b13ba36fba46fd5c517f936fc275097",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R8",
+        "R9"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795740728.5035698,
+      "session": "199d4129-7605-43cf-a024-7e4ed0d0a21f"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "4af97188c5f020dcaa76fea31722c18c604a5d3f",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795739685.617173
+    },
+    {
+      "tip": "f055e944bcfaf6395a87601015970d5b675f9366",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795739894.5037959
+    },
+    {
+      "tip": "475a8f081b13ba36fba46fd5c517f936fc275097",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795740137.6488068
+    },
+    {
+      "tip": "b89ae767a7c158dceb8112d99c8079b6f0dba310",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 3,
+      "at": 1795741137.2641459
+    }
+  ]
+}

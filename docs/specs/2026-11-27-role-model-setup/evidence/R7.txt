@@ -1,0 +1,31 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+models.md のバイト列: b'- \xe5\xae\x9f\xe8\xa3\x85: haiku\n'
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h7-0 python3 '<repo>/plugins/spec-autopilot/scripts/autopilot.py' init game
+<repo>/.autopilot-qa/tmp/repo7-0/docs/specs/2026-11-27-game
+NOTE: 手元の設定 <repo>/.autopilot-qa/tmp/h7-0/models.md に誤りがあるので、spec の `## モデル` は雛形のまま（モデルの節の `- 実装:` は「sonnet-high」「opus-medium」「opus-xhigh」「fable」のどれか（今は「haiku」））。直す: `ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す（<repo>/plugins/spec-autopilot/scripts/ladder.py）
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h7-0 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --review fable
+書いた: <repo>/.autopilot-qa/tmp/h7-0/models.md
+- 評価: fable
+NOTE: <repo>/.autopilot-qa/tmp/h7-0/models.md に誤りがあった（モデルの節の `- 実装:` は「sonnet-high」「opus-medium」「opus-xhigh」「fable」のどれか（今は「haiku」））。元の中身を退避した: <repo>/.autopilot-qa/tmp/h7-0/models.md.bad-1795740512183638000-96199。読めた行だけで続ける
+(exit 0)
+models.md のバイト列: b'- \xe5\xae\x9f\xe8\xa3\x85: \xff\xfe\n'
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h7-1 python3 '<repo>/plugins/spec-autopilot/scripts/autopilot.py' init game
+<repo>/.autopilot-qa/tmp/repo7-1/docs/specs/2026-11-27-game
+NOTE: 手元の設定 <repo>/.autopilot-qa/tmp/h7-1/models.md に誤りがあるので、spec の `## モデル` は雛形のまま（<repo>/.autopilot-qa/tmp/h7-1/models.md が UTF-8 で読めない）。直す: `ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す（<repo>/plugins/spec-autopilot/scripts/ladder.py）
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h7-1 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --review fable
+書いた: <repo>/.autopilot-qa/tmp/h7-1/models.md
+- 評価: fable
+NOTE: <repo>/.autopilot-qa/tmp/h7-1/models.md に誤りがあった（<repo>/.autopilot-qa/tmp/h7-1/models.md が UTF-8 で読めない）。元の中身を退避した: <repo>/.autopilot-qa/tmp/h7-1/models.md.bad-1795740512428190000-96211。読めた行だけで続ける
+(exit 0)
+models.md のバイト列: b'- \xe5\xae\x9f\xe8\xa3\x85: fable\n- \xe5\xae\x9f\xe8\xa3\x85: opus-medium\n'
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h7-2 python3 '<repo>/plugins/spec-autopilot/scripts/autopilot.py' init game
+<repo>/.autopilot-qa/tmp/repo7-2/docs/specs/2026-11-27-game
+NOTE: 手元の設定 <repo>/.autopilot-qa/tmp/h7-2/models.md に誤りがあるので、spec の `## モデル` は雛形のまま（モデルの節に `- 実装:` が 2 本以上ある）。直す: `ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す（<repo>/plugins/spec-autopilot/scripts/ladder.py）
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h7-dir python3 '<repo>/plugins/spec-autopilot/scripts/autopilot.py' init game
+<repo>/.autopilot-qa/tmp/repo7-dir/docs/specs/2026-11-27-game
+NOTE: 手元の設定 <repo>/.autopilot-qa/tmp/h7-dir/models.md に誤りがあるので、spec の `## モデル` は雛形のまま（<repo>/.autopilot-qa/tmp/h7-dir/models.md を読めない（IsADirectoryError））。直す: `ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す（<repo>/plugins/spec-autopilot/scripts/ladder.py）
+(exit 0)
+（どの init も spec.md が templates/spec.md と同じ。変異 .autopilot-qa/mut-R7-1.patch〔write_spec の `if errors:` → `if False:`〕で plugins/spec-autopilot/tests/test_init_models.py::test_init_with_an_unreadable_setting_keeps_the_template_and_notes_the_fix は 5 failed〔AssertionError〕、戻した後 5 passed）
