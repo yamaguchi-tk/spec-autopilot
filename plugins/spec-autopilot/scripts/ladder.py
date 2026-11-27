@@ -188,6 +188,22 @@ def edit(change):
         return rows
 
 
+def write_spec(src, dst):
+    """init が spec.md を作る。手元の設定の行を、雛形の `## モデル` のコメントの後に写す（読めない設定は写さず NOTE で直し方を出す）。"""
+    text = Path(src).read_text(encoding="utf-8")
+    path = config_path()
+    raw, _, errors = read_config(path)
+    if errors:
+        print(f"NOTE: 手元の設定 {path} に誤りがあるので、spec の `## モデル` は雛形のまま（{'; '.join(errors)}）。"
+              f"直す: `ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す（{Path(__file__).resolve()}）", file=sys.stderr)
+    elif raw is not None:
+        lines = [f"- {k}: {v}" for k, v in parse(raw.decode("utf-8"))[0]]
+        if lines:
+            text = re.sub(r"^(## モデル\n(?:<!--.*?-->\n)?)", lambda m: m.group(1) + "\n".join(lines) + "\n", text, count=1, flags=re.M | re.S)
+            print(f"NOTE: 手元の設定 {path} の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: {' / '.join(lines)}", file=sys.stderr)
+    Path(dst).write_text(text, encoding="utf-8")
+
+
 def accepted_lines():
     return [f"{SPEC_KEY[role]}: 受ける段 {'・'.join(rungs)}" for role, rungs in RUNGS.items()]
 
