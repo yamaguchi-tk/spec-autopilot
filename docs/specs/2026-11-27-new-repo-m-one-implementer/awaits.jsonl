@@ -1,0 +1,1 @@
+{"kind": "ci", "pr": 78, "sha": "2bff2fc2ff640c307d3d76c1123104e1a2c141be", "result": "error", "started_at": 1795753698.019936, "at": 1795753699.060777, "detail": ["RuntimeError: gh pr checks 78 --json name,bucket,link が読めない（exit 1）: no checks reported on the 'claude/new-repo-m-one-implementer' branch"]}
