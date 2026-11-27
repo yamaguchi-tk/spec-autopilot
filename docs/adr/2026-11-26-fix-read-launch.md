@@ -19,7 +19,7 @@
 ## Consequences
 - split-transcript は pull まで blocked のまま
 - 割り方の正本が transcript_lines と別に 2 か所残る（split-transcript の後に別の spec でまとめる）
-- awaits.jsonl に切れた行が 1 行でも残ると、人がその行を直すか消すまで、その spec の待ちの記録を読む判定は全部止まる。Stop hook の文は例外の型名だけなので、行番号は CLI を回して見る
+- awaits.jsonl に切れた行が 1 行でも残ると、人がその行を直すか消すまで、その spec の待ちの記録を読む判定（check・ready・qa・rolled-back・Stop hook。Stop hook は予算の 2 倍の弁にも届かない）は全部止まる。agent が行を消すと数え漏れるので、agent は `autopilot.py block --no-rollback` で人に戻す（production_errors が読めない記録を「本番が良くない」として返すので、block だけは通る。wait・hold は断る）。Stop hook の文は例外の型名（UnreadableAwaits）だけなので、行番号は CLI を回して見る
 - 書き手が書いている途中に読むと、書きかけの末尾の行で一時的に止まりうる（次の判定で消える。頻度は測っていない）
 
 ## pre-pr-review の範囲

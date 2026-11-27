@@ -1,5 +1,9 @@
-$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -v
-plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator
-plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator
-plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator
-============================== 3 passed in 14.28s ==============================
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -v --no-header -p no:cacheprovider
+============================= test session starts ==============================
+collecting ... collected 3 items
+
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+2028] PASSED [ 33%]
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+2029] PASSED [ 66%]
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+0085] PASSED [100%]
+
+============================== 3 passed in 7.03s ===============================

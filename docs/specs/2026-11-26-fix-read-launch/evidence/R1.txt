@@ -1,8 +1,12 @@
-$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator -v
-plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string
-plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string
-plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string
-plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator
-plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator
-plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator
-============================== 6 passed in 6.28s ===============================
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator -v --no-header -p no:cacheprovider
+============================= test session starts ==============================
+collecting ... collected 6 items
+
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2028] PASSED [ 16%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2029] PASSED [ 33%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+0085] PASSED [ 50%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+2028] PASSED [ 66%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+2029] PASSED [ 83%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+0085] PASSED [100%]
+
+============================== 6 passed in 12.63s ==============================
