@@ -207,11 +207,12 @@ def scan(path, deadline=None):
     """transcript から (起動・再開した agent の id → 時刻, 期限 timer の [(id, 張った時刻, 起動応答の時刻, 秒)], この turn の
     最後の tool の timer の id か None, 途中の完了の知らせが最後に届いた agent の id の集合)。timer は起動応答（backgroundTaskId）があり、
     後の tool の入力にその id が出ていないものだけ。途中の完了は、host の task-notification の summary が `is waiting on its own
-    background work` で終わるもの。ほかの summary の知らせ・その agent の hand-back の行・起動と再開で外す。
+    background work` で終わるもの。ほかの summary の知らせ・その agent の hand-back の行・起動と再開で外す。host は hand-back の行の
+    後に途中の完了の知らせを書くので、起動・再開の後に hand-back を返した agent（reported）には、途中の完了の印を立てない。
     deadline を過ぎたら transcript.Overdue を投げる。"""
     from transcript import transcript_lines
 
-    agents, pending, timers, last, fresh, interim = {}, {}, {}, None, None, set()
+    agents, pending, timers, last, fresh, interim, reported = {}, {}, {}, None, None, set(), set()
     for line in transcript_lines(path, deadline):
         try:
             r = json.loads(line)
@@ -224,11 +225,16 @@ def scan(path, deadline=None):
         content = m.get("content") if isinstance(m, dict) else None
         blocks = [b for b in content if isinstance(b, dict)] if isinstance(content, list) else []
         text = _host_text(r, content if r.get("type") == "user" else None)
+        handed = _HAND_BACK.findall(text)
+        reported.update(handed)
+        interim.difference_update(handed)
         for note in _NOTIFICATION.findall(text):
             task, summary = _TASK_ID.search(note), _SUMMARY.search(note)
             if task and summary:
-                (interim.add if summary.group(1).strip().endswith(INTERIM_SUMMARY) else interim.discard)(task.group(1))
-        interim.difference_update(_HAND_BACK.findall(text))
+                if summary.group(1).strip().endswith(INTERIM_SUMMARY) and task.group(1) not in reported:
+                    interim.add(task.group(1))
+                else:
+                    interim.discard(task.group(1))
         if r.get("type") == "assistant":
             for b in blocks:
                 if b.get("type") != "tool_use":
@@ -250,6 +256,7 @@ def scan(path, deadline=None):
             if isinstance(agent, str) and _AGENT_ID.fullmatch(agent) and at is not None:
                 agents[agent] = at
                 interim.discard(agent)
+                reported.discard(agent)
             task = res.get("backgroundTaskId")
             acks = [b.get("tool_use_id") for b in blocks if isinstance(b.get("tool_use_id"), str)]
             ack = next((t for t in acks if t in pending), None)

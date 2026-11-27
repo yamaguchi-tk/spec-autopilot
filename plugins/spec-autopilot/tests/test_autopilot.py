@@ -2170,6 +2170,40 @@ def test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish(repo, 
     assert blocks(repo, path)
 
 
+@pytest.mark.parametrize("form", ["user", "queued"])
+def test_stop_hook_blocks_when_an_interim_notice_follows_the_handback_line(repo, tmp_path, form):
+    """hand-back の行の後に途中の完了の知らせが届く並び（host が SubagentHandback の後に書く順）でも、最終の報告を返したので止める。"""
+    approved(repo)
+    path = transcript(tmp_path, launched("a1"), handback("a1"), interim("a1", form), *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path)
+
+
+def test_stop_hook_blocks_when_handback_and_interim_notice_share_one_line(repo, tmp_path):
+    approved(repo)
+    both = {"type": "user", "message": {"role": "user", "content":
+            handback("a1")["message"]["content"] + "\n" + notice("a1", summary=INTERIM.format("a1"))}}
+    path = transcript(tmp_path, launched("a1"), both, *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path)
+
+
+def test_stop_hook_counts_an_interim_finish_again_after_the_reported_agent_is_resumed(repo, tmp_path):
+    """hand-back で返した agent を再開したら、その後の途中の完了は待ち中に数える。別の agent の hand-back は影響しない。"""
+    approved(repo)
+    path = transcript(tmp_path, launched("a1", ago=1000), launched("a2", tool="toolu_2"), handback("a1"), handback("a2"),
+                      resumed("a1", ago=1), interim("a1"), interim("a2"), *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert not blocks(repo, path)
+    (path.parent / path.stem / "subagents" / "agent-a1.meta.json").unlink()
+    alive(path, "a2")
+    finished(path, "a2")
+    assert blocks(repo, path)
+
+
 @pytest.mark.parametrize("later,expect_block", [(None, False), ("handback", True), ("final", True)])
 def test_stop_hook_reads_the_real_host_notification_shapes(repo, tmp_path, later, expect_block):
     """実物の形（summary の Agent の後ろは説明文で agent の id ではない・note と output-file の行がある・hand-back は先頭に文がある）。"""
