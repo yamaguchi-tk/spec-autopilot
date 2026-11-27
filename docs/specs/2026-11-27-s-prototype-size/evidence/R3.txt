@@ -1,0 +1,38 @@
+- commit: 128f67b29c25e09e1669a9799e47113e2a9ec012
+
+（手元のパスは `<worktree>` に伏せた。R2 の browser-tetris の一時の repo で、prompt に「合意し直し」を足して、128f67b の照合役の定義で 2 回回した。2 回とも項目 1〜4・6 は 1 行ずつ `該当なし（合意し直し）` で、項目 11 に ng があった）
+
+$ cd <worktree>/.autopilot-qa/repo-tetris && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-tetris/docs/specs/2026-11-27-tetris
+合意し直し" > <worktree>/.autopilot-qa/out-tetris-redo.jsonl
+（1 回目の項目 11 の行。要件・判定・根拠の列）
+R1：盤面・スコア・操作説明の表示、ミノの出現と落下の開始（制約は大きさ S） | ng | 大きさを M にする: spec.md:9
+R2：左右の移動、衝突の判定、長押しの繰り返し | ng | 大きさを M にする: spec.md:10
+R3：時計回りの回転と、横 2 マス以内のずらし | ng | 非目標へ移す（横のずらしの部分。基本の回転は残す）: spec.md:11
+R4：800 ミリ秒ごとの落下、固定、次のミノ | ng | 大きさを M にする: spec.md:12
+R12：7 種の形と色、ランダムな出現順 | ng | 大きさを M にする: spec.md:20
+
+$ cd <worktree>/.autopilot-qa/repo-tetris && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-tetris/docs/specs/2026-11-27-tetris
+合意し直し" > <worktree>/.autopilot-qa/out-tetris-redo2.jsonl
+（2 回目の項目 11 の行）
+R1: 盤面・スコア・操作説明の表示、出現、落下の開始（本体の見積もり約 80 行。全要件の合計は約 320 行） | ng | 大きさを M にする: docs/specs/2026-11-27-tetris/spec.md:9
+R12: 7 種の形・色・ランダムな出し方（約 35 行） | ng | 大きさを M にする: docs/specs/2026-11-27-tetris/spec.md:20
+R4: 800 ミリ秒の落下・固定・次のミノ（約 35 行） | ng | 大きさを M にする: docs/specs/2026-11-27-tetris/spec.md:12
+R2: 左右の移動・衝突の判定・キー入力（約 35 行） | ng | 大きさを M にする: docs/specs/2026-11-27-tetris/spec.md:10
+R3: 回転と、壁・固定ブロックでの横ずらし（約 25 行） | ng | 非目標へ移す（横ずらしの部分。回転は残し、S を超える分は M にする）: docs/specs/2026-11-27-tetris/spec.md:11
+R10: Enter とボタンでの再開（約 25 行） | ng | 大きさを M にする: docs/specs/2026-11-27-tetris/spec.md:18
+
+$ grep -n '5〜11 を見る\|5・7・8・9・10・11 を見る' plugins/spec-autopilot/agents/autopilot-spec-checker.md | cut -c1-12
+9:渡された spec
+
+$ grep -n '合意し直しの照合:.*5・7・8・9・10・11' plugins/spec-autopilot/commands/autopilot.md | cut -c1-12
+117:- 合意し直しの照合
+
+$ node .autopilot-qa/check.mjs --run
+# claude exit codes: 0,0,0,0,0
+# out-tetris-redo.jsonl: model=claude-sonnet-5-5 item11=[ng,ng,ng,ng,ng]
+#   items 1-4,6 bad=[] item11 ng=5
+# out-tetris-redo2.jsonl: model=claude-sonnet-5-5 item11=[ng,ng,ng,ng,ng,ng]
+#   items 1-4,6 bad=[] item11 ng=6
+R1 pass
+R2 pass
+R3 pass
