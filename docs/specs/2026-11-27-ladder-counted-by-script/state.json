@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "ladder-counted-by-script",
   "created_at": 1795757450.3576891,
   "existing": true,
   "start": "4e24634d1098d330647a3b4f9efa865854b4f2a2",
-  "last_active_at": 1795767933.902239,
+  "last_active_at": 1795768464.7726772,
   "scope_sha256": "58676828b121b2deb615692cfe754906b3d906b304da66ada561e3e3af72d03b",
   "approved_at": 1795764762.3724759,
   "approved_by": "R1 を C（review を記録できない状態の評価役の起動は deny）に直し、R6 を広げ、R7・T5 を足し、大きさ L・予算 150 分で合意し直す",
@@ -281,7 +281,7 @@
   ],
   "anomalies": {
     "空の turn の block": 0,
-    "裏で走った agent": 4,
+    "裏で走った agent": 5,
     "承認後に人へ問い": 0,
     "待ちの poll": 0
   },
@@ -302,5 +302,16 @@
       "dispatch": 1,
       "at": 1795767423.689825
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 88,
+      "at": 1795768451.932666,
+      "sha": "5a7818128f1b741546524531c39517ece20ee96c",
+      "head": "56191ef97b27718704bc93f4934e56137e596cc1"
+    }
+  ],
+  "merged_at": 1795768451.932671,
+  "paused_at_merge": 0.0,
+  "done_at": 1795768464.6193228
 }
