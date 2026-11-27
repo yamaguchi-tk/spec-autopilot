@@ -16,5 +16,5 @@ split-modules の夜の run で、実装役・評価役は自分で起こした�
 1 を選ぶ。7 つの定義はファイルの数で 1 本の spec にすると大きさが L になるので、評価役の 3 つをこの spec にし、実装役の 4 つは 2026-11-28-denial-stop-implementers に分けた。
 
 ## Consequences
-- 実装役・評価役が TaskStop を使えるようになる
+- 評価役が TaskStop を使えるようになる（実装役は 2026-11-28-denial-stop-implementers）
 - 拒否の件数が減ったかは、この後の run の集計で確かめる
