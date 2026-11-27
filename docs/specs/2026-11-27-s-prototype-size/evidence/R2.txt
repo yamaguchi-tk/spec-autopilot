@@ -1,0 +1,31 @@
+- commit: 128f67b29c25e09e1669a9799e47113e2a9ec012
+
+（手元のパスは `<worktree>` に伏せた。fixtures を spec.md として、git init した一時の repo（<worktree>/.autopilot-qa/repo-tetris・repo-guess）に置いた。128f67b の照合役の定義で、browser-tetris は 2 回、number-guess は 1 回回した。node .autopilot-qa/check.mjs --run が、下の 3 本を含む 5 本を並べて回す）
+
+$ cd <worktree>/.autopilot-qa/repo-tetris && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-tetris/docs/specs/2026-11-27-tetris" > <worktree>/.autopilot-qa/out-tetris.jsonl
+（1 回目の項目 11 の行。要件・判定・根拠の列）
+R1: 画面・盤面・スコア・操作説明・出現・落下開始（見積もり約 70 行。12 要件の合計は約 300 行で、150 行を超える） | ng | 大きさを M にする（基本の画面なので非目標へは移さない）: spec.md:9
+R12: 7 種の形・色・ランダムな出し順（約 45 行） | ng | 大きさを M にする（7 種と色は普通に付くので非目標へは移さない）: spec.md:20
+R2: 左右移動・衝突判定・長押し（約 35 行） | ng | 大きさを M にする（基本の操作なので非目標へは移さない）: spec.md:10
+R4: 800 ミリ秒の落下・固定・次のミノ（約 35 行） | ng | 大きさを M にする（基本の操作なので非目標へは移さない）: spec.md:12
+R3: 回転と、横に 2 マス以内のずらし（約 30 行） | ng | ずらしを非目標へ移す。それでも超えるので大きさを M にする: spec.md:11
+
+$ cd <worktree>/.autopilot-qa/repo-tetris && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-tetris/docs/specs/2026-11-27-tetris" > <worktree>/.autopilot-qa/out-tetris2.jsonl
+（2 回目の項目 11 の行）
+R1: 画面・盤面・スコア・操作説明・出現と落下の開始 | ng | 大きさを M にする: spec.md:9
+R3: 時計回りの回転と、横 2 マス以内のずらし | ng | 壁際のずらしを非目標へ移す（それでも超えるので大きさを M にする）: spec.md:11
+R4: 800 ミリ秒ごとの落下・固定・次のミノ | ng | 大きさを M にする: spec.md:12
+R12: 7 種類のランダムな出現と色分け | ng | 大きさを M にする: spec.md:20
+
+$ cd <worktree>/.autopilot-qa/repo-guess && claude -p --plugin-dir <worktree>/plugins/spec-autopilot --agent spec-autopilot:autopilot-spec-checker --output-format stream-json --verbose "spec のディレクトリ: <worktree>/.autopilot-qa/repo-guess/docs/specs/2026-11-27-guess" > <worktree>/.autopilot-qa/out-guess.jsonl
+（項目 11 の行）
+本体の見積もりは R1 が 30〜50 行、R2 が 20〜30 行、R3 が 5〜10 行、R4 が 5〜15 行で、合計 60〜105 行。150 行以下なので S に収まる | ok | spec.md:38
+
+$ node .autopilot-qa/check.mjs --run
+# claude exit codes: 0,0,0,0,0
+# out-tetris.jsonl: model=claude-sonnet-5-5 item11=[ng,ng,ng,ng,ng]
+# out-tetris2.jsonl: model=claude-sonnet-5-5 item11=[ng,ng,ng,ng]
+# out-guess.jsonl: model=claude-sonnet-5-5 item11=[ok]
+R1 pass
+R2 pass
+R3 pass
