@@ -1,0 +1,17 @@
+- commit: b232fd303227495a39f346ecfff02e770e475892
+
+$ python3 .autopilot-qa/check.py
+autopilot-reviewer: tools=['Read', 'Grep', 'Glob', 'Bash', 'Write', 'TaskStop']
+autopilot-reviewer: 出力の節は base と同じ (1536 文字)
+autopilot-reviewer-xhigh: tools=['Read', 'Grep', 'Glob', 'Bash', 'Write', 'TaskStop']
+autopilot-reviewer-xhigh: 出力の節は base と同じ (1536 文字)
+autopilot-reviewer-fable: tools=['Read', 'Grep', 'Glob', 'Bash', 'Write', 'TaskStop']
+autopilot-reviewer-fable: 出力の節は base と同じ (1536 文字)
+12 の段は 3 つで同じ文
+R1 pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_reviewer_tools.py plugins/spec-autopilot/tests/test_advisors.py plugins/spec-autopilot/tests/test_agent_gate.py plugins/spec-autopilot/tests/test_ladder.py -q -n auto
+124 passed in 15.48s
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1552 passed in 158.88s (0:02:38)
