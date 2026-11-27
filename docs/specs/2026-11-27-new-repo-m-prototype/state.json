@@ -4,7 +4,7 @@
   "created_at": 1795767530.672534,
   "existing": true,
   "start": "a52175cc646f614c05a0e5530cd4cdfd48e3473a",
-  "last_active_at": 1795768359.7676952,
+  "last_active_at": 1795769197.816567,
   "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
   "approved_at": 1795767966.3967738,
   "approved_by": "OK（推奨の spec のまま承認）",
@@ -41,6 +41,15 @@
       ],
       "dispatch": 0,
       "at": 1795768359.767691
+    }
+  ],
+  "lenses": [
+    {
+      "name": "権限の境界をまたぐ呼び出し",
+      "found": 2,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795769197.816564
     }
   ]
 }
