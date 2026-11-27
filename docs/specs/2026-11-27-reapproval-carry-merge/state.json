@@ -1,0 +1,14 @@
+{
+  "phase": "queued",
+  "slug": "reapproval-carry-merge",
+  "created_at": 1795753067.4874592,
+  "existing": true,
+  "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
+  "last_active_at": 1795757261.843105,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795757261.842288,
+  "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
+  "spec_sha256": "5182e393f9b042eb417feeecb1dce03f6a2553a891e48a768993697bc2f14e5c",
+  "after": null
+}
