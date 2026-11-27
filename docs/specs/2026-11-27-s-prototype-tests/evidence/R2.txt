@@ -1,0 +1,8 @@
+- commit: ca2e9727e3cfa891b0e73d9d8fc5f0d9e161aacb
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ladder.py::test_every_rung_has_an_agent_with_the_declared_model_and_the_same_body -q
+1 passed in 6.40s
+$ for f in autopilot-implementer autopilot-implementer-opus autopilot-implementer-opus-xhigh autopilot-implementer-fable; do grep "^2\. TDD" plugins/spec-autopilot/agents/$f.md | shasum; done
+04827f5cfaabd689eda4962c55b00be3325a05b7  -
+04827f5cfaabd689eda4962c55b00be3325a05b7  -
+04827f5cfaabd689eda4962c55b00be3325a05b7  -
+04827f5cfaabd689eda4962c55b00be3325a05b7  -
