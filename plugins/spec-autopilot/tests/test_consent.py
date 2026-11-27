@@ -4,7 +4,9 @@ import subprocess
 import sys
 import time
 
+from test_advisor_approval import both_ran, out
 from test_autopilot import CLI, GOOD_SPEC, PLUGIN, approved, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
+from test_goal_child import child_spec, parent_goal, queue_by_advisor
 
 sys.path.insert(0, str(PLUGIN / "scripts"))
 import consent  # noqa: E402
@@ -148,3 +150,87 @@ def test_concurrent_lints_keep_the_other_keys_and_the_first_seen_time(repo):
     assert after["note"] == "別のプロセスが書いた値" and consent.valid(after["consent"])
     lint_ok(repo, d)
     assert state(d)["consent"] == after["consent"]
+
+
+# --- R3: --by-advisor の承認し直しと、目的の spec の子の承認も、同じ起点を使う ---
+
+def blocked_numbered(repo, slug="game", text=NUMBERED):
+    """連番の ADR を指す spec を lint で通して人が承認し、block した後。相談役 2 本はこの後に起動する側で回す。"""
+    d = init_spec(repo, slug)
+    numbered_spec(repo, d)
+    lint_ok(repo, d)
+    user_says(repo)
+    assert approve(repo, d).returncode == 0
+    assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y").returncode == 0
+    time.sleep(0.02)
+    return d
+
+
+def by_advisor(repo, d):
+    return run(repo, "approve", str(d), "--by", "連番を直した", "--by-advisor")
+
+
+def test_by_advisor_reapproval_passes_after_only_the_adr_number_is_fixed(repo):
+    d = blocked_numbered(repo)
+    both_ran()
+    renumber(repo, d)
+    r = by_advisor(repo, d)
+    assert r.returncode == 0, out(r)
+    assert state(d)["phase"] == "building"
+
+
+def test_by_advisor_reapproval_refuses_a_text_change_or_an_unlinted_spec(repo):
+    d = blocked_numbered(repo, "req")
+    both_ran()
+    renumber(repo, d, NUMBERED.replace("横 1 列がそろったとき", "横 2 列がそろったとき"))
+    r = by_advisor(repo, d)
+    assert r.returncode == 1 and "fable-advisor" in r.stdout, out(r)
+    assert state(d)["phase"] == "blocked"
+    (repo / NEW).rename(repo / OLD)
+    d = init_spec(repo, "nolint")  # lint を回さずに人が承認した spec は、連番だけの直しでも spec.md の最後の変更が起点
+    numbered_spec(repo, d)
+    user_says(repo)
+    assert approve(repo, d).returncode == 0
+    assert run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y").returncode == 0
+    time.sleep(0.02)
+    both_ran()
+    renumber(repo, d)
+    r = by_advisor(repo, d)
+    assert r.returncode == 1 and "fable-advisor" in r.stdout, out(r)
+    assert state(d)["phase"] == "blocked"
+
+
+def numbered_child(repo, parent, slug="child"):
+    d = child_spec(repo, parent, slug)
+    (repo / OLD).write_text("# ADR: canvas で描く\n\n- 直し方: 要らなくする\n", encoding="utf-8")
+    (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8").replace("docs/adr/2026-01-01-game.md", OLD), encoding="utf-8")
+    return d
+
+
+def test_child_queue_by_advisor_passes_after_only_the_adr_number_is_fixed(repo):
+    parent = parent_goal(repo)
+    d = numbered_child(repo, parent)
+    lint_ok(repo, d)
+    both_ran()
+    renumber(repo, d, (d / "spec.md").read_text(encoding="utf-8"))
+    r = queue_by_advisor(repo, d)
+    assert r.returncode == 0, out(r)
+    assert state(d)["phase"] == "queued"
+
+
+def test_child_queue_by_advisor_refuses_a_text_change_or_an_unlinted_spec(repo):
+    parent = parent_goal(repo)
+    d = numbered_child(repo, parent, "req")
+    lint_ok(repo, d)
+    both_ran()
+    renumber(repo, d, (d / "spec.md").read_text(encoding="utf-8").replace("横 1 列がそろったとき", "横 2 列がそろったとき"))
+    r = queue_by_advisor(repo, d)
+    assert r.returncode == 1 and "fable-advisor" in r.stdout, out(r)
+    assert state(d)["phase"] == "discovery"
+    (repo / NEW).rename(repo / OLD)
+    d = numbered_child(repo, parent, "nolint")  # lint を回していない子は、連番だけの直しでも spec.md の最後の変更が起点
+    both_ran()
+    renumber(repo, d, (d / "spec.md").read_text(encoding="utf-8"))
+    r = queue_by_advisor(repo, d)
+    assert r.returncode == 1 and "fable-advisor" in r.stdout, out(r)
+    assert state(d)["phase"] == "discovery"

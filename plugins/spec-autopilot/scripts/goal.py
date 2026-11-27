@@ -90,9 +90,10 @@ def last_sibling_queued_at(d, name):
     return max(times)
 
 
-def child_errors(d, scope, session):
+def child_errors(d, scope, session, origin):
     """子の承認の条件（親が目的として承認されている・自走の範囲の節が親と同じ・`- 親の要件:` が全部親にある・相談役の条件）
-    を満たさないものの一覧。空なら通る。足りない条件は全部挙げる。"""
+    を満たさないものの一覧。空なら通る。足りない条件は全部挙げる。
+    origin は承認の起点（consent.origin。lint が通した中身なら lint が初めて見た時刻で、spec.md の最後の変更とは限らない）。"""
     errors = []
     names, reqs_lines = parent_lines(d)
     name = names[0] if len(names) == 1 else None
@@ -115,7 +116,7 @@ def child_errors(d, scope, session):
             errors.append(f"親 spec {name} の `## 要件` が読めない")
         elif reqs and (missing := [x for x in reqs if x not in ids]):
             errors.append(f"`- 親の要件:` に親 spec {name} の要件に無い番号がある: {'、'.join(missing)}")
-    since = max((d / "spec.md").stat().st_mtime, last_sibling_queued_at(d, name) if name else 0.0)
+    since = max(origin, last_sibling_queued_at(d, name) if name else 0.0)
     return errors + advisor_approval.reply_errors(session, since)
 
 

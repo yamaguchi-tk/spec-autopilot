@@ -157,7 +157,7 @@ def test_child_records_made_before_the_last_spec_change_do_not_count(repo):
     time.sleep(0.02)
     (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8") + "\n", encoding="utf-8")
     r = queue_by_advisor(repo, d)
-    assert r.returncode == 1 and "spec.md の最後の変更" in r.stdout, out(r)
+    assert r.returncode == 1 and "承認の起点" in r.stdout, out(r)
 
 
 def test_second_child_needs_its_own_consultation_after_the_first_child_was_approved(repo):

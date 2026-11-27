@@ -981,7 +981,7 @@ def cmd_approve(a):
         sys.exit(f"{adr}。作り方の選択を ADR に書いてから承認する")
     since, what = advisor_approval.since_of(s, consent.origin(d, s))
     session = os.environ.get("CLAUDE_CODE_SESSION_ID") if a.by_advisor else require_user_after(d, since, what)
-    if a.by_advisor and (errors := goal.child_errors(d, scope, session) if child else advisor_approval.reply_errors(session, since)):
+    if a.by_advisor and (errors := goal.child_errors(d, scope, session, since) if child else advisor_approval.reply_errors(session, since)):
         return report(errors, warnings, "")
     by = advisor_approval.BY_PREFIX + a.by if a.by_advisor else a.by
     if a.goal: return goal.approve(d, by, scope, warnings)  # noqa: E701
