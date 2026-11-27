@@ -3,15 +3,19 @@
 PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json があるもの）のうち、phase が building（または discovery で「## 制約」の大きさが S の試作）・最後の dispatch を
 閉じた handoff が無い・その dispatch の agent が起動する名前と同じ、の 3 つを満たすものが 1 つでもあれば何も出さない。
 無ければ、prompt に spec が無い・state.json が読めない・途中の例外も含めて deny する。
-想定するのは事故（dispatch の打ち忘れ）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
+評価役（autopilot-reviewer で始まる）の起動は、prompt に書かれた building の spec の state.json の review_launches に時刻を足して通す（読めない spec は残さずに通す）。
+実装役は、最後の評価役の起動より後に review の記録が無い spec も通さない（評価役の結果を記録してから起動し直す）。
+想定するのは事故（dispatch の打ち忘れ・評価役の結果の記録の抜け）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
 答えを出さずに終わった（import の失敗・終了コード 0 以外）ときの deny は、hooks.json の command が出す。"""
 import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import autopilot  # noqa: E402
 import overnight  # noqa: E402
 
 # CLI init が作る spec のディレクトリの名前（<日付>-<英小文字・数字・ハイフン>）を、prompt のパスの手がかりにする
@@ -97,16 +101,32 @@ def problem(d, name):
         return f"{d} の最後の dispatch は handoff で閉じている"
     if short(dispatches[-1].get("agent")) != name:
         return f"{d} の最後の dispatch は {dispatches[-1].get('agent')} を指している（起動は {name}）"
-    return None
+    return overnight.ladder.unrecorded_review(d, s)
+
+
+def record_review_launch(d):
+    """building の spec の review_launches に今の時刻を足す（書く直前に読み直す。読めない・building でない spec は何もしない）。"""
+    try:
+        s = autopilot.load_state(d)
+        if s.get("phase") == "building":
+            s.setdefault("review_launches", []).append(time.time())
+            autopilot.save_state(d, s)
+    except Exception:
+        pass
 
 
 def decide(payload):
     """(deny の理由 | None)。"""
     inp = payload.get("tool_input") or {}
     name = short(inp.get("subagent_type"))
-    if not name.startswith("autopilot-implementer"):
+    is_reviewer = name.startswith("autopilot-reviewer")
+    if not (is_reviewer or name.startswith("autopilot-implementer")):
         return None
     dirs = spec_dirs(str(inp.get("prompt") or ""), payload.get("cwd") or ".")
+    if is_reviewer:
+        for d in dirs:
+            record_review_launch(d)
+        return None
     if not dirs:
         return "prompt に spec のディレクトリ（state.json があるもの）が無いので、dispatch を確かめられない"
     reasons = []

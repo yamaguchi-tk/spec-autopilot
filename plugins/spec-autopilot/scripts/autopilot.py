@@ -1258,7 +1258,7 @@ def cmd_review(a):
     reviews.append({"high": high, "at": time.time(), "sha": tip})
     streak, msgs = s.setdefault("streak", {}), []
     import ladder
-    for rid in reqs:  # 巡ごとに数える: この巡に high か失敗があれば +1、無ければ 0（3 巡に届いた要件は作り直すまで戻さない）
+    for rid in reqs:  # 巡ごとに数える: この巡に high か失敗があれば +1（無ければそのまま。戻すのは rework だけ）
         new = [f for f in (s.get("fails") or {}).get(rid, []) if float(f["at"]) > since]
         if new:
             streak[rid] = streak.get(rid, 0) + 1
@@ -1267,8 +1267,6 @@ def cmd_review(a):
             line = reason and raise_impl(d, s, rid, reason, since, reviews[-1]["at"])  # この要件について 1 巡に 1 段、上げた段を渡した後ならもう 1 段（main は何も呼ばない）
             if line:
                 msgs.append(line)
-        elif streak.get(rid, 0) < LADDER_REWORK:
-            streak[rid] = 0
     save_state(d, s)
     print("\n".join(msgs) if msgs else "review: high なし")
     return 0

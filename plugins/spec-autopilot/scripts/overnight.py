@@ -53,7 +53,7 @@ REQUIRED_FOR_FULL = ("QA の環境", "QA の書き込み先", "デプロイの�
 AUTO_DEPLOY = "マージで自動"
 NO_DEPLOY = "なし（マージした commit で QA）"  # デプロイの workflow が無い repo: 最後のマージの記録を QA の起点にする
 ROUND_KEYS = ("merges", "merged_at", "paused_at_merge", "parked", "qa_runs", "handoffs", "dispatches", "lenses",
-              "rolled_back")
+              "rolled_back", "review_launches")
 OPTIONAL_KEYS = ("通知",)  # 無くてよい行（無ければ なし）
 NOTIFY = ("デスクトップ", "Slack の DM", "なし")
 PROFILE = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -891,6 +891,7 @@ def cmd_dispatch(a):
     if not (s.get("phase") == "building" or small):
         autopilot.refuse(s, "dispatch は自走中（building）か、承認の前の大きさ S の試作だけ受ける" + (f"。{why}" if why else ""))
     name, reqs, stop = impl_name(d, s, a.task)
+    stop = stop or ladder.unrecorded_review(d, s)  # 評価役の結果を記録しないまま直しへ進まない（開いた dispatch の後では review を記録できない）
     if stop:
         print(stop)
         return 1

@@ -64,7 +64,7 @@
   - path: plugins/spec-autopilot/scripts/lineup.py:79-89
 
 ## 作り方
-この spec の ADR のとおり（直し方の段は「設計を変える」）。agent_gate の decide で、評価役の起動なら prompt に書かれた spec のディレクトリ（spec_dirs）のうち building のもの全部の state.json の `review_launches` に起動の時刻を 1 件足して通し、実装役の起動なら problem で「最後の評価役の起動の時刻 > 最後の review の時刻」を deny の理由にする。state.json の読み書きは autopilot.py の load_state・save_state を使う。`review_launches` を overnight.py の ROUND_KEYS に足し、承認し直しで history に移す。cmd_review の巡の数えから、high も失敗も無い巡で 0 に戻す分岐を消す（autopilot.py の行数は増やさない）。
+この spec の ADR のとおり（直し方の段は「設計を変える」）。agent_gate の decide で、評価役の起動なら prompt に書かれた spec のディレクトリ（spec_dirs）のうち building のもの全部の state.json の `review_launches` に起動の時刻を 1 件足して通し、実装役の起動なら problem で「最後の評価役の起動の時刻 > 最後の review の時刻」を deny の理由にする。state.json の読み書きは autopilot.py の load_state・save_state を使う。`review_launches` を overnight.py の ROUND_KEYS に足し、承認し直しで history に移す。cmd_review の巡の数えから、high も失敗も無い巡で 0 に戻す分岐を消す（autopilot.py の行数は増やさない）。開いた dispatch の後では review を記録できない（review_gate が閉じた handoff を求める）ので、記録の抜けは overnight.py dispatch でも断り、判定は ladder.py の unrecorded_review 1 つを agent_gate と dispatch で使う。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |

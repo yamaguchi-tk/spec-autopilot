@@ -105,6 +105,14 @@ def review_agent(section_text, raises, reviews):
     return RUNGS["review"][names[i]][0]
 
 
+def unrecorded_review(d, s):
+    """最後の評価役の起動（hook が記録した review_launches）より後に review の記録が無ければ、その旨の文。あれば None。"""
+    reviews = s.get("reviews") or []
+    if (s.get("review_launches") or [0])[-1] > (reviews[-1]["at"] if reviews else 0):
+        return f"{d} は評価役を起動したのに結果が記録されていない。評価役の結果を `autopilot.py review {d} --high ...` で記録してから進む"
+    return None
+
+
 def raise_reason(streak_now, investigate, rework):
     """review の巡で、その要件を 1 段上げる合図。無ければ None（実装役の失敗は fail の記録の時点で上げる）。"""
     if streak_now == rework:
