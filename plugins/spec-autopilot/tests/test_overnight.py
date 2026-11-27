@@ -620,6 +620,33 @@ def test_handoff_requires_a_new_commit_and_checked_tasks(repo):
     assert night(repo, "handoff", str(d), "--task", "T1").returncode == 0
 
 
+def test_handoff_prompts_the_playable_line_only_when_every_task_is_checked(repo):
+    d = full_spec(repo)
+    both = "- [x] T1: 規則 [R1]\n- [ ] T2: 画面 [R2]\n"
+    (d / "tasks.md").write_text(both, encoding="utf-8")
+    assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    implementer_ran()
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0 and "handoff: OK" in r.stdout and "遊べます" not in r.stdout  # T2 が残る間は促さない
+    handoffs = state(d)["handoffs"]
+    (d / "tasks.md").write_text(both.replace("[ ] T2", "[x] T2"), encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")  # 記録済みの経路でも、全部 [x] になれば促す
+    assert r.returncode == 0 and "遊べます: <開き方>。評価を続けます" in r.stdout
+    assert state(d)["handoffs"] == handoffs  # 記録は変えない
+
+
+def test_handoff_prompts_the_playable_line_when_the_last_task_closes(repo):
+    d = full_spec(repo)
+    (d / "tasks.md").write_text("- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    assert night(repo, "dispatch", str(d), "--task", "T1").returncode == 0
+    implementer_ran()
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "impl"], cwd=repo, check=True)
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0 and "遊べます: <開き方>。評価を続けます" in r.stdout
+    assert len(state(d)["handoffs"]) == 1
+
+
 def test_handoff_rejects_uncommitted_code(repo):
     d = full_spec(repo)
     (d / "tasks.md").write_text("- [ ] T1: 規則 [R1, R2]\n", encoding="utf-8")

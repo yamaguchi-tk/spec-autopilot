@@ -1045,6 +1045,20 @@ def after_close_errors(root, tip, now):
     return []
 
 
+def checked_tasks(d):
+    """tasks.md で [x] のタスクの番号と、[ ] のタスクの数。"""
+    rows = [m for m in map(autopilot.TASK.match, (d / "tasks.md").read_text(encoding="utf-8").splitlines()) if m]
+    return {m.group(2) for m in rows if m.group(1) in "xX"}, sum(m.group(1) == " " for m in rows)
+
+
+def ok_message(d, lead="handoff: OK。"):
+    """handoff の OK の行。タスクが全部 [x] なら、触れるものは評価役に進む前に「遊べます」の行を出すよう促す行を足す。"""
+    msg = f"{lead}評価役に進む"
+    if checked_tasks(d)[1] == 0:
+        msg += "\n最後のタスクを閉じた。触れるもの（ブラウザや CLI）なら、評価役を起動する前に「遊べます: <開き方>。評価を続けます」と 1 行だけ出す（問いではない）"
+    return msg
+
+
 def cmd_handoff(a):
     """閉じた後の 2 つの形（dispatch を打たずに起動した実装役は hooks/agent_gate.py が起動で止める。閉じた後に main が書いた
     コードは、閉じた tip と中身が違うファイルから統合先が変えたものを除いて見分ける）を拒む。見分けない残りは、統合先も変えた
@@ -1066,7 +1080,7 @@ def cmd_handoff(a):
     if missing:
         errors.append(f"{', '.join(missing)} は最後の dispatch で渡していない（渡すたびに dispatch する）")
     if closed and closed[-1].get("tip") == now and not missing:
-        print("handoff: 最後の dispatch は今の HEAD で記録済み。評価役に進む")
+        print(ok_message(d, "handoff: 最後の dispatch は今の HEAD で記録済み。"))
         return 0
     if not closed:  # 開いている dispatch: 実装役の commit が増えたかを数える
         if base is not None and not contains(root, base, now):
@@ -1080,13 +1094,12 @@ def cmd_handoff(a):
     dirty = dirty_code(root)
     if dirty:
         errors.append(f"commit していないコードがある: {', '.join(dirty)}")
-    done = {m.group(2) for m in map(autopilot.TASK.match, (d / "tasks.md").read_text(encoding="utf-8").splitlines())
-            if m and m.group(1) in "xX"}
+    done = checked_tasks(d)[0]
     errors += [f"{t} が tasks.md で [x] になっていない" for t in a.task if t not in done]
     if not errors:
         s.setdefault("handoffs", []).append({"tip": now, "tasks": a.task, "dispatch": n, "at": time.time()})
         autopilot.save_state(d, s)
-    return autopilot.report(errors, [], "handoff: OK。評価役に進む")
+    return autopilot.report(errors, [], ok_message(d))
 
 
 def cmd_ready(a):
