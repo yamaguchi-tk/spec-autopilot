@@ -8,7 +8,7 @@
 観測: split-modules の夜の run で、実装役・評価役は `pkill`・`kill` で 8 件拒まれた。できあがったら、評価役は自分で起こした処理を TaskStop で止められ、定義にそう書かれている。
 
 ## 要件
-- R1: 評価役の定義（autopilot-reviewer・autopilot-reviewer-xhigh・autopilot-reviewer-fable の 3 つ）は、front matter の tools に TaskStop を持ち、本文で、処理を `kill`・`pkill` で止めず、自分が background で起こした処理の task id だけを TaskStop に渡して止めること（main の timer やほかの agent の処理の id は渡さない。前景の処理は Bash の `timeout` 引数で終わらせる。task id の無い処理が残ったら止めずに報告に書く）を指示する。
+- R1: 評価役の定義（autopilot-reviewer・autopilot-reviewer-xhigh・autopilot-reviewer-fable の 3 つ）は、front matter の tools に TaskStop を持ち、本文で、処理を `kill`・`pkill` で止めず、自分が background で起こした処理の task id だけを TaskStop に渡して止めること（main の timer やほかの agent の処理の id は渡さない。前景の処理は Bash の `timeout` 引数で終わらせる。task id の無い処理が残ったら止めずに返す）を指示する。出力の節は変えない。
 
 ## 非目標
 - 実装役の定義を直すこと（2026-11-28-denial-stop-implementers が受け持つ）
@@ -44,12 +44,12 @@
   - path: plugins/spec-autopilot/tests/test_ladder.py:199-211
 
 ## 作り方
-この spec の ADR のとおり。3 つの定義の front matter の tools に `TaskStop` を足し、本文の番号の付いた段の最後（11 の段）の後ろに、どの段にも効く 1 段として「処理を止める必要があれば `kill`・`pkill` を打たず（権限の自動判定が拒む）、自分が background で起こした処理の task id を TaskStop に渡して止める。main の timer やほかの agent の処理の id は渡さない。前景の処理は Bash ツールの `timeout` 引数で終わらせる。task id の無い処理が残ったら、`kill`・`pkill` を打たず、止めずに報告に書く」を足す（3 つの定義で同じ位置・同じ文にし、梯子の段の本文が同じであることのテストを通す）。テストは新しい tests/test_reviewer_tools.py に書く。テストは、3 つの定義の front matter の tools に TaskStop があるか（host が読む値）を見る。
+この spec の ADR のとおり。3 つの定義の front matter の tools に `TaskStop` を足し、本文の番号の付いた段の最後（11 の段）の後ろに、どの段にも効く 1 段として「処理を止める必要があれば `kill`・`pkill` を打たず（権限の自動判定が拒む）、自分が background で起こした処理の task id を TaskStop に渡して止める。main の timer やほかの agent の処理の id は渡さない。前景の処理は Bash ツールの `timeout` 引数で終わらせる。task id の無い処理が残ったら、`kill`・`pkill` を打たず、止めずに返す（裏に回さないと 3 の段が決めているので、残るのは事故のときだけ）」。出力の節（`出力（日本語）:` から後ろ）は変えないを足す（3 つの定義で同じ位置・同じ文にし、梯子の段の本文が同じであることのテストを通す）。テストは新しい tests/test_reviewer_tools.py に書く。テストは、3 つの定義の front matter の tools に TaskStop があるか（host が読む値）を見る。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |
 |---|---|---|---|
-| R1 | 手元で実物 | 3 つの定義の front matter と本文を読む | 3 つとも tools に TaskStop があり、本文に kill・pkill でなく TaskStop で止める指示がある |
+| R1 | 手元で実物 | 3 つの定義の front matter と本文を読む | 3 つとも tools に TaskStop があり、本文に kill・pkill でなく TaskStop で止める指示と、task id の無い処理は止めずに返す指示があり、出力の節は変わっていない |
 
 ## 制約
 - 予算: 30 分
