@@ -1,4 +1,4 @@
-- commit: 6e90b5a8f83d0f725ad1ceef8429393a3c795349
+- commit: f98f107be935618dfc7a6190590e114ffc2de0ce
 
 $ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
 ........................................................................ [ 98%]
