@@ -645,21 +645,27 @@ def review_gate(d, s):
 # --- 待ちの記録と予算（Stop hook と status が読む） ---
 
 def awaits(d, s):
-    """今の承認より後に終わった待ちの記録（承認し直した前の夜の記録は読まない）。読めない行は飛ばす。"""
+    """今の承認より後に終わった待ちの記録（承認し直した前の夜の記録は読まない）。読めない行があれば止める（_awaits）。"""
     since = float(s.get("approved_at") or 0)
     return [r for r in _awaits(d) if r["at"] > since]
 
 
 def _awaits(d):
+    """待ちの記録の行。空でないのに記録として読めない行（書き込みの途中で切れたものなど）があれば、数えずに通さないよう、
+    ファイルと行番号を名指しして ValueError で止める（人がその行を直すか消すまで、その spec の判定は止まる）。"""
     f = d / AWAITS_LOG
     out = []
-    for line in f.read_bytes().decode("utf-8").split("\n") if f.exists() else []:  # "\n" だけで割る（記録の文字列の U+2028 で割らない）
+    lines = f.read_bytes().decode("utf-8").split("\n") if f.exists() else []  # "\n" だけで割る（記録の文字列の U+2028 で割らない）
+    for n, line in enumerate(lines, 1):
+        if not line.strip():
+            continue
         try:
             r = json.loads(line)
-            if isinstance(r, dict) and isinstance(r.get("at"), (int, float)):
-                out.append(r)
         except ValueError:
-            continue
+            r = None
+        if not (isinstance(r, dict) and isinstance(r.get("at"), (int, float))):
+            raise ValueError(f"{f}:{n} の待ちの記録が読めない。その行を直すか消してから続ける")
+        out.append(r)
     return out
 
 
