@@ -226,6 +226,105 @@ def test_next_blocks_a_dependent_spec_that_cannot_be_put_on_its_dependency(repo,
     assert state(b)["phase"] == "blocked" and "載せ" in state(b)["blocked"]["reason"]
 
 
+# --- 依る spec は state.json に名前で書く ---
+
+def test_queue_writes_only_the_directory_name_of_the_dependency_to_state_json(repo, tmp_path):
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "c0"], cwd=repo, check=True)
+    a = spec(repo, "a")
+    queue(repo, a)
+    wb = tmp_path / "wb"
+    subprocess.run([*GIT, "worktree", "add", "-q", "-b", "b", str(wb)], cwd=repo, check=True)
+    b = spec(wb, "b", after=a, size="M")
+    queue(wb, b)
+    assert state(b)["after"] == a.name and "/" not in state(b)["after"]
+    raw = (b / "state.json").read_text(encoding="utf-8")
+    assert str(tmp_path) not in raw and str(repo) not in raw and str(a.resolve()) not in raw
+
+
+def test_next_starts_a_dependent_spec_in_another_worktree_from_the_name_in_state_json(repo, tmp_path):
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "c0"], cwd=repo, check=True)
+    a = spec(repo, "a")
+    queue(repo, a)
+    wb = tmp_path / "wb"
+    subprocess.run([*GIT, "worktree", "add", "-q", "-b", "b", str(wb)], cwd=repo, check=True)
+    b = spec(wb, "b", after=a, size="M")
+    queue(wb, b)
+    assert state(b)["after"] == a.name
+    assert line(repo, "next").returncode == 0
+    set_phase(a, phase="done", done_at=time.time())
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "building"
+
+
+def test_next_still_reads_an_absolute_path_left_in_after_by_the_earlier_version(repo):
+    a = spec(repo, "a")
+    queue(repo, a)
+    b = spec(repo, "b", after=a, size="M")
+    queue(repo, b)
+    set_phase(a, phase="blocked", blocked={"req": "R1", "reason": "x", "evidence": "y", "at": time.time()})
+    set_phase(b, after=str(a.resolve()))
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "blocked" and a.name in state(b)["blocked"]["reason"]
+
+
+def test_next_blocks_a_dependent_spec_whose_dependency_is_not_in_the_session_record(repo):
+    a = spec(repo, "a")
+    queue(repo, a)
+    b = spec(repo, "b", after=a, size="M")
+    queue(repo, b)
+    set_phase(a, phase="done", done_at=time.time())
+    set_phase(b, after="2026-01-01-no-such-spec")
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "blocked" and "2026-01-01-no-such-spec" in state(b)["blocked"]["reason"]
+
+
+def test_next_blocks_a_dependent_spec_whose_dependency_name_matches_two_specs(repo, tmp_path):
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "c0"], cwd=repo, check=True)
+    a = spec(repo, "a")
+    queue(repo, a)
+    wb = tmp_path / "wb"
+    subprocess.run([*GIT, "worktree", "add", "-q", "-b", "b", str(wb)], cwd=repo, check=True)
+    twin = spec(wb, "a")
+    assert twin.name == a.name
+    queue(wb, twin)
+    b = spec(repo, "b", after=a, size="M")
+    queue(repo, b)
+    set_phase(a, phase="done", done_at=time.time())
+    set_phase(twin, phase="done", done_at=time.time())
+    r = line(repo, "next")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(b)["phase"] == "blocked" and a.name in state(b)["blocked"]["reason"]
+
+
+def test_demand_does_not_count_a_dependent_spec_whose_dependency_cannot_be_found(repo):
+    sys.path.insert(0, str(PLUGIN / "scripts"))
+    import lineup
+
+    a = spec(repo, "a")
+    queue(repo, a)
+    b = spec(repo, "b", after=a, size="M")
+    queue(repo, b)
+    set_phase(a, phase="done", done_at=time.time())
+    assert lineup.demand([(a, state(a)), (b, state(b))], set()) is not None  # 依る spec が引けるうちは、着手できるものに数える
+    set_phase(b, after="2026-01-01-no-such-spec")
+    assert lineup.demand([(a, state(a)), (b, state(b))], set()) is None
+
+
+def test_stop_hook_does_not_demand_next_for_a_dependent_spec_whose_dependency_cannot_be_found(repo):
+    a = spec(repo, "a")
+    queue(repo, a)
+    b = spec(repo, "b", after=a, size="M")
+    queue(repo, b)
+    set_phase(a, phase="done", done_at=time.time())
+    assert "lineup.py next" in decision(repo).get("reason", "")  # b は a が終わったので着手できる
+    set_phase(b, after="2026-01-01-no-such-spec")
+    reason = decision(repo).get("reason", "")
+    assert "lineup.py next" not in reason and "読めない" not in reason
+
+
 # --- 依る spec の lint（承認の前は書式だけ、着手で突き合わせる） ---
 
 LATER = "- 変える: `src/lines.js:1`（`countLines`）\n"  # 前の spec が作るファイル（init の時点に無い）
