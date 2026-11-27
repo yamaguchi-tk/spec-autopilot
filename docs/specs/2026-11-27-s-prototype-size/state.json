@@ -1,14 +1,120 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "s-prototype-size",
   "created_at": 1795740429.140597,
   "existing": true,
   "start": "1416cb843a5dd25001a438e53d7b4f8f5aa05d76",
-  "last_active_at": 1795742421.288361,
+  "last_active_at": 1795744713.02833,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795742421.2871768,
   "approved_by": "OK、承認（2 本まとめて。1 本目）",
   "spec_sha256": "7b0c56c8684c4a60fcf25dfe87ec9bc6297a45ef6e7998249f938642cd3a7c66",
-  "after": null
+  "after": null,
+  "approved_at": 1795742430.6418009,
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795743344.0684538,
+      "sha": "040ad62a522f69da3cf98a9d64e2f5ec5e7d5a70"
+    },
+    {
+      "high": [],
+      "at": 1795744713.02831,
+      "sha": "128f67b29c25e09e1669a9799e47113e2a9ec012"
+    }
+  ],
+  "fails": {
+    "R3": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795743344.068448
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "dd37bb375d08fe73c751636789496d186c093a17",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795742437.727584,
+      "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
+    },
+    {
+      "base": "b14f91cf550a8efeb9efc676742e0f8fdb9e95d3",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795742485.4581351,
+      "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
+    },
+    {
+      "base": "040ad62a522f69da3cf98a9d64e2f5ec5e7d5a70",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795743344.489459,
+      "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "b14f91cf550a8efeb9efc676742e0f8fdb9e95d3",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795742485.221035
+    },
+    {
+      "tip": "040ad62a522f69da3cf98a9d64e2f5ec5e7d5a70",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795742605.18315
+    },
+    {
+      "tip": "128f67b29c25e09e1669a9799e47113e2a9ec012",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795744712.4024
+    }
+  ],
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 2,
+    "承認後に人へ問い": 1,
+    "待ちの poll": 0
+  }
 }
