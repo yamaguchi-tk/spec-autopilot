@@ -4,7 +4,7 @@
   "created_at": 1795801549.299603,
   "existing": true,
   "start": "4a2edcf0820d23f399f39b0df33bb535bae5fda8",
-  "last_active_at": 1795802228.062818,
+  "last_active_at": 1795802655.246054,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795802221.071851,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 12）。人は目的の spec を「まとめて承認」「夜なのでできるだけ確認せずに自走して」で承認済み",
@@ -16,8 +16,50 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
-  "reworks": {}
+  "reviews": [
+    {
+      "high": [
+        "R1"
+      ],
+      "at": 1795802655.24604,
+      "sha": "4f5e2abd30057499ee5f82dd74ffd933d8f65b8d"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795802655.246038
+      }
+    ]
+  },
+  "streak": {
+    "R1": 1
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "6d238f2a3d9edaa82c642703a10939ef1a5389fa",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795802234.801312,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "4f5e2abd30057499ee5f82dd74ffd933d8f65b8d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795802455.177569
+    }
+  ]
 }

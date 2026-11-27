@@ -1,0 +1,27 @@
+- commit: 4f5e2ab
+
+$ gh pr view 105 --json state,mergedAt,mergeCommit,baseRefName,headRefName --jq '[.state,.mergedAt,.mergeCommit.oid,.baseRefName,.headRefName]|@tsv'
+MERGED	2026-11-27T16:51:06Z	542d70eca70e71ebad7686a7cc66689ceb1b5586	main	claude/reapproval-carry-dispatch
+
+$ gh pr view 106 --json state,mergedAt,mergeCommit,baseRefName,headRefName --jq '[.state,.mergedAt,.mergeCommit.oid,.baseRefName,.headRefName]|@tsv'
+MERGED	2026-11-27T17:44:50Z	4a2edcf0820d23f399f39b0df33bb535bae5fda8	main	claude/size-note-at-pr
+
+$ git show claude/reapproval-carry-dispatch:docs/specs/2026-11-28-reapproval-carry-dispatch/state.json | jq -c '{phase, last: .merges[-1]}'
+{"phase":"done","last":{"pr":105,"at":1795798275.534131,"sha":"542d70eca70e71ebad7686a7cc66689ceb1b5586","head":"1a9dc6efdb5726a322811cdd5617b01e69d0be98"}}
+
+$ git show claude/size-note-at-pr:docs/specs/2026-11-28-size-note-at-pr/state.json | jq -c '{phase, last: .merges[-1]}'
+{"phase":"done","last":{"pr":106,"at":1795801500.0344388,"sha":"4a2edcf0820d23f399f39b0df33bb535bae5fda8","head":"92e788ffa3a19751de15c2597fa94fccda719a6f"}}
+
+$ jq -r .phase docs/specs/2026-11-28-reapproval-carry-dispatch/state.json docs/specs/2026-11-28-size-note-at-pr/state.json
+building
+building
+
+$ python3 .autopilot-qa/check_goal_merged.py
+real gh: 2026-11-28-reapproval-carry-dispatch -> ('claude/reapproval-carry-dispatch', 105)
+real gh: 2026-11-28-size-note-at-pr -> ('claude/size-note-at-pr', 106)
+R1 pass
+failing gh: stdout='ret None' stderr=''
+R1-log fail: 期待 gh の失敗（exit 4・auth）が stderr に出る、実際 None を返し stderr は空（goal は phase=building の done でない子とだけ言う）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_goal.py plugins/spec-autopilot/tests/test_goal_done.py plugins/spec-autopilot/tests/test_goal_child.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_goal_merged.py -q -n auto
+77 passed in 9.15s
