@@ -1,0 +1,5 @@
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -v
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator
+============================== 3 passed in 14.28s ==============================

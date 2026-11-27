@@ -1,0 +1,10 @@
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record -v
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line
+plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records PASSED
+plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record PASSED
+============================== 8 passed in 1.14s ===============================

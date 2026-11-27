@@ -1,0 +1,4 @@
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator -v
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED
+============================== 2 passed in 2.18s ===============================

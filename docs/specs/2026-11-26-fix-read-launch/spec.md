@@ -11,7 +11,7 @@
 - R1: dispatch の後に起動した実装役の transcript のどれかの行（読んだファイルの中身が入る user の tool_result の行を含む）の文字列の中に、JSON の文字列に生のまま残る改行に似た文字（U+2028・U+2029・U+0085）があるとき、`overnight.py handoff` は、その記録を読めないとせず、ほかの条件（model・effort・commit）だけで判定する。
 - R2: 相談役（fable-advisor・advice-checker）の transcript のどれかの行（user の tool_result の行を含む）の文字列の中に R1 の文字があるとき、`autopilot.py approve --by-advisor` は、その記録を読めないとせず、返答の `承認:`・`判定:` の行で判定する。
 - R3: transcript の 1 行が JSON として壊れているとき（書きかけ・途中で切れた行）、handoff と approve --by-advisor は今までどおり読めない記録として止める。
-- R4: 待ちの記録（awaits.jsonl）の行の文字列の中に R1 の文字があるとき、deploy の failure を数える判定（failed_deploys・deploy_exhausted・deploy_smoke）は、その行を飛ばさずに数える。途中で切れた行は今までどおり飛ばす。
+- R4: 待ちの記録（awaits.jsonl）の行の文字列の中に R1 の文字があるとき、deploy の failure を数える判定（failed_deploys・deploy_exhausted・deploy_smoke）は、その行を飛ばさずに数える。空でないのに記録として読めない行（途中で切れた行など）があれば、数えずに通さず、ファイルと行番号を名指しして止める。await の書き手は、前の記録が改行で終わっていなければ改行を足してから書く（2 巡目の独立レビューの high を受けた再設計で、人が「源で止める」を選んだ）。
 
 ## 非目標
 - 2026-11-26-split-transcript の実装を変えること（resume の後に handoff からやり直す）
@@ -23,7 +23,9 @@
 ## 影響範囲
 - 変える: plugins/spec-autopilot/scripts/overnight.py:931-946（read_launch）
 - 変える: plugins/spec-autopilot/scripts/advisor_approval.py:96-103（launches）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:653-663（_awaits。1 巡目の独立レビューの high を人に確かめて足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:653-670（_awaits。1 巡目の独立レビューの high を人に確かめて足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:827-831（cmd_await の書き手。2 巡目の再設計で足した）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:647-650（awaits。overnight.py の 14 か所と、budget_view を通して hooks/stop.py・autopilot.py が呼ぶ）
 - 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:919
 - 呼び出し元: plugins/spec-autopilot/scripts/advisor_approval.py:118
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1349-1356（transcript_lines。b"\n" だけで割る）
@@ -52,7 +54,7 @@
   - path: plugins/spec-autopilot/scripts/advisor_approval.py:96-103
 
 ## 作り方
-この spec の ADR のとおり、read_launch と advisor_approval.launches が transcript を、手本の transcript_lines と同じくバイトで読んで b"\n" だけで割る（`read_bytes().split(b"\n")` を行ごとに utf-8 で読む。text mode の改行の変換を通さない。空の行は今までどおり飛ばす）。autopilot.py の transcript_lines は呼ばない（split-transcript がそれを transcript.py に移すので、ここで参照を足すと載せ替えで衝突する）。
+この spec の ADR のとおり、read_launch と advisor_approval.launches が transcript を、手本の transcript_lines と同じくバイトで読んで b"\n" だけで割る（`read_bytes().split(b"\n")` を行ごとに utf-8 で読む。text mode の改行の変換を通さない。空の行は今までどおり飛ばす）。overnight._awaits も awaits.jsonl を `read_bytes().decode("utf-8").split("\n")` で割り、空でない読めない行では ValueError で止める（読み手を選んで止めると、通す側に倒れる読み手が残るため）。await の書き手は、前の記録が改行で終わらなければ改行を足す。autopilot.py の transcript_lines は呼ばない（split-transcript がそれを transcript.py に移すので、ここで参照を足すと載せ替えで衝突する）。
 
 - テストは、U+2028 などを生の文字で書かず、Python の `"\u2028"` のエスケープで書く（生の文字で書くと、このテストのファイルを読んだ実装役の transcript が、直っていない手元の CLI で同じ所で切れる）
 
@@ -62,7 +64,7 @@
 | R1 | 手元で実物 | user の tool_result の行と assistant の行の文字列に R1 の文字を持つ実装役の transcript を tmp の CLAUDE_CONFIG_DIR に置き、`overnight.py handoff` を回す | base で「読めない」で落ち、tip で通る |
 | R2 | 手元で実物 | user の tool_result の行の文字列に R1 の文字を持つ相談役の transcript を置き、`autopilot.py approve --by-advisor` を回す | base で「読めない」で落ち、tip で通る |
 | R3 | 手元で実物 | 途中で切れた行の transcript で、handoff と approve --by-advisor を回す | tip でも読めない記録として止まる |
-| R4 | 手元で実物 | detail に R1 の文字を持つ deploy の failure の行を awaits.jsonl に書き、failed_deploys・deploy_exhausted・deploy_smoke を呼ぶ | base で数え漏れ、tip で数える。途中で切れた行は tip でも飛ばす |
+| R4 | 手元で実物 | detail に R1 の文字を持つ deploy の failure の行を awaits.jsonl に書き、failed_deploys・deploy_exhausted・deploy_smoke を呼ぶ | base で数え漏れ、tip で数える。途中で切れた行・記録でない行は tip ではファイルと行番号を名指しして止まり、切れた行の後の await の記録は新しい行に書かれる |
 
 ## 制約
 - 予算: 45 分
