@@ -1,0 +1,14 @@
+{
+  "phase": "queued",
+  "slug": "s-prototype-size",
+  "created_at": 1795740429.140597,
+  "existing": true,
+  "start": "1416cb843a5dd25001a438e53d7b4f8f5aa05d76",
+  "last_active_at": 1795742421.288361,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795742421.2871768,
+  "approved_by": "OK、承認（2 本まとめて。1 本目）",
+  "spec_sha256": "7b0c56c8684c4a60fcf25dfe87ec9bc6297a45ef6e7998249f938642cd3a7c66",
+  "after": null
+}
