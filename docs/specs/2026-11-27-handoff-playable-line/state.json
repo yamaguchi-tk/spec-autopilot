@@ -4,7 +4,7 @@
   "created_at": 1795751942.877262,
   "existing": true,
   "start": "0dc10f418111bc0aa45d5dc6d96088b5fc41947b",
-  "last_active_at": 1795754203.665598,
+  "last_active_at": 1795761580.604776,
   "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
   "queued_at": 1795752992.710474,
   "approved_by": "人: OK、承認（2 本まとめて）",
@@ -13,11 +13,43 @@
   "approved_at": 1795754203.66539,
   "budget_min": 60,
   "post_budget_min": 60,
-  "history": [],
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "R2 の試走: 入れ子の Claude Code の信頼の確認・権限の確認・草案の OK を人が返す",
+      "at": 1795754540.2572532
+    }
+  ],
   "blocked": null,
-  "paused_sec": 0,
+  "paused_sec": 7040.33886384964,
   "reviews": [],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "c5f64f3126417a6fdbdbc211e440804232e27c9f",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795754235.4898791,
+      "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "cb8efacc67d1daa50d934c717e1484247c3ae04e",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795754404.910818
+    }
+  ],
+  "wait": null
 }

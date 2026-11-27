@@ -1,0 +1,19 @@
+- commit: cb8efacc67d1daa50d934c717e1484247c3ae04e
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_input_kinds.py plugins/spec-autopilot/tests/test_prototype_gate.py -q -n auto
+........................................................................ [ 42%]
+........................................................................ [ 85%]
+........................                                                 [100%]
+168 passed in 22.81s
+
+$ python3 .autopilot-qa/check.py
+.........                                                                [100%]
+9 passed in 19.20s
+
+R1 pass
+
+（.autopilot-qa/test_r1.py は、一時の repo で overnight.py handoff を tip と base（c5f64f31 の overnight.py）の両方で打つ 9 場面:
+ open_remaining / open_all / upper_x / moved_after_close / moved_after_close_remaining / error_no_commit / error_unchecked /
+ error_not_dispatched / last_task_closes。どの場面も終了コードと state.json の handoffs（at・tip を除く）が base と同じで、
+ 全部 [x]（[X] を含む・開いた dispatch・記録済み・閉じた後に HEAD が動いた経路）のときだけ OK の行の次の 1 行に
+ 「遊べます: <開き方>。評価を続けます」の促しが出て、[ ] が残るときは出力が base と一字一句同じ、エラーのときは促しも OK も出ない）
