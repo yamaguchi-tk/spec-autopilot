@@ -373,6 +373,23 @@ def test_next_blocks_a_dependent_spec_after_cmd_block_dropped_its_dependency_fro
     assert state(b)["phase"] == "blocked" and "が block" in state(b)["blocked"]["reason"]
 
 
+@pytest.mark.parametrize("end", ["done", "block"])
+def test_no_state_json_of_the_dependent_pair_holds_a_local_path_after_queue_start_and_end(repo, tmp_path, end):
+    """同じ種類（state.json に手元のパスが入る）の洗い出し: 承認・着手・依る spec の終わり・次の着手か block を通しても、
+    両方の state.json のどこにも絶対パスが入らない。"""
+    a, b = dependent_pair(repo, tmp_path, False)
+    if end == "done":
+        finish(repo, a)
+        (b.parents[2] / "docs" / "adr" / "2026-01-01-game.md").unlink()
+    else:
+        assert run(repo, "block", str(a), "--req", "R1", "--reason", "x", "--evidence", "y").returncode == 0
+    assert line(repo, "next").returncode == 0
+    assert state(b)["phase"] == ("building" if end == "done" else "blocked")
+    for d in (a, b):
+        raw = (d / "state.json").read_text(encoding="utf-8")
+        assert str(tmp_path) not in raw and str(repo) not in raw and str(Path.home()) not in raw, d.name
+
+
 def test_next_blocks_when_the_pair_written_at_the_queue_names_another_spec_than_after(repo, tmp_path):
     a, b = dependent_pair(repo, tmp_path, True)
     finish(repo, a)
