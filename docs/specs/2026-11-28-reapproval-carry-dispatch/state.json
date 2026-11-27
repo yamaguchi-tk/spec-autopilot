@@ -1,8 +1,14 @@
 {
-  "phase": "discovery",
+  "phase": "queued",
   "slug": "reapproval-carry-dispatch",
   "created_at": 1795793351.926902,
   "existing": true,
   "start": "34de8ecf6737ff9738f6b80fee98c72e72cb13e9",
-  "last_active_at": 1795793351.980055
+  "last_active_at": 1795796820.6906428,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795796820.690033,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 14）。人は目的の spec を「まとめて承認」「夜なのでできるだけ確認せずに自走して」で承認済み",
+  "spec_sha256": "6c37485d32392722cab637b631dad66a55fae27de6c48522f1c5a47319ac1423",
+  "after": null
 }
