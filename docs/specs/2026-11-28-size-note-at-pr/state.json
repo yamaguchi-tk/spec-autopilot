@@ -1,8 +1,14 @@
 {
-  "phase": "discovery",
+  "phase": "queued",
   "slug": "size-note-at-pr",
   "created_at": 1795798855.045896,
   "existing": true,
   "start": "542d70eca70e71ebad7686a7cc66689ceb1b5586",
-  "last_active_at": 1795798855.072715
+  "last_active_at": 1795799396.914242,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795799396.91353,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 11）。人は目的の spec を「まとめて承認」「夜なのでできるだけ確認せずに自走して」で承認済み",
+  "spec_sha256": "0050f152e53208bea7442b3b44df3e4d06cc40414282bb3176d632fa800d6071",
+  "after": null
 }
