@@ -1062,7 +1062,7 @@ def cmd_block(a):
     save_state(d, s)
     release(d)
     __import__("runlog").record(d, s, "block", s["blocked"]["at"], top_end=wait_at or s["blocked"]["at"])
-    print(f"blocked: {a.req}。人に 1 通で示す")
+    print(f"blocked: {a.req}。" + ("人に示す前に、spec を直し、fable-advisor → advice-checker を起動して `approve --by-advisor` で承認し直すのを試す（数えられるのは spec を直した後に起動した相談役だけ）。通らなければ `lineup.py next` で次に進み、人に 1 通で示す" if not __import__("advisor_approval").human_errors(s, s.get("scope_sha256")) else "人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない）"))
     __import__("overnight").notify(d)
     return 0
 
@@ -1135,7 +1135,7 @@ def status(d):
         lines.append("承認済みで着手待ち: lineup.py next で承認した順に着手する（人の発言は要らない）")
     elif phase == "blocked":
         b = s.get("blocked") or {}
-        lines.append(f"人に戻した: {b.get('req')}（{b.get('reason')}）。返事を受けたら /autopilot の「人に戻るとき」の手順に従う")
+        lines.append(f"人に戻した: {b.get('req')}（{b.get('reason')}）。" + ("まず spec を直して approve --by-advisor の承認し直しを試し、通らなければ人に 1 通で示して人の返事を待ち、/autopilot の「人に戻るとき」の手順に従う" if not __import__("advisor_approval").human_errors(s, s.get("scope_sha256")) else "人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う"))
     elif phase == "discovery":
         lines.append("壁打ち中: /autopilot の A・B の手順で spec を詰める")
     elif phase == "done":
