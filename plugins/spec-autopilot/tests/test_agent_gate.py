@@ -119,6 +119,8 @@ def test_gate_records_a_reviewer_launch_in_the_building_spec_and_allows_it(repo)
     assert len(launches) == 1 and launches[0] >= before
     assert decision(fire(repo, f"spec: {d}", agent="autopilot-reviewer-fable")) is None
     assert len(state(d)["review_launches"]) == 2
+    assert decision(fire(repo, f"spec は {d.relative_to(repo)} です", agent=REVIEWER, tool="Task")) is None
+    assert len(state(d)["review_launches"]) == 3
 
 
 def test_gate_leaves_state_alone_when_the_reviewer_names_no_building_spec(repo):
