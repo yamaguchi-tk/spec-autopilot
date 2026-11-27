@@ -1574,7 +1574,7 @@ def test_session_start_reports_the_ladder(repo):
     make_done(repo, d)
     failed_round(repo, d)
     failed_round(repo, d)
-    assert "R1: 2 巡続いた失敗" in context(session_start(repo))
+    assert "R1: 失敗のあった巡が累計 2 巡" in context(session_start(repo))
 
 
 def test_another_account_takes_over_the_spec_only_by_adopt(repo, tmp_path):
@@ -3108,7 +3108,7 @@ def test_check_does_not_demand_rework_for_a_parked_requirement(repo):
     three_fails(repo, d)
     assert "作り方" in run(repo, "check", str(d)).stdout
     park_req(d, "R1")
-    assert "R1 は失敗が" not in run(repo, "check", str(d)).stdout
+    assert "R1 は失敗のあった巡が" not in run(repo, "check", str(d)).stdout
 
 
 def test_check_still_demands_rework_for_an_unparked_requirement(repo):
@@ -3117,7 +3117,7 @@ def test_check_still_demands_rework_for_an_unparked_requirement(repo):
     three_fails(repo, d, "R2")
     park_req(d, "R1")
     out = run(repo, "check", str(d)).stdout
-    assert "R2 は失敗が" in out and "R1 は失敗が" not in out
+    assert "R2 は失敗のあった巡が" in out and "R1 は失敗のあった巡が" not in out
 
 
 def test_changed_spec_error_names_revert_park_and_block(repo):

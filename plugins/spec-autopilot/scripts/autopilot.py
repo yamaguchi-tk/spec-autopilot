@@ -761,7 +761,7 @@ def ladder_errors(s):
         if n < LADDER_REWORK or rid in parked:
             continue
         if len((s.get("reworks") or {}).get(rid, [])) < MAX_REWORKS:
-            errors.append(f"{rid} は失敗が {n} 巡続いた。作り方を変える"
+            errors.append(f"{rid} は失敗のあった巡が累計 {n} 巡。作り方を変える"
                           "（references/dead-end.md の 2。新しい ADR を書き、autopilot.py rework で記録する）")
         else:
             errors.append(f"{rid} は作り直しを {MAX_REWORKS} 回しても満たせない。autopilot.py block で人に戻す")
@@ -1122,7 +1122,7 @@ def status(d):
             lines.append(f"機械の待ち: {d / overnight.AWAIT_FILE} がある。待ちのプロセスが死んでいれば、overnight.py await を起動し直す")
         for rid, n in sorted((s.get("streak") or {}).items()):
             if n:
-                lines.append(f"{rid}: {n} 巡続いた失敗（references/dead-end.md の段に従う）")
+                lines.append(f"{rid}: 失敗のあった巡が累計 {n} 巡（references/dead-end.md の段に従う）")
         for rid, adrs in sorted((s.get("reworks") or {}).items()):
             if adrs:
                 lines.append(f"{rid}: 作り直し {len(adrs)} 回（{', '.join(adrs)}）")
@@ -1193,10 +1193,10 @@ def add_fail(s, rid, source, evidence):
 
 def ladder_message(rid, n):
     if n >= LADDER_REWORK:
-        return f"{rid}: 失敗が {n} 巡続いた。作り方を変える（references/dead-end.md の 2）"
+        return f"{rid}: 失敗のあった巡が累計 {n} 巡。作り方を変える（references/dead-end.md の 2）"
     if n >= LADDER_INVESTIGATE:
-        return f"{rid}: 失敗が {n} 巡続いた。推測で直さず原因を調べる（references/dead-end.md の 1）"
-    return f"{rid}: 失敗が {n} 巡続いた"
+        return f"{rid}: 失敗のあった巡が累計 {n} 巡。推測で直さず原因を調べる（references/dead-end.md の 1）"
+    return f"{rid}: 失敗のあった巡が累計 {n} 巡"
 
 
 def cmd_fail(a):
@@ -1278,7 +1278,7 @@ def cmd_rework(a):
     if a.req not in reqs:
         sys.exit(f"{a.req} は spec.md の要件に無い")
     if (s.get("streak") or {}).get(a.req, 0) < LADDER_REWORK:
-        sys.exit(f"{a.req} の失敗は {LADDER_REWORK} 巡続いていない。作り直しの前に直すか原因を調べる")
+        sys.exit(f"{a.req} の失敗のあった巡は累計 {LADDER_REWORK} 巡に届いていない。作り直しの前に直すか原因を調べる")
     reworks = s.setdefault("reworks", {})
     if len(reworks.get(a.req, [])) >= MAX_REWORKS:
         sys.exit(f"{a.req} は作り直しを {MAX_REWORKS} 回した。autopilot.py block {d} --req {a.req} で人に戻す")
