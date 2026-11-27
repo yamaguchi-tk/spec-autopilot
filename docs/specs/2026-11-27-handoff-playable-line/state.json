@@ -4,7 +4,7 @@
   "created_at": 1795751942.877262,
   "existing": true,
   "start": "0dc10f418111bc0aa45d5dc6d96088b5fc41947b",
-  "last_active_at": 1795763752.599363,
+  "last_active_at": 1795764693.627189,
   "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
   "queued_at": 1795752992.710474,
   "approved_by": "人: OK、承認（2 本まとめて）",
@@ -32,6 +32,11 @@
       "high": [],
       "at": 1795763752.5993469,
       "sha": "292e278e766bd938df6c8e083e9faad87aee2e38"
+    },
+    {
+      "high": [],
+      "at": 1795764693.627172,
+      "sha": "767bf4503f5aad669ce79d3040cbbdfb582690f2"
     }
   ],
   "fails": {},
@@ -53,6 +58,19 @@
       "agent": "autopilot-implementer",
       "at": 1795754235.4898791,
       "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
+    },
+    {
+      "base": "0df8d499481ac36a6bb000d2e1ba93fd2248deb1",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795764025.300201,
+      "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
     }
   ],
   "handoffs": [
@@ -71,6 +89,14 @@
       ],
       "dispatch": 0,
       "at": 1795763720.856709
+    },
+    {
+      "tip": "767bf4503f5aad669ce79d3040cbbdfb582690f2",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 1,
+      "at": 1795764247.440756
     }
   ],
   "wait": null,
