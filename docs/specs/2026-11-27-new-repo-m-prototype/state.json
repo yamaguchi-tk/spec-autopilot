@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "new-repo-m-prototype",
+  "created_at": 1795767530.672534,
+  "existing": true,
+  "start": "a52175cc646f614c05a0e5530cd4cdfd48e3473a",
+  "last_active_at": 1795767966.398557,
+  "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
+  "approved_at": 1795767966.3967738,
+  "approved_by": "OK（推奨の spec のまま承認）",
+  "spec_sha256": "501caed2383131cd85cc43d9723ee3fa926f6338319eb75c70b8f5b0e75a4b39",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
