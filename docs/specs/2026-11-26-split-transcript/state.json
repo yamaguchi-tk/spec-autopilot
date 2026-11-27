@@ -1,0 +1,144 @@
+{
+  "phase": "building",
+  "slug": "split-transcript",
+  "created_at": 1795701687.201709,
+  "existing": true,
+  "start": "003e0a5eeeb4b3f64e488c3009560a1e20e84199",
+  "last_active_at": 1795777739.159677,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795702358.216693,
+  "approved_by": "人が「戻しを許可する」と返した。前の巡の実装を revert し、T1 を実装役にやり直させる。要件・自走の範囲は変えていない",
+  "spec_sha256": "134fe75d01060f0b26c6a3dfdb5c29f4daa85901844eb947e7d4420f5f10d5fd",
+  "after": null,
+  "approved_at": 1795776678.374797,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [
+    {
+      "approved_at": 1795702364.8103411,
+      "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 子 1（親 R1）: transcript.py への切り出し",
+      "blocked": {
+        "req": "R1",
+        "reason": "overnight.py handoff が実装役の起動の記録を読めない（read_launch が transcript を splitlines で割り、実装役が読んだ test_stop_bounds.py の U+2028 で JSON が切れる）。起動し直しても同じ",
+        "evidence": "overnight.py handoff: ERROR: autopilot-implementer の起動の記録 agent-a6e5db517455b620c が読めない。read_launch を直に呼ぶと JSONDecodeError: Unterminated string（transcript に U+2028 が 1 個）",
+        "at": 1795702816.7441049
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": [],
+      "fails": {},
+      "streak": {},
+      "reworks": {},
+      "post_budget_min": 60,
+      "paused_sec": 0,
+      "light": null,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": null,
+      "qa_runs": null,
+      "handoffs": null,
+      "dispatches": [
+        {
+          "base": "c6138f4a0a809ca13aa79fe0de80266292d96953",
+          "tasks": [
+            "T1"
+          ],
+          "reqs": [
+            "R1"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795702374.9355772,
+          "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+        }
+      ],
+      "lenses": null,
+      "rolled_back": null,
+      "phase": "blocked"
+    },
+    {
+      "approved_at": 1795775047.901653,
+      "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: block の理由（read_launch の U+2028）は main の #75 で直った。新しい main に載せ替え、影響範囲と前提の行番号だけを直した。要件・自走の範囲は変えていない。相談役の推奨（承認: 可）を advice-checker が反証なし（0/11）で確かめた",
+      "blocked": {
+        "req": "R1",
+        "reason": "承認し直しで前の巡の dispatch が数えられず、handoff が通らない。規則の手順（spec の外を dispatch の base に戻して渡し直す）の git restore と、代わりの git revert が、どちらも auto mode に拒まれた。前の巡の実装（8139877）は HEAD に残っている",
+        "evidence": "overnight.py handoff --task T1 → ERROR: dispatch の記録が無い。git restore --source=c6138f4 は Destructive、git revert 8139877 は Undermining Oversight で拒否",
+        "at": 1795775142.8413692
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": [],
+      "fails": {},
+      "streak": {},
+      "reworks": {},
+      "post_budget_min": 60,
+      "paused_sec": 0,
+      "light": null,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": null,
+      "qa_runs": null,
+      "handoffs": null,
+      "dispatches": null,
+      "lenses": null,
+      "rolled_back": null,
+      "phase": "blocked"
+    }
+  ],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795777634.641899,
+      "sha": "73040c77b560d9d5a7328a897b3373bedc84fae5"
+    }
+  ],
+  "fails": {},
+  "streak": {
+    "R1": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "10b9c15c3e4426fdd3fa81802e443f4856dbdf89",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795776688.716584,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "b74919bcc0cd414f6404db4573a6c920f1b545d0",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795776991.245696
+    },
+    {
+      "tip": "73040c77b560d9d5a7328a897b3373bedc84fae5",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795777634.512319
+    }
+  ],
+  "lenses": [
+    {
+      "name": "挙動を変えないリファクタ",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795777739.1596758
+    }
+  ]
+}
