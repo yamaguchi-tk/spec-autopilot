@@ -6,7 +6,7 @@
 人の発言:「リファクタしてから改善を始めたい」「別のセッションで改善中なので被らないようにして」「全部終わるまで自走して欲しい」。親の spec（2026-11-26-split-modules）の R2 を受け持つ。overnight.py は別のセッションの PR のマージで 1510 行になり、利用者の規則の上限（1500 行）を超えた。できあがったら overnight.py は約 550 行減り、行を足す改善を上限の内で始められる。挙動・CLI の出力・テストの期待は変わらない。
 
 ## 要件
-- R1: 範囲・デプロイ・本番・ロールバックの判定と、待ちの記録と予算を overnight.py の外に移したとき、overnight.py は 1100 行以下になり、overnight.py に移した名前を外へ出し直す行（re-export）は無く、テストの全量が通り、CLI（overnight.py の `report`・`qa`・`ready` と、移す名前を通る autopilot.py の `lint`・`check`・`status`）の出力とエラー文は変わらない。
+- R1: 範囲・デプロイ・本番・ロールバックの判定と、待ちの記録と予算を overnight.py の外に移したとき、overnight.py は 1100 行以下になり、overnight.py に移した名前を外へ出し直す行（re-export）は無く、テストの全量が通り、CLI（overnight.py と autopilot.py。移す名前を通る overnight.py の `report`・`qa`・`ready`・`await`・`merged`・`notify` と、autopilot.py の `lint`・`check`・`status`・`block`・`wait` を含む）の出力とエラー文は変わらない。
 
 ## 非目標
 - 関数の中身を書き換えること（移すだけ。import の行と参照の名前の頭だけを変える）
