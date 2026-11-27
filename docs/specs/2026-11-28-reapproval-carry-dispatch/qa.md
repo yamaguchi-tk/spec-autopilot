@@ -1,0 +1,6 @@
+# QA の結果
+
+<!-- 結果は pass / unverified / fail。pass の証拠は `<path>::<テスト名>`（pytest の node id `<path>::<クラス>::<テスト名>` も可。複数は `・` で並べ、同じファイルの続きは `::<テスト名>`。続けて ` と cmd: ...` を書ける。末尾の 1 組の（…）は注記）・`cmd: <実行したことと結果>`・`manual: <操作と結果>`。並べたテストが 1 つでも無ければ check が落ちる。spec の段が手元で実物の要件の pass は `evidence/R<n>.*` に、デプロイ後の pass は `evidence/R<n>.txt` に、`$ <コマンド>` の行とその出力を残す（デプロイ後はデプロイの後に書き、頭に `- commit: <マージの sha>` と `- 結果: Confirmed` を 1 本ずつ）。unverified は spec の `- unverified の承認:` か、その要件を積んだ park があるときだけ通る -->
+| 要件 | 結果 | 証拠 |
+|---|---|---|
+| R1 | pass | plugins/spec-autopilot/tests/test_carry.py::test_reapproval_after_a_words_only_fix_carries_the_closed_dispatch_and_handoff_and_review_passes_without_a_new_dispatch・::test_reapproval_does_not_carry_the_dispatch_when_a_file_outside_the_spec_changed_and_handoff_is_refused_without_a_dispatch・::test_reapproval_does_not_carry_a_dispatch_that_no_handoff_closed・::test_reapproval_of_a_spec_without_a_dispatch_says_why_it_carried_no_dispatch・::test_queued_reapproval_carries_the_dispatch_when_lineup_next_starts_it・::test_only_a_blocked_spec_carries_the_dispatch と cmd: 一時の git repo で本物の CLI を回し、文だけの直しの承認し直しと `--queue` の後の `lineup.py next` が `dispatch を引き継いだ: ` を出して dispatch なしで handoff と review が通り、spec の外の変更・開いた dispatch・dispatch の無い spec では `dispatch を引き継がなかった: <理由>` を出すことを確かめた（evidence/R1.txt） |

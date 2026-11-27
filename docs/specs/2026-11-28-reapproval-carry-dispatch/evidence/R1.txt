@@ -1,0 +1,105 @@
+- commit: a6974b1f824fee29bec38bd9062f7650ef7161a6
+- 結果: Confirmed
+
+一時の git repo（.autopilot-qa/r1-runs/<場合>/repo）で本物の CLI を回した。人の発言と実装役の起動の記録（host が書くもの）だけ tests の helper で作った。
+
+$ python3 .autopilot-qa/check_reapproval_dispatch.py
+R1 pass
+
+（以下はその中で回した CLI と出力。repo のパスは相対にした）
+
+## 場合: 文だけの直し（approve）
+（dispatch → 実装の commit → handoff → review → block の後）
+(spec.md の要件の文だけを直して commit)
+$ python3 autopilot.py approve docs/specs/2026-11-28-game --by OK
+dispatch を引き継いだ: T1。dispatch を打たずに overnight.py handoff docs/specs/2026-11-28-game --task T1 から進む
+approved: 予算 30 分。ここから自走する
+(exit 0)
+-> OK: state に dispatch 1・handoff 1 が残る
+$ python3 agent_gate.py  < payload(実装役の起動)
+{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "実装役を起動できない: docs/specs/2026-11-28-game の最後の dispatch は handoff で閉じている。overnight.py dispatch <dir> --task T<n> を打ってから起動する"}}
+(exit 0)
+$ python3 overnight.py handoff docs/specs/2026-11-28-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+$ python3 autopilot.py review docs/specs/2026-11-28-game --high none
+review: high なし
+(exit 0)
+-> OK: dispatch は増えていない（1 本のまま）
+$ python3 autopilot.py block docs/specs/2026-11-28-game --req R1 --reason x --evidence y --no-rollback 本番を確かめていない
+(exit 0)
+(spec.md の文をもう 1 か所直して commit)
+$ python3 autopilot.py approve docs/specs/2026-11-28-game --by OK
+dispatch を引き継いだ: T1。dispatch を打たずに overnight.py handoff docs/specs/2026-11-28-game --task T1 から進む
+approved: 予算 30 分。ここから自走する
+(exit 0)
+$ python3 overnight.py handoff docs/specs/2026-11-28-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+
+## 場合: spec の外を 1 行変えた
+(spec.md の要件の文だけを直して commit)
+(spec の外の core.test.js を 1 行変えて commit)
+$ python3 autopilot.py approve docs/specs/2026-11-28-game --by OK
+dispatch を引き継がなかった: 最後の handoff の後に、spec の置き場の外のファイルが変わったか、git で比べられない
+approved: 予算 30 分。ここから自走する
+(exit 0)
+-> OK: state の dispatch・handoff は空（history に移した）
+$ python3 overnight.py handoff docs/specs/2026-11-28-game --task T1
+ERROR: dispatch の記録が無い。実装役に渡す前に overnight.py dispatch <dir> --task T<n>
+(exit 1)
+
+## 場合: 最後の dispatch を閉じずに blocked
+$ python3 overnight.py dispatch docs/specs/2026-11-28-game --task T1
+(exit 0)
+$ python3 autopilot.py block docs/specs/2026-11-28-game --req R1 --reason x --evidence y --no-rollback 本番を確かめていない
+(exit 0)
+(spec.md の要件の文だけを直して commit)
+$ python3 autopilot.py approve docs/specs/2026-11-28-game --by OK
+dispatch を引き継がなかった: 最後の dispatch が handoff で閉じていない
+approved: 予算 30 分。ここから自走する
+(exit 0)
+$ python3 overnight.py handoff docs/specs/2026-11-28-game --task T1
+ERROR: dispatch の記録が無い。実装役に渡す前に overnight.py dispatch <dir> --task T<n>
+(exit 1)
+
+## 場合: 閉じた dispatch の後に 2 本目の dispatch を開いたまま blocked
+$ python3 overnight.py dispatch docs/specs/2026-11-28-game --task T1
+dispatch: T1 を 51258c94 から実装役に渡す。起動する agent:
+autopilot-implementer
+(exit 0)
+$ python3 autopilot.py approve docs/specs/2026-11-28-game --by OK
+dispatch を引き継がなかった: 最後の dispatch が handoff で閉じていない
+approved: 予算 30 分。ここから自走する
+(exit 0)
+
+## 場合: dispatch の無い spec
+$ python3 autopilot.py approve docs/specs/2026-11-28-game --by OK
+dispatch を引き継がなかった: 前の巡に dispatch が無い
+approved: 予算 30 分。ここから自走する
+(exit 0)
+
+## 場合: 文だけの直しを --queue で承認し lineup.py next
+$ python3 autopilot.py approve docs/specs/2026-11-28-game --by OK --queue
+queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+(exit 0)
+$ python3 lineup.py next
+dispatch を引き継いだ: T1。dispatch を打たずに overnight.py handoff docs/specs/2026-11-28-game --task T1 から進む
+started: docs/specs/2026-11-28-game。予算 30 分。/autopilot の C の手順で進める
+(exit 0)
+$ python3 overnight.py handoff docs/specs/2026-11-28-game --task T1
+handoff: OK。評価役に進む
+(exit 0)
+$ python3 autopilot.py review docs/specs/2026-11-28-game --high none
+review: high なし
+(exit 0)
+
+## 変異（spec の外の照合 same_outside を外す: .autopilot-qa/mut-R1-1.patch）
+$ bash .autopilot-qa/mut-R1-1.sh
+1 passed in 12.14s
+--- 変異の後
+>       assert NOT_CARRIED_DISPATCH in r.stdout and CARRIED_DISPATCH not in r.stdout
+E       AssertionError: assert ('dispatch を引き継がなかった: ' in 'dispatch を引き継いだ: T1。dispatch を打たずに overnight.py handoff .../docs/specs/2026-11-28-game --task T1 から進む\napproved: 予算 30 分。ここから自走する\n')
+FAILED plugins/spec-autopilot/tests/test_carry.py::test_reapproval_does_not_carry_the_dispatch_when_a_file_outside_the_spec_changed_and_handoff_is_refused_without_a_dispatch
+1 failed in 12.90s
+（戻した後、git diff --quiet HEAD -- plugins/spec-autopilot/scripts/carry.py が通り、印 .applied は残っていない）

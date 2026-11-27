@@ -204,7 +204,10 @@ def test_reapproval_after_a_building_round_moves_the_prototype_dispatch_and_hand
         assert line(repo, "next").returncode == 0
     s = state(d)
     assert s["phase"] == "building"
-    assert not s.get("dispatches") and not s.get("handoffs")
+    if after == "blocked":  # 閉じた dispatch で spec の外が同じ（tip が今の HEAD）なので、state に残り history にも入る
+        assert len(s["dispatches"]) == 1 and len(s["handoffs"]) == 1
+    else:
+        assert not s.get("dispatches") and not s.get("handoffs")
     assert any(len(h.get("dispatches") or []) == 1 and len(h.get("handoffs") or []) == 1 for h in s["history"]), s["history"]
 
 
