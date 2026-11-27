@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "values-driven-main",
   "created_at": 1795821924.745016,
   "existing": true,
   "start": "aff73f4d514344093a38b34dae36343f3bffc4bd",
-  "last_active_at": 1795823386.673336,
+  "last_active_at": 1795823790.226638,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795822232.5674372,
   "approved_by": "人が spec をそのまま OK と承認（範囲: マージまで）",
@@ -68,5 +68,22 @@
   ],
   "review_launches": [
     1795822916.714945
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 110,
+      "at": 1795823782.6695812,
+      "sha": "06a73a81766790739ac8b0e354d36016b772e10f",
+      "head": "675cce68a00c1bc5b0565495b0a3136d3bc80595"
+    }
+  ],
+  "merged_at": 1795823782.6695838,
+  "paused_at_merge": 0.0,
+  "done_at": 1795823790.2133372,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
