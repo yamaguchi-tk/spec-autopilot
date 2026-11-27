@@ -3,6 +3,7 @@ payload を stdin で渡す入口と、hooks.json の command（答えを出さ�
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -130,11 +131,36 @@ def test_gate_leaves_state_alone_when_the_reviewer_names_no_building_spec(repo):
 
 
 def test_gate_denies_an_implementer_while_a_reviewer_result_is_not_recorded(repo):
-    d = dispatched(repo, building(repo))
-    assert decision(fire(repo, f"{d}")) is None
+    d = building(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    hand_off(repo, d)
     assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert len(state(d)["review_launches"]) == 1
+    s = state(d)
+    s["dispatches"].append({**s["dispatches"][-1], "at": time.time()})  # 直しの dispatch を開く
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
     kind, why = decision(fire(repo, f"{d}"))
     assert kind == "deny" and "autopilot.py review" in why and str(d) in why
+
+
+def test_reviewer_launch_while_a_dispatch_is_open_is_not_recorded(repo):
+    d = dispatched(repo, building(repo))
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert not state(d).get("review_launches")
+    assert decision(fire(repo, f"{d}")) is None
+
+
+def test_reviewer_launch_that_cannot_be_recorded_is_named_on_stderr_and_passes(repo):
+    d = building(repo)
+    mode = d.stat().st_mode
+    os.chmod(d, stat.S_IRUSR | stat.S_IXUSR)
+    try:
+        r = fire(repo, f"{d}", agent=REVIEWER)
+    finally:
+        os.chmod(d, mode)
+    assert decision(r) is None
+    assert "PermissionError" in r.stderr and str(d) in r.stderr and len(r.stderr.strip().splitlines()) == 1
+    assert not state(d).get("review_launches")
 
 
 def test_dispatch_refuses_until_the_reviewer_result_is_recorded(repo):
