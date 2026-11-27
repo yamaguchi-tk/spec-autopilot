@@ -692,6 +692,8 @@ def check(d, stage="all"):
     s = load_state(d)
     if s.get("phase") not in ("building", "done"):
         return [f"承認されていない（phase={s.get('phase')}）"], []
+    if not (d / "spec.md").exists():
+        return [f"spec.md が無い（{d / 'spec.md'}）。承認した spec.md を元の場所に戻す"], []
     errors, notes = [], []
     if sha(d) != s.get("spec_sha256"):
         errors.append("spec.md の要件・QA の方向性・制約などが承認の後に変わった。"

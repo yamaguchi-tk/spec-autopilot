@@ -315,3 +315,18 @@ def test_check_stage_pr_prints_the_base_error_when_spec_md_is_missing_and_does_n
     r = run(repo, "check", str(d), "--stage", "pr")
     assert r.returncode == 1 and "ERROR: 承認されていない（phase=discovery）" in r.stdout, r.stdout + r.stderr
     assert "Traceback" not in r.stderr, r.stderr
+
+
+def test_check_prints_a_spec_md_missing_error_for_an_approved_spec_without_traceback(repo):
+    """承認した spec（building と done）から spec.md を消しても、check は Traceback にせず `spec.md が無い` の ERROR 1 行で終わる。"""
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    for phase in ("building", "done"):
+        if phase == "done":
+            make_done(repo, d)
+        (d / "spec.md").rename(d / "spec.md.bak")
+        for args in (("check", str(d)), ("check", str(d), "--stage", "pr")):
+            r = run(repo, *args)
+            assert r.returncode == 1 and "ERROR: spec.md が無い" in r.stdout, (phase, args, r.stdout + r.stderr)
+            assert "Traceback" not in r.stderr, (phase, args, r.stderr)
+        (d / "spec.md.bak").rename(d / "spec.md")
