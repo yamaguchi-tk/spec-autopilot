@@ -430,7 +430,7 @@ def production_errors(d, s, done=True):
         prod = production(d, s)
     except UnreadableAwaits as e:  # 本番を確かめられない。止める側に倒し、マージの後なら先に戻させ、block で人に渡せるようにする
         if not s.get("merges") or going_back(s):
-            return [f"{e}。本番を確かめられないので、戻した後なら qa --smoke で確かめてから、block --no-rollback で理由を書いて人に示す"]
+            return [f"{e}。本番を確かめられないので、block --no-rollback で理由を書いて人に示す（戻した後で smoke を回せるなら、先に qa --smoke で記録する）"]
         return [f"{e}。本番を確かめられないので、直しより先にロールバック: {rollback}"]
     if prod is None:
         return []
@@ -1401,13 +1401,12 @@ def notify(d):
     where = rows.get("通知") or "なし"
     s = autopilot.load_state(d)
     try:
-        line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
-        if where == "Slack の DM":
-            line = "\n".join([line, *report(d)[1:]])  # DM は朝の報告の行を載せる（読んで判断できるように）
-    except UnreadableAwaits as e:  # block の後の知らせを、読めない待ちの記録で落とさない（report は読めない記録に耐える）
-        line = f"{d.name}: {s.get('phase')}。{e}"
-        if where == "Slack の DM":
-            line = "\n".join([line, *report(d)[1:]])
+        prod = production_label(d, s) or deploy_view(d, s) or "デプロイなし"
+    except UnreadableAwaits:  # block の後の知らせを、読めない待ちの記録で落とさない（どの行かは report の行が出す）
+        prod = "待ちの記録が読めないので分からない"
+    line = f"{d.name}: {s.get('phase')}。本番: {prod}"
+    if where == "Slack の DM":
+        line = "\n".join([line, *report(d)[1:]])  # DM は朝の報告の行を載せる（読んで判断できるように）
     if where == "デスクトップ":
         try:
             r = subprocess.run(["osascript", "-e", f"display notification {json.dumps(line, ensure_ascii=False)} with title \"spec-autopilot\""],
