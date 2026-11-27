@@ -21,14 +21,16 @@
   - メモ: cmd_done の大きさの判定（1036-1047）を新しいファイルの関数に移し、cmd_done と cmd_check（stage が pr のとき）から呼ぶ。autopilot.py は 1391 行なので、移して行を減らす
 - 新規: plugins/spec-autopilot/scripts/size_note.py
 - 変える: plugins/spec-autopilot/commands/autopilot.md（全体）
-  - メモ: 102 行（C の 5 の PR）。 「`CLI done` が「大きさが L になった」と NOTE を出したら」を、4 の `CLI check <dir> --stage pr` か `CLI done` が出したら、に直す
+  - メモ: 102 行（C の 5 の PR）と 112 行（戻ったときの PR）。どちらも NOTE の出どころを `CLI done` だけと書いているので、「`CLI check <dir> --stage pr` か `CLI done` が出したら」に直す
 - 変える: plugins/spec-autopilot/tests/test_size.py（全体）
   - メモ: 既存のテストは変えず、check --stage pr の L と M の場合のテストを足す
 - 呼び出し元: plugins/spec-autopilot/scripts/autopilot.py:1352
   - メモ: check のサブコマンドの `--stage` の引数
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1036-1047
-- 同じ入力: なし
-  - メモ: spec.md の制約と影響範囲を読むだけで、state の記録は変えない
+- 別の実装: plugins/spec-autopilot/scripts/autopilot.py:1000-1013
+  - メモ: cmd_size が同じ大きさの行と影響範囲から大きさを数える（評価役の観点 8 用。数えられないときは ERROR で L に倒す）。出力の形と終了コードが違うので size_note.py とは共有せず、そのまま残す
+- 同じ入力: stated_size、counted_size
+  - メモ: どちらも spec.md の制約の大きさの行と影響範囲を読む。state の記録は変えない
 - 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_merge_qa.py -q -n auto
 
 ## 変えない挙動
