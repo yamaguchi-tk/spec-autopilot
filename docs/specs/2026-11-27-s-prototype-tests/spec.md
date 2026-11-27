@@ -14,7 +14,7 @@
 ## 要件
 - R1: autopilot-implementer が大きさ S の spec を実装するとき、実装役はテストを要件ごとに代表の 1〜2 件にし、要件に書かれた境界の値・表の値はその数件の期待値に入れる。直しを頼まれたときの再現テスト、playbook のタスクが求めるテスト（bug-fix の落ちる再現のテストなど）、同時の書き込みのテストは代表の数に数えず、今のまま書く。大きさが S でない spec のテストの書き方は変えない。
 - R2: 梯子の段の実装役（autopilot-implementer-opus・autopilot-implementer-opus-xhigh・autopilot-implementer-fable）も、R1 と同じテストの書き方をする。
-- R3: plugins/spec-autopilot/.claude-plugin/plugin.json の version を 0.1.14 から 0.1.15 に上げ、版数のテストが 0.1.14 を超えたことを確かめ、.claude-plugin/marketplace.json の description は plugin.json と同じに保つ。
+- R3: plugins/spec-autopilot/.claude-plugin/plugin.json の version を 0.1.15 から 0.1.16 に上げ、版数のテストが 0.1.15 を超えたことを確かめ、.claude-plugin/marketplace.json の description は plugin.json と同じに保つ。
 
 ## 非目標
 - M 以上の spec のテストの数を絞ること
@@ -30,8 +30,8 @@
   - メモ: 梯子の段の実装役の本文は、既定の実装役と同じに保つ（tests/test_ladder.py が本文の一致を確かめる）
 - 変える: plugins/spec-autopilot/.claude-plugin/plugin.json（全体）
   - メモ: version の行だけ
-- 変える: plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py:67-69（test_version_is_raised_past_0_1_13）
-  - メモ: 版数のテストを、0.1.14 を超えたことを見るものに置き換える（repo の CLAUDE.md の版数の規則）
+- 変える: plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py:68-70（test_version_is_raised_past_0_1_14）
+  - メモ: 版数のテストを、0.1.15 を超えたことを見るものに置き換える（repo の CLAUDE.md の版数の規則）
 - 呼び出し元: plugins/spec-autopilot/commands/autopilot.md:90
   - メモ: C の 2 が実装役を起動する。S の試作は references/small-prototype.md が起動する
 - 手本: plugins/spec-autopilot/agents/autopilot-implementer.md:12（2 の項の、計測を括弧に添える書き方）
@@ -52,18 +52,18 @@
   - path: plugins/spec-autopilot/agents/autopilot-implementer.md:12
 - 前提: 梯子の段の実装役の本文は、既定の実装役と同じでなければならない
   - path: plugins/spec-autopilot/tests/test_ladder.py:199-211
-- 前提: 版数のテストは 0.1.13 を超えたかだけを見る
-  - path: plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py:67-69
+- 前提: 版数のテストは 0.1.14 を超えたかだけを見る
+  - path: plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py:68-70
 
 ## 作り方
-この spec の ADR のとおり、実装役の 2 の項に、大きさ S のときのテストの数を 1 文足し、梯子の段の 3 ファイルに同じ文を写す。版数を 0.1.15 に上げ、版数のテストを 0.1.14 を超えたことを見るものに置き換える。
+この spec の ADR のとおり、実装役の 2 の項に、大きさ S のときのテストの数を 1 文足し、梯子の段の 3 ファイルに同じ文を写す。版数を 0.1.16 に上げ、版数のテストを 0.1.15 を超えたことを見るものに置き換える。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |
 |---|---|---|---|
 | R1 | 手元で実物 | 変えた autopilot-implementer.md の 2 の項を読む | 大きさ S のときだけテストを要件ごとに代表の 1〜2 件にし、境界の値・表の値を期待値に入れ、再現テスト・playbook のテスト・同時の書き込みのテストを数に数えないと書かれ、S でないときの書き方が今のまま |
 | R2 | 手元で実物 | 回帰テストの test_ladder.py を回し、4 ファイルの 2 の項を読み比べる | テストが通り、4 ファイルの 2 の項が同じ |
-| R3 | 手元で実物 | plugin.json の version を読み、回帰テストのコマンドを回す | version が 0.1.15 で、版数のテストが 0.1.14 を超えたことを見て、テストが通る |
+| R3 | 手元で実物 | plugin.json の version を読み、回帰テストのコマンドを回す | version が 0.1.16 で、版数のテストが 0.1.15 を超えたことを見て、テストが通る |
 
 ## 制約
 - 予算: 30 分
