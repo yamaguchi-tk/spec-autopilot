@@ -579,7 +579,7 @@ def size_errors(d, impact_text, stated, first_agreement, at_approve):
         return [str(e)], []
     if errors:
         return errors, []
-    if first_agreement and "L" in (stated, size):  # 合意し直しでは L を理由には止めない。実装はもう同じブランチにあり、spec を分けても PR は分かれない。PR は done の NOTE で分けさせる
+    if first_agreement and "L" in (stated, size):  # 合意し直しでは L を理由には止めない。実装はもう同じブランチにあり、spec を分けても PR は分かれない。PR は check --stage pr か done の NOTE で分けさせる
         return [f"{SPLIT_L}（申告 {stated}・{detail}）"], []
     if stated == "S" and diffed == 0:
         if at_approve:
@@ -692,6 +692,8 @@ def check(d, stage="all"):
     s = load_state(d)
     if s.get("phase") not in ("building", "done"):
         return [f"承認されていない（phase={s.get('phase')}）"], []
+    if not (d / "spec.md").exists():
+        return [f"spec.md が無い（{d / 'spec.md'}）。承認した spec.md を元の場所に戻す"], []
     errors, notes = [], []
     if sha(d) != s.get("spec_sha256"):
         errors.append("spec.md の要件・QA の方向性・制約などが承認の後に変わった。"
@@ -1014,7 +1016,10 @@ def cmd_size(a):
 
 
 def cmd_check(a):
-    errors, notes = check(Path(a.dir), a.stage)
+    d = Path(a.dir)
+    errors, notes = check(d, a.stage)
+    if a.stage == "pr" and not errors and (d / "spec.md").exists():  # PR を作る前に、PR を分けるかを決められるようにする（done の NOTE と同じ）。errors があるときは base と同じ ERROR だけ出す
+        notes += __import__("size_note").notes(sys.modules[__name__], d, load_state(d))
     return report(errors, notes, "check: OK")
 
 
@@ -1033,18 +1038,8 @@ def cmd_done(a):
         __import__("runlog").record(d, s, "done", s["done_at"])
     minutes = lambda since: round((s["done_at"] - since) / 60, 1)  # noqa: E731
     print(f"done: 承認から {minutes(s['approved_at'] + s.get('paused_sec', 0))} 分（確認待ちを除く）、着手から {minutes(s['created_at'])} 分。異常: {anomaly_line(s.get('anomalies') or {})}。{commit_note(s)}")
-    text = (d / "spec.md").read_text(encoding="utf-8")
-    stated, size_err = stated_size(COMMENT_BLOCK.sub("", section(text, "制約") or ""))
-    size, detail = None, "数えていない"
-    if size_err:  # 読めない大きさの行は大きい側に倒す（cmd_size と同じ向き）
-        stated, detail = "L", size_err
-    if not is_new_repo(s):
-        try:
-            size, _, detail, _ = counted_size(d, COMMENT_BLOCK.sub("", section(text, "影響範囲") or ""))
-        except RuntimeError as e:
-            print(f"NOTE: 大きさを数えられない（{e}）。PR の大きさは差分を見て決める")
-    if "L" in (stated, size):  # 合意し直しと自走中に育った L も、PR を作る前のここで受け持つ
-        print(f"NOTE: {SPLIT_PR}（申告 {stated or 'なし'}・{detail}）")
+    for line in __import__("size_note").notes(sys.modules[__name__], d, s):
+        print(f"NOTE: {line}")
     overnight = __import__("overnight")
     print("\n".join(overnight.report(d)))
     overnight.notify(d)

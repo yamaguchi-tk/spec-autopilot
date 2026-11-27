@@ -245,3 +245,88 @@ def test_a_new_repo_reapproval_passes_a_declared_large_size_and_done_says_to_spl
     make_done(repo, d)
     r = run(repo, "done", str(d))
     assert r.returncode == 0 and "stacked PR に分ける" in r.stdout, r.stdout
+
+
+def approved_medium_spec(repo):
+    """申告 M・数えた大きさ M で承認した、既存の repo の spec。"""
+    d = existing_spec(repo, size="- 大きさ: M")
+    write_files(repo, {"src/board.js": "x\n", "src/game.js": "y\n"})
+    user_says(repo, prompt="OK")
+    assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+    return d
+
+
+def test_check_stage_pr_says_to_split_the_pr_when_the_counted_size_grew_to_large(repo):
+    """範囲がマージ以上の spec は done が PR の後になるので、PR を作る前の check --stage pr が L の NOTE を出す。終了コードは変えない。"""
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    six_changed_files(repo)
+    make_done(repo, d)
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "NOTE: 大きさが L になった" in r.stdout and "数えた大きさ L" in r.stdout and "申告 M" in r.stdout, r.stdout
+
+
+def test_check_stage_pr_says_to_split_the_pr_when_the_declared_size_is_large(repo):
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    make_done(repo, d)
+    assert run(repo, "done", str(d)).returncode == 0
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 大きさ: M", "- 大きさ: L"), encoding="utf-8")
+    user_says(repo, prompt="機能を足して")
+    assert run(repo, "approve", str(d), "--by", "機能を足す").returncode == 0
+    make_done(repo, d)
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "NOTE: 大きさが L になった" in r.stdout and "申告 L" in r.stdout, r.stdout
+
+
+def test_check_stage_pr_does_not_say_it_when_neither_size_is_large(repo):
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    make_done(repo, d)
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "大きさが L になった" not in r.stdout, r.stdout
+
+
+def test_check_without_stage_does_not_say_it_even_when_large(repo):
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    six_changed_files(repo)
+    make_done(repo, d)
+    r = run(repo, "check", str(d))
+    assert "大きさが L になった" not in r.stdout, r.stdout
+
+
+def test_check_stage_pr_prints_only_the_base_error_when_the_spec_is_not_approved_and_does_not_traceback(repo):
+    """承認前（check が errors を返す）の spec では、大きさの NOTE を出さず、base と同じ ERROR だけで終わる。"""
+    d = existing_spec(repo, size="- 大きさ: L")
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 1 and "ERROR: 承認されていない（phase=discovery）" in r.stdout, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr and "大きさが L になった" not in r.stdout, r.stdout + r.stderr
+
+
+def test_check_stage_pr_prints_the_base_error_when_spec_md_is_missing_and_does_not_traceback(repo):
+    """spec.md が無い spec でも、check --stage pr は Traceback にせず base と同じ ERROR で終わる。"""
+    d = existing_spec(repo)
+    (d / "spec.md").unlink()
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 1 and "ERROR: 承認されていない（phase=discovery）" in r.stdout, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr, r.stderr
+
+
+def test_check_prints_a_spec_md_missing_error_for_an_approved_spec_without_traceback(repo):
+    """承認した spec（building と done）から spec.md を消しても、check は Traceback にせず `spec.md が無い` の ERROR 1 行で終わる。"""
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    for phase in ("building", "done"):
+        if phase == "done":
+            make_done(repo, d)
+        (d / "spec.md").rename(d / "spec.md.bak")
+        for args in (("check", str(d)), ("check", str(d), "--stage", "pr")):
+            r = run(repo, *args)
+            assert r.returncode == 1 and "ERROR: spec.md が無い" in r.stdout, (phase, args, r.stdout + r.stderr)
+            assert "Traceback" not in r.stderr, (phase, args, r.stderr)
+        (d / "spec.md.bak").rename(d / "spec.md")
