@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "lineup-relative-after",
+  "created_at": 1795761638.7192929,
+  "existing": true,
+  "start": "06a99b0b2622d9ca87063722dccbea5751d42683",
+  "last_active_at": 1795763662.3487291,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795763662.347283,
+  "approved_by": "OK（草案のまま承認）",
+  "spec_sha256": "96c37cae0867530436c2c358f2859745df7b040901c4d2489507932165635032",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
