@@ -1,0 +1,14 @@
+{
+  "phase": "queued",
+  "slug": "handoff-playable-line",
+  "created_at": 1795751942.877262,
+  "existing": true,
+  "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
+  "last_active_at": 1795752992.711196,
+  "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
+  "queued_from": "discovery",
+  "queued_at": 1795752992.710474,
+  "approved_by": "人: OK、承認（2 本まとめて）",
+  "spec_sha256": "4caf76f28f336763cd2a4f16b205356d8dbdf5ca3d53a19b6407096d6da74025",
+  "after": "/Users/takashi-yamaguchi/repository/other/spec-autopilot/.claude/worktrees/new-repo-m-one-implementer/docs/specs/2026-11-27-new-repo-m-one-implementer"
+}
