@@ -668,6 +668,9 @@ def deploy_floor(d, s):
     return floor
 
 
+UNREADABLE_PROD = "待ちの記録が読めないので分からない"  # 読めない待ちの記録のときの本番の表示（qa・report・notify）
+
+
 class UnreadableAwaits(ValueError):
     """awaits.jsonl に記録として読めない行がある（production_errors が「本番が良くない」として受け、block で人に戻せるようにする）。"""
 
@@ -1188,7 +1191,7 @@ def cmd_qa(a):
     try:
         label = production_label(d, s) or "確かめていない"
     except UnreadableAwaits:  # 記録は済んだ。本番の状態だけが読めない
-        label = "待ちの記録が読めないので分からない"
+        label = UNREADABLE_PROD
     print(f"qa: 記録した。本番: {label}")
     return 0
 
@@ -1268,7 +1271,7 @@ def report(d):
             waiting.insert(0, f"本番を戻していない: {b['no_rollback']}")
     if unreadable:
         waiting.insert(0, unreadable)
-    prod = (production_label(d, s) or deploy_view(d, s)) if strict else "待ちの記録が読めないので分からない"
+    prod = (production_label(d, s) or deploy_view(d, s)) if strict else UNREADABLE_PROD
     lines = [f"## 朝の報告: {d.name}",
              f"本番: {prod or 'この夜はデプロイしていない'}" + (f"。戻した: {'、'.join(rollbacks)}" if rollbacks else ""),
              ("人の判断を待つもの: " + "、".join(waiting)) if waiting else "人の判断を待つものは無い"]
@@ -1400,13 +1403,13 @@ def notify(d):
     rows = scope_rows((d / "spec.md").read_text(encoding="utf-8")) or {}
     where = rows.get("通知") or "なし"
     s = autopilot.load_state(d)
-    try:
-        prod = production_label(d, s) or deploy_view(d, s) or "デプロイなし"
-    except UnreadableAwaits:  # block の後の知らせを、読めない待ちの記録で落とさない（どの行かは report の行が出す）
-        prod = "待ちの記録が読めないので分からない"
-    line = f"{d.name}: {s.get('phase')}。本番: {prod}"
-    if where == "Slack の DM":
-        line = "\n".join([line, *report(d)[1:]])  # DM は朝の報告の行を載せる（読んで判断できるように）
+    if where == "Slack の DM":  # DM は朝の報告の行を載せる（読んで判断できるように。本番と読めない行は報告の行が 1 回ずつ出す）
+        line = "\n".join([f"{d.name}: {s.get('phase')}", *report(d)[1:]])
+    else:
+        try:
+            line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
+        except UnreadableAwaits as e:  # block の後の知らせを、読めない待ちの記録で落とさず、どの行を直すかを出す
+            line = f"{d.name}: {s.get('phase')}。本番: {UNREADABLE_PROD}。{e}"
     if where == "デスクトップ":
         try:
             r = subprocess.run(["osascript", "-e", f"display notification {json.dumps(line, ensure_ascii=False)} with title \"spec-autopilot\""],

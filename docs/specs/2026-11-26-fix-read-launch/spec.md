@@ -22,17 +22,17 @@
 
 ## 影響範囲
 （行番号は、この直しを入れた後の tip のもの）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:966-981（read_launch）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:969-984（read_launch）
 - 変える: plugins/spec-autopilot/scripts/advisor_approval.py:96-103（launches）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:652-696（awaits・deploy_floor・UnreadableAwaits・_awaits。1 巡目の独立レビューの high を人に確かめて足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:652-699（awaits・deploy_floor・UNREADABLE_PROD・UnreadableAwaits・_awaits。1 巡目の独立レビューの high を人に確かめて足した）
 - 変える: plugins/spec-autopilot/scripts/overnight.py:421-455（production_errors が UnreadableAwaits を「本番が良くない」として返す。マージの後なら先に戻させ、block --no-rollback で人に戻す道を残す）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:699-718（parked_ops・exempt_kinds が report のために strict を受ける）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1120-1133（ready_rollback の CI の記録は読める行だけで見る）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1167-1226（qa・rolled-back の証拠の下限は deploy_floor）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1250-1303（report は読めない行を先頭に出し、block の行を落とさず、読めない間は pass の要件も done と書かない）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:854-858（cmd_await の書き手。2 巡目の再設計で足した）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1398-1420（notify が読めない待ちの記録で落ちず、Slack の DM に朝の報告の行を載せる）
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:954
+- 変える: plugins/spec-autopilot/scripts/overnight.py:702-721（parked_ops・exempt_kinds が report のために strict を受ける）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1123-1136（ready_rollback の CI の記録は読める行だけで見る）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1170-1229（qa・rolled-back の証拠の下限は deploy_floor）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1253-1306（report は読めない行を先頭に出し、block の行を落とさず、読めない間は pass の要件も done と書かない）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:857-861（cmd_await の書き手。2 巡目の再設計で足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1401-1423（notify が読めない待ちの記録で落ちず、Slack の DM には朝の報告の行を、ほかの知らせには読めない行の場所を載せる）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:957
 - 呼び出し元: plugins/spec-autopilot/scripts/advisor_approval.py:118
 - 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:652-657（awaits。overnight.py の 13 か所〔_awaits を直接読む deploy_floor・report は別〕と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1349-1356（transcript_lines。b"\n" だけで割る）
@@ -71,7 +71,7 @@
 | R1 | 手元で実物 | user の tool_result の行と assistant の行の文字列に R1 の文字を持つ実装役の transcript を tmp の CLAUDE_CONFIG_DIR に置き、`overnight.py handoff` を回す | base で「読めない」で落ち、tip で通る |
 | R2 | 手元で実物 | user の tool_result の行の文字列に R1 の文字を持つ相談役の transcript を置き、`autopilot.py approve --by-advisor` を回す | base で「読めない」で落ち、tip で通る |
 | R3 | 手元で実物 | 途中で切れた行の transcript で、handoff と approve --by-advisor を回す | tip でも読めない記録として止まる |
-| R4 | 手元で実物 | detail に R1 の文字を持つ deploy の failure の行を awaits.jsonl に書き、failed_deploys・deploy_exhausted・deploy_smoke を呼ぶ | base で数え漏れ、tip で数える。途中で切れた行・記録でない行は tip ではファイルと行番号を名指しして止まり、切れた行の後の await の記録は新しい行に書かれ、壊れた本番の戻しと block と朝の報告は回り、朝の報告は pass の要件も done と書かない |
+| R4 | 手元で実物 | detail に R1 の文字を持つ deploy の failure の行を awaits.jsonl に書き、failed_deploys・deploy_exhausted・deploy_smoke を呼ぶ | base で数え漏れ、tip で数える。途中で切れた行・記録でない行は tip ではファイルと行番号を名指しして止まり、切れた行の後の await の記録は新しい行に書かれ、壊れた本番の戻しと block と朝の報告は回り、朝の報告は pass の要件も done と書かない。Slack の DM の知らせには報告の行が 1 回ずつ載り、ほかの知らせには読めない行のファイルと行番号が 1 回載る |
 
 ## 制約
 - 予算: 45 分
