@@ -4,7 +4,7 @@
   "created_at": 1795778286.562539,
   "existing": true,
   "start": "53cddd6c8284c01ae789c8fafd4b00d9901d585c",
-  "last_active_at": 1795779376.1447868,
+  "last_active_at": 1795779720.2055209,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795779226.3316102,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 目的の spec（split-modules、人が --goal で承認）の子 2。検証役の反証 1 件（R1 の CLI の列挙が親 R2 より狭い）を受けて R1 を「〜を含む」の形に直し、直した spec を相談役が承認: 可、検証役が反証なし（0/10）とした",
@@ -32,6 +32,16 @@
       "agent": "autopilot-implementer",
       "at": 1795779253.105814,
       "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "e02baf9ca35573e66120cda444e8b78840890376",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795779720.205518
     }
   ]
 }
