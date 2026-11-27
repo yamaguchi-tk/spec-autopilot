@@ -34,7 +34,7 @@
 - 変える: plugins/spec-autopilot/scripts/overnight.py:1401-1425（notify が読めない待ちの記録で落ちず、Slack の DM には朝の報告の行を、ほかの知らせには読めない行の場所を載せる）
 - 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:957
 - 呼び出し元: plugins/spec-autopilot/scripts/advisor_approval.py:118
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:652-657（awaits。overnight.py の 13 か所〔_awaits を直接読む deploy_floor・report は別〕と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:652-657（awaits。overnight.py の 13 か所〔_awaits を直接読む deploy_floor・report・notify は別〕と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1349-1356（transcript_lines。b"\n" だけで割る）
 - 手本: plugins/spec-autopilot/tests/test_overnight.py:941-951（test_handoff_refuses_an_unreadable_implementer_record）
 - 手本: plugins/spec-autopilot/tests/test_advisor_approval.py:202（test_approve_by_advisor_refuses_an_unreadable_record）
