@@ -7,6 +7,7 @@
 
 - 順はこのセッションの記録の並び（承認した順）。依る spec は spec.md の「## 制約」の `- 依る spec: <ディレクトリ名>` に書く
 - 着手は、承認のときのハッシュが同じで、着手の時点の lint が通るときだけ。通らなければ blocked にする（queued のまま残さない）
+- state.json の `after` は依る spec のディレクトリ名だけ（パスは commit されるので書かない）。このセッションの記録から名前で 1 本に決め、決まらなければ blocked にする
 - 依る spec が block なら blocked。依る spec が終わっていれば、その先端（マージしたならマージの commit、レビュー待ちならその PR の head）の上に載せ替えて着手する
 - レビュー待ちは、GitHub の承認が付き、head が記録と同じなら building に戻す（人の発言の代わりに GitHub の承認を根拠にする）
 """
@@ -63,8 +64,7 @@ def queue_lint(d):
 
 def enqueue(d, s, by, session, warnings):
     name = after_name(d)
-    after = next((str(x.resolve()) for x in ap.recorded_specs(session) if x.name == name), None) if name else None
-    s.update(phase="queued", queued_from=s.get("phase"), queued_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), after=after)
+    s.update(phase="queued", queued_from=s.get("phase"), queued_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), after=name)  # state.json は commit されるので、パスは書かず名前だけ
     ap.take_over(d, session, "承認")
     ap.save_state(d, s)
     return ap.report([], warnings, f"queued: 承認した。{NEXT} で承認した順に着手する（人の発言は要らない）")
@@ -134,20 +134,21 @@ def put_on(d, base):
     return None
 
 
-def dependency(s):
-    """(依る spec のディレクトリ, その state)。依る spec が無ければ (None, None)。"""
+def dependency(s, rows):
+    """(依る spec のディレクトリ, その state)。依る spec が無ければ (None, None)。rows は記録した spec と state の組。
+    `after` の名前（前の版の絶対パスなら最後の要素）で 1 本に決まらなければ (Path(名前), None) を返す。"""
     if not s.get("after"):
         return None, None
-    dep = Path(s["after"])
-    return dep, ap.load_state(dep)
+    name = Path(s["after"]).name
+    found = [(d, ds) for d, ds in rows if d.name == name]
+    return found[0] if len(found) == 1 else (Path(name), None)
 
 
-def start(d, s):
-    """queued の spec に着手する。着手できたら True。着手できないなら blocked にして False。"""
+def start(d, s, dep, ds):
+    """queued の spec に着手する（dep・ds は dependency の答え。引けないときは呼ばない）。着手できたら True。着手できないなら blocked にして False。"""
     if ap.sha(d) != s.get("spec_sha256"):
         block(d, s, "承認の後に spec.md か ADR の先頭が変わった。示し直して承認を受ける")
         return False
-    dep, ds = dependency(s)
     if dep is not None:
         base = base_of(dep, ds)
         err = put_on(d, base) if base else f"依る spec {dep.name} の先端が読めない"
@@ -170,12 +171,12 @@ def specs(session):
     return [(d, ap.load_state(d)) for d in ap.recorded_specs(session)]
 
 
-def startable(s):
-    """queued の spec に今着手してよいか（依る spec が終わったか block か、依る spec が無い）。"""
+def startable(s, rows):
+    """queued の spec に今着手してよいか（依る spec が終わったか block か、依る spec が無い）。依る spec が引けなければ数えない。"""
     if s.get("phase") != "queued":
         return False
-    dep, ds = dependency(s)
-    return dep is None or ds.get("phase") not in WAITING or review_wait(ds)
+    dep, ds = dependency(s, rows)
+    return dep is None or (ds is not None and (ds.get("phase") not in WAITING or review_wait(ds)))
 
 
 def review_wait(s):
@@ -184,7 +185,7 @@ def review_wait(s):
 
 def demand(rows, over_budget):
     """Stop hook の要求の文か None。rows は (dir, state)。over_budget は予算の 2 倍を過ぎた building の dir の集合。"""
-    if not any(startable(s) or review_wait(s) for _, s in rows):
+    if not any(startable(s, rows) or review_wait(s) for _, s in rows):
         return None
     building = [d for d, s in rows if s.get("phase") == "building"]
     if any(d not in over_budget for d in building):
@@ -226,13 +227,19 @@ def cmd_next(a):
             return 0
     for d, _ in rows:
         s = ap.load_state(d)  # 前の spec の block で、依る spec の phase が変わっている
-        if not startable(s):
+        if s.get("phase") != "queued":
             continue
-        dep, ds = dependency(s)
+        cur = specs(session)
+        dep, ds = dependency(s, cur)
+        if dep is not None and ds is None:
+            block(d, s, f"依る spec {dep.name} を名前で 1 本に決められない（このセッションの記録に無いか、2 本以上ある）")
+            continue
+        if not startable(s, cur):
+            continue
         if dep is not None and ds.get("phase") == "blocked":
             block(d, s, f"依る spec {dep.name} が block")
             continue
-        if start(d, s):
+        if start(d, s, dep, ds):
             return 0
     for d, s in rows:
         if review_wait(s):
