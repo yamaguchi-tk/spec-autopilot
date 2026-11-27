@@ -49,6 +49,22 @@ LLM の多段レビューや人への中間確認ではなく、成果物の型�
 - 規則に書くときの例: 「人に案を選んでもらう前に、`spec-autopilot:fable-advisor` に材料を場所で渡して 1 本相談する。返った推奨の `推奨:`・`理由:`・`引いた決定:` の欄と、依頼の原文と材料の場所だけを `spec-autopilot:advice-checker` に渡して反証を探させ、`反証あり` なら、最初の材料の場所・最初の推奨・成り立たない主張を渡して fable-advisor に 1 回だけ直させる。最初の推奨と反証の結果、直した推奨（検証していないと書く）、自分の案との食い違いを確認の本文に載せる」
 - opus-advisor と fable-advisor は、工程管理つきの開発ハーネス [gate-driven-development](https://github.com/yamaguchi-tk/gate-driven-development)（GDD）の相談役から、その工程に結びついた起動条件を外して作ったものです。今はこの plugin の定義が正本で、GDD の側とは同期しません
 
+## 役ごとのモデルの既定を変える（setup）
+
+実装役・評価役の始めの段は、既定が実装 `sonnet-high`・評価 `opus-high` です。毎回同じ段にしたいときは、1 回だけ次を回します。
+
+```
+/spec-autopilot:setup
+```
+
+今の段と受ける段が役ごとに出るので、1 つ選びます（既定に戻す選択もあります）。選んだ段は `SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-autopilot`）の `models.md` に `- 実装: <段>`・`- 評価: <段>` の形で残り、plugin を更新しても消えません。command を使わず、次のように直接打つこともできます（`scripts/ladder.py`）。
+
+- `ladder.py show`: 役ごとの受ける段・既定・手元の設定と、設定のファイルのパスを出す
+- `ladder.py setup --impl <段>` / `--review <段>`: その役の行を書く（受けない段は断り、ファイルを変えない）
+- `ladder.py setup --reset`: 設定を消して既定に戻す。`--reset 実装` か `--reset 評価` なら、その役の行だけを消す
+
+設定が写るのは、`autopilot.py init` が spec.md を作る時点だけです。作った後の spec は変わらないので、直したいときはその spec の `## モデル` を直します。設定が読めないとき（段の名前が変わった、同じ役の行が 2 つある、など）は、init が spec を雛形のまま作り、直し方を NOTE で出します。照合役・相談役のモデルは変わりません。
+
 ## 前提と制限
 
 - Python 3 が要ります（標準ライブラリだけ）
