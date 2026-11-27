@@ -1,64 +1,295 @@
-- commit: ba6491c9a29136668531d857abe960117f46cea5
+- commit: 0307d7dd036d959df8447f80cdcba1a793793716
 - 結果: Confirmed
 
 一時の git repo（.autopilot-qa/size-note-runs/ の下）で、tip の CLI と base（cbbdac4）の CLI を同じ作り方の repo に回して比べた。
 grownL = 申告 M で承認し、差分が L に育った spec。stayM = 申告 M で M のまま。declL = 合意し直しで申告を L にした spec。
-unfinished_grownL = grownL でタスクが残る（ERROR あり）。unreadable = 承認後に大きさの行を読めない値にした。unapproved = 承認前。
+unreadable = 大きさの行を読めない値にし、承認の hash をそれに合わせた spec（この版より前に形を検査せずに承認した spec）。
+unfinished_grownL = grownL でタスクが残る（check が ERROR を返す）。unapproved = 承認前。
+nospec_unapproved・nospec_done・nospec_grownL = spec.md を消した spec（前の巡の low。承認前・done の形・L に育った形）。
+期待: check が通る spec では、L（grownL・declL・unreadable）だけ NOTE が出て、終了コードは base と同じ。check が ERROR を返す spec では、NOTE を出さず、出力も終了コードも base と同じ（tip だけの Traceback が無い）。--stage なしの check と done の NOTE は base と同じ。
+nospec_done・nospec_grownL の Traceback は check() 自身が spec.md を読むところで出て、base でも同じに出る（差分の外）。
 
 $ python3 .autopilot-qa/check_size_note.py
 R1 pass
 
+$ python3 -m pytest plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_merge_qa.py -q -n auto
+566 passed in 44.50s
+
 $ python3 autopilot.py check <dir> --stage pr   # grownL, tip
 NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））
 check: OK
+
+(exit 0)
+
+$ python3 autopilot.py check <dir>   # grownL, tip
+check: OK
+
+(exit 0)
+
+$ python3 autopilot.py done <dir>   # grownL, tip
+check: OK
+done: 承認から 0.0 分（確認待ちを除く）、着手から 0.0 分。異常: なし。spec・state.json・qa.md・tasks.md は commit しない（この repo は docs/specs を commit していない）
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））
+## 朝の報告: 2026-11-28-game
+本番: この夜はデプロイしていない
+人の判断を待つものは無い
+- R1: done（core.test.js::clears a full line）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- 範囲: PR まで。マージ: なし
+- 待ち: 0 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+
 (exit 0)
 
 $ python3 base/autopilot.py check <dir> --stage pr   # grownL, base
 check: OK
+
+(exit 0)
+
+$ python3 base/autopilot.py check <dir>   # grownL, base
+check: OK
+
+(exit 0)
+
+$ python3 base/autopilot.py done <dir>   # grownL, base
+check: OK
+done: 承認から 0.0 分（確認待ちを除く）、着手から 0.0 分。異常: なし。spec・state.json・qa.md・tasks.md は commit しない（この repo は docs/specs を commit していない）
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））
+## 朝の報告: 2026-11-28-game
+本番: この夜はデプロイしていない
+人の判断を待つものは無い
+- R1: done（core.test.js::clears a full line）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- 範囲: PR まで。マージ: なし
+- 待ち: 0 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+
 (exit 0)
 
 $ python3 autopilot.py check <dir> --stage pr   # stayM, tip
 check: OK
+
+(exit 0)
+
+$ python3 autopilot.py check <dir>   # stayM, tip
+check: OK
+
+(exit 0)
+
+$ python3 autopilot.py done <dir>   # stayM, tip
+check: OK
+done: 承認から 0.0 分（確認待ちを除く）、着手から 0.0 分。異常: なし。spec・state.json・qa.md・tasks.md は commit しない（この repo は docs/specs を commit していない）
+## 朝の報告: 2026-11-28-game
+本番: この夜はデプロイしていない
+人の判断を待つものは無い
+- R1: done（core.test.js::clears a full line）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- 範囲: PR まで。マージ: なし
+- 待ち: 0 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+
 (exit 0)
 
 $ python3 base/autopilot.py check <dir> --stage pr   # stayM, base
 check: OK
+
+(exit 0)
+
+$ python3 base/autopilot.py check <dir>   # stayM, base
+check: OK
+
+(exit 0)
+
+$ python3 base/autopilot.py done <dir>   # stayM, base
+check: OK
+done: 承認から 0.0 分（確認待ちを除く）、着手から 0.0 分。異常: なし。spec・state.json・qa.md・tasks.md は commit しない（この repo は docs/specs を commit していない）
+## 朝の報告: 2026-11-28-game
+本番: この夜はデプロイしていない
+人の判断を待つものは無い
+- R1: done（core.test.js::clears a full line）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- 範囲: PR まで。マージ: なし
+- 待ち: 0 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+
 (exit 0)
 
 $ python3 autopilot.py check <dir> --stage pr   # declL, tip
 NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））
 check: OK
+
+(exit 0)
+
+$ python3 autopilot.py check <dir>   # declL, tip
+check: OK
+
+(exit 0)
+
+$ python3 autopilot.py done <dir>   # declL, tip
+check: OK
+done: 承認から 0.0 分（確認待ちを除く）、着手から 0.1 分。異常: なし。spec・state.json・qa.md・tasks.md は commit しない（この repo は docs/specs を commit していない）
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））
+## 朝の報告: 2026-11-28-game
+本番: この夜はデプロイしていない
+人の判断を待つものは無い
+- R1: done（core.test.js::clears a full line）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- 範囲: PR まで。マージ: なし
+- 待ち: 0 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+
 (exit 0)
 
 $ python3 base/autopilot.py check <dir> --stage pr   # declL, base
 check: OK
+
+(exit 0)
+
+$ python3 base/autopilot.py check <dir>   # declL, base
+check: OK
+
+(exit 0)
+
+$ python3 base/autopilot.py done <dir>   # declL, base
+check: OK
+done: 承認から 0.0 分（確認待ちを除く）、着手から 0.0 分。異常: なし。spec・state.json・qa.md・tasks.md は commit しない（この repo は docs/specs を commit していない）
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））
+## 朝の報告: 2026-11-28-game
+本番: この夜はデプロイしていない
+人の判断を待つものは無い
+- R1: done（core.test.js::clears a full line）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: なし。直した欠陥 0。積んだ操作: なし
+- 範囲: PR まで。マージ: なし
+- 待ち: 0 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+
 (exit 0)
 
 $ python3 autopilot.py check <dir> --stage pr   # unfinished_grownL, tip
 ERROR: T2 が終わっていない
-NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））
+
+(exit 1)
+
+$ python3 autopilot.py check <dir>   # unfinished_grownL, tip
+ERROR: T2 が終わっていない
+
 (exit 1)
 
 $ python3 base/autopilot.py check <dir> --stage pr   # unfinished_grownL, base
 ERROR: T2 が終わっていない
+
+(exit 1)
+
+$ python3 base/autopilot.py check <dir>   # unfinished_grownL, base
+ERROR: T2 が終わっていない
+
+(exit 1)
+
+$ python3 autopilot.py check <dir> --stage pr   # nospec_unapproved, tip
+ERROR: 承認されていない（phase=discovery）
+
+(exit 1)
+
+$ python3 autopilot.py check <dir>   # nospec_unapproved, tip
+ERROR: 承認されていない（phase=discovery）
+
+(exit 1)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # nospec_unapproved, base
+ERROR: 承認されていない（phase=discovery）
+
+(exit 1)
+
+$ python3 base/autopilot.py check <dir>   # nospec_unapproved, base
+ERROR: 承認されていない（phase=discovery）
+
+(exit 1)
+
+$ python3 autopilot.py check <dir> --stage pr   # nospec_done, tip
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_done-tip/repo/docs/specs/2026-11-28-game/spec.md'
+(exit 1)
+
+$ python3 autopilot.py check <dir>   # nospec_done, tip
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_done-tip/repo/docs/specs/2026-11-28-game/spec.md'
+(exit 1)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # nospec_done, base
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_done-base/repo/docs/specs/2026-11-28-game/spec.md'
+(exit 1)
+
+$ python3 base/autopilot.py check <dir>   # nospec_done, base
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_done-base/repo/docs/specs/2026-11-28-game/spec.md'
+(exit 1)
+
+$ python3 autopilot.py check <dir> --stage pr   # nospec_grownL, tip
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_grownL-tip/repo/docs/specs/2026-11-28-game/spec.md'
+(exit 1)
+
+$ python3 autopilot.py check <dir>   # nospec_grownL, tip
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_grownL-tip/repo/docs/specs/2026-11-28-game/spec.md'
+(exit 1)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # nospec_grownL, base
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_grownL-base/repo/docs/specs/2026-11-28-game/spec.md'
+(exit 1)
+
+$ python3 base/autopilot.py check <dir>   # nospec_grownL, base
+
+Traceback (most recent call last):
+FileNotFoundError: [Errno 2] No such file or directory: '.autopilot-qa/size-note-runs/nospec_grownL-base/repo/docs/specs/2026-11-28-game/spec.md'
 (exit 1)
 
 $ python3 autopilot.py check <dir> --stage pr   # unreadable, tip
-ERROR: spec.md の要件・QA の方向性・制約などが承認の後に変わった。（以下略）
 NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））
-(exit 1)
+check: OK
+
+(exit 0)
+
+$ python3 autopilot.py check <dir>   # unreadable, tip
+check: OK
+
+(exit 0)
 
 $ python3 base/autopilot.py check <dir> --stage pr   # unreadable, base
-ERROR: spec.md の要件・QA の方向性・制約などが承認の後に変わった。（以下略）
-(exit 1)
+check: OK
+
+(exit 0)
+
+$ python3 base/autopilot.py check <dir>   # unreadable, base
+check: OK
+
+(exit 0)
 
 $ python3 autopilot.py check <dir> --stage pr   # unapproved, tip
 ERROR: 承認されていない（phase=discovery）
+
 (exit 1)
 
-ほかに同じスクリプトで確かめたこと（どれも一致）:
-- 終了コード: 6 通りすべてで check --stage pr の終了コードが tip と base で同じ（NOTE の有無で変わらない）
-- --stage なしの check: 6 通りすべてで tip と base の stdout・終了コードが同じで、L の NOTE を出さない
-- done: grownL・stayM・declL で、tip と base の done の NOTE の行と終了コードが同じ（grownL・declL は L の NOTE あり、stayM は無し）
-- check --stage pr の L の NOTE の行は、同じ repo の done の L の NOTE の行と同じ本文
-- どの出力にも `NOTE: NOTE` の二重の接頭辞と Traceback が無い
+$ python3 autopilot.py check <dir>   # unapproved, tip
+ERROR: 承認されていない（phase=discovery）
+
+(exit 1)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # unapproved, base
+ERROR: 承認されていない（phase=discovery）
+
+(exit 1)
+
+$ python3 base/autopilot.py check <dir>   # unapproved, base
+ERROR: 承認されていない（phase=discovery）
+
+(exit 1)
