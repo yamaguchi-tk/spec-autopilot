@@ -893,7 +893,7 @@ def cmd_init(a):
     existing = has_code(root)
     d.mkdir(parents=True)
     for name in ARTIFACTS:
-        shutil.copy(TEMPLATES / name, d / name)
+        (__import__("ladder").write_spec if name == "spec.md" else shutil.copy)(TEMPLATES / name, d / name)
     s = {"phase": "discovery", "slug": a.slug, "created_at": time.time(), "existing": existing}
     if existing:
         out = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], cwd=root, capture_output=True, text=True)
