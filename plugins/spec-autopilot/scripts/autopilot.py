@@ -1016,7 +1016,7 @@ def cmd_size(a):
 def cmd_check(a):
     d = Path(a.dir)
     errors, notes = check(d, a.stage)
-    if a.stage == "pr":  # PR を作る前に、PR を分けるかを決められるようにする（done の NOTE と同じ）
+    if a.stage == "pr" and not errors and (d / "spec.md").exists():  # PR を作る前に、PR を分けるかを決められるようにする（done の NOTE と同じ）。errors があるときは base と同じ ERROR だけ出す
         notes += __import__("size_note").notes(sys.modules[__name__], d, load_state(d))
     return report(errors, notes, "check: OK")
 

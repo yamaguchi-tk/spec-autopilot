@@ -298,3 +298,20 @@ def test_check_without_stage_does_not_say_it_even_when_large(repo):
     make_done(repo, d)
     r = run(repo, "check", str(d))
     assert "大きさが L になった" not in r.stdout, r.stdout
+
+
+def test_check_stage_pr_prints_only_the_base_error_when_the_spec_is_not_approved_and_does_not_traceback(repo):
+    """承認前（check が errors を返す）の spec では、大きさの NOTE を出さず、base と同じ ERROR だけで終わる。"""
+    d = existing_spec(repo, size="- 大きさ: L")
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 1 and "ERROR: 承認されていない（phase=discovery）" in r.stdout, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr and "大きさが L になった" not in r.stdout, r.stdout + r.stderr
+
+
+def test_check_stage_pr_prints_the_base_error_when_spec_md_is_missing_and_does_not_traceback(repo):
+    """spec.md が無い spec でも、check --stage pr は Traceback にせず base と同じ ERROR で終わる。"""
+    d = existing_spec(repo)
+    (d / "spec.md").unlink()
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 1 and "ERROR: 承認されていない（phase=discovery）" in r.stdout, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr, r.stderr
