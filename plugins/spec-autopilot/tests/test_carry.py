@@ -183,3 +183,67 @@ def test_only_a_blocked_spec_carries(repo, prev):
     merges = [{"pr": 7, "sha": "m1", "head": git_head(repo)}]
     kept, note = carry.plan(repo, {"merges": merges, "approved_at": 1.0}, prev)
     assert not kept and note.startswith(NOT_CARRIED)
+
+
+def timed_out_await(repo, gh, d, kind):
+    """前の巡で、マージの後に待ちが上限（0 分）を過ぎて終わった記録を作る。"""
+    if kind == "deploy":
+        gh.answers("run list", [{"out": [{"databaseId": 5, "workflowName": "deploy", "status": "in_progress", "conclusion": None}]}])
+        r = night(repo, "await", str(d), "--kind", "deploy", "--interval", "0", "--timeout-min", "0")
+    else:
+        gh.answers("pr view", [{"out": {"reviewDecision": "REVIEW_REQUIRED", "headRefOid": "h8"}}])
+        r = night(repo, "await", str(d), "--kind", "review", "--pr", "8", "--interval", "0", "--timeout-min", "0")
+    assert r.returncode == 2, r.stdout + r.stderr
+
+
+def merged_then_timed_out_then_carried(repo, gh, kind):
+    d = full_spec(repo)
+    make_done(repo, d)
+    gh.answers("pr view", [merged_pr(git_head(repo))])
+    assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
+    timed_out_await(repo, gh, d, kind)
+    block(repo, d)
+    fix_the_words(repo, d)
+    reapprove(repo, d)
+    return d
+
+
+def test_a_carried_round_does_not_count_the_deploy_timeout_of_the_earlier_round_as_parked(repo, gh):
+    d = merged_then_timed_out_then_carried(repo, gh, "deploy")
+    s = state(d)
+    assert s["merges"] and s["awaits_since"]
+    assert overnight.parked_ops(d, s) == []
+    assert "deploy" not in overnight.exempt_kinds(d, s)
+
+
+def test_a_carried_round_does_not_exempt_the_merge_by_a_review_timeout_of_the_earlier_round(repo, gh):
+    d = merged_then_timed_out_then_carried(repo, gh, "review")
+    s = state(d)
+    assert overnight.parked_ops(d, s) == []
+    assert "merge" not in overnight.exempt_kinds(d, s)
+
+
+def test_a_carried_round_keeps_the_deploy_success_of_the_earlier_round_and_parks_nothing(repo, gh):
+    d = blocked_after_deploy(repo, gh)
+    fix_the_words(repo, d)
+    reapprove(repo, d)
+    s = state(d)
+    assert overnight.parked_ops(d, s) == [] and overnight.deploys_of_last_merge(d, s)
+
+
+def test_check_asks_for_the_merge_containing_head_after_a_code_change_even_if_the_earlier_round_timed_out_in_review(repo, gh):
+    d = merged_then_timed_out_then_carried(repo, gh, "review")
+    (repo / "fix.js").write_text("y\n", encoding="utf-8")
+    commit(repo, "fix.js", msg="code after the carry")
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and CONTAINS in r.stdout
+
+
+def test_check_asks_for_the_merge_containing_head_after_a_code_change_when_the_earlier_round_had_no_timeout(repo, gh):
+    d = blocked_after_deploy(repo, gh)
+    fix_the_words(repo, d)
+    reapprove(repo, d)
+    (repo / "fix.js").write_text("y\n", encoding="utf-8")
+    commit(repo, "fix.js", msg="code after the carry")
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and CONTAINS in r.stdout

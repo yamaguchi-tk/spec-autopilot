@@ -699,11 +699,18 @@ def _awaits(d, strict=True):
     return out
 
 
+def this_round_timeouts(d, s, strict=True):
+    """上限を過ぎた待ち。持ち越した spec でも、今の承認より後のものだけ（前の巡の timeout は新しい巡で数え直す）。
+    成功・失敗の事実は awaits が持ち越した分も読む。"""
+    approved = float(s.get("approved_at") or 0)
+    return [a for a in awaits(d, s, strict) if a.get("result") == "timeout" and a["at"] > approved]
+
+
 def parked_ops(d, s, strict=True):
     """積んだ操作（park と、上限を過ぎた待ち）。"""
     timeouts = [{"kind": a.get("kind"), "op": f"{a.get('kind')} の待ち（PR {a.get('pr')}）",
                  "reason": "待ちの上限を過ぎた", "req": None, "sha": a.get("sha"), "at": a["at"]}
-                for a in awaits(d, s, strict) if a.get("result") == "timeout"]
+                for a in this_round_timeouts(d, s, strict)]
     return list(s.get("parked") or []) + timeouts
 
 
@@ -713,10 +720,9 @@ def exempt_kinds(d, s, strict=True):
     merges = s.get("merges") or []
     last = merges[-1].get("sha") if merges else None
     kinds = {p.get("kind") for p in s.get("parked") or [] if not p.get("req") and p.get("merges", 0) == len(merges)}
-    kinds |= {a.get("kind") for a in awaits(d, s, strict) if a.get("result") == "timeout" and a.get("kind") == "deploy"
-              and a.get("sha") == last}
+    kinds |= {a.get("kind") for a in this_round_timeouts(d, s, strict) if a.get("kind") == "deploy" and a.get("sha") == last}
     since = float(merges[-1].get("at", 0)) if merges else 0
-    if any(a.get("result") == "timeout" and a.get("kind") == "review" and a["at"] > since for a in awaits(d, s, strict)):
+    if any(a.get("kind") == "review" and a["at"] > since for a in this_round_timeouts(d, s, strict)):
         kinds.add("merge")  # 承認の待ちが朝まで届かなかったマージは、人の判断を待つものとして積む
     return kinds
 
