@@ -1122,6 +1122,35 @@ def test_an_unreadable_await_row_stops_with_the_file_and_line(tmp_path, bad):
         overnight.failed_deploys(tmp_path, s)
 
 
+def test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line(tmp_path):
+    """日本語の途中（UTF-8 の途中）で切れた行の後に記録が続いても、ファイルと行番号を名指しして止める。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, " ", 1)
+    row = json.dumps({"kind": "deploy", "sha": "m0", "detail": ["失敗"]}, ensure_ascii=False).encode("utf-8")
+    with (tmp_path / "awaits.jsonl").open("ab") as f:
+        f.write(row[:row.index("失".encode("utf-8")) + 1] + b"\n")
+    with pytest.raises(ValueError, match=r"awaits\.jsonl:2 "):
+        overnight.failed_deploys(tmp_path, s)
+
+
+def test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human(repo, gh):
+    """読めない待ちの記録は check と Stop hook を止め、block --no-rollback で人に戻せる（戻す道まで止めない）。"""
+    d = full_spec(repo)
+    make_done(repo, d)
+    gh.answers("pr view", [merged_pr(git_head(repo))])
+    assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
+    with (d / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"kind": "deploy", "sha": "m1", "res\n')
+    assert run(repo, "check", str(d)).returncode != 0
+    assert '"block"' in stop_hook(repo).stdout
+    assert '"block"' in stop_hook(repo, {"stop_hook_active": True}).stdout
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y")
+    assert r.returncode != 0 and "awaits.jsonl:" in (r.stdout + r.stderr)
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y", "--no-rollback", "待ちの記録が切れた")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(d)["phase"] == "blocked" and '"block"' not in stop_hook(repo).stdout
+
+
 def test_empty_await_rows_are_not_records(tmp_path):
     """空の行（末尾の改行の後と、書き手が足した改行）は記録ではないので、止めずに飛ばす。"""
     import overnight
