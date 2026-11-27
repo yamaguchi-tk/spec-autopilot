@@ -1,0 +1,10 @@
+- commit: 1c90f98f2f4990a0fa74a29a9287416ebfbbcb20
+$ python3 -m pytest plugins/spec-autopilot/tests/test_lineup.py::test_next_starts_a_dependent_spec_in_another_worktree_from_the_name_in_state_json plugins/spec-autopilot/tests/test_lineup.py::test_next_still_reads_an_absolute_path_left_in_after_by_the_earlier_version plugins/spec-autopilot/tests/test_lineup.py::test_next_starts_a_dependent_spec_after_cmd_done_dropped_its_dependency_from_the_record plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_after_cmd_block_dropped_its_dependency_from_the_record plugins/spec-autopilot/tests/test_lineup.py::test_next_starts_a_dependent_spec_on_top_of_its_dependency plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_that_cannot_be_put_on_its_dependency -v -p no:cacheprovider
+plugins/spec-autopilot/tests/test_lineup.py::test_next_starts_a_dependent_spec_in_another_worktree_from_the_name_in_state_json PASSED [ 14%]
+plugins/spec-autopilot/tests/test_lineup.py::test_next_still_reads_an_absolute_path_left_in_after_by_the_earlier_version PASSED [ 28%]
+plugins/spec-autopilot/tests/test_lineup.py::test_next_starts_a_dependent_spec_after_cmd_done_dropped_its_dependency_from_the_record[same_worktree] PASSED [ 42%]
+plugins/spec-autopilot/tests/test_lineup.py::test_next_starts_a_dependent_spec_after_cmd_done_dropped_its_dependency_from_the_record[other_worktree] PASSED [ 57%]
+plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_after_cmd_block_dropped_its_dependency_from_the_record PASSED [ 71%]
+plugins/spec-autopilot/tests/test_lineup.py::test_next_starts_a_dependent_spec_on_top_of_its_dependency PASSED [ 85%]
+plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_that_cannot_be_put_on_its_dependency PASSED [100%]
+============================== 7 passed in 20.61s ==============================

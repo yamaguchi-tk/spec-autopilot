@@ -1,0 +1,6 @@
+- commit: 1c90f98f2f4990a0fa74a29a9287416ebfbbcb20
+$ python3 -m pytest plugins/spec-autopilot/tests/test_lineup.py::test_queue_writes_only_the_directory_name_of_the_dependency_to_state_json plugins/spec-autopilot/tests/test_lineup.py::test_no_state_json_of_the_dependent_pair_holds_a_local_path_after_queue_start_and_end -v -p no:cacheprovider
+plugins/spec-autopilot/tests/test_lineup.py::test_queue_writes_only_the_directory_name_of_the_dependency_to_state_json PASSED [ 33%]
+plugins/spec-autopilot/tests/test_lineup.py::test_no_state_json_of_the_dependent_pair_holds_a_local_path_after_queue_start_and_end[done] PASSED [ 66%]
+plugins/spec-autopilot/tests/test_lineup.py::test_no_state_json_of_the_dependent_pair_holds_a_local_path_after_queue_start_and_end[block] PASSED [100%]
+============================== 3 passed in 9.63s ===============================
