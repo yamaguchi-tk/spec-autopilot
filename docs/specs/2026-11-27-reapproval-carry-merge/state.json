@@ -4,7 +4,7 @@
   "created_at": 1795753067.4874592,
   "existing": true,
   "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
-  "last_active_at": 1795771368.2041779,
+  "last_active_at": 1795771972.6240158,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795757261.842288,
   "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
@@ -58,6 +58,11 @@
       "high": [],
       "at": 1795771359.820977,
       "sha": "637dfa065c5669d16c203f1ce7c057f1e0bebbdd"
+    },
+    {
+      "high": [],
+      "at": 1795771964.2810502,
+      "sha": "8ac81165b6002a14efe0af5c058bd6d0f4202fa5"
     }
   ],
   "fails": {
@@ -269,6 +274,14 @@
       ],
       "dispatch": 5,
       "at": 1795770380.130698
+    },
+    {
+      "tip": "8ac81165b6002a14efe0af5c058bd6d0f4202fa5",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 5,
+      "at": 1795771517.3701062
     }
   ],
   "lenses": [
@@ -299,6 +312,13 @@
       "reproduced": 0,
       "fixed": 0,
       "at": 1795771368.204171
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795771972.624015
     }
   ]
 }

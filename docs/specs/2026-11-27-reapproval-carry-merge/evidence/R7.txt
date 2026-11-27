@@ -1,7 +1,8 @@
-- commit: 637dfa065c5669d16c203f1ce7c057f1e0bebbdd
+- commit: 8ac81165b6002a14efe0af5c058bd6d0f4202fa5
 $ grep -n '"version"' plugins/spec-autopilot/.claude-plugin/plugin.json
 3:  "version": "0.1.18",
-$ git show 5a7818128f1b741546524531c39517ece20ee96c:plugins/spec-autopilot/.claude-plugin/plugin.json | grep -n '"version"'
+$ git show origin/main:plugins/spec-autopilot/.claude-plugin/plugin.json | grep -n '"version"'
 3:  "version": "0.1.17",
 $ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q -p no:cacheprovider
-11 passed in 72.82s (0:01:12)
+...........                                                              [100%]
+11 passed in 33.61s
