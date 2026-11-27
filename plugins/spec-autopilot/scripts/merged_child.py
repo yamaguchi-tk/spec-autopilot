@@ -6,9 +6,12 @@
 記録の PR の番号が正の整数・記録が戻しでない・PR が MERGED で mergedAt がある・マージの commit が記録と同じ・
 base が repo の既定のブランチ・head のブランチ名が state を読んだブランチと同じ・PR が子のディレクトリの下のファイルを変えた。
 git・gh の失敗・読めない・例外は「確かめられない」で None（呼び出し側は作業ツリーの phase で読む）。
+gh の失敗（exit 0 以外・JSON でない答え・タイムアウト・起動できない）は、子の名前・PR の番号・失敗の種類を stderr に 1 行出す。
+git show で ref にファイルが無いのは、その ref が子の state を持たないだけなので出さない。
 """
 import json
 import subprocess
+import sys
 from pathlib import PurePosixPath
 
 
@@ -19,8 +22,43 @@ def run(args, cwd):
     return r.stdout
 
 
+class GhError(Exception):
+    """gh を呼べなかった・答えが読めなかった。args[0] が失敗の種類。"""
+
+
 def gh_json(root, *args):
-    return json.loads(run(["gh", *args], root))
+    try:
+        r = subprocess.run(["gh", *args], cwd=root, capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        raise GhError("タイムアウト")
+    except OSError:
+        raise GhError("起動できない")
+    if r.returncode != 0:
+        raise GhError(f"exit {r.returncode}")
+    try:
+        v = json.loads(r.stdout)
+    except ValueError:
+        raise GhError("JSON でない答え")
+    if not isinstance(v, dict):
+        raise GhError("JSON でない答え（object でない）")
+    return v
+
+
+def default_branch_reader(root):
+    """repo の既定のブランチ名を返す関数。gh は最初の 1 回だけ呼び、失敗も覚えて同じ失敗を返す。"""
+    cache = []
+
+    def get():
+        if not cache:
+            try:
+                name = gh_json(root, "repo", "view", "--json", "defaultBranchRef").get("defaultBranchRef", {}).get("name")
+                cache.append(name if isinstance(name, str) and name else GhError("既定のブランチが読めない"))
+            except (GhError, AttributeError) as e:
+                cache.append(e if isinstance(e, GhError) else GhError("既定のブランチが読めない"))
+        if isinstance(cache[0], GhError):
+            raise cache[0]
+        return cache[0]
+    return get
 
 
 def branch_name(ref):
@@ -43,7 +81,7 @@ def positive_int(x):
     return isinstance(x, int) and not isinstance(x, bool) and x > 0
 
 
-def merged_ok(root, rel, branch, rec):
+def merged_ok(root, rel, branch, rec, default_branch):
     """記録 rec の PR が、7 つの条件を満たすか。PR の番号と rollback は gh を呼ぶ前に見る。"""
     if not positive_int(rec.get("pr")) or rec.get("rollback"):
         return False
@@ -52,8 +90,7 @@ def merged_ok(root, rel, branch, rec):
         return False
     if not isinstance(v.get("mergeCommit"), dict) or v["mergeCommit"].get("oid") != rec["sha"]:
         return False
-    default = gh_json(root, "repo", "view", "--json", "defaultBranchRef")["defaultBranchRef"]["name"]
-    if not default or v.get("baseRefName") != default or v.get("headRefName") != branch:
+    if v.get("baseRefName") != default_branch() or v.get("headRefName") != branch:
         return False
     return any(isinstance(f, dict) and isinstance(f.get("path"), str) and PurePosixPath(f["path"]).is_relative_to(rel)
                for f in v.get("files") or [])
@@ -66,14 +103,19 @@ def read(root, child):
         refs = run(["git", "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes"], root).split()
     except (OSError, RuntimeError, ValueError, subprocess.SubprocessError):
         return None
+    default_branch, reported = default_branch_reader(root), set()
     for ref in refs:
         branch = branch_name(ref)
         if branch is None:
             continue
         try:
             rec = last_merge(run(["git", "show", f"{ref}:{rel}/state.json"], root))
-            if rec and merged_ok(root, rel, branch, rec):
+            if rec and merged_ok(root, rel, branch, rec, default_branch):
                 return branch, rec["pr"]
+        except GhError as e:
+            if (rec["pr"], e.args[0]) not in reported:
+                reported.add((rec["pr"], e.args[0]))
+                print(f"merged_child: {child.name} の PR {rec['pr']} を gh で確かめられない（{e.args[0]}）。作業ツリーの phase で読む", file=sys.stderr)
         except (OSError, RuntimeError, ValueError, KeyError, TypeError, AttributeError, subprocess.SubprocessError):
             continue
     return None

@@ -3,10 +3,11 @@
 import json
 import os
 import subprocess
+import sys
 
 import pytest
 
-from test_autopilot import run, state, repo  # noqa: F401
+from test_autopilot import PLUGIN, run, state, repo  # noqa: F401
 from test_goal_child import child_spec, parent_goal
 from test_goal_done import set_phase
 
@@ -24,6 +25,9 @@ out = ans.get("out", "")
 sys.stdout.write(out if isinstance(out, str) else json.dumps(out))
 sys.exit(ans.get("code", 0))
 '''
+
+sys.path.insert(0, str(PLUGIN / "scripts"))
+import merged_child  # noqa: E402
 
 GIT = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
 
@@ -240,3 +244,81 @@ def test_goal_asks_gh_nothing_for_a_child_already_done_in_the_working_tree(repo,
     set_phase(b, "done")
     assert run(repo, "goal", str(parent)).returncode == 0
     assert gh.calls() == []
+
+
+# --- gh の失敗を stderr に 1 行出す（T2）---
+
+def failure_lines(text):
+    return [x for x in text.splitlines() if "gh" in x and "確かめられない" in x]
+
+
+@pytest.mark.parametrize("answer, kind", [
+    ({"code": 4, "out": ""}, "exit 4"),
+    ({"code": 0, "out": "not json"}, "JSON でない"),
+    ({"code": 0, "out": "[]"}, "JSON でない"),
+])
+def test_goal_names_the_child_the_pr_and_the_kind_on_stderr_when_gh_fails_and_still_falls_back(repo, gh, answer, kind):
+    parent, (a, b) = family(repo, gh)
+    gh.script["pr view 11"] = answer
+    gh.save()
+    refused(repo, parent, b)
+    r = run(repo, "goal", str(parent))
+    lines = failure_lines(r.stderr)
+    assert len(lines) == 1 and b.name in lines[0] and "11" in lines[0] and kind in lines[0], r.stderr
+    assert a.name not in r.stderr
+
+
+def test_goal_names_the_pr_on_stderr_when_the_default_branch_cannot_be_read(repo, gh):
+    parent, (a,) = family(repo, gh, 1)
+    gh.script["repo view"] = {"code": 1}
+    gh.save()
+    refused(repo, parent, a)
+    lines = failure_lines(run(repo, "goal", str(parent)).stderr)
+    assert len(lines) == 1 and a.name in lines[0] and "10" in lines[0] and "exit 1" in lines[0]
+
+
+def test_goal_prints_nothing_on_stderr_when_gh_answers_and_every_child_is_read(repo, gh):
+    parent, (a, b) = family(repo, gh)
+    r = run(repo, "goal", str(parent))
+    assert r.returncode == 0 and r.stderr == ""
+
+
+def test_goal_prints_nothing_on_stderr_when_git_show_finds_no_state_file_in_any_ref(repo, gh):
+    parent, (a,) = family(repo, gh, 1)
+    git(repo, "branch", "-q", "-D", "branch-10")
+    r = run(repo, "goal", str(parent))
+    assert r.returncode == 1 and r.stderr == "" and "pr view 10" not in " ".join(gh.calls())
+
+
+def test_goal_prints_one_line_for_a_failing_pr_found_on_two_refs(repo, gh):
+    parent, (a,) = family(repo, gh, 1)
+    git(repo, "update-ref", "refs/remotes/origin/branch-10", "refs/heads/branch-10")
+    gh.script["pr view 10"] = {"code": 4, "out": ""}
+    gh.save()
+    assert len(failure_lines(run(repo, "goal", str(parent)).stderr)) == 1
+
+
+def test_goal_asks_gh_for_the_default_branch_once_when_the_child_state_is_on_two_refs(repo, gh):
+    parent, (a,) = family(repo, gh, 1)
+    git(repo, "update-ref", "refs/remotes/origin/other", "refs/heads/branch-10")
+    set_pr(gh, a, 0, headRefName="zzz")  # どの ref でも head が合わず、既定のブランチまでは引く
+    refused(repo, parent, a)
+    assert gh.calls().count("repo view --json defaultBranchRef") == 1
+
+
+@pytest.mark.parametrize("raised, kind", [
+    (subprocess.TimeoutExpired(["gh"], 60), "タイムアウト"),
+    (FileNotFoundError(2, "No such file", "gh"), "起動できない"),
+])
+def test_read_returns_none_and_names_the_child_pr_and_kind_when_gh_times_out_or_cannot_start(repo, gh, capsys, monkeypatch, raised, kind):
+    parent, (a,) = family(repo, gh, 1)
+    real = subprocess.run
+
+    def fake(args, *rest, **kw):
+        if args[0] == "gh":
+            raise raised
+        return real(args, *rest, **kw)
+    monkeypatch.setattr(merged_child.subprocess, "run", fake)
+    assert merged_child.read(repo, a) is None
+    lines = failure_lines(capsys.readouterr().err)
+    assert len(lines) == 1 and a.name in lines[0] and "10" in lines[0] and kind in lines[0], lines
