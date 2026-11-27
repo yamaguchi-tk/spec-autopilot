@@ -16,7 +16,7 @@
   3. それ以外（hook・判定を変える〔2 段目の条件に当たるものを除く〕、新しい仕組み、複数の部品にまたがる〔(a)・(b) の中の写しと名指しする側を同じ PR で直すものを除く〕、やる内容を人と決める必要がある）: `/autopilot` で、人と spec を合意して回す
 - `/autopilot` が壊れていて回せないときも pre-pr-review で回し、回せなかった理由（コマンドと件数。手元のパスは伏せる）を PR 本文に書く。pre-pr-review を使えない環境では、差分と規則だけを渡した独立レビューを 1 回回す（マージの扱いは pre-pr-review と同じ）
 - 自走の範囲は spec ごとに `## 自走の範囲` の `- 範囲:` で決める。草案は「マージまで」で出し、承認のときに先頭に示す。main へのマージは、marketplace から新しく入れる人に届き、版数を上げたものは入れた人にも届く（デプロイの workflow は無いので「マージ・デプロイ・QA まで」は使わない）。`/autopilot` の check を通して自走の範囲でマージする PR のほかは、マージは人の指示を待つ
-- plugin を使う手元の checkout（symlink の向け先）の pull は、自走の範囲に入れず、人が頼んだときに `docs/pull-checkout.md` の手順で行う（plugin と `.claude-plugin` の中の差分が plugin の tests と README だけなら取り込み、ほかは差分を人に示して人が決める）。開発は別の worktree で行い、その checkout のブランチを切り替えない
+- 手元の plugin は GitHub の marketplace から入れた版ごとの写しを読む。更新は自走の範囲に入れず、人が頼んだときに `claude plugin update spec-autopilot@spec-autopilot` で行い、更新の後に、走っているセッションで `/reload-plugins` を回し、見回り役の plist を新しい版の `watch.py plist` で出し直す（plist は作った時点の watch.py の実パスを書くため）。開発中の版は `claude --plugin-dir <worktree>/plugins/spec-autopilot` で試す
 - `/autopilot` で回すときは pre-pr-review を重ねない。hook か判定を変える spec では、`## 制約` に想定する脅威を 1 行書く（lint は検査せず、評価役にも専用の観点は無い。範囲と直す要否を決めるときの目安）
 - 新しい仕組みや改善を agent が自分で思いついたときは、実際のタスクで観測した失敗（state.json の blocked、見回りの報告、transcript の件数）があるものだけを出す。測っていなければ、先に測る手順を出す。人が頼んだ機能は、この条件で削らない。変えたファイルの中で見つけた不具合は、上の「実装中に見つけた別の問題」に従う
 - この進め方は、`/autopilot` で回した最初の 5 本で、`SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-autopilot`）の `runs.jsonl` を読んで決める（承認からの分数、blocked の回数と理由、マージ後の手戻りの PR の数）。予算を超えるのが 5 本中 3 本以上なら、ここに規則を足さず、`/autopilot` の欠陥として直す
