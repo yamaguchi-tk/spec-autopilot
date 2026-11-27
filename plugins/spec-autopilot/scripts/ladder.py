@@ -3,8 +3,18 @@
 
 段は安い順。effort を先に上げ、それでも足りなければモデルを上げる（Opus は Sonnet の約 9 倍の費用）。
 Opus xhigh で 2 回落ちたら、Fable を 1 回だけ試す。Fable でも落ちたら、その要件を park に積む。
+
+手元の設定は SPEC_AUTOPILOT_HOME（無ければ ~/.claude/spec-autopilot）の models.md に、spec の `## モデル` と同じ形の行で置く。
+`ladder.py setup`・`show` で書く・見る。init が spec.md を作るときに、その行を `## モデル` に写す（梯子は spec の節だけを読む）。
 """
+import argparse
+import fcntl
+import os
 import re
+import sys
+import tempfile
+import time
+from pathlib import Path
 
 # 役 → 段の名前 → (agent の名前, model, effort)。順は安い順で、先頭が既定
 RUNGS = {
@@ -23,6 +33,7 @@ RUNGS = {
 # 評価役の段を手で上げる合図（判断を含むので機械では検出しない）。実装役は review の巡で自動で上げる
 REVIEW_REASON = "判定が決まらない"
 SPEC_KEY = {"impl": "実装", "review": "評価"}
+ROLE_OF = {v: k for k, v in SPEC_KEY.items()}
 TRIES_BEFORE_FABLE = 2
 ROW = re.compile(r"^- (実装|評価):[ \t]*(\S+)[ \t]*$")
 COMMENT = re.compile(r"<!--.*?-->", re.S)
@@ -122,3 +133,121 @@ def report_lines(raises, reviews, rows=None):
         who = r["req"] if r.get("role") == "impl" else "評価"
         lines.append(f"  - {who} {r['from']}→{r['to']}（{r['reason']}）")
     return lines
+
+
+def config_path():
+    return Path(os.environ.get("SPEC_AUTOPILOT_HOME") or Path.home() / ".claude" / "spec-autopilot") / "models.md"
+
+
+def read_config(path=None):
+    """手元の設定を読む。(元のバイト列 or None, 読める行 {実装|評価: 段}, 誤りの一覧)。無ければ (None, {}, [])。
+    読める行は、受ける段で、同じ役の 1 本目だけ。"""
+    path = path or config_path()
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        return None, {}, []
+    except OSError as e:
+        return None, {}, [f"{path} を読めない（{type(e).__name__}）"]
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return raw, {}, [f"{path} が UTF-8 で読めない"]
+    rows = {}
+    for key, rung in parse(text)[0]:
+        if rung in RUNGS[ROLE_OF[key]]:
+            rows.setdefault(key, rung)
+    return raw, rows, lint(text)
+
+
+def render(rows):
+    return "".join(f"- {k}: {rows[k]}\n" for k in SPEC_KEY.values() if k in rows)
+
+
+def edit(change):
+    """ロックの中で読み直し、change(読める行) が返した行だけで書き換える（空なら消す）。壊れていた元の中身は毎回別の名前で残す。"""
+    path = config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path.with_name(path.name + ".lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        raw, rows, errors = read_config(path)
+        if errors:
+            if raw is None:
+                sys.exit("; ".join(errors))
+            kept = path.with_name(f"{path.name}.bad-{time.time_ns()}-{os.getpid()}")
+            kept.write_bytes(raw)
+            print(f"NOTE: {path} に誤りがあった（{'; '.join(errors)}）。元の中身を退避した: {kept}。読めた行だけで続ける", file=sys.stderr)
+        rows = change(dict(rows))
+        if not rows:
+            path.unlink(missing_ok=True)
+            return rows
+        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(render(rows))
+        os.replace(tmp, path)
+        return rows
+
+
+def write_spec(src, dst):
+    """init が spec.md を作る。手元の設定の行を、雛形の `## モデル` のコメントの後に写す（読めない設定は写さず NOTE で直し方を出す）。"""
+    text = Path(src).read_text(encoding="utf-8")
+    path = config_path()
+    raw, _, errors = read_config(path)
+    if errors:
+        print(f"NOTE: 手元の設定 {path} に誤りがあるので、spec の `## モデル` は雛形のまま（{'; '.join(errors)}）。"
+              f"直す: `ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す（{Path(__file__).resolve()}）", file=sys.stderr)
+    elif raw is not None:
+        lines = [f"- {k}: {v}" for k, v in parse(raw.decode("utf-8"))[0]]
+        if lines:
+            text = re.sub(r"^(## モデル\n(?:<!--.*?-->\n)?)", lambda m: m.group(1) + "\n".join(lines) + "\n", text, count=1, flags=re.M | re.S)
+            print(f"NOTE: 手元の設定 {path} の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: {' / '.join(lines)}", file=sys.stderr)
+    Path(dst).write_text(text, encoding="utf-8")
+
+
+def accepted_lines():
+    return [f"{SPEC_KEY[role]}: 受ける段 {'・'.join(rungs)}" for role, rungs in RUNGS.items()]
+
+
+def cmd_show(a):
+    path = config_path()
+    _, rows, errors = read_config(path)
+    for role, line in zip(RUNGS, accepted_lines()):
+        print(f"{line} / 既定 {next(iter(RUNGS[role]))} / 手元の設定 {rows.get(SPEC_KEY[role], 'なし')}")
+    print(f"設定のファイル: {path}")
+    for e in errors:
+        print(f"設定の誤り: {e}（`ladder.py setup` か `ladder.py setup --reset` で直す）")
+    return 0
+
+
+def cmd_setup(a):
+    path = config_path()
+    if a.reset is not None:
+        if a.reset != "all" and a.reset not in ROLE_OF or a.impl or a.review:
+            sys.exit("--reset は単独で、役は「実装」か「評価」だけを渡す")
+        keys = list(SPEC_KEY.values()) if a.reset == "all" else [a.reset]
+        edit(lambda rows: {k: v for k, v in rows.items() if k not in keys})
+        print(f"{'実装・評価' if a.reset == 'all' else a.reset}が既定に戻った（設定のファイル: {path}）")
+        return 0
+    given = {SPEC_KEY[r]: v for r, v in (("impl", a.impl), ("review", a.review)) if v is not None}
+    bad = [f"{SPEC_KEY[r]} の段「{v}」" for r in RUNGS for v in [getattr(a, r)] if v is not None and v not in RUNGS[r]]
+    if not given or bad:
+        sys.exit(("受けない段: " + "、".join(bad) + "\n" if bad else "--impl か --review か --reset を渡す\n") + "\n".join(accepted_lines()))
+    rows = edit(lambda cur: {**cur, **given})
+    print(f"書いた: {path}\n{render(rows)}", end="")
+    return 0
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="ladder.py")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("show")
+    sp = sub.add_parser("setup")
+    sp.add_argument("--impl")
+    sp.add_argument("--review")
+    sp.add_argument("--reset", nargs="?", const="all")
+    a = p.parse_args(argv)
+    return {"show": cmd_show, "setup": cmd_setup}[a.cmd](a)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,6 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h6 python3 '<repo>/plugins/spec-autopilot/scripts/autopilot.py' init game
+<repo>/.autopilot-qa/tmp/repo6/docs/specs/2026-11-27-game
+(exit 0)
+$ python3 .autopilot-qa/check.py（作った spec.md を plugins/spec-autopilot/templates/spec.md と比べる）
+spec.md == templates/spec.md: True

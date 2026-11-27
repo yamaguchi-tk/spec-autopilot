@@ -1,0 +1,13 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h1 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --impl opus-medium
+書いた: <repo>/.autopilot-qa/tmp/h1/models.md
+- 実装: opus-medium
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h1 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --review opus-xhigh
+書いた: <repo>/.autopilot-qa/tmp/h1/models.md
+- 実装: opus-medium
+- 評価: opus-xhigh
+(exit 0)
+$ cat <repo>/.autopilot-qa/tmp/h1/models.md
+- 実装: opus-medium
+- 評価: opus-xhigh

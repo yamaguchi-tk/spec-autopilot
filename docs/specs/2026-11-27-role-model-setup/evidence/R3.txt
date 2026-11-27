@@ -1,0 +1,11 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h1 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' show
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 opus-medium
+評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 opus-xhigh
+設定のファイル: <repo>/.autopilot-qa/tmp/h1/models.md
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h3 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' show
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 なし
+評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 なし
+設定のファイル: <repo>/.autopilot-qa/tmp/h3/models.md
+(exit 0)

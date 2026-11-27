@@ -1,0 +1,19 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h4 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --impl opus-medium --review opus-xhigh
+書いた: <repo>/.autopilot-qa/tmp/h4/models.md
+- 実装: opus-medium
+- 評価: opus-xhigh
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h4 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --reset '実装'
+実装が既定に戻った（設定のファイル: <repo>/.autopilot-qa/tmp/h4/models.md）
+(exit 0)
+$ cat <repo>/.autopilot-qa/tmp/h4/models.md
+- 評価: opus-xhigh
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h4 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --reset
+実装・評価が既定に戻った（設定のファイル: <repo>/.autopilot-qa/tmp/h4/models.md）
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h4e python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --reset
+実装・評価が既定に戻った（設定のファイル: <repo>/.autopilot-qa/tmp/h4e/models.md）
+(exit 0)
+$ ls <repo>/.autopilot-qa/tmp/h4
+models.md.lock

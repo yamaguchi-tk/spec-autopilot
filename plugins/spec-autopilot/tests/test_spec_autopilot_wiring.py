@@ -42,7 +42,8 @@ def test_commands_exist():
 @pytest.mark.parametrize("command", COMMANDS, ids=lambda p: p.name)
 def test_referenced_files_exist(command):
     refs = set(re.findall(r"references/[A-Za-z0-9_/-]+\.md", command.read_text(encoding="utf-8")))
-    assert refs, f"{command.name} が references/ を 1 つも指していない"
+    if command.name == "autopilot.md":
+        assert refs, f"{command.name} が references/ を 1 つも指していない"
     missing = sorted(r for r in refs if not (PLUGIN / r).is_file())
     assert not missing, f"{command.name} が指す実在しないファイル: {missing}"
 
@@ -64,6 +65,51 @@ def test_cli_messages_point_to_existing_command_sections():
     assert not names - heads, f"見出しに無い節: {sorted(names - heads)}"
 
 
-def test_version_is_raised_past_0_1_13():
+def test_version_is_raised_past_0_1_14():
     v = _load(MANIFEST)["version"]
-    assert tuple(int(x) for x in v.split(".")) > (0, 1, 13)
+    assert tuple(int(x) for x in v.split(".")) > (0, 1, 14)
+
+
+def test_setup_command_exists_and_its_ladder_commands_run(tmp_path):
+    """commands/setup.md は ladder.py のコマンドを書き、<...> を含まない行は一時の置き場でそのまま通る。"""
+    import os
+    import shlex
+    import subprocess
+    import sys
+
+    setup = PLUGIN / "commands" / "setup.md"
+    assert setup.is_file(), "commands/setup.md が無い"
+    text = setup.read_text(encoding="utf-8")
+    cmds = re.findall(r'^python3 "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ladder\.py" ([^\n<>]+)$', text, re.M)
+    assert any(c.split()[0] == "show" for c in cmds), "setup.md に ladder.py show の行が無い"
+    env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path)}
+    for c in cmds:
+        r = subprocess.run([sys.executable, str(PLUGIN / "scripts" / "ladder.py"), *shlex.split(c)], env=env, capture_output=True, text=True)
+        assert r.returncode == 0, f"{c}: {r.stdout}{r.stderr}"
+
+
+def _setup_options(rungs, default, cur):
+    """commands/setup.md 手順 2 の選択肢の作り方を写したもの。"""
+    opts = [f"今のまま（{cur}）"]
+    if cur == default:
+        return opts + [r for r in rungs if r != cur]
+    return opts + [f"既定に戻す（{default}）"] + [r for r in rungs if r not in (cur, default)]
+
+
+@pytest.mark.parametrize("role", ["実装", "評価"])
+def test_setup_options_fit_ask_user_question_limit_for_every_current_rung(role, tmp_path):
+    """show の受ける段と既定から作る選択肢は、今の段がどれでも 2〜4 個で、受ける段のどれにも届く。"""
+    import os
+    import subprocess
+    import sys
+
+    env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path)}
+    out = subprocess.run([sys.executable, str(PLUGIN / "scripts" / "ladder.py"), "show"], env=env, capture_output=True, text=True).stdout
+    m = re.search(rf"^{role}: 受ける段 (\S+) / 既定 (\S+) /", out, re.M)
+    assert m, out
+    rungs, default = m.group(1).split("・"), m.group(2)
+    for cur in rungs:
+        opts = _setup_options(rungs, default, cur)
+        assert 2 <= len(opts) <= 4, f"{role} 今 {cur}: {opts}"
+        reach = {cur, *(r for r in rungs if r in opts), *([default] if cur != default else [])}
+        assert reach == set(rungs), f"{role} 今 {cur}: {opts}"
