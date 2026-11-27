@@ -1077,6 +1077,7 @@ def test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable(repo
 @pytest.mark.parametrize("where", ["デスクトップ", "なし"])
 def test_a_note_that_is_not_a_dm_names_the_unreadable_await_row(repo, gh, tmp_path, osascript, where, scope):
     """DM でない知らせ（報告の行を載せない）には、範囲によらず、読めない行のファイルと行番号を 1 回載せる（どの行を直すか分かるように）。"""
+    import deploy
     import overnight
     d = full_spec(repo, scope, **{"通知": where})
     if scope == FULL:
@@ -1084,6 +1085,6 @@ def test_a_note_that_is_not_a_dm_names_the_unreadable_await_row(repo, gh, tmp_pa
     cut_await_row(d)
     note = overnight.notify(d)
     named = re.compile(r"awaits\.jsonl:\d+ ")  # 切れた行の番号は、範囲（前に書いた記録の数）で変わる
-    assert len(named.findall(note)) == 1 and f"本番: {overnight.UNREADABLE_PROD}" in note
+    assert len(named.findall(note)) == 1 and f"本番: {deploy.UNREADABLE_PROD}" in note
     if where == "デスクトップ":
         assert len(named.findall(osascript.read_text(encoding="utf-8"))) == 1

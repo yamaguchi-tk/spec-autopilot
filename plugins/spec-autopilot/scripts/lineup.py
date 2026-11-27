@@ -37,9 +37,9 @@ def after_name(d):
 
 def minutes(d):
     """承認から夜の終わりまでの見込み（予算とマージ後の予算）。"""
-    import overnight
+    import deploy
 
-    budget, post = overnight.budgets((d / "spec.md").read_text(encoding="utf-8"))
+    budget, post = deploy.budgets((d / "spec.md").read_text(encoding="utf-8"))
     return budget + post
 
 
@@ -116,20 +116,20 @@ def enqueue(d, s, by, session, warnings):
 
 def begin(d, s, by, prev):
     """承認した spec を自走中（building）にする。予算の時計はここから。"""
-    import overnight
+    import deploy
 
-    budget, post = overnight.budgets((d / "spec.md").read_text(encoding="utf-8"))
+    budget, post = deploy.budgets((d / "spec.md").read_text(encoding="utf-8"))
     history = s.get("history", [])
     kept, note = __import__("carry").plan(ap.repo_root(d), s, prev)  # コードが同じなら、前の巡のマージとデプロイの記録を持ち越す
     since = s.get("awaits_since") or s.get("approved_at")
     if prev != "discovery":
         history.append({**{k: s.get(k) for k in ("approved_at", "approved_by", "blocked", "done_at", "anomalies", "reviews",
-                                                 "fails", "streak", "reworks", "post_budget_min", "paused_sec", "light", *overnight.ROUND_KEYS)}, "phase": prev})
+                                                 "fails", "streak", "reworks", "post_budget_min", "paused_sec", "light", *deploy.ROUND_KEYS)}, "phase": prev})
     ds = s.get("dispatches") or []
     keep = ("dispatches", "handoffs") if ds and all(x.get("prototype") for x in ds) else ()  # 承認の前の試作の dispatch（印は dispatch が打つ）は、承認の後の handoff で閉じる
     for x in ds if keep else ():
         x.pop("prototype")  # 持ち越したら印を外す。次の巡の再承認では history に移す
-    for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", "awaits_since", *(k for k in overnight.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
+    for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", "awaits_since", *(k for k in deploy.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
         s.pop(k, None)
     now = time.time()
     s.update(phase="building", approved_at=now, approved_by=by, spec_sha256=ap.sha(d), budget_min=budget,
@@ -325,13 +325,14 @@ def cmd_next(a):
 
 
 def cmd_hold(a):
+    import deploy
     import overnight
 
     d = Path(a.dir)
     s = ap.load_state(d)
     if s.get("phase") != "building":
         ap.refuse(s, "hold は自走中（building）だけ受ける")
-    gate = overnight.production_errors(d, s, done=False)
+    gate = deploy.production_errors(d, s, done=False)
     if gate:
         sys.exit(f"本番が良くないまま脇に置かない: {gate[0]}")
     v = overnight.gh_json("pr", "view", str(a.pr), "--json", "reviewDecision,headRefOid")

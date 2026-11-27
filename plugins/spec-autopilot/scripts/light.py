@@ -112,23 +112,23 @@ def command_errors(text, after_approve=False):
     - `## 自走の範囲` の見出し（この綴りのまま。コードブロックやコメントの中も数える）は 1 つだけで、コメントを外した後、`- <キー>: <値>` の行と空行だけ。`デプロイの起動` は「マージで自動」か「なし（マージした commit で QA）」か空、`ロールバック` は revert の PR か空
     - spec のほかの所（散文・綴りの違う見出しの節・閉じたコメント）に書いたコマンドは機械では拾わない。軽量フローの run では after-pr.md の 3・5 が
       「起動のコマンドとコマンドでの戻しは無い」と agent に言う（LLM の指示なので、守れているかは機械で確かめられない。限界）"""
-    import overnight
+    import deploy
     way = ("`autopilot.py block` で記録して人に戻る" if after_approve else
            "マージで自動に動く workflow か revert の PR にする（デプロイの workflow が無ければ起動を「なし（マージした commit で QA）」、"
            "範囲がマージまで・PR までなら空でよい）か、合意ありで spec を作り直す")
     out = []
-    raw = ap.section(text, overnight.SCOPE_SECTION) or ""
+    raw = ap.section(text, deploy.SCOPE_SECTION) or ""
     body = ap.COMMENT_BLOCK.sub("", raw)
-    _, bad = ap.classify(body, [("row", overnight.SCOPE_ROW)])
+    _, bad = ap.classify(body, [("row", deploy.SCOPE_ROW)])
     if raw.count("<!--") != raw.count("-->"):  # 閉じていないコメントが、後ろのコメントの閉じまでを隠さないように
         bad.append("<!-- と --> の数が合わない")
     if bad:
-        out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` に `- <キー>: <値>` の行のほかを書けない（{bad[0][:40]}）。{way}")
-    n = len(re.findall(rf"^## {re.escape(overnight.SCOPE_SECTION)}\s*$", text, re.M))  # 読み手は最初の節だけを見る（コードブロックの中も数える）
+        out.append(f"軽量フローでは `## {deploy.SCOPE_SECTION}` に `- <キー>: <値>` の行のほかを書けない（{bad[0][:40]}）。{way}")
+    n = len(re.findall(rf"^## {re.escape(deploy.SCOPE_SECTION)}\s*$", text, re.M))  # 読み手は最初の節だけを見る（コードブロックの中も数える）
     if n > 1:
-        out.append(f"軽量フローでは `## {overnight.SCOPE_SECTION}` の節を 1 つにまとめる（{n} 個ある）。{way}")
-    rows = overnight.scope_rows(text) or {}
-    allowed = {"デプロイの起動": (overnight.AUTO_DEPLOY, overnight.NO_DEPLOY), "ロールバック": (overnight.REVERT,)}
+        out.append(f"軽量フローでは `## {deploy.SCOPE_SECTION}` の節を 1 つにまとめる（{n} 個ある）。{way}")
+    rows = deploy.scope_rows(text) or {}
+    allowed = {"デプロイの起動": (deploy.AUTO_DEPLOY, deploy.NO_DEPLOY), "ロールバック": (deploy.REVERT,)}
     found = {k for k in KEYS if (rows.get(k) or "") not in ("", *allowed[k])}
     return out + [f"軽量フローでは `- {key}:` は「{'」か「'.join(allowed[key])}」か空だけにする"
                   f"（人が見ないままコマンドを打つことになる）。{way}" for key in KEYS if key in found]

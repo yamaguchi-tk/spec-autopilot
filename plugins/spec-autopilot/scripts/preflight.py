@@ -50,8 +50,8 @@ def check(text, now=None, cwd=None, goal=False):
 
 def overnight_run(text, now):
     """夜通し回しうる run か。予算が読めなければ長さが分からないので True。now は前に並ぶ分を足した時刻。"""
-    import overnight  # sso と同じ読み手（overnight.budgets）で読む
-    budget, post = overnight.budgets(text)
+    import deploy  # sso と同じ読み手（deploy.budgets）で読む
+    budget, post = deploy.budgets(text)
     if budget is None:
         return True
     ahead = max(0, ((now or time.time()) - time.time()) / 60)
@@ -129,11 +129,11 @@ def keep_awake():
 
 
 def sso(text, now):
-    import overnight  # lint・approve と同じ読み手（overnight.scope_rows・overnight.budgets）で読む
-    profile = (overnight.scope_rows(text) or {}).get("AWS の profile")
-    if not profile or profile == "なし" or not overnight.PROFILE.match(profile):
+    import deploy  # lint・approve と同じ読み手（deploy.scope_rows・deploy.budgets）で読む
+    profile = (deploy.scope_rows(text) or {}).get("AWS の profile")
+    if not profile or profile == "なし" or not deploy.PROFILE.match(profile):
         return [], []
-    budget, post = overnight.budgets(text)
+    budget, post = deploy.budgets(text)
     budget, post = budget or 0, post or 0
     end, twice = now + (budget + post) * 60, now + 2 * (budget + post) * 60
     login = f"`aws sso login --profile {profile}` でログインし直してから承認する"

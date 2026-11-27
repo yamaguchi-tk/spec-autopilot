@@ -96,19 +96,19 @@ def test_qa_without_a_merge_is_refused(repo, tmp_path):
 
 
 def test_smoke_after_the_merge_confirms_production(repo, gh, tmp_path):
-    import overnight
+    import deploy
     from pathlib import Path
     d = agreed(repo)
     make_done(repo, d)
     gh.answers("pr view", [merged_pr(git_head(repo))])
     assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
-    assert overnight.production(Path(d), state(d)) == overnight.UNKNOWN
+    assert deploy.production(Path(d), state(d)) == deploy.UNKNOWN
     assert night(repo, "qa", str(d), "--evidence", str(evidence(tmp_path)), "--smoke", "pass").returncode == 0
-    assert overnight.production(Path(d), state(d)) == overnight.CONFIRMED
+    assert deploy.production(Path(d), state(d)) == deploy.CONFIRMED
     s = state(d)
     s["qa_runs"].append({"evidence": "x", "mtime": 0, "smoke": "fail", "at": time.time()})
     (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
-    assert overnight.production(Path(d), state(d)) == overnight.BROKEN
+    assert deploy.production(Path(d), state(d)) == deploy.BROKEN
 
 
 def broken_without_deploy(repo, gh, tmp_path, d):
@@ -154,12 +154,12 @@ def test_the_report_says_production_is_the_merged_commit(repo, gh, tmp_path):
 
 
 def test_a_passing_smoke_without_a_merge_leaves_production_broken(repo, gh, tmp_path):
-    import overnight
+    import deploy
     from pathlib import Path
     d = agreed(repo)
     broken_without_deploy(repo, gh, tmp_path, d)
     assert night(repo, "qa", str(d), "--evidence", str(evidence(tmp_path, "again.txt")), "--smoke", "pass").returncode == 0
-    assert overnight.production(Path(d), state(d)) == overnight.BROKEN  # 抜けるのは壊れた後のマージだけ
+    assert deploy.production(Path(d), state(d)) == deploy.BROKEN  # 抜けるのは壊れた後のマージだけ
     r = run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "again.txt")
     assert r.returncode != 0 and "本番が良くない" in r.stderr
     gh.answers("pr view", [{"out": {"state": "OPEN", "headRefOid": git_head(repo)}}])

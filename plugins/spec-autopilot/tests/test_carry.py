@@ -13,7 +13,7 @@ from test_overnight import GIT, deploy_ok, full_spec, gh, git_head, merged_pr, n
 
 sys.path.insert(0, str(PLUGIN / "scripts"))
 import carry  # noqa: E402
-import overnight  # noqa: E402
+import deploy  # noqa: E402
 
 NOT_CARRIED = "持ち越さなかった"
 CONTAINS = "今の HEAD を含むマージ"
@@ -69,8 +69,8 @@ def test_reapproval_after_a_words_only_fix_carries_the_merge_and_the_deploy(repo
     assert "持ち越した: マージ 1 件（PR 7）" in r.stdout
     assert s["merges"] == before["merges"] and s["history"][-1]["merges"] == before["merges"]
     assert s["merged_at"] == s["approved_at"] and s["paused_at_merge"] == 0 and s["awaits_since"] == before["approved_at"]
-    assert [a["kind"] for a in overnight.awaits(d, s) if a.get("result") == "success"] == ["deploy"]
-    assert overnight.deploys_of_last_merge(d, s)
+    assert [a["kind"] for a in deploy.awaits(d, s) if a.get("result") == "success"] == ["deploy"]
+    assert deploy.deploys_of_last_merge(d, s)
 
 
 def test_a_carried_round_counts_reviews_qa_and_dispatches_again(repo, gh):
@@ -147,7 +147,7 @@ def test_reapproval_carries_nothing_when_the_code_differs_or_cannot_be_decided(r
     s = state(d)
     assert not s.get("merges") and s.get("merged_at") is None and "awaits_since" not in s
     assert NOT_CARRIED in r.stdout and "持ち越した" not in r.stdout
-    assert overnight.awaits(d, s) == [] and s["history"][-1].get("merges")
+    assert deploy.awaits(d, s) == [] and s["history"][-1].get("merges")
 
 
 def test_a_spec_without_a_merge_prints_nothing_about_carrying(repo):
@@ -167,7 +167,7 @@ def test_a_second_reapproval_keeps_the_first_start_of_the_carried_records(repo, 
     fix_the_words(repo, d, "（文を直した）", "（もう一度直した）")
     r = reapprove(repo, d)
     s = state(d)
-    assert "持ち越した" in r.stdout and s["awaits_since"] == since and overnight.deploys_of_last_merge(d, s)
+    assert "持ち越した" in r.stdout and s["awaits_since"] == since and deploy.deploys_of_last_merge(d, s)
 
 
 def test_queued_reapproval_carries_when_lineup_next_starts_it(repo, gh):
@@ -216,15 +216,15 @@ def test_a_carried_round_does_not_count_the_deploy_timeout_of_the_earlier_round_
     d = merged_then_timed_out_then_carried(repo, gh, "deploy")
     s = state(d)
     assert s["merges"] and s["awaits_since"]
-    assert overnight.parked_ops(d, s) == []
-    assert "deploy" not in overnight.exempt_kinds(d, s)
+    assert deploy.parked_ops(d, s) == []
+    assert "deploy" not in deploy.exempt_kinds(d, s)
 
 
 def test_a_carried_round_does_not_exempt_the_merge_by_a_review_timeout_of_the_earlier_round(repo, gh):
     d = merged_then_timed_out_then_carried(repo, gh, "review")
     s = state(d)
-    assert overnight.parked_ops(d, s) == []
-    assert "merge" not in overnight.exempt_kinds(d, s)
+    assert deploy.parked_ops(d, s) == []
+    assert "merge" not in deploy.exempt_kinds(d, s)
 
 
 def test_a_carried_round_keeps_the_deploy_success_of_the_earlier_round_and_parks_nothing(repo, gh):
@@ -232,7 +232,7 @@ def test_a_carried_round_keeps_the_deploy_success_of_the_earlier_round_and_parks
     fix_the_words(repo, d)
     reapprove(repo, d)
     s = state(d)
-    assert overnight.parked_ops(d, s) == [] and overnight.deploys_of_last_merge(d, s)
+    assert deploy.parked_ops(d, s) == [] and deploy.deploys_of_last_merge(d, s)
 
 
 def test_check_asks_for_the_merge_containing_head_after_a_code_change_even_if_the_earlier_round_timed_out_in_review(repo, gh):

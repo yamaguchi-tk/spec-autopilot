@@ -608,8 +608,8 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     for rid in reqs:
         if rid not in planned:
             errors.append(f"{rid} の確かめ方が「## QA の方向性」の表に無い")
-    import overnight
-    if overnight.budgets(text)[0] is None:
+    import deploy
+    if deploy.budgets(text)[0] is None:
         errors.append("予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）")
     premise_text = COMMENT_BLOCK.sub("", section(text, "前提") or "")
     if not premise_text.strip():
@@ -640,10 +640,10 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     for word in sorted(set(own_adr_words(text))):
         errors.append(f"本文が自分の ADR を「{word}」で指している。ADR の番号は並行の branch と取り合って改番されるので、"
                       "本文では「この spec の ADR」と書く（作り方の節では書いてよい）")
-    import overnight  # 範囲と段の規則は PR の後のループと一緒に置く（このファイルの行の予算のため）
+    import deploy  # 範囲と段の規則は PR の後のループと一緒に置く（このファイルの行の予算のため）
     import stages
     errors += stages.lint(sys.modules[__name__], text, reqs) + __import__("ladder").lint(section(text, "モデル"))
-    more_err, more_warn = overnight.scope_lint(text, repo_root(d))
+    more_err, more_warn = deploy.scope_lint(text, repo_root(d))
     pre_err, pre_warn = __import__("preflight").check(text, time.time() + ahead * 60, goal=goal) if at_approve or preflight else ([], [])  # 夜通しの前提は人がいる lint と承認のとき
     errors += more_err + pre_err + (__import__("rootcause").consent(sys.modules[__name__], d, text, warnings) if first_agreement else [])  # 合意の ADR の段の行（初回の合意だけ）
     warnings += more_warn + pre_warn
@@ -744,10 +744,11 @@ def check(d, stage="all"):
             problem = evidence_problem(root, evidence, seen)
             if problem:
                 errors.append(f"{rid} の証拠: {problem}")
+    import deploy
     import overnight
     errors += ladder_errors(s) + overnight.review_errors(d, s)
-    errors += overnight.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage)
-    return errors + (overnight.scope_errors(d, s) if stage != "pr" else []) + __import__("light").errors(d, s), notes
+    errors += deploy.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage)
+    return errors + (deploy.scope_errors(d, s) if stage != "pr" else []) + __import__("light").errors(d, s), notes
 
 
 def ladder_errors(s):
@@ -1055,7 +1056,7 @@ def cmd_block(a):
     s = load_state(d)
     if s.get("phase") not in ("building", "wait"):
         refuse(s, "block は自走中（building）か確認待ち（wait）だけ受ける")
-    gate = __import__("overnight").production_errors(d, s, done=False)
+    gate = __import__("deploy").production_errors(d, s, done=False)
     if gate and not (a.no_rollback or "").strip():
         sys.exit(f"本番が良くない: {gate[0]}。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）")
     wait_at = float(s["wait"]["at"]) if s.get("phase") == "wait" and s.get("wait") else None
@@ -1076,7 +1077,7 @@ def cmd_wait(a):
     s = load_state(d)
     if s.get("phase") != "building":
         refuse(s, "wait は自走中（building）だけ受ける")
-    gate = __import__("overnight").production_errors(d, s, done=False)
+    gate = __import__("deploy").production_errors(d, s, done=False)
     if gate:
         sys.exit(f"本番が良くないまま wait にしない: {gate[0]}")
     s.update(phase="wait", wait={"reason": a.reason, "at": time.time()})
@@ -1117,11 +1118,11 @@ def status(d):
     phase = s.get("phase")
     lines = [f"{d}: phase={phase}"]
     if phase == "building":
-        import overnight
-        elapsed, budget, label = overnight.budget_view(d, s)
+        import deploy
+        elapsed, budget, label = deploy.budget_view(d, s)
         lines.append(f"{label} {elapsed:.0f} 分 / 予算 {budget:.0f} 分（確認待ち・機械の待ちを除く）")
-        if overnight.await_record(d):
-            lines.append(f"機械の待ち: {d / overnight.AWAIT_FILE} がある。待ちのプロセスが死んでいれば、overnight.py await を起動し直す")
+        if deploy.await_record(d):
+            lines.append(f"機械の待ち: {d / deploy.AWAIT_FILE} がある。待ちのプロセスが死んでいれば、overnight.py await を起動し直す")
         for rid, n in sorted((s.get("streak") or {}).items()):
             if n:
                 lines.append(f"{rid}: 失敗のあった巡が累計 {n} 巡（references/dead-end.md の段に従う）")
