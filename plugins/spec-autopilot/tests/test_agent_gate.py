@@ -11,7 +11,7 @@ import time
 import pytest
 
 from test_autopilot import PLUGIN, hand_off, implementer_ran, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
-from test_overnight import full_spec, night
+from test_overnight import full_spec, gh, git_head, merged_pr, night  # noqa: F401（gh は fixture）
 
 GATE = PLUGIN / "hooks" / "agent_gate.py"
 IMPL = "spec-autopilot:autopilot-implementer"
@@ -137,7 +137,11 @@ def test_gate_leaves_state_alone_when_the_reviewer_names_no_building_spec(repo):
     before = {p: (p / "state.json").read_bytes() for p in (d, other)}
     assert decision(fire(repo, "評価して", agent=REVIEWER)) is None
     assert decision(fire(repo, f"spec: {other}", agent=REVIEWER)) is None
-    assert {p: (p / "state.json").read_bytes() for p in (d, other)} == before
+    broken = init_spec(repo, "broken")
+    (broken / "state.json").write_text("{not json", encoding="utf-8")
+    before[broken] = (broken / "state.json").read_bytes()
+    assert decision(fire(repo, f"spec: {broken} と docs/specs/2026-11-27-missing", agent=REVIEWER)) is None
+    assert {p: (p / "state.json").read_bytes() for p in (d, other, broken)} == before
 
 
 def test_gate_denies_an_implementer_while_a_reviewer_result_is_not_recorded(repo):
@@ -153,26 +157,79 @@ def test_gate_denies_an_implementer_while_a_reviewer_result_is_not_recorded(repo
     assert kind == "deny" and "autopilot.py review" in why and str(d) in why
 
 
-def test_reviewer_launch_while_a_dispatch_is_open_is_not_recorded(repo):
+def test_reviewer_launch_while_a_dispatch_is_open_is_denied_and_records_nothing(repo):
     d = dispatched(repo, building(repo))
-    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
-    assert not state(d).get("review_launches")
+    before = (d / "state.json").read_bytes()
+    kind, why = decision(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "最後の dispatch" in why and "overnight.py handoff" in why and str(d) in why
+    assert "実装役を起動できない" not in why and "overnight.py dispatch" not in why
+    assert (d / "state.json").read_bytes() == before
     assert decision(fire(repo, f"{d}")) is None
 
 
-def test_reviewer_launch_in_a_spec_without_dispatch_is_not_recorded_and_dispatch_still_opens(repo):
+def test_reviewer_launch_in_a_spec_without_dispatch_is_denied_and_dispatch_still_opens(repo):
     d = building(repo)  # 承認の直後（dispatch が 1 つも無い）。review は「handoff が閉じていない」で断る
-    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    kind, why = decision(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "handoff が閉じていない" in why and "overnight.py handoff" in why
     assert not state(d).get("review_launches")
     dispatched(repo, d)
     assert decision(fire(repo, f"{d}")) is None
 
 
-def test_reviewer_launch_with_uncommitted_code_is_not_recorded(repo):
+def test_reviewer_launch_with_uncommitted_code_is_denied_with_the_review_gate_sentence(repo):
     d = closed(repo)
     (repo / "uncommitted.py").write_text("x = 1\n", encoding="utf-8")  # review は「commit していないコード」で断る
-    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    kind, why = decision(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "commit していないコードがある: uncommitted.py" in why
     assert not state(d).get("review_launches")
+
+
+def test_reviewer_prompt_naming_a_building_and_a_discovery_spec_records_only_the_building_one_and_passes(repo):
+    gated = closed(repo)
+    ungated = init_spec(repo, "ungated")  # discovery は building でないので数えない
+    assert decision(fire(repo, f"{ungated} と {gated}", agent=REVIEWER)) is None
+    assert len(state(gated)["review_launches"]) == 1 and not state(ungated).get("review_launches")
+
+
+def test_reviewer_prompt_naming_a_receiving_and_a_refusing_building_spec_records_only_the_receiving_one(repo):
+    receiving = closed(repo)
+    other = repo / "docs" / "specs" / "2026-11-27-refusing"
+    shutil.copytree(receiving, other)  # 同じ state.json の写し（handoff の記録が別の dispatch の番号を指さない）
+    s = state(other)
+    s["handoffs"] = []  # こちらは handoff が閉じていない
+    (other / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    assert decision(fire(repo, f"{other} と {receiving}", agent=REVIEWER)) is None
+    assert len(state(receiving)["review_launches"]) == 1 and not state(other).get("review_launches")
+    kind, why = decision(fire(repo, f"{other}", agent=REVIEWER))
+    assert kind == "deny" and str(other) in why
+
+
+def test_reviewer_launch_denied_after_only_a_spec_file_commit_passes_after_the_handoff_is_redone(repo):
+    d = closed(repo)
+    (d / "qa.md").write_text("# qa\n", encoding="utf-8")
+    subprocess.run([*GIT, "add", "-f", "-A", "--", "docs/specs"], cwd=repo, check=True)
+    subprocess.run([*GIT, "commit", "-q", "-m", "spec のファイルだけ"], cwd=repo, check=True)
+    kind, why = decision(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "overnight.py handoff" in why and not state(d).get("review_launches")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert len(state(d)["review_launches"]) == 1
+
+
+def test_reviewer_launch_after_the_merge_commit_is_denied_and_passes_after_the_handoff_is_redone(repo, gh):
+    """マージの記録がある building の spec（デプロイ後の QA の段）。checkout をマージの commit に置くと HEAD が動いて deny になる。"""
+    d = closed(repo)
+    gh.answers("pr view", [merged_pr(git_head(repo))])
+    assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "Merge pull request #7"], cwd=repo, check=True)  # マージの commit
+    assert state(d)["merges"]
+    kind, why = decision(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "overnight.py handoff" in why and not state(d).get("review_launches")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert len(state(d)["review_launches"]) == 1
 
 
 def test_reviewer_launch_that_cannot_be_recorded_is_named_on_stderr_and_passes(repo):
