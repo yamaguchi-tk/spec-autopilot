@@ -4,7 +4,7 @@
   "created_at": 1795757450.3576891,
   "existing": true,
   "start": "4e24634d1098d330647a3b4f9efa865854b4f2a2",
-  "last_active_at": 1795766746.521421,
+  "last_active_at": 1795767933.902239,
   "scope_sha256": "58676828b121b2deb615692cfe754906b3d906b304da66ada561e3e3af72d03b",
   "approved_at": 1795764762.3724759,
   "approved_by": "R1 を C（review を記録できない状態の評価役の起動は deny）に直し、R6 を広げ、R7・T5 を足し、大きさ L・予算 150 分で合意し直す",
@@ -218,6 +218,11 @@
       ],
       "at": 1795766746.52134,
       "sha": "68b50cd986de373b96947a3a675376fa8b3c24ed"
+    },
+    {
+      "high": [],
+      "at": 1795767933.9022179,
+      "sha": "900cc9ce574f2fb28967b49a5741966809fdc101"
     }
   ],
   "fails": {
@@ -258,11 +263,25 @@
       "agent": "autopilot-implementer",
       "at": 1795764786.16925,
       "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
+    },
+    {
+      "base": "eb55d0518109dae260ad59036592bc0180eda7c7",
+      "tasks": [
+        "T5"
+      ],
+      "reqs": [
+        "R1",
+        "R6",
+        "R7"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795766784.612581,
+      "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
     }
   ],
   "anomalies": {
     "空の turn の block": 0,
-    "裏で走った agent": 2,
+    "裏で走った agent": 4,
     "承認後に人へ問い": 0,
     "待ちの poll": 0
   },
@@ -274,6 +293,14 @@
       ],
       "dispatch": 0,
       "at": 1795765524.7564359
+    },
+    {
+      "tip": "900cc9ce574f2fb28967b49a5741966809fdc101",
+      "tasks": [
+        "T5"
+      ],
+      "dispatch": 1,
+      "at": 1795767423.689825
     }
   ]
 }

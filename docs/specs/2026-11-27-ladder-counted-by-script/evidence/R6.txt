@@ -1,4 +1,4 @@
-- commit: 68b50cd
+- commit: 900cc9c
 $ python3 .autopilot-qa/check.py
   [R6] 段落: 戻さない: True
   [R6] 段落: 記録しないと止まる: True

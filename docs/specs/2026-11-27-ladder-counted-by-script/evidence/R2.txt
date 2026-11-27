@@ -1,4 +1,4 @@
-- commit: 68b50cd
+- commit: 900cc9c
 $ python3 .autopilot-qa/check.py
   [R2] ok: handoff → 評価役 → dispatch: rc=1 out='<wt>/.autopilot-qa/work/r2/docs/specs/2026-11-27-game は評価役を起動したのに結果が記録されていない。評価役の結果を `autopilot.py review <wt>/.autopilot-qa/work/r2/docs/specs/2026-11-27-game --high ...` で記録してから進む'
   [R2] ok: 評価役の後に review が無いまま開いた dispatch で実装役: ('deny', '実装役を起動できない: <wt>/.autopilot-qa/work/r2/docs/specs/2026-11-27-game は評価役を起動したのに結果が記録されていない。評価役の結果を `autopilot.py review <wt>/.autopilot-qa/work/r2/docs/specs/2026-11-27-game --high ...` で記録してから進む。overnight.py dispatch <dir> --task T<n> を打ってから起動する')
@@ -6,8 +6,5 @@ $ python3 .autopilot-qa/check.py
   [R2] ok: review の後の dispatch: rc=0
   [R2] ok: review の後の実装役: None
   [R2] ok: dispatch → 評価役（deny のはず: deny）→ 実装役: None
-  [R2] ok: dispatch の無い spec で評価役 → dispatch rc=0 'dispatch: T1 を 039ffd52 から実装役に渡す。起動する agent:\nautopilot-implementer'
+  [R2] ok: dispatch の無い spec で評価役 → dispatch rc=0 'dispatch: T1 を 44a206dc から実装役に渡す。起動する agent:\nautopilot-implementer'
 R2 pass
-$ git apply .autopilot-qa/mut-R2-5.patch && python3 -m pytest plugins/spec-autopilot/tests/test_agent_gate.py::test_dispatch_refuses_until_the_reviewer_result_is_recorded -q; git apply -R .autopilot-qa/mut-R2-5.patch
-E       AssertionError: assert (0 != 0)
-1 failed
