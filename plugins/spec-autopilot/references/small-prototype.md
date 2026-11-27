@@ -3,7 +3,7 @@
 次のどちらかの spec では、承認の前に動く試作を作って人に触ってもらう（`commands/autopilot.md` の A の 2 から読む。playbook の名前ではなく、大きさの行と repo の種類で決まる）。
 
 - `- 大きさ: S`
-- `- 大きさ: M` で、新しく作る repo（state.json の `existing` が偽。docs/specs・docs/adr の外に git が追うファイルが無い）で、「## 制約」に `- 依る spec:` の行が無い。依る spec のある M は、前の spec の変更がまだ載っていない木に書くことになるので作らない。既存の repo の M・L も承認の前にコードを書かない
+- `- 大きさ: M` で、新しく作る repo（state.json の `existing` が false〔bool〕。キーが無い・ほかの値なら既存の repo とみなす。false は、init のときに docs/specs・docs/adr の外に git が追うファイル（git の外では、ファイル）が無ければ init が書く。dispatch と hook は state.json の `existing` だけを見る）で、「## 制約」に `- 依る spec:` の行が無い。依る spec のある M は、前の spec の変更がまだ載っていない木に書くことになるので作らない。既存の repo の M・L も承認の前にコードを書かない
 
 M の試作も実装役 1 本に全要件を渡す（新しく作る repo の M の実装と同じ）。草案の提示は S より遅れうるので、予算の 10 分に触れるまでを数えて報告に書く。
 
