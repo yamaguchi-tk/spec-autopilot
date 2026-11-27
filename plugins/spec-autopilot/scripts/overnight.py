@@ -319,10 +319,10 @@ def first_attempt(run_id):
 
 
 def prototype_ok(d, s):
-    """承認の前の試作を許すか。(真偽, 読めなかったときの理由か None)。大きさ S か、新しく作る repo（state.json の existing が偽）で依る spec の無い M だけ真。読めない・形が違う・無いなら偽。"""
+    """承認の前の試作を許すか。(真偽, 読めなかったときの理由か None)。大きさ S か、新しく作る repo（state.json の existing が false）で依る spec の無い M だけ真。読めない・形が違う・無いなら偽。"""
     try:
         size = autopilot.stated_size(autopilot.COMMENT_BLOCK.sub("", autopilot.section((Path(d) / "spec.md").read_text(encoding="utf-8"), "制約") or ""))[0]
-        return size == "S" or (size == "M" and not s.get("existing") and not __import__("lineup").after_name(Path(d))), None
+        return size == "S" or (size == "M" and autopilot.is_new_repo(s) and not __import__("lineup").after_name(Path(d))), None
     except Exception as e:
         return False, f"spec.md が読めない（{type(e).__name__}）"
 

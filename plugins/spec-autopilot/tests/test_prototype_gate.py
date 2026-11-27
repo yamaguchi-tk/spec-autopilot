@@ -8,7 +8,7 @@ import time
 import pytest
 
 from test_agent_gate import GIT, IMPL, decision, fire
-from test_autopilot import GOOD_SPEC, implementer_ran, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
+from test_autopilot import GOOD_SPEC, NOT_FALSE, implementer_ran, init_spec, repo, run, state, user_says, with_existing  # noqa: F401（repo は fixture）
 from test_lineup import line
 from test_overnight import night
 
@@ -214,3 +214,24 @@ def test_dispatch_and_gate_say_that_spec_md_could_not_be_read(repo):
         (d / "spec.md").chmod(0o644)
     assert r.returncode != 0 and "spec.md が読めない" in r.stdout + r.stderr
     assert out is not None and out[0] == "deny" and "spec.md が読めない" in out[1]
+
+
+@pytest.mark.parametrize("value", NOT_FALSE)
+def test_dispatch_in_discovery_refuses_a_medium_spec_when_existing_is_not_false_and_keeps_state(repo, value):
+    d = draft(repo, "- 大きさ: M")
+    with_existing(d, value)
+    before = (d / "state.json").read_text(encoding="utf-8")
+    r = dispatch(repo, d)
+    assert r.returncode != 0
+    assert (d / "state.json").read_text(encoding="utf-8") == before
+
+
+@pytest.mark.parametrize("value", NOT_FALSE)
+def test_gate_denies_in_discovery_a_medium_spec_when_existing_is_not_false_even_with_a_dispatch_record(repo, value):
+    d = draft(repo, "- 大きさ: M")
+    st = state(d)
+    st["dispatches"] = [{"base": None, "tasks": ["T1"], "reqs": ["R1"], "agent": "autopilot-implementer", "at": 1}]
+    (d / "state.json").write_text(json.dumps(st), encoding="utf-8")
+    with_existing(d, value)
+    out = decision(fire(repo, f"{d}"))
+    assert out is not None and out[0] == "deny"

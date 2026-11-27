@@ -120,6 +120,11 @@ def repo_root(start):
     return Path(out.stdout.strip()) if out.returncode == 0 else Path(start)
 
 
+def is_new_repo(s):
+    """state.json の existing が bool の False のときだけ新しく作る repo。キーが無い・null・文字列・0 などは既存の repo（止める側に倒す）。"""
+    return s.get("existing") is False
+
+
 def load_state(d):
     return json.loads((d / "state.json").read_text(encoding="utf-8"))
 
@@ -620,7 +625,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     stated, size_err = stated_size(constraints)
     errors += ([size_err] if size_err else []) + __import__("playbooks").lint(constraints)
     first_agreement = load_state(d).get("phase") in ("discovery", "queued") and not goal  # L を止めるのは初回の合意だけ。目的の spec（--goal）は止めない
-    if load_state(d).get("existing"):
+    if not is_new_repo(load_state(d)):
         body = {name: COMMENT_BLOCK.sub("", section(text, name) or "") for name in EXISTING_SECTIONS}
         for name in EXISTING_SECTIONS:
             if not body[name].strip():
@@ -1033,7 +1038,7 @@ def cmd_done(a):
     size, detail = None, "数えていない"
     if size_err:  # 読めない大きさの行は大きい側に倒す（cmd_size と同じ向き）
         stated, detail = "L", size_err
-    if s.get("existing"):
+    if not is_new_repo(s):
         try:
             size, _, detail, _ = counted_size(d, COMMENT_BLOCK.sub("", section(text, "影響範囲") or ""))
         except RuntimeError as e:

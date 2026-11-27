@@ -1,0 +1,31 @@
+- commit: 0c3f78f9ed9ce0561925822ae9220ee500e951a5
+$ python3 .autopilot-qa/check.py
+（一時の repo を .autopilot-qa/work-tip・work-base に作り、discovery の M の spec の state.json の existing を 消す・null・"false"・0・""・[]・false にして、overnight.py dispatch と hooks/agent_gate.py を入口から打った。base は git archive 53cddd6 の plugin に tip のテストを載せたもの）
+TIP missing:    dispatch_rc=1 state_same=true msg="dispatch は自走中（building）か、承認の前の試作（大きさ S、または新しく作る repo の M）だけ受ける（phase=discovery）" gate=deny "… は building でない（discovery。discovery は試作を許す大きさ S か新しく作る repo の M だけ）…"
+TIP null:       dispatch_rc=1 state_same=true gate=deny（同じ理由）
+TIP str-false:  dispatch_rc=1 state_same=true gate=deny（同じ理由）
+TIP zero:       dispatch_rc=1 state_same=true gate=deny（同じ理由）
+TIP str-empty:  dispatch_rc=1 state_same=true gate=deny（同じ理由）
+TIP empty-list: dispatch_rc=1 state_same=true gate=deny（同じ理由）
+TIP false:      dispatch_rc=0 "dispatch: T1 を … 実装役に渡す。起動する agent:\nautopilot-implementer" gate=null（通す）
+BASE missing:   dispatch_rc=0 gate=null（通してしまう）
+BASE null:      dispatch_rc=0 gate=null（通してしまう）
+BASE str-false: dispatch_rc=1 gate=deny
+BASE zero:      dispatch_rc=0 gate=null（通してしまう）
+BASE false:     dispatch_rc=0 gate=null
+tests tip: 0 16 passed in 3.89s
+tests base: 1 12 failed, 4 passed in 4.76s
+R1 pass
+R2 pass
+
+$ bash .autopilot-qa/mut.sh R1-1 plugins/spec-autopilot/scripts/overnight.py plugins/spec-autopilot/tests/test_prototype_gate.py -k existing_is_not_false
+（変異: prototype_ok の autopilot.is_new_repo(s) を not s.get("existing") に戻す）
+== 変異の前
+8 passed, 27 deselected in 3.09s
+== 変異の後
+ plugins/spec-autopilot/scripts/overnight.py | 2 +-
+>       assert out is not None and out[0] == "deny"
+E       assert (None is not None)
+plugins/spec-autopilot/tests/test_prototype_gate.py:237: AssertionError
+6 failed, 2 passed, 27 deselected in 3.73s
+== 戻した: 印なし
