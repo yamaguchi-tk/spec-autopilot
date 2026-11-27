@@ -122,6 +122,10 @@ def spoil_rollback(repo, d):
     edit_state(d, lambda s: s["merges"][-1].update(rollback=True))
 
 
+def spoil_rolled_back_by_command(repo, d):
+    edit_state(d, lambda s: s.update(rolled_back=[{"reason": "smoke が落ちた", "evidence": "e", "mtime": 1.0, "at": time.time()}]))
+
+
 def spoil_head(repo, d):
     edit_state(d, lambda s: s["merges"][-1].pop("head"))
 
@@ -134,7 +138,7 @@ def spoil_approved_at(repo, d):
     edit_state(d, lambda s: s.update(approved_at=None))
 
 
-@pytest.mark.parametrize("spoil", [spoil_code, spoil_rollback, spoil_head, spoil_unknown_head, spoil_approved_at])
+@pytest.mark.parametrize("spoil", [spoil_code, spoil_rollback, spoil_rolled_back_by_command, spoil_head, spoil_unknown_head, spoil_approved_at])
 def test_reapproval_carries_nothing_when_the_code_differs_or_cannot_be_decided(repo, gh, spoil):
     d = blocked_after_deploy(repo, gh)
     fix_the_words(repo, d)
