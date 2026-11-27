@@ -1,0 +1,14 @@
+{
+  "phase": "queued",
+  "slug": "new-repo-m-one-implementer",
+  "created_at": 1795751662.8324249,
+  "existing": true,
+  "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
+  "last_active_at": 1795752992.437543,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795752992.4365828,
+  "approved_by": "人: OK、承認（2 本まとめて）",
+  "spec_sha256": "01eb1957ce4308b105e07c071b5a36932d743fea666e848d32d610ff991e805b",
+  "after": null
+}
