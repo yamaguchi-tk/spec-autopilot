@@ -1,0 +1,9 @@
+- commit: c3f3476ecff6f837782ea00601c5ea17f6bb2aaa
+$ python3 .autopilot-qa/check_ladder.py
+（本物の autopilot.py review を high R1 → none → R1 → none → R1 の順に記録し、各記録の出力・streak・check の終了コードを並べる）
+R4 trace: [('R1: 失敗のあった巡が累計 1 巡', 1, 1), ('review: high なし', 1, 1), ('R1: 失敗のあった巡が累計 2 巡。推測で直さず原因を調べる（references/dead-end.md の 1）\nR1: 実装役の段を上げた: autopilot-implementer→autopilot-implementer-opus（原因調査）', 2, 1), ('review: high なし', 2, 1), ('R1: 失敗のあった巡が累計 3 巡。作り方を変える（references/dead-end.md の 2）\nR1: 実装役の段を上げた: autopilot-implementer-opus→autopilot-implementer-opus-xhigh（作り直し）', 3, 1)]
+R4 pass
+（R4 の検査: 2 巡目の high で「原因を調べる」、その次の none の巡の check は作り直しを求めない、3 巡目の high で「作り方を変える」、その check は終了コード 1 で R1 の作り方を求めた。status は「累計 3 巡」）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py::test_high_none_high_none_high_reaches_investigate_then_rework -q
+.
+1 passed

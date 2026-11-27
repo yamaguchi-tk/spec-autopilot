@@ -1,0 +1,8 @@
+- commit: c3f3476ecff6f837782ea00601c5ea17f6bb2aaa
+$ python3 .autopilot-qa/check_ladder.py
+（本物の autopilot.py review を一時の repo で high R1 → none → R1 の順に記録し、state.json の streak を読む。続けて fail --from qa の巡、none の巡、rework、rework の後の none、累計 2 巡での rework を回す）
+R3 pass
+（R3 の検査: streak R1 は [1, 1, 2]、R2 は 0。fail --from qa の後の none の巡で 3、その後の none で 3 のまま。rework で 0、その後の none で 0。累計 2 巡の rework は「累計 3 巡に届いていない」で断られた）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py::test_round_without_high_or_fail_keeps_the_count plugins/spec-autopilot/tests/test_autopilot.py::test_rework_resets_the_count_that_none_rounds_kept -q
+..
+2 passed

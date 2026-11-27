@@ -1,0 +1,8 @@
+- commit: c3f3476ecff6f837782ea00601c5ea17f6bb2aaa
+$ python3 .autopilot-qa/check_ladder.py
+（building の spec に本物の agent_gate.py で評価役の起動を 1 件残し、phase を done にして、人の発言の後に本物の autopilot.py approve で承認し直し、state.json を読む。続けて新しい巡で dispatch と実装役の payload を agent_gate に渡す）
+R5 pass
+（R5 の検査: 承認し直しの後 phase=building で最上位に review_launches が無く、history の最後の巡に review_launches が 1 件。新しい巡の dispatch は終了コード 0、実装役の起動は通った）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_agent_gate.py::test_reapproval_moves_review_launches_to_history_and_starts_empty -q
+.
+1 passed

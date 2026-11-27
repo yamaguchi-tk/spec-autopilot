@@ -1,0 +1,14 @@
+- commit: c3f3476ecff6f837782ea00601c5ea17f6bb2aaa
+$ grep -n "累計\|0 に戻さず\|記録しないと" plugins/spec-autopilot/references/dead-end.md
+5:数えるのは、…巡の中でその要件に失敗か high が 1 つでもあれば +1（何件あっても 1 回）。high も失敗も無い巡では数えを変えず（0 に戻さず、間に high none の巡を挟んでも累計は減らない）、0 に戻すのは作り直し（rework）だけ。…記録しないと、次の `overnight.py dispatch` と実装役の起動が止まる（起動の入口の hook が評価役の起動を数え、最後の起動の後に `review` の記録が無い spec を断る）。
+7:## 1. 同じ要件の失敗が累計 2 巡になったら: 原因を調べる
+16:ガード…（事例では、失敗が累計 2 巡になった後の直しで…累計 3 巡になった後の作り直しのときだった）…
+18:## 2. 累計 3 巡になったら: 作り方を変える（check が落ちる）
+$ grep -n "記録しないと、次の" plugins/spec-autopilot/commands/autopilot.md
+95:   - 結果を `CLI review <dir> --high none` か `--high R1,R3`…失敗か high のあった巡の累計（high も失敗も無い巡では戻さない）で `references/dead-end.md` の段に進む。評価役を起動したら、返るたびに必ず記録する（記録しないと、次の `NIGHT dispatch` と実装役の起動が hook で止まる）。…
+$ python3 .autopilot-qa/check_ladder.py
+R6 pass
+（R6 の検査: dead-end.md の数え方の段落に「0 に戻さず」「rework」「記録しないと」「実装役の起動が止まる」、見出しに「累計 2 巡」「累計 3 巡」があり「続いた」が無い。autopilot.md の C の 3 の記録の行に「累計」「戻さない」「記録しないと」「hook で止まる」。autopilot.py に「巡続い」が無い）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py::test_session_start_reports_the_ladder -q
+.
+1 passed
