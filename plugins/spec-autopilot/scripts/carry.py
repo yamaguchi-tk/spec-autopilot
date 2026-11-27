@@ -49,3 +49,10 @@ def plan(root, s, prev):
 def holds_head(root, s, merge_head):
     """持ち越した spec（awaits_since がある）の「今の HEAD を含むマージ」。マージの head と今の HEAD の間が spec の置き場の中だけ。"""
     return bool(s.get("awaits_since")) and same_outside(root, merge_head)
+
+
+def this_round_timeouts(records, s):
+    """上限を過ぎた待ち。持ち越した spec でも、今の承認より後のものだけ（前の巡の timeout は新しい巡で数え直す）。
+    成功・失敗の事実は、持ち越した分も読む awaits の記録のまま使う。"""
+    approved = float(s.get("approved_at") or 0)
+    return [a for a in records if a.get("result") == "timeout" and a["at"] > approved]
