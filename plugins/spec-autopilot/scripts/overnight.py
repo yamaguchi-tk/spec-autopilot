@@ -22,7 +22,7 @@
   overnight.py merged <dir> --pr <n> [--rollback --reason <理由>]   マージを gh で確かめて記録する（冪等）。マージ後の予算はここから数える
   overnight.py qa <dir> --evidence <file> --smoke pass|fail|unknown   デプロイの後に実環境で QA を回した証拠と、変えない挙動の smoke を記録する
       （`- デプロイの起動: なし（マージした commit で QA）` の spec は、デプロイの代わりに最後のマージの記録の後に書いた証拠を受ける）
-  overnight.py notify <dir>                         spec の `- 通知:` の先に、今の状態と本番の状態を 1 行で知らせる（done と block も出す）
+  overnight.py notify <dir>                         spec の `- 通知:` の先に、今の状態と本番の状態を知らせる（Slack の DM は朝の報告の行。done と block も出す）
   overnight.py park <dir> --kind merge|deploy|qa|ci|other --op <操作> --reason <理由> [--req R<n>]
                                                     範囲の外の操作・満たせない要件を、止めずに積む
   overnight.py report <dir>                         朝の報告（done も最後に出す）
@@ -1399,14 +1399,16 @@ def cmd_lens(a):
 
 
 def notify(d):
-    """spec の `- 通知:` の先に 1 行で知らせる。デスクトップは osascript、Slack の DM は main に送らせる。失敗しても止めない。"""
+    """spec の `- 通知:` の先に知らせる。Slack の DM は朝の報告の行を main に送らせ、ほかは状態と本番の 1 行
+    （読めない待ちの記録があればその場所も）を出す（デスクトップは osascript）。失敗しても止めない。"""
     rows = scope_rows((d / "spec.md").read_text(encoding="utf-8")) or {}
     where = rows.get("通知") or "なし"
     s = autopilot.load_state(d)
     if where == "Slack の DM":  # DM は朝の報告の行を載せる（読んで判断できるように。本番と読めない行は報告の行が 1 回ずつ出す）
         line = "\n".join([f"{d.name}: {s.get('phase')}", *report(d)[1:]])
     else:
-        try:
+        try:  # 読めるかは _awaits で決める（範囲によっては本番の表示が待ちの記録を読まないので、その例外に頼らない）
+            _awaits(d)
             line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
         except UnreadableAwaits as e:  # block の後の知らせを、読めない待ちの記録で落とさず、どの行を直すかを出す
             line = f"{d.name}: {s.get('phase')}。本番: {UNREADABLE_PROD}。{e}"
