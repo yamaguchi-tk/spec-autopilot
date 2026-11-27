@@ -290,7 +290,7 @@ def test_an_adr_matching_a_protected_pattern_is_counted(repo):
     """ADR は保護から除かない。ADR の名前が *guardrails* に当たると approve が断る（止める側）。"""
     d = existing_spec(repo, files={"docs/adr/README.md": "# ADR\n"})
     adr = "docs/adr/2026-01-01-guardrails-wording.md"
-    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", adr: "# ADR\n"})
+    write_files(repo, {"src/board.js": "function clearLines() { return 1 }\n", adr: "# ADR\n\n- 直し方: 要らなくする\n"})
     add(repo, adr)
     (d / "spec.md").write_text((d / "spec.md").read_text(encoding="utf-8").replace("docs/adr/2026-01-01-game.md", adr), encoding="utf-8")
     r = light(repo, "approve", str(d), "--source", "x")

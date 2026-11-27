@@ -1,0 +1,26 @@
+- commit: 35ea61569d8f38c3e922ec91c5fde907ac86cb05
+$ source .venv/bin/activate && python3 .autopilot-qa/check.py   # 一時の git repo（.autopilot-qa/work）で本物の CLI を回した
+R2 pass
+$ autopilot.py approve <dir> --by OK   # 人の発言を記録した後。ADR: - 直し方: 設計を変える だけ
+exit=1
+ERROR: ADR docs/adr/2026-01-01-game.md: `- 退けた: 要らなくする（<理由>）` か `- 要件の文で退けた: 要らなくする（R<n> の「<要件の語>」）` の行
+ERROR: ADR docs/adr/2026-01-01-game.md: `- 退けた: 入力の約束を変える（<理由>）` か `- 要件の文で退けた: 入力の約束を変える（R<n> の「<要件の語>」）` の行
+$ autopilot.py approve <dir> --by OK --queue
+exit=1
+ERROR: ADR docs/adr/2026-01-01-game.md: `- 退けた: 要らなくする（<理由>）` か `- 要件の文で退けた: 要らなくする（R<n> の「<要件の語>」）` の行
+ERROR: ADR docs/adr/2026-01-01-game.md: `- 退けた: 入力の約束を変える（<理由>）` か `- 要件の文で退けた: 入力の約束を変える（R<n> の「<要件の語>」）` の行
+$ light.py approve <dir> --source x
+exit=1
+ERROR: ADR docs/adr/2026-01-01-game.md: `- 退けた: 要らなくする（<理由>）` か `- 要件の文で退けた: 要らなくする（R<n> の「<要件の語>」）` の行
+ERROR: ADR docs/adr/2026-01-01-game.md: `- 退けた: 入力の約束を変える（<理由>）` か `- 要件の文で退けた: 入力の約束を変える（R<n> の「<要件の語>」）` の行
+（3 つの後とも phase は discovery。UTF-8 で読めない ADR でも 3 つとも exit=1・Traceback なし・discovery のまま）
+$ autopilot.py approve <dir> --by OK   # 行をそろえた後
+exit=0
+approved: 予算 30 分。ここから自走する
+$ lineup.py next   # queued で承認した後に ADR の退けた行を消した
+（phase は blocked、理由に「着手の時点で lint が通らない」と退けた行の ERROR）
+$ bash .autopilot-qa/mut.sh mut-R2-1 <tip> plugins/spec-autopilot/scripts/autopilot.py plugins/spec-autopilot/tests/test_consent_adr.py::test_every_approval_is_refused_while_the_adr_lacks_the_lines
+mut-R2-1: 変異の前は通った
+E           AssertionError: approved: 予算 30 分。ここから自走する
+1 failed in 2.91s
+mut-R2-1: 変異の後の終了コード 1

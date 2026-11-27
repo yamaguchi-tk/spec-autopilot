@@ -1,0 +1,13 @@
+- commit: 35ea61569d8f38c3e922ec91c5fde907ac86cb05
+$ source .venv/bin/activate && python3 .autopilot-qa/check.py   # 照合役の定義の項目 11 と冒頭の段落を引き、2 本の ADR を rootcause で読んだ
+R8 pass
+$ grep -n '^11\.' plugins/spec-autopilot/agents/autopilot-spec-checker.md
+11. 退けた理由の照合: spec の先頭の `- ADR:` が指すファイルの `- 退けた: <段>（<理由>）` と `- 要件の文で退けた: <段>（R<n> の「<要件の語>」）` の理由を、「## 目的」に当てて読む。理由が、その段で目的に届かない訳を書いていなければ、その行ごとに `ng` を 1 本返す（「要らなくする」を退ける理由なら、既存の機能・手順・設定で目的に届かない訳。「複雑になる」「手間が増える」のように、段の名前や好みだけを言い換えたものは訳に数えない）。理由が目的の言葉に届く訳を書いていれば `ok`。`- 直し方:` の行が無いか、選んだ段より上の段の退けた行が無いとき（最上段の「要らなくする」を選んだ ADR は退けた行が要らない）は、段の行が無い `ng` を 1 本返す。…
+$ grep -n '合意し直し' plugins/spec-autopilot/agents/autopilot-spec-checker.md
+9: …「合意し直し」と渡されたとき（実装が進んだ後の作業ツリー）は、1〜4・6 を `該当なし（合意し直し）` にし、5・7・8・9・10 を見て、11 は `該当なし（合意し直し）` にする。…
+$ rootcause.consent_check(docs/adr/2026-11-26-night-notes-short-run.md)
+ERROR=1 退けた=[]
+（段の行が無い → 項目 11 の「段の行が無い ng」に当たる）
+$ rootcause.consent_check(docs/adr/2026-11-27-consent-adr-fix-ladder.md)
+ERROR=0 退けた=['要らなくする']
+（理由「相談役は合意の段で既定では回らず、人は ADR に枠の違う案が無いことに気づけないので、今の仕組みのままでは目的に届かない」は、既存の仕組みで目的に届かない訳を書いており、項目 11 で ok を出せる）

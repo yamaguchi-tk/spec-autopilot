@@ -156,7 +156,7 @@ def numbered(repo, d, number, slug="game"):
     adr_dir = repo / "docs" / "adr"
     for f in adr_dir.glob("*.md"):
         f.unlink()
-    (adr_dir / f"{number}-{slug}.md").write_text(f"# ADR-{number}: canvas で描く\n", encoding="utf-8")
+    (adr_dir / f"{number}-{slug}.md").write_text(f"# ADR-{number}: canvas で描く\n\n- 直し方: 要らなくする\n", encoding="utf-8")
     spec = d / "spec.md"
     spec.write_text(re.sub(r"^- ADR: .*$", f"- ADR: docs/adr/{number}-{slug}.md", spec.read_text(encoding="utf-8"), count=1, flags=re.M),
                     encoding="utf-8")

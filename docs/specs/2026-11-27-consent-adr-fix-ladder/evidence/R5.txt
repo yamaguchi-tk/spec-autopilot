@@ -1,0 +1,21 @@
+- commit: 35ea61569d8f38c3e922ec91c5fde907ac86cb05
+$ source .venv/bin/activate && python3 .autopilot-qa/check.py   # 一時の git repo（.autopilot-qa/work）で本物の CLI を回した
+R5 pass
+$ autopilot.py lint <dir>   # spec に - ADR: が無い
+exit=0
+lint: OK
+$ autopilot.py approve <dir> --by OK   # - ADR: が無い
+exit=1
+spec.md の先頭に `- ADR: docs/adr/<file>.md` が無い。作り方の選択を ADR に書いてから承認する
+$ autopilot.py lint <dir>   # ADR のファイルが無い
+exit=0
+lint: OK
+$ autopilot.py approve <dir> --by OK   # ADR のファイルが無い
+exit=1
+ADR docs/adr/2026-01-01-none.md が無い。作り方の選択を ADR に書いてから承認する
+$ light.py approve <dir> --source x   # ADR のファイルが無い
+exit=1
+ERROR: ADR docs/adr/2026-01-01-none.md が無い
+$ autopilot.py lint <dir>   # - ADR: がディレクトリを指す
+exit=0
+lint: OK

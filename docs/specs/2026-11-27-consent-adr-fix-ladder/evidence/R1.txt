@@ -1,0 +1,24 @@
+- commit: 502c6e16c6aa83edc2053b5a34fed5eb71778189
+$ source .venv/bin/activate && python3 .autopilot-qa/check.py && python3 -m pytest plugins/spec-autopilot/tests/test_consent_adr.py plugins/spec-autopilot/tests/test_rootcause.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_light.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_main_progress.py -q -n auto
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass
+R6 pass
+R7 pass
+R8 pass
+R9 pass
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+........................................................................ [ 35%]
+........................................................................ [ 47%]
+........................................................................ [ 59%]
+........................................................................ [ 71%]
+........................................................................ [ 83%]
+........................................................................ [ 95%]
+.........................                                                [100%]
+601 passed in 122.38s (0:02:02)
