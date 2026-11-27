@@ -1,0 +1,10 @@
+- commit: fd6c1fcd1c26c1e6f51e45c8cd30237f9356ede4
+
+$ git show c5fb956:plugins/spec-autopilot/.claude-plugin/plugin.json | grep version
+  "version": "0.1.16",
+
+$ grep -n '"version"' plugins/spec-autopilot/.claude-plugin/plugin.json
+3:  "version": "0.1.17",
+
+$ .venv/bin/python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q
+11 passed in 42.11s

@@ -1,0 +1,19 @@
+- commit: fd6c1fcd1c26c1e6f51e45c8cd30237f9356ede4
+
+commands/autopilot.md の「人に戻るとき」・再開の項と fable-advisor.md の `承認:` の欄を、R1 の出力と advisor_approval.py の human_errors・reply_errors の ERROR と突き合わせた。
+
+$ sed -n 145p plugins/spec-autopilot/commands/autopilot.md
+`CLI block <dir> --req R<n> --reason "<理由>" --evidence "<証拠>"` を実行する。block の後は、時刻や人がいるかによらず、まず下の承認し直しの手順（1〜5）を回す。通らないとき（`承認: 否`・反証あり・確かめられない 1 以上・`## 自走の範囲` を変える直し・直す文が無い）だけ、次の 1 通にまとめて人に示し、`lineup.py next` で行列の次に進む。
+
+$ sed -n 128p plugins/spec-autopilot/commands/autopilot.md | grep -o 'blocked なら[^）]*）'
+blocked なら「人に戻るとき」の承認し直しを先に試し、通らなければ人の返事を待つ）
+
+$ sed -n 143,160p plugins/spec-autopilot/commands/autopilot.md | grep -n -E '夜|朝'
+16:5. 通った巡は、approved_by（`相談役（fable-advisor・advice-checker 反証なし）: <要約>`）を、朝の報告（done の後の人への報告）に 1 行書く。人が読み直す
+
+（「朝の報告」は done の後の報告の名前で、夜の間の限定ではない。「夜の間（人の返事を待てないとき）」の文は残っていない）
+
+$ grep -n -o '承認:` 承認し直しの相談（[^）]*）' plugins/spec-autopilot/agents/fable-advisor.md
+85:承認:` 承認し直しの相談（呼び出し側が、人が一度承認した spec の block の後の承認し直しを通してよいかを聞いたとき。時刻によらない）
+
+通らないときの条件と approve の ERROR: `承認: 否`・反証あり・確かめられない 1 以上 は reply_errors、`## 自走の範囲` を変える直し は human_errors の 3 つ目、記録が揃わない は手順 4 の文が受ける。食い違いは無い。

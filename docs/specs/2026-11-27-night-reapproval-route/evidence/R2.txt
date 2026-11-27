@@ -1,0 +1,11 @@
+- commit: fb837ebee68f3ed4d4cff07af7b2349b5e58ef0e
+
+.autopilot-qa/check.py の R2 の段。R1 の spec で本物の autopilot.py status を打った。
+
+$ .venv/bin/python3 .autopilot-qa/check.py
+--- status: ['人に戻した: R1（R2 の文を直す必要）。まず spec を直して approve --by-advisor の承認し直しを試し、通らなければ人に 1 通で示して人の返事を待ち、/autopilot の「人に戻るとき」の手順に従う']
+R2 pass
+exit=0
+
+$ .venv/bin/python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_light.py plugins/spec-autopilot/tests/test_input_kinds.py -q -n auto
+618 passed in 167.15s (0:02:47)

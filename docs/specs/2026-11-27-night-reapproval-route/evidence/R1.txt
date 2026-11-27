@@ -1,0 +1,11 @@
+- commit: fb837ebee68f3ed4d4cff07af7b2349b5e58ef0e
+
+.autopilot-qa/check.py の R1 の段。一時の repo で人が approve した spec に本物の autopilot.py block を打った。
+
+$ .venv/bin/python3 .autopilot-qa/check.py
+--- block: 0 blocked: R1。人に示す前に、spec を直し、fable-advisor → advice-checker を起動して `approve --by-advisor` で承認し直すのを試す（数えられるのは spec を直した後に起動した相談役だけ）。通らなければ `lineup.py next` で次に進み、人に 1 通で示す
+R1 pass
+exit=0
+
+$ .venv/bin/python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_light.py plugins/spec-autopilot/tests/test_input_kinds.py -q -n auto
+618 passed in 167.15s (0:02:47)
