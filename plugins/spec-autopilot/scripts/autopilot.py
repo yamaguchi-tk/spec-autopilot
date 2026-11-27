@@ -643,7 +643,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     errors += stages.lint(sys.modules[__name__], text, reqs) + __import__("ladder").lint(section(text, "モデル"))
     more_err, more_warn = overnight.scope_lint(text, repo_root(d))
     pre_err, pre_warn = __import__("preflight").check(text, time.time() + ahead * 60, goal=goal) if at_approve or preflight else ([], [])  # 夜通しの前提は人がいる lint と承認のとき
-    errors += more_err + pre_err
+    errors += more_err + pre_err + (__import__("rootcause").consent(sys.modules[__name__], d, text, warnings) if first_agreement else [])  # 合意の ADR の段の行（初回の合意だけ）
     warnings += more_warn + pre_warn
     for rid, body in reqs.items():
         for word in VAGUE:
@@ -1293,7 +1293,7 @@ def cmd_rework(a):
         sys.exit(f"{a.adr} は前に使った ADR。作り方の変更は新しい ADR に書く")
     if not adr.is_file() or root not in adr.parents:
         sys.exit(f"ADR {a.adr} が repo の中に無い")
-    __import__("rootcause").refuse_if_unfit(adr.read_text(encoding="utf-8"), a.adr, d, reqs)
+    __import__("rootcause").refuse_if_unfit(adr, a.adr, d, reqs)
     reworks.setdefault(a.req, []).append(str(adr.relative_to(root)))
     s.setdefault("streak", {})[a.req] = 0
     save_state(d, s)

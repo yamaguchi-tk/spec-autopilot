@@ -1,0 +1,36 @@
+- commit: 35ea61569d8f38c3e922ec91c5fde907ac86cb05
+$ source .venv/bin/activate && python3 .autopilot-qa/check.py   # 一時の git repo（.autopilot-qa/work）で本物の CLI を回した。承認の後に ADR を「# 段の行なし」に書き換えた
+R4 pass
+$ autopilot.py lint <dir>   # phase=building
+exit=0
+lint: OK
+$ autopilot.py check <dir>   # phase=building
+exit=1
+ERROR: tasks.md にタスクが無い（`- [ ] T1: ... [R1]` の形で書く）
+ERROR: R1 を受け持つタスクが tasks.md に無い
+ERROR: R2 を受け持つタスクが tasks.md に無い
+ERROR: R1 の QA の結果が qa.md に無い
+ERROR: R2 の QA の結果が qa.md に無い
+ERROR: 最後のレビューが記録されていない（autopilot-reviewer を回し、autopilot.py review で記録する）
+（直し方・退けた の ERROR は無い）
+$ autopilot.py lint <dir>   # phase=wait
+exit=0
+lint: OK
+$ autopilot.py check <dir>   # phase=wait
+exit=1
+ERROR: 承認されていない（phase=wait）
+$ autopilot.py lint <dir>   # phase=blocked
+exit=0
+lint: OK
+$ autopilot.py approve <dir> --by OK   # blocked の後の合意し直し
+exit=0
+approved: 予算 30 分。ここから自走する
+$ autopilot.py lint <dir>   # phase=done
+exit=0
+lint: OK
+$ autopilot.py approve <dir> --by OK   # done の後の合意し直し
+exit=0
+approved: 予算 30 分。ここから自走する
+$ autopilot.py approve <dir> --by '目的 OK' --goal   # discovery、大きさ L、ADR に段の行なし
+exit=0
+goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）

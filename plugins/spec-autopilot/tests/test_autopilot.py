@@ -126,7 +126,7 @@ def init_spec(repo, slug="game"):
     d = Path(r.stdout.strip())
     (d / "spec.md").write_text(GOOD_SPEC, encoding="utf-8")
     (repo / "docs" / "adr").mkdir(parents=True, exist_ok=True)
-    (repo / "docs" / "adr" / "2026-01-01-game.md").write_text("# ADR: canvas で描く\n", encoding="utf-8")
+    (repo / "docs" / "adr" / "2026-01-01-game.md").write_text("# ADR: canvas で描く\n\n- 直し方: 要らなくする\n", encoding="utf-8")
     return d
 
 
