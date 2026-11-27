@@ -90,7 +90,8 @@ def test_gate_allows_the_implementer_dispatched_for_a_medium_spec_in_a_new_repo(
     assert decision(fire(repo, f"spec: {d}。T1")) is None
 
 
-@pytest.mark.parametrize("size, existing", [("- 大きさ: M", True), (DEPENDENT_M, False), ("- 大きさ: L", False), (None, False)])
+@pytest.mark.parametrize("size, existing", [
+    ("- 大きさ: M", True), (DEPENDENT_M, False), ("- 大きさ: L", False), (None, False), ("- 大きさ: S\n- 大きさ: S", False), ("- 大きさ: M\n- 大きさ: M", False)])
 def test_gate_denies_in_discovery_when_no_prototype_is_allowed_even_with_a_dispatch_record(repo, size, existing):
     d = draft(repo, size, existing=existing)
     st = state(d)
