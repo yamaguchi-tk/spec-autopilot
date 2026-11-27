@@ -4,7 +4,7 @@
   "created_at": 1795753067.4874592,
   "existing": true,
   "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
-  "last_active_at": 1795761267.630852,
+  "last_active_at": 1795763742.491025,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795757261.842288,
   "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
@@ -16,8 +16,128 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
-  "reworks": {}
+  "reviews": [
+    {
+      "high": [
+        "R3",
+        "R5"
+      ],
+      "at": 1795762898.4612448,
+      "sha": "26863ecf4f3890c8d52c40d2eb13ff029f70d938"
+    },
+    {
+      "high": [],
+      "at": 1795763724.084517,
+      "sha": "de68ef536c1d11c08ca167dcac64accc3c49f22d"
+    }
+  ],
+  "fails": {
+    "R3": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795762898.46124
+      }
+    ],
+    "R5": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795762898.4612439
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "d64a62c4105b5425eaba22c2ead38d47e9ec8a85",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795761322.003031,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "35cda00088a3f9a4416de4ec8f57e5cf9bd7d095",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R7"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795761976.9649339,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "26863ecf4f3890c8d52c40d2eb13ff029f70d938",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795762908.839058,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "35cda00088a3f9a4416de4ec8f57e5cf9bd7d095",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795761969.173601
+    },
+    {
+      "tip": "26863ecf4f3890c8d52c40d2eb13ff029f70d938",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795762211.969903
+    },
+    {
+      "tip": "de68ef536c1d11c08ca167dcac64accc3c49f22d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 2,
+      "at": 1795763526.263766
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 2,
+      "reproduced": 2,
+      "fixed": 2,
+      "at": 1795763742.491023
+    }
+  ]
 }
