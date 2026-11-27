@@ -4,7 +4,7 @@
   "created_at": 1795780841.735311,
   "existing": true,
   "start": "53cddd6c8284c01ae789c8fafd4b00d9901d585c",
-  "last_active_at": 1795793461.137367,
+  "last_active_at": 1795793677.645003,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795789863.446688,
   "approved_by": "人が「OK」で承認（引き継ぎ後、版数を 0.1.21 に直した spec）",
