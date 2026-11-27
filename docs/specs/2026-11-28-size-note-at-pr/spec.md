@@ -17,6 +17,8 @@
 - 版数を上げること（マージの後に版数だけの PR で上げる）
 
 ## 影響範囲
+- 変える: plugins/spec-autopilot/scripts/autopilot.py:582（size_errors）
+  - メモ: コメントの「PR は done の NOTE で分けさせる」を、check --stage pr か done の NOTE に直す（コメントだけで、判定は変えない）
 - 変える: plugins/spec-autopilot/scripts/autopilot.py:1016-1050（cmd_check、cmd_done）
   - メモ: cmd_done の大きさの判定（1036-1047）を新しいファイルの関数に移し、cmd_done と cmd_check（stage が pr のとき）から呼ぶ。autopilot.py は 1391 行なので、移して行を減らす
 - 新規: plugins/spec-autopilot/scripts/size_note.py
