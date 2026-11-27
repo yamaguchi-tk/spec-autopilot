@@ -15,7 +15,7 @@
 - デプロイ後の要件の証拠（`- commit:` が最後のマージの sha）の照合を変えること
 - 評価役が書く `- commit:` の値を変えること（評価役の定義には触れない）
 - 版数を上げること（マージの後に版数だけの PR で上げる）
-- commands/autopilot.md:95 の「巡の tip の出力だけを数える」の括弧を直すこと（main と評価役が頭に書く値は今までどおり巡の tip で、手順の指示は変わらない。手順の文は兄弟の子 2 の spec が同じファイルを直すので、そちらと衝突させない）
+- commands/autopilot.md:95 の「巡の tip の出力だけを数える」の括弧を直すこと（main と評価役が頭に書く値は今までどおり巡の tip で、手順の指示は変わらない。/autopilot の手順の文は、親の R2 の子のうち 2026-11-28-denial-handling〔この worktree には無い〕が受け持つと 2026-11-28-denial-stop-reviewers の非目標に書かれているので、そちらと衝突させない）
 
 ## 影響範囲
 - 変える: plugins/spec-autopilot/scripts/stages.py（全体）
