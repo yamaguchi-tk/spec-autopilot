@@ -1,0 +1,22 @@
+- commit: 73040c77b560d9d5a7328a897b3373bedc84fae5
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1528 passed in 255.89s (0:04:15)
+
+$ wc -l plugins/spec-autopilot/scripts/autopilot.py plugins/spec-autopilot/scripts/transcript.py
+    1385 plugins/spec-autopilot/scripts/autopilot.py
+     145 plugins/spec-autopilot/scripts/transcript.py
+    1530 total
+
+$ python3 .autopilot-qa/check.py
+autopilot.py lines: 1385
+imported into autopilot: ['_iso_epoch', 'anomalies', 'anomaly_line', 'transcript_lines']
+autopilot.<moved> outside: 0
+anomalies: 64 入力（本物 60・承認あり 20）を base と tip で比べた
+anomalies missing.jsonl: rc=0 stdout='<bad>/missing.jsonl: 読めない（FileNotFoundError）' stderr_same=True
+anomalies (引数なし): rc=2 stdout='' stderr_same=True
+report: 70 個の spec の写しを base と tip で比べた。例: - 積んだ操作: 0 件。異常: 裏で走った agent 2、承認後に人へ問い 1
+report missing: rc=1 例外の行="FileNotFoundError: [Errno 2] No such file or directory: '<wt>/.autopilot-qa/specs/missing/state.json'" same=True
+hook transcript.py broken retry=False: rc=0 decision=block msg=spec-autopilot の Stop hook が判定できない（ImportError）。docs/specs の state.json と成果物を確かめて続ける
+hook transcript.py broken retry=True: rc=0 decision=None msg=spec-autopilot の Stop hook が判定できない（ImportError）ので放す
+R1 pass
