@@ -19,9 +19,12 @@
 ## Consequences
 - split-transcript は pull まで blocked のまま
 - 割り方の正本が transcript_lines と別に 2 か所残る（split-transcript の後に別の spec でまとめる）
+- awaits.jsonl に切れた行が 1 行でも残ると、人がその行を直すか消すまで、その spec の待ちの記録を読む判定は全部止まる。Stop hook の文は例外の型名だけなので、行番号は CLI を回して見る
+- 書き手が書いている途中に読むと、書きかけの末尾の行で一時的に止まりうる（次の判定で消える。頻度は測っていない）
 
 ## pre-pr-review の範囲
-- 範囲: overnight.read_launch と advisor_approval.launches が subagent の transcript を、overnight._awaits が awaits.jsonl を、"\n" だけで割るようにする（JSON の文字列の中の U+2028・U+2029・U+0085 で行を割らない）。壊れた行は今までどおり、transcript では読めない記録として止め、awaits.jsonl では飛ばす
+- 範囲: overnight.read_launch と advisor_approval.launches が subagent の transcript を、overnight._awaits が awaits.jsonl を、"\n" だけで割るようにする（JSON の文字列の中の U+2028・U+2029・U+0085 で行を割らない）。壊れた行は、transcript では今までどおり読めない記録として止め、awaits.jsonl でも飛ばさずにファイルと行番号を名指しして止める。await の書き手は、前の記録が改行で終わらなければ改行を足してから書く
   - _awaits は 1 巡目の独立レビューの high（deploy の failure の行が割れて飛ばされ、failed_deploys・deploy_smoke が数え漏れて ready と check が通す側に倒れる fail-open）で、人に確かめて範囲に入れた
+  - 2 巡目の独立レビューの high（切れた行を飛ばし、書き手が改行を確かめないので次の記録も同じ行になって飛ぶ）で、同じ部品に 2 巡続けて high が出たので再設計にした。案は「源で止める」と「書き手だけ直して飛ばす挙動を保つ」で、人が「源で止める」を選んだ
 - 想定する脅威: 事故だけ（subagent が読んだファイルの中身に、改行に似た文字が入っていること）。transcript をわざと書き換える入力は想定しない
-- やらないこと: 割り方の関数を 1 つにまとめること、相談役の返答の本文の割り方（_lines_of）、ほかの splitlines の箇所（JSONL を読まないもの）、awaits.jsonl の途中で切れた行を飛ばす挙動、版数
+- やらないこと: 割り方の関数を 1 つにまとめること、相談役の返答の本文の割り方（_lines_of）、ほかの splitlines の箇所（JSONL を読まないもの）、Stop hook が止めたときの文に行番号を出すこと（hooks/stop.py は変えない）、版数
