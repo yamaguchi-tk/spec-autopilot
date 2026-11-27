@@ -1009,3 +1009,56 @@ def test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end(repo, gh
     assert r.returncode == 0, r.stdout + r.stderr
     out = night(repo, "report", str(d))
     assert out.returncode == 0 and "awaits.jsonl:" in out.stdout and "block: R2" in out.stdout
+
+
+def cut_await_row(d):
+    time.sleep(0.02)
+    with (d / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"kind": "deploy", "sha": "x", "res\n')
+
+
+def written(tmp_path, name, text):
+    ev = tmp_path / name
+    ev.write_text(text, encoding="utf-8")
+    time.sleep(0.02)
+    return ev
+
+
+def test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file(repo, gh, tmp_path):
+    """読めない行があるときの smoke は、読める deploy の後でも、記録のファイルの更新より前なら受けない（消えた deploy の後とは言えない）。"""
+    d = full_spec(repo)
+    broken(repo, gh, d, tmp_path)
+    old = written(tmp_path, "old.txt", "smoke pass\n")
+    cut_await_row(d)
+    assert night(repo, "qa", str(d), "--evidence", str(old), "--smoke", "pass").returncode != 0
+    new = written(tmp_path, "new.txt", "smoke pass\n")
+    assert night(repo, "qa", str(d), "--evidence", str(new), "--smoke", "pass").returncode == 0
+
+
+def test_with_an_unreadable_await_row_a_rollback_by_command_still_runs(repo, gh, tmp_path):
+    """コマンドで戻す spec でも、読めない行があるまま rolled-back が回り（記録のファイルの更新より後の出力だけ）、block で人に渡せる。"""
+    d = full_spec(repo, **{"ロールバック": "コマンド: ./rollback.sh"})
+    broken(repo, gh, d, tmp_path)
+    old = written(tmp_path, "rb-old.txt", "$ ./rollback.sh\nok\n")
+    cut_await_row(d)
+    assert night(repo, "rolled-back", str(d), "--evidence", str(old), "--reason", "smoke が落ちた").returncode != 0
+    new = written(tmp_path, "rb.txt", "$ ./rollback.sh\nok\n")
+    r = night(repo, "rolled-back", str(d), "--evidence", str(new), "--reason", "smoke が落ちた")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert smoke(repo, d, tmp_path, "pass", "after.txt").returncode == 0
+    r = run(repo, "block", str(d), "--req", "R2", "--reason", "戻した", "--evidence", "after.txt", "--no-rollback", "記録が読めない")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_the_report_does_not_say_done_while_an_await_row_is_unreadable(repo, gh, tmp_path):
+    """読めない行があるときの朝の報告は、pass の要件も done と書かない（消えた待ちの記録に積んだ段が入っていたかもしれない）。
+    Slack の DM の知らせにも、その報告の行を載せる。"""
+    d = full_spec(repo, **{"通知": "Slack の DM"})
+    broken(repo, gh, d, tmp_path)
+    cut_await_row(d)
+    assert run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y", "--no-rollback", "z").returncode == 0
+    out = night(repo, "report", str(d)).stdout
+    reqs = [x for x in out.splitlines() if x.startswith("- R")]
+    assert reqs and not any(": done" in x for x in reqs) and any("待ちの記録が読めない" in x for x in reqs)
+    note = night(repo, "notify", str(d)).stdout
+    assert "block: R2" in note and "awaits.jsonl:" in note
