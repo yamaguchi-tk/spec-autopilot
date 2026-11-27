@@ -7,3 +7,10 @@ plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_r
 plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+0085] PASSED [100%]
 
 ============================== 3 passed in 7.03s ===============================
+
+# base 側: 落ちるテストを足した commit e29f063（直しの前）で回す
+$ git checkout e29f063 && python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -q --no-header -p no:cacheprovider
+FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+2028]
+FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+2029]
+FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+0085]
+3 failed in 7.84s

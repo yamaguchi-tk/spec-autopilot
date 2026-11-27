@@ -1,16 +1,43 @@
-$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human -v --no-header -p no:cacheprovider
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end -v --no-header -p no:cacheprovider
 ============================= test session starts ==============================
-collecting ... collected 10 items
+collecting ... collected 11 items
 
-plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2028] PASSED [ 10%]
-plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2029] PASSED [ 20%]
-plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+0085] PASSED [ 30%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[cut] PASSED [ 40%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[not-a-dict] PASSED [ 50%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[no-at] PASSED [ 60%]
-plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records PASSED [ 70%]
-plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record PASSED [ 80%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line PASSED [ 90%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human PASSED [100%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2028] PASSED [  9%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2029] PASSED [ 18%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+0085] PASSED [ 27%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[cut] PASSED [ 36%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[not-a-dict] PASSED [ 45%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[no-at] PASSED [ 54%]
+plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records PASSED [ 63%]
+plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record PASSED [ 72%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line PASSED [ 81%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human PASSED [ 90%]
+plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end PASSED [100%]
 
-============================== 10 passed in 6.55s ==============================
+============================= 11 passed in 34.87s ==============================
+
+# base 側: 落ちるテストを足した commit 5ac8c3c（直しの前）で回す
+$ git checkout 5ac8c3c && python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted -q --no-header -p no:cacheprovider --tb=no -rf
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2028]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2029]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+0085]
+3 failed in 0.91s
+
+# base 側: 落ちるテストを足した commit 6ead879（直しの前）で回す
+$ git checkout 6ead879 && python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line -q --no-header -p no:cacheprovider --tb=no -rf
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[cut]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[not-a-dict]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[no-at]
+4 failed in 3.19s
+
+# base 側: 落ちるテストを足した commit 4974ce3（直しの前）で回す
+$ git checkout 4974ce3 && python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human -q --no-header -p no:cacheprovider --tb=no -rf
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human
+2 failed in 6.22s
+
+# base 側: 落ちるテストを足した commit 684d387（直しの前）で回す
+$ git checkout 684d387 && python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end -q --no-header -p no:cacheprovider --tb=no -rf
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end
+1 failed in 6.46s

@@ -10,3 +10,10 @@ plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of
 plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+0085] PASSED [100%]
 
 ============================== 6 passed in 12.63s ==============================
+
+# base 側: 落ちるテストを足した commit e29f063（直しの前）で回す
+$ git checkout e29f063 && python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string -q --no-header -p no:cacheprovider
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2028]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2029]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+0085]
+3 failed in 8.31s

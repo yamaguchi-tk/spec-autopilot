@@ -6,3 +6,7 @@ plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut
 plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED [100%]
 
 ============================== 2 passed in 4.58s ===============================
+
+# base 側: 落ちるテストを足した commit e29f063（直しの前）で回す
+$ git checkout e29f063 && python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator -q --no-header -p no:cacheprovider
+2 passed in 5.54s
