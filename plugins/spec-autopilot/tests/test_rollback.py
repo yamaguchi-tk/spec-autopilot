@@ -1072,11 +1072,16 @@ def test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable(repo
     assert note.count("block: R2") == 1 and note.count("awaits.jsonl:") == 1 and note.count("本番:") == 1
 
 
-def test_a_desktop_note_names_the_unreadable_await_row(repo, gh, tmp_path):
-    """DM でない知らせ（報告の行を載せない）には、読めない行のファイルと行番号を 1 回載せる（どの行を直すか分かるように）。"""
+@pytest.mark.parametrize("scope", [FULL, "マージまで"])
+@pytest.mark.parametrize("where", ["デスクトップ", "なし"])
+def test_a_note_that_is_not_a_dm_names_the_unreadable_await_row(repo, gh, tmp_path, osascript, where, scope):
+    """DM でない知らせ（報告の行を載せない）には、範囲によらず、読めない行のファイルと行番号を 1 回載せる（どの行を直すか分かるように）。"""
     import overnight
-    d = full_spec(repo, **{"通知": "なし"})
-    broken(repo, gh, d, tmp_path)
+    d = full_spec(repo, scope, **{"通知": where})
+    if scope == FULL:
+        broken(repo, gh, d, tmp_path)
     cut_await_row(d)
     note = overnight.notify(d)
-    assert note.count("awaits.jsonl:2 ") == 1 and "本番: 待ちの記録が読めないので分からない" in note
+    assert note.count("awaits.jsonl:2 ") == 1 and f"本番: {overnight.UNREADABLE_PROD}" in note
+    if where == "デスクトップ":
+        assert osascript.read_text(encoding="utf-8").count("awaits.jsonl:2 ") == 1
