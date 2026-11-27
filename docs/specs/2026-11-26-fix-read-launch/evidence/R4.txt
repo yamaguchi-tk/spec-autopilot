@@ -1,23 +1,24 @@
-$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_a_rollback_by_command_still_runs -v --no-header -p no:cacheprovider --tb=line -rf
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_a_rollback_by_command_still_runs -v --no-header -p no:cacheprovider --tb=line -rf
 ============================= test session starts ==============================
-collecting ... collected 14 items
+collecting ... collected 15 items
 
-plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2028] PASSED [  7%]
-plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2029] PASSED [ 14%]
-plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+0085] PASSED [ 21%]
-plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record PASSED [ 28%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[cut] PASSED [ 35%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[not-a-dict] PASSED [ 42%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[no-at] PASSED [ 50%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line PASSED [ 57%]
-plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human PASSED [ 64%]
-plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end PASSED [ 71%]
-plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable PASSED [ 78%]
-plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records PASSED [ 85%]
-plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file PASSED [ 92%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2028] PASSED [  6%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2029] PASSED [ 13%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+0085] PASSED [ 20%]
+plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record PASSED [ 26%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[cut] PASSED [ 33%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[not-a-dict] PASSED [ 40%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[no-at] PASSED [ 46%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line PASSED [ 53%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human PASSED [ 60%]
+plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end PASSED [ 66%]
+plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable PASSED [ 73%]
+plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable PASSED [ 80%]
+plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records PASSED [ 86%]
+plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file PASSED [ 93%]
 plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_a_rollback_by_command_still_runs PASSED [100%]
 
-============================= 14 passed in 13.50s ==============================
+============================= 15 passed in 17.08s ==============================
 
 # base 側: 落ちるテストを足した commit 5ac8c3c（直しの前）。git worktree で 5ac8c3c を取り出した root で回す
 $ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted -q --no-header -p no:cacheprovider --tb=line -rf
@@ -118,15 +119,36 @@ E   AssertionError: assert (1 != 0 and 'awaits.jsonl:' in ('' + '本番が良く
 FAILED plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end
 1 failed in 2.45s
 
-# base 側: 落ちるテストを足した commit 1ee5e70（直しの前）。git worktree で 1ee5e70 を取り出した root で回す
+# base 側: 朝の報告の done の分岐の前（1ee5e70）のコードに tip のテストのファイルを置いて回す（git worktree で 1ee5e70 を取り出し、plugins/spec-autopilot/tests/test_rollback.py を tip のものに替えた root）
 $ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable -q --no-header -p no:cacheprovider --tb=line -rf
 F                                                                        [100%]
 =================================== FAILURES ===================================
 E   AssertionError: assert (['- R1: done（core.test.js::clears a full line）。マージ: PR 7。直した欠陥 0。積んだ操作: なし', '- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: PR 7。直した欠陥 0。積んだ操作: なし'] and not True)
-     +  where True = any(<generator object test_the_report_does_not_say_done_while_an_await_row_is_unreadable.<locals>.<genexpr> at 0x10cd1db10>)
+     +  where True = any(<generator object test_the_report_does_not_say_done_while_an_await_row_is_unreadable.<locals>.<genexpr> at 0x109019cb0>)
 <path> AssertionError: assert (['- R1: done（core.test.js::clears a full line）。マージ: PR 7。直した欠陥 0。積んだ操作: なし', '- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: PR 7。直した欠陥 0。積んだ操作: なし'] and not True)
 =========================== short test summary info ============================
 FAILED plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable
-1 failed in 2.42s
+1 failed in 5.36s
+
+# base 側: 落ちるテストを足した commit 477d198（直しの前）で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable -q --no-header -p no:cacheprovider --tb=line -rf
+F                                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert ('block: R2' in '2026-11-27-game: blocked。<path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし' and 2 == 1)
+     +  where 2 = <built-in method count of str object at 0x7525d7c800>('awaits.jsonl:')
+     +    where <built-in method count of str object at 0x7525d7c800> = '2026-11-27-game: blocked。<path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし'.count
+----------------------------- Captured stdout call -----------------------------
+NOTE: Slack の MCP で自分宛ての DM に送る: 2026-11-27-game: blocked。<path> の待ちの記録が読めないので、数えずに止める。行は人が直すか消す（agent が消すと数え漏れる）。autopilot.py block で人に示す（本番が良くないと断られたら、先に戻すか、戻せない理由を --no-rollback に書く）
+本番: 待ちの記録が読めないので分からない
+人の判断を待つもの: <path> の待ちの記録が読めないので、数えずに止める。行は人が直すか消す（agent が消すと数え漏れる）。autopilot.py block で人に示す（本番が良くないと断られたら、先に戻すか、戻せない理由を --no-rollback に書く）、本番を戻していない: z、block: R2（x）
+- R1: 確かめていない（待ちの記録が読めない）（core.test.js::clears a full line）。マージ: PR 7。直した欠陥 0。積んだ操作: なし
+- R2: 確かめていない（待ちの記録が読めない）（cmd: playwright でEnterを押し盤面が空になった）。マージ: PR 7。直した欠陥 0。積んだ操作: なし
+- 範囲: マージ・デプロイ・QA まで。マージ: PR 7
+- 待ち: 1 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+<path> AssertionError: assert ('block: R2' in '2026-11-27-game: blocked。<path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし' and 2 == 1)
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable
+1 failed in 2.90s
 
 # 出力の中の手元の絶対パスは <path> に伏せた（sed -E 's#(/private|/Users)/[^ '"'"',)]*#<path>#g'）
