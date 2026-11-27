@@ -1,0 +1,30 @@
+- commit: 0c3f78f9ed9ce0561925822ae9220ee500e951a5
+$ python3 .autopilot-qa/check.py
+（一時の repo を .autopilot-qa/work-tip・work-base に作り、state.json の existing を 消す・null・"false"・0・""・[]・false にして、autopilot.py lint と、承認・QA を済ませた spec に autopilot.py done を入口から打った。base は git archive 53cddd6 の plugin に tip のテストを載せたもの）
+TIP missing:    lint_rc=1 「既存の repo では「## 影響範囲」を書く」=true 「既存の repo では「## 変えない挙動」を書く」=true 回帰テストの行の ERROR=true / done_rc=0 「NOTE: 大きさを数えられない」=true（数えに行った）
+TIP null:       lint_rc=1 影響範囲=true 変えない挙動=true / done は数えた
+TIP str-false:  lint_rc=1 影響範囲=true 変えない挙動=true / done は数えた
+TIP zero:       lint_rc=1 影響範囲=true 変えない挙動=true / done は数えた
+TIP str-empty:  lint_rc=1 影響範囲=true 変えない挙動=true / done は数えた
+TIP empty-list: lint_rc=1 影響範囲=true 変えない挙動=true / done は数えた
+TIP false:      lint_rc=0 既存の節を求めない / done は数えない
+BASE missing:   lint_rc=0 既存の節を求めない / done は数えない（新しい repo とみなしてしまう）
+BASE null:      lint_rc=0 / done は数えない
+BASE zero:      lint_rc=0 / done は数えない
+BASE str-false: lint_rc=1 影響範囲=true
+tests tip: 0 16 passed in 3.89s
+tests base: 1 12 failed, 4 passed in 4.76s
+R1 pass
+R2 pass
+
+$ bash .autopilot-qa/mut.sh R2-1 plugins/spec-autopilot/scripts/autopilot.py plugins/spec-autopilot/tests/test_autopilot.py -k existing_is_not_false_as_an_existing_repo
+（変異: lint の if not is_new_repo(load_state(d)) を if load_state(d).get("existing") に戻す）
+== 変異の前
+4 passed, 465 deselected in 2.05s
+== 変異の後
+ plugins/spec-autopilot/scripts/autopilot.py | 2 +-
+>       assert r.returncode == 1
+E       AssertionError: assert 0 == 1
+plugins/spec-autopilot/tests/test_autopilot.py:3204: AssertionError
+3 failed, 1 passed, 465 deselected in 2.05s
+== 戻した: 印なし
