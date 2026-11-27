@@ -8,7 +8,7 @@
 観測: 評価役が返った後に state を commit すると、証拠の頭の `- commit:` が `CLI review` の記録した巡の tip と合わず、check が止まった。違いは state.json の 1 行だけだった。できあがったら、spec の置き場の中だけの commit が挟まっても、評価役を回し直さずに check が通る。
 
 ## 要件
-- R1: 段が手元で実物の要件の証拠（evidence/R<n>.txt）の頭の `- commit:` が、その要件の証拠として数えてよい評価役の巡（最後に high になった巡より後の巡）の sha のどれとも一致しないとき、`- commit:` の commit とその巡の sha の間で spec の置き場（docs/specs と docs/adr）の外のファイルが同じなら、`CLI check` はその証拠をその巡のものとして数える。`- commit:` の値が 7〜40 桁の 16 進でなければ、git に渡さずに今までどおり落とす。外が違うか、git で比べられない（commit が無い・読めない）なら、今までどおり「評価役の巡の tip でない」で落とす。
+- R1: 段が手元で実物の要件の証拠（evidence/R<n>.txt）の頭の `- commit:` が、その要件の証拠として数えてよい評価役の巡（最後に high になった巡より後の巡）の sha のどれとも一致しないとき、`- commit:` の commit とその巡の sha の間で spec の置き場（docs/specs と docs/adr）の外のファイルが同じなら、`CLI check` はその証拠をその巡のものとして数える。`- commit:` の値は、git の option として読まれない形（`--end-of-options` の後ろ）で commit に引き当ててから比べる。外が違うか、git で比べられない（値が commit に引き当たらない・読めない）なら、今までどおり「評価役の巡の tip でない」で落とす。
 
 ## 非目標
 - 証拠が書かれた時刻の条件（最後の high の巡か承認より後）を緩めること
@@ -25,7 +25,7 @@
 - 手本: plugins/spec-autopilot/scripts/carry.py:7-21
   - メモ: same_outside と同じ pathspec（carry.OUTSIDE）で、git が 0 で終わったときだけ同じとみなす
 - 変える: plugins/spec-autopilot/tests/test_stages.py（全体）
-  - メモ: 既存のテストは変えず、置き場の中だけの commit・外を変えた commit・存在しない sha・16 進でない値（`--output=x` など）の場合のテストを足す
+  - メモ: 既存のテストは変えず、置き場の中だけの commit・外を変えた commit・存在しない sha・option の形の値（`--output=x` など）・sha でない commit の名前（ブランチ名）の場合のテストを足す
 - 同じ入力: reviews
   - メモ: overnight.py の review_gate と autopilot.py の review が同じ記録を書く・読む。この spec は読み方だけを変える
 - 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_merge_qa.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_rollback.py -q -n auto
@@ -50,12 +50,12 @@
   - コマンド: `grep -rn "stages.check(" plugins/spec-autopilot/scripts` → deploy.py:306 の 1 件
 
 ## 作り方
-この spec の ADR のとおり。stages.py の checked_in_review に repo の root を渡し、数えてよい巡の sha のどれかと文字列で一致しなければ、`git diff --quiet <commit> <sha> -- <carry.OUTSIDE>` が 0 で終わる巡があるかを見る。check は root を autopilot.repo_root(d) で取って渡す。`- commit:` の値は 7〜40 桁の 16 進だけを git に渡し（`--` で pathspec と分ける）、git が 0 以外で終わる・例外は「同じでない」とする。
+この spec の ADR のとおり。stages.py の checked_in_review に repo の root を渡し、数えてよい巡の sha のどれかと文字列で一致しなければ、`git diff --quiet <commit> <sha> -- <carry.OUTSIDE>` が 0 で終わる巡があるかを見る。check は root を autopilot.repo_root(d) で取って渡す。`- commit:` の値は `git rev-parse --verify --quiet --end-of-options <値>^{commit}` で commit の sha に引き当て、引き当てた sha だけを git diff に渡す（`--` で pathspec と分ける）。git が 0 以外で終わる・例外は「同じでない」とする。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |
 |---|---|---|---|
-| R1 | 手元で実物 | 一時の git repo で spec を承認・実装・review まで進め、証拠の頭を review の tip にしたうえで、spec の置き場の中だけを commit し、証拠の頭をその新しい commit に書き直して `CLI check` を回す。spec の外を 1 行変えた commit を頭にした場合、存在しない sha を頭にした場合、`--output=<一時のパス>` を頭にした場合も回す | 置き場の中だけの場合は check が R1 の証拠を通し（終了コード 0）、外を変えた場合・存在しない sha・16 進でない値の場合は「評価役の巡の tip でない」で落ちる |
+| R1 | 手元で実物 | 一時の git repo で spec を承認・実装・review まで進め、証拠の頭を review の tip にしたうえで、spec の置き場の中だけを commit し、証拠の頭をその新しい commit に書き直して `CLI check` を回す。spec の外を 1 行変えた commit を頭にした場合、存在しない sha を頭にした場合、`--output=<一時のパス>` を頭にした場合、置き場の中だけを commit したブランチの名前を頭にした場合も回す | 置き場の中だけの場合は check が R1 の証拠を通し（終了コード 0）、置き場の中だけのブランチの名前の場合も通し、外を変えた場合・存在しない sha・option の形の値の場合は「評価役の巡の tip でない」で落ち、`--output=` のパスにファイルができない |
 
 ## 制約
 - 予算: 45 分
