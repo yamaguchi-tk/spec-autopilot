@@ -5,11 +5,14 @@
 - デプロイ後: 手元では確かめられない要件だけ。`- 手元でできない理由: R<n>（<理由>）` を書く
 - 代役: 実物が手元にもデプロイ後にも無いときだけ。`- 代役の理由: R<n>（<理由>）` を書き、人が承認で見る
 手元で実物とデプロイ後の pass は、実行の出力を spec のディレクトリの `evidence/<要件>.txt` に残す。どちらも `$ <コマンド>` の行と
-その出力が要る。手元で実物の出力は、頭の `- commit:` が、その要件を最後に確かめた評価役の巡の tip のものだけを数える。デプロイ後の出力は、最後のマージの commit のデプロイが通った後に書き、頭に `- commit: <その sha>` と
+その出力が要る。手元で実物の出力は、頭の `- commit:` が、その要件を最後に確かめた評価役の巡の tip のもの（spec の置き場の外が tip と同じ commit も含む）だけを数える。デプロイ後の出力は、最後のマージの commit のデプロイが通った後に書き、頭に `- commit: <その sha>` と
 `- 結果: Confirmed` を 1 本ずつ書いたものだけを数える。unverified は、`- unverified の承認: R<n>（<理由>）` の行か、
 その要件を積んだ park があるときだけ通す。行の形だけを読み、自由文は解釈しない。
 """
 import re
+import subprocess
+
+import carry
 
 LOCAL, DEPLOYED, STAND_IN = "手元で実物", "デプロイ後", "代役"
 STAGES = (LOCAL, DEPLOYED, STAND_IN)
@@ -105,15 +108,47 @@ def same_commit(c, sha):
     return bool(c and sha) and (c == sha or (len(c) >= 7 and sha.startswith(c)))
 
 
-def checked_in_review(text, mtime, rid, reviews, approved_at):
+GIT_TIMEOUT_SEC = 5  # Stop hook の予算（20 秒）に収めるため、git の 1 回ごとに切る
+FULL_SHA = re.compile(r"^[0-9a-f]{40}([0-9a-f]{24})?$")
+
+
+def same_outside_as(root, commit, sha):
+    """`- commit:` の値と巡の sha の間で、spec の置き場の外のファイルが同じ。値は rev-parse で commit の sha に引き当て、
+    引き当てた完全な sha だけを diff に渡す（値を option として読ませない）。git が 0 以外・引き当たらない場合は False、
+    timeout は TimeoutExpired をそのまま上げる（呼び出し側が残りの巡を試さずに落とす）。"""
+    try:
+        found = subprocess.run(["git", "rev-parse", "--verify", "--quiet", "--end-of-options", f"{commit}^{{commit}}"],
+                               cwd=root, capture_output=True, text=True, timeout=GIT_TIMEOUT_SEC)
+        resolved = found.stdout.strip()
+        if found.returncode != 0 or not FULL_SHA.match(resolved):
+            return False
+        same = subprocess.run(["git", "diff", "--quiet", resolved, sha, "--", *carry.OUTSIDE],
+                              cwd=root, capture_output=True, timeout=GIT_TIMEOUT_SEC)
+    except subprocess.TimeoutExpired:
+        raise
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return same.returncode == 0
+
+
+def checked_in_review(text, mtime, rid, reviews, approved_at, root):
     """手元で実物の出力が、今の承認の評価役の巡に結び付くか: 頭の `- commit:` が、その要件が最後に high になった巡より後の巡の sha の
-    どれかで、出力がその high の巡（無ければ承認）より後に書かれている。前の承認・fail の巡の出力は通らない。"""
+    どれか（または、その巡の sha との間で spec の置き場の外が同じ commit）で、出力がその high の巡（無ければ承認）より後に書かれている。
+    前の承認・fail の巡の出力は通らない。"""
     commits = [v for k, v in head_rows(text) if k == "commit"]
     if len(commits) != 1:
         return False
     last_high = max((i for i, r in enumerate(reviews) if rid in (r.get("high") or [])), default=-1)
     since = float(reviews[last_high].get("at", 0)) if last_high >= 0 else float(approved_at or 0)
-    return mtime > since and any(same_commit(commits[0], r.get("sha")) for r in reviews[last_high + 1:])
+    if mtime <= since:
+        return False
+    counted = reviews[last_high + 1:]
+    if any(same_commit(commits[0], r.get("sha")) for r in counted):
+        return True
+    try:  # 新しい巡から当て、最初に同じと分かった巡で止める
+        return any(r.get("sha") and same_outside_as(root, commits[0], r["sha"]) for r in reversed(counted))
+    except subprocess.TimeoutExpired:
+        return False
 
 
 def check(autopilot, d, rows, parked_reqs, deployed_at, stage="all", merge_sha=None, reviews=(), approved_at=0):
@@ -125,6 +160,7 @@ def check(autopilot, d, rows, parked_reqs, deployed_at, stage="all", merge_sha=N
     if not stages:
         return []
     errors = []
+    root = autopilot.repo_root(d)
     for rid, (result, _) in rows.items():
         stage_of = stages.get(rid)
         if stage_of == DEPLOYED and stage == "pr":
@@ -142,7 +178,7 @@ def check(autopilot, d, rows, parked_reqs, deployed_at, stage="all", merge_sha=N
                 errors.append(f"{rid} は段が{LOCAL}なので、実行の出力を {d.name}/evidence/{rid}.txt に残す（空でないファイル）")
             elif not ran(read_head(f)):
                 errors.append(f"{rid} の {d.name}/evidence/{rid}.txt に、実行したコマンドの行（`$ <コマンド>`）とその出力が無い")
-            elif not checked_in_review(read_head(f), f.stat().st_mtime, rid, list(reviews), approved_at):
+            elif not checked_in_review(read_head(f), f.stat().st_mtime, rid, list(reviews), approved_at, root):
                 errors.append(f"{rid} の evidence/{rid}.txt の頭の `- commit:` が、{rid} を最後に確かめた評価役の巡の tip でない"
                               "（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）")
             continue

@@ -1,5 +1,6 @@
 """QA の方向性の段（手元で実物・デプロイ後・代役）と、段ごとの証拠の要求を、入口（CLI）から確かめる。"""
 import json
+import subprocess
 import time
 
 import pytest
@@ -105,6 +106,80 @@ def test_a_real_run_output_from_a_failed_round_is_refused(repo):
     real_run(repo, d, "R1")
     real_run(repo, d, "R2")
     assert run(repo, "check", str(d)).returncode == 0
+
+
+def commit_after_review(repo, *paths, message="after review"):
+    """評価役が返った後の commit（パス指定）。新しい HEAD の sha を返す。"""
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
+    subprocess.run([*git, "add", "-f", "--", *paths], cwd=repo, check=True)
+    subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", message], cwd=repo, check=True)
+    return subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True).stdout.strip()
+
+
+def evidence_head(d, rid, commit):
+    """R<n> の証拠の頭の `- commit:` を書き直す（評価役が渡された値を頭に書いた形）。"""
+    time.sleep(0.02)
+    (d / "evidence" / f"{rid}.txt").write_text(f"- commit: {commit}\n$ node core.test.js\n{rid}: ran and saw the expected output\n",
+                                               encoding="utf-8")
+
+
+def reviewed_spec(repo):
+    d = approve(repo, scoped("PR まで"))
+    make_done(repo, d)
+    assert run(repo, "check", str(d)).returncode == 0  # 巡の tip を頭に書いた証拠は、今までどおり通る
+    return d
+
+
+def test_an_evidence_commit_that_differs_from_the_round_tip_only_inside_the_spec_places_is_counted(repo):
+    d = reviewed_spec(repo)
+    (d / "qa.md").write_text((d / "qa.md").read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    (repo / "docs" / "adr" / "2026-01-01-game.md").write_text("# ADR: canvas で描く\n\n- 直し方: 局所の継ぎ足し\n", encoding="utf-8")
+    new = commit_after_review(repo, "docs/specs", "docs/adr")
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, new)
+    r = run(repo, "check", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_an_evidence_commit_that_is_a_branch_name_on_a_spec_only_commit_is_counted(repo):
+    d = reviewed_spec(repo)
+    (d / "qa.md").write_text((d / "qa.md").read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    commit_after_review(repo, "docs/specs")
+    subprocess.run(["git", "branch", "evidence-tip"], cwd=repo, check=True)
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, "evidence-tip")
+    r = run(repo, "check", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_an_evidence_commit_that_changed_a_file_outside_the_spec_places_is_refused(repo):
+    d = reviewed_spec(repo)
+    (repo / "fix.js").write_text("changed after the review\n", encoding="utf-8")
+    new = commit_after_review(repo, "fix.js", "docs/specs")
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, new)
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and "評価役の巡の tip でない" in r.stdout
+
+
+def test_an_evidence_commit_that_does_not_exist_is_refused(repo):
+    d = reviewed_spec(repo)
+    commit_after_review(repo, "docs/specs")
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, "deadbeef" * 5)
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and "評価役の巡の tip でない" in r.stdout
+
+
+def test_an_evidence_commit_in_the_shape_of_a_git_option_writes_no_file_and_is_refused(repo, tmp_path):
+    d = reviewed_spec(repo)
+    commit_after_review(repo, "docs/specs")
+    out = tmp_path / "written-by-option.txt"
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, f"--output={out}")
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and "評価役の巡の tip でない" in r.stdout
+    assert not out.exists()
 
 
 def test_check_does_not_take_an_empty_output(repo):
@@ -287,3 +362,57 @@ def test_head_rows_stay_linear_on_a_long_run_of_spaces_in_a_value():
     assert stages.head_rows(text) == [("commit", "x" + " " * 200000 + "y")]
     assert time.monotonic() - start < 2
     assert stages.head_rows("- 結果:  Confirmed \t\n- commit:abc\nx\n- z: 1\n") == [("結果", "Confirmed"), ("commit", "abc")]
+
+
+# --- 証拠の commit を git で照合するときの縁（T3） ---
+
+def git_calls(monkeypatch, stages, answer):
+    """stages が呼ぶ git を代役にし、呼ばれた引数を集める。answer(args) が CompletedProcess か例外を返す。"""
+    calls = []
+
+    def fake(args, **kw):
+        calls.append(args)
+        out = answer(args)
+        if isinstance(out, Exception):
+            raise out
+        return out
+
+    monkeypatch.setattr(stages.subprocess, "run", fake)
+    return calls
+
+
+def done(code, out=""):
+    return subprocess.CompletedProcess([], code, stdout=out, stderr="")
+
+
+def rounds(*shas):
+    return [{"at": 1.0 + i, "sha": s, "high": []} for i, s in enumerate(shas)]
+
+
+def test_a_git_timeout_drops_the_evidence_without_trying_the_older_rounds(monkeypatch):
+    import stages
+    calls = git_calls(monkeypatch, stages, lambda args: subprocess.TimeoutExpired(args, 5))
+    text = "- commit: feedface\n$ a\nok\n"
+    assert stages.checked_in_review(text, 10.0, "R1", rounds("a" * 40, "b" * 40, "c" * 40), 0, ".") is False
+    assert len(calls) == 1
+
+
+def test_a_round_without_a_sha_is_skipped_and_an_older_round_is_still_tried(monkeypatch):
+    import stages
+    old, resolved = "a" * 40, "d" * 40
+    reviews = rounds(old) + [{"at": 5.0, "high": []}, {"at": 6.0, "sha": None, "high": []}]
+
+    def answer(args):
+        return done(0, resolved + "\n") if args[1] == "rev-parse" else done(0)
+
+    calls = git_calls(monkeypatch, stages, answer)
+    assert stages.checked_in_review("- commit: feedface\n$ a\nok\n", 10.0, "R1", reviews, 0, ".") is True
+    assert [c[1] for c in calls] == ["rev-parse", "diff"] and calls[1][3:5] == [resolved, old]
+
+
+@pytest.mark.parametrize("out", ["--output=x", "abc1234", "a" * 40 + "\n" + "b" * 40, ""])
+def test_a_rev_parse_output_that_is_not_one_full_sha_is_never_passed_to_diff(monkeypatch, out):
+    import stages
+    calls = git_calls(monkeypatch, stages, lambda args: done(0, out + "\n"))
+    assert stages.checked_in_review("- commit: feedface\n$ a\nok\n", 10.0, "R1", rounds("a" * 40), 0, ".") is False
+    assert all(c[1] == "rev-parse" for c in calls)
