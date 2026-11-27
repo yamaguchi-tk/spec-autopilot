@@ -1,5 +1,6 @@
 """QA の方向性の段（手元で実物・デプロイ後・代役）と、段ごとの証拠の要求を、入口（CLI）から確かめる。"""
 import json
+import subprocess
 import time
 
 import pytest
@@ -105,6 +106,80 @@ def test_a_real_run_output_from_a_failed_round_is_refused(repo):
     real_run(repo, d, "R1")
     real_run(repo, d, "R2")
     assert run(repo, "check", str(d)).returncode == 0
+
+
+def commit_after_review(repo, *paths, message="after review"):
+    """評価役が返った後の commit（パス指定）。新しい HEAD の sha を返す。"""
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
+    subprocess.run([*git, "add", "-f", "--", *paths], cwd=repo, check=True)
+    subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", message], cwd=repo, check=True)
+    return subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True).stdout.strip()
+
+
+def evidence_head(d, rid, commit):
+    """R<n> の証拠の頭の `- commit:` を書き直す（評価役が渡された値を頭に書いた形）。"""
+    time.sleep(0.02)
+    (d / "evidence" / f"{rid}.txt").write_text(f"- commit: {commit}\n$ node core.test.js\n{rid}: ran and saw the expected output\n",
+                                               encoding="utf-8")
+
+
+def reviewed_spec(repo):
+    d = approve(repo, scoped("PR まで"))
+    make_done(repo, d)
+    assert run(repo, "check", str(d)).returncode == 0  # 巡の tip を頭に書いた証拠は、今までどおり通る
+    return d
+
+
+def test_an_evidence_commit_that_differs_from_the_round_tip_only_inside_the_spec_places_is_counted(repo):
+    d = reviewed_spec(repo)
+    (d / "qa.md").write_text((d / "qa.md").read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    (repo / "docs" / "adr" / "2026-01-01-game.md").write_text("# ADR: canvas で描く\n\n- 直し方: 局所の継ぎ足し\n", encoding="utf-8")
+    new = commit_after_review(repo, "docs/specs", "docs/adr")
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, new)
+    r = run(repo, "check", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_an_evidence_commit_that_is_a_branch_name_on_a_spec_only_commit_is_counted(repo):
+    d = reviewed_spec(repo)
+    (d / "qa.md").write_text((d / "qa.md").read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    commit_after_review(repo, "docs/specs")
+    subprocess.run(["git", "branch", "evidence-tip"], cwd=repo, check=True)
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, "evidence-tip")
+    r = run(repo, "check", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_an_evidence_commit_that_changed_a_file_outside_the_spec_places_is_refused(repo):
+    d = reviewed_spec(repo)
+    (repo / "fix.js").write_text("changed after the review\n", encoding="utf-8")
+    new = commit_after_review(repo, "fix.js", "docs/specs")
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, new)
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and "評価役の巡の tip でない" in r.stdout
+
+
+def test_an_evidence_commit_that_does_not_exist_is_refused(repo):
+    d = reviewed_spec(repo)
+    commit_after_review(repo, "docs/specs")
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, "deadbeef" * 5)
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and "評価役の巡の tip でない" in r.stdout
+
+
+def test_an_evidence_commit_in_the_shape_of_a_git_option_writes_no_file_and_is_refused(repo, tmp_path):
+    d = reviewed_spec(repo)
+    commit_after_review(repo, "docs/specs")
+    out = tmp_path / "written-by-option.txt"
+    for rid in ("R1", "R2"):
+        evidence_head(d, rid, f"--output={out}")
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and "評価役の巡の tip でない" in r.stdout
+    assert not out.exists()
 
 
 def test_check_does_not_take_an_empty_output(repo):
