@@ -885,6 +885,59 @@ def test_block_requires_known_requirement_and_evidence(repo):
     assert s["blocked"]["req"] == "R1"
 
 
+def blocked_for_reapproval(repo, forget_scope=False):
+    """承認した spec を block する。forget_scope なら、最後の承認のときの自走の範囲の記録が無い spec（軽量フロー・古い承認）にする。"""
+    d = approved(repo)
+    if forget_scope:
+        s = state(d)
+        del s["scope_sha256"]
+        (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "R2 の文を直す必要", "--evidence", "test log")
+    assert r.returncode == 0 and state(d)["phase"] == "blocked"
+    return d, r
+
+
+def test_block_output_points_to_reapproval_before_asking_the_human(repo):
+    d, r = blocked_for_reapproval(repo)
+    assert "--by-advisor" in r.stdout and "lineup.py next" in r.stdout and "人に 1 通" in r.stdout
+    assert r.stdout.index("--by-advisor") < r.stdout.index("lineup.py next")
+
+
+def test_blocked_status_line_shows_reapproval_then_waiting_for_the_human(repo):
+    d, _ = blocked_for_reapproval(repo)
+    r = run(repo, "status", str(d))
+    lines = [line for line in r.stdout.splitlines() if "--by-advisor" in line]
+    assert len(lines) == 1 and "人の返事" in lines[0]
+    assert lines[0].index("--by-advisor") < lines[0].index("人の返事")
+
+
+def test_block_and_status_skip_reapproval_when_the_scope_record_is_missing(repo):
+    d, r = blocked_for_reapproval(repo, forget_scope=True)
+    assert "--by-advisor" not in r.stdout and "人に 1 通" in r.stdout
+    st = run(repo, "status", str(d))
+    assert "--by-advisor" not in st.stdout and "返事" in st.stdout
+
+
+def change_scope(d):
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 範囲: PR まで", "- 範囲: マージまで"), encoding="utf-8")
+
+
+def test_block_skips_reapproval_when_the_scope_section_changed_before_it(repo):
+    d = approved(repo)
+    change_scope(d)
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "範囲を変えた", "--evidence", "test log")
+    assert r.returncode == 0 and "--by-advisor" not in r.stdout and "人に 1 通" in r.stdout
+    assert "--by-advisor" not in run(repo, "status", str(d)).stdout
+
+
+def test_status_skips_reapproval_when_the_scope_section_changed_after_block(repo):
+    d, _ = blocked_for_reapproval(repo)
+    change_scope(d)
+    r = run(repo, "status", str(d))
+    assert "--by-advisor" not in r.stdout and "人の返事" in r.stdout
+
+
 def test_resume_from_blocked_requires_reapproval(repo):
     d = approved(repo)
     run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y")

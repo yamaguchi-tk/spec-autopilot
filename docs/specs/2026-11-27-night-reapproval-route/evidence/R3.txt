@@ -1,0 +1,14 @@
+- commit: fd6c1fcd1c26c1e6f51e45c8cd30237f9356ede4
+
+commands/autopilot.md の C の冒頭の最後の文と、check の「承認の後に変わった」のエラー文を突き合わせた。
+
+$ sed -n 85p plugins/spec-autopilot/commands/autopilot.md | grep -o '変える必要があるなら.*'
+変える必要があるなら、1 つの要件だけなら `overnight.py park` でその要件を積んでほかを進め、どの要件も進められないときだけ `CLI block` で記録して「人に戻るとき」に進む（`CLI check` のエラー文と同じ使い分け）。
+
+$ sed -n 690,692p plugins/spec-autopilot/scripts/autopilot.py
+        errors.append("spec.md の要件・QA の方向性・制約などが承認の後に変わった。"
+                      "spec.md を承認の時点に戻す。1 つの要件だけを変える必要があるなら `overnight.py park` でその要件を積む。"
+                      "どの要件も進められないときだけ block する（作り方の節と、先頭の `- ADR:` 行の番号〔改番〕は変えてよい）")
+
+$ grep -c '変える必要があるなら「人に戻るとき」に進む' plugins/spec-autopilot/commands/autopilot.md
+0

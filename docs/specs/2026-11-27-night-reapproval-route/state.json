@@ -1,0 +1,220 @@
+{
+  "phase": "building",
+  "slug": "night-reapproval-route",
+  "created_at": 1795753067.313378,
+  "existing": true,
+  "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
+  "last_active_at": 1795760789.081758,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795757260.074273,
+  "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
+  "spec_sha256": "7f1d1a26c298019d46496910929dfdd6669553bea878e4e809861a569371d60f",
+  "after": null,
+  "approved_at": 1795757274.761562,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R6"
+      ],
+      "at": 1795758539.508157,
+      "sha": "fd6c1fcd1c26c1e6f51e45c8cd30237f9356ede4"
+    },
+    {
+      "high": [],
+      "at": 1795759835.0867388,
+      "sha": "fb837ebee68f3ed4d4cff07af7b2349b5e58ef0e"
+    },
+    {
+      "high": [],
+      "at": 1795760788.9253561,
+      "sha": "d8135d0905d350e120d7bf704d161f7b561e606c"
+    }
+  ],
+  "fails": {
+    "R6": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795758539.5081549
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R6": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "9aec592777746d2105399c841c2707afeeb21dfd",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795757286.809943,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "5bd07913340831e521e2232e01591b37750832e7",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795757363.331677,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "a470f3cf46e1f81fcaf50a52d8dfed1592e3a5e6",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795757489.882221,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "19624c40e8a72a4e62d43101631f6d26a335f03d",
+      "tasks": [
+        "T4"
+      ],
+      "reqs": [
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795757615.1145668,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "fd6c1fcd1c26c1e6f51e45c8cd30237f9356ede4",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795758544.702707,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "7c29c7a7c39a1de998411e074735bddec2394a43",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795758976.0716858,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "5bd07913340831e521e2232e01591b37750832e7",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795757363.1989539
+    },
+    {
+      "tip": "a470f3cf46e1f81fcaf50a52d8dfed1592e3a5e6",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795757489.748262
+    },
+    {
+      "tip": "19624c40e8a72a4e62d43101631f6d26a335f03d",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795757614.982992
+    },
+    {
+      "tip": "ad9df5b513a99e7d7f1432dea529af632e2a4e6c",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 3,
+      "at": 1795757726.823264
+    },
+    {
+      "tip": "fd6c1fcd1c26c1e6f51e45c8cd30237f9356ede4",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 3,
+      "at": 1795758539.355915
+    },
+    {
+      "tip": "fb837ebee68f3ed4d4cff07af7b2349b5e58ef0e",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 5,
+      "at": 1795759146.49737
+    },
+    {
+      "tip": "d8135d0905d350e120d7bf704d161f7b561e606c",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 5,
+      "at": 1795759972.313879
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795758539.601239
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795759835.259128
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 2,
+      "reproduced": 2,
+      "fixed": 0,
+      "at": 1795760789.0817559
+    }
+  ]
+}
