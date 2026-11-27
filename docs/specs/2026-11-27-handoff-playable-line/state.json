@@ -4,7 +4,7 @@
   "created_at": 1795751942.877262,
   "existing": true,
   "start": "0dc10f418111bc0aa45d5dc6d96088b5fc41947b",
-  "last_active_at": 1795761580.604776,
+  "last_active_at": 1795763752.599363,
   "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
   "queued_at": 1795752992.710474,
   "approved_by": "人: OK、承認（2 本まとめて）",
@@ -18,13 +18,27 @@
       "phase": "wait",
       "reason": "R2 の試走: 入れ子の Claude Code の信頼の確認・権限の確認・草案の OK を人が返す",
       "at": 1795754540.2572532
+    },
+    {
+      "phase": "wait",
+      "reason": "R2 が fail。R1 だけの PR を先に出すか、承認の前の M の試作の spec を先にするかを人が決める",
+      "at": 1795761638.066625
     }
   ],
   "blocked": null,
-  "paused_sec": 7040.33886384964,
-  "reviews": [],
+  "paused_sec": 9063.4431245327,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795763752.5993469,
+      "sha": "292e278e766bd938df6c8e083e9faad87aee2e38"
+    }
+  ],
   "fails": {},
-  "streak": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0
+  },
   "reworks": {},
   "dispatches": [
     {
@@ -49,7 +63,25 @@
       ],
       "dispatch": 0,
       "at": 1795754404.910818
+    },
+    {
+      "tip": "292e278e766bd938df6c8e083e9faad87aee2e38",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795763720.856709
     }
   ],
-  "wait": null
+  "wait": null,
+  "parked": [
+    {
+      "kind": "qa",
+      "op": "承認の前の M の試作を別の spec にし、試走し直して触れるまでを測る",
+      "reason": "R2 の試走が 12:51 で 10 分を超えた。spec の止まる条件どおり人に戻し、人が R1 の PR を先に出すと決めた",
+      "req": "R2",
+      "merges": 0,
+      "at": 1795763676.430539
+    }
+  ]
 }
