@@ -1069,4 +1069,14 @@ def test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable(repo
     assert run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y", "--no-rollback", "z").returncode == 0
     import overnight
     note = overnight.notify(d)  # 知らせの 1 通（cmd_notify は NOTE の行と、この 1 通を続けて出す）
-    assert "block: R2" in note and note.count("awaits.jsonl:") == 1
+    assert note.count("block: R2") == 1 and note.count("awaits.jsonl:") == 1 and note.count("本番:") == 1
+
+
+def test_a_desktop_note_names_the_unreadable_await_row(repo, gh, tmp_path):
+    """DM でない知らせ（報告の行を載せない）には、読めない行のファイルと行番号を 1 回載せる（どの行を直すか分かるように）。"""
+    import overnight
+    d = full_spec(repo, **{"通知": "なし"})
+    broken(repo, gh, d, tmp_path)
+    cut_await_row(d)
+    note = overnight.notify(d)
+    assert note.count("awaits.jsonl:2 ") == 1 and "本番: 待ちの記録が読めないので分からない" in note
