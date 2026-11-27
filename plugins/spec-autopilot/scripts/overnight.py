@@ -42,6 +42,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import autopilot  # noqa: E402
+import carry  # noqa: E402
 import ladder  # noqa: E402
 import stages  # noqa: E402
 
@@ -213,7 +214,7 @@ def scope_errors(d, s):
     root, parked = autopilot.repo_root(d), exempt_kinds(d, s)
     merges = s.get("merges") or []
     errors = production_errors(d, s)
-    if "merge" not in parked and not (merges and (contains(root, head(root), merges[-1].get("head")) or __import__("carry").holds_head(root, s, merges[-1].get("head")))):
+    if "merge" not in parked and not (merges and (contains(root, head(root), merges[-1].get("head")) or carry.holds_head(root, s, merges[-1].get("head")))):
         errors.append("範囲がマージを含むのに、今の HEAD を含むマージを確かめていない（references/after-pr.md。"
                       "マージしたら overnight.py merged <dir> --pr <n>、できないなら overnight.py park --kind merge）")
     late = stages.deployed_reqs(autopilot, (d / "spec.md").read_text(encoding="utf-8"))
@@ -699,18 +700,11 @@ def _awaits(d, strict=True):
     return out
 
 
-def this_round_timeouts(d, s, strict=True):
-    """上限を過ぎた待ち。持ち越した spec でも、今の承認より後のものだけ（前の巡の timeout は新しい巡で数え直す）。
-    成功・失敗の事実は awaits が持ち越した分も読む。"""
-    approved = float(s.get("approved_at") or 0)
-    return [a for a in awaits(d, s, strict) if a.get("result") == "timeout" and a["at"] > approved]
-
-
 def parked_ops(d, s, strict=True):
     """積んだ操作（park と、上限を過ぎた待ち）。"""
     timeouts = [{"kind": a.get("kind"), "op": f"{a.get('kind')} の待ち（PR {a.get('pr')}）",
                  "reason": "待ちの上限を過ぎた", "req": None, "sha": a.get("sha"), "at": a["at"]}
-                for a in this_round_timeouts(d, s, strict)]
+                for a in carry.this_round_timeouts(awaits(d, s, strict), s)]
     return list(s.get("parked") or []) + timeouts
 
 
@@ -720,9 +714,9 @@ def exempt_kinds(d, s, strict=True):
     merges = s.get("merges") or []
     last = merges[-1].get("sha") if merges else None
     kinds = {p.get("kind") for p in s.get("parked") or [] if not p.get("req") and p.get("merges", 0) == len(merges)}
-    kinds |= {a.get("kind") for a in this_round_timeouts(d, s, strict) if a.get("kind") == "deploy" and a.get("sha") == last}
+    kinds |= {a.get("kind") for a in carry.this_round_timeouts(awaits(d, s, strict), s) if a.get("kind") == "deploy" and a.get("sha") == last}
     since = float(merges[-1].get("at", 0)) if merges else 0
-    if any(a.get("kind") == "review" and a["at"] > since for a in this_round_timeouts(d, s, strict)):
+    if any(a.get("kind") == "review" and a["at"] > since for a in carry.this_round_timeouts(awaits(d, s, strict), s)):
         kinds.add("merge")  # 承認の待ちが朝まで届かなかったマージは、人の判断を待つものとして積む
     return kinds
 
