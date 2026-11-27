@@ -3178,3 +3178,53 @@ def test_changed_spec_error_names_revert_park_and_block(repo):
     (d / "spec.md").write_text(GOOD_SPEC.replace("Enter", "Space"), encoding="utf-8")
     out = run(repo, "check", str(d)).stdout
     assert "承認の時点に戻す" in out and "overnight.py park" in out and "どの要件も進められないときだけ block" in out
+
+
+# --- state.json の existing が false の bool でないときは、既存の repo とみなす ---
+
+MISSING = object()
+NOT_FALSE = [pytest.param(MISSING, id="key-missing"), pytest.param(None, id="null"), pytest.param("false", id="string-false"), pytest.param(0, id="zero")]
+
+
+def with_existing(d, value):
+    """state.json の existing を value にする（MISSING ならキーを消す）。"""
+    s = json.loads((d / "state.json").read_text(encoding="utf-8"))
+    if value is MISSING:
+        s.pop("existing", None)
+    else:
+        s["existing"] = value
+    (d / "state.json").write_text(json.dumps(s, ensure_ascii=False), encoding="utf-8")
+
+
+@pytest.mark.parametrize("value", NOT_FALSE)
+def test_lint_treats_a_state_whose_existing_is_not_false_as_an_existing_repo(repo, value):
+    d = init_spec(repo)
+    with_existing(d, value)
+    r = run(repo, "lint", str(d))
+    assert r.returncode == 1
+    assert "既存の repo では「## 影響範囲」を書く" in r.stdout and "既存の repo では「## 変えない挙動」を書く" in r.stdout
+
+
+def test_lint_does_not_ask_for_existing_repo_sections_when_existing_is_false(repo):
+    d = init_spec(repo)
+    with_existing(d, False)
+    r = run(repo, "lint", str(d))
+    assert r.returncode == 0, r.stdout
+
+
+@pytest.mark.parametrize("value", NOT_FALSE)
+def test_done_counts_the_size_when_existing_is_not_false(repo, value):
+    d = approved(repo)
+    make_done(repo, d)
+    with_existing(d, value)
+    r = run(repo, "done", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "大きさを数えられない" in r.stdout
+
+
+def test_done_does_not_count_the_size_when_existing_is_false(repo):
+    d = approved(repo)
+    make_done(repo, d)
+    r = run(repo, "done", str(d))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "大きさを数えられない" not in r.stdout
