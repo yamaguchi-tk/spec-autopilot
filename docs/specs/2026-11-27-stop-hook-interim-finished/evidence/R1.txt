@@ -1,0 +1,24 @@
+- commit: 77e19a2ba6e697cb3f066fbfb7336e50b4d0ba12
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q -n auto -k "stop_hook or wait_state or scan or version or marketplace or bounds or budget"
+160 passed in 18.36s
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1568 passed in 400.84s (0:06:40)
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/test_autopilot.py -q -n auto -rA -k "interim or handback or reported or real_host or finished_meta or marked_the_agent_finished or interim_mark"
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_releases_after_an_interim_finish_while_a_live_timer_exists[user]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_releases_after_an_interim_finish_while_a_live_timer_exists[queued]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_asks_for_a_timer_after_an_interim_finish_without_a_live_timer[user]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_asks_for_a_timer_after_an_interim_finish_without_a_live_timer[queued]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_does_not_count_an_interim_finish_quoted_in_a_tool_result
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_reads_the_real_host_notification_shapes[None-False]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_keeps_an_interim_mark_per_agent
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_counts_an_interim_finish_again_after_the_reported_agent_is_resumed
+21 passed in 5.66s
+
+# 実物の main の transcript（直近 5 日、途中の完了の知らせを含む 43 本）を stop.scan に通し、agent ごとの並び（最後の起動・再開の後に hand-back を返したか、最後の知らせが途中の完了か）から求めた期待と集合を比べる
+$ .venv/bin/python .autopilot-qa/real.py 5
+files=43 counts={'interim': 179, 'handback': 2219, 'handback_then_interim': 86, 'in_set': 2, 'loose_handback': 2219, 'loose_interim': 220, 'after_hti': {('handback', 'interim', 'notice'): 54, ('handback', 'interim'): 12, ('handback', 'interim', 'interim', 'notice'): 16, ('handback', 'interim', 'interim', 'interim'): 1, ('handback', 'interim', 'interim', 'interim', 'notice'): 2, ('handback', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'notice'): 1}}
+R1 pass
+R2 pass

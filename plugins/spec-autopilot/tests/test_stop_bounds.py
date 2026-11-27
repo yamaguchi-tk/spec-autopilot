@@ -96,7 +96,7 @@ def test_scan_reads_lines_with_u2028_and_carriage_returns_inside(tmp_path):
     row = launched("a1")
     row["message"]["content"][0]["content"][0]["text"] += " \r"
     path = transcript(tmp_path, row, *timer())
-    agents, timers, _ = stop.scan(path)
+    agents, timers, _, _ = stop.scan(path)
     assert "a1" in agents and timers
 
 

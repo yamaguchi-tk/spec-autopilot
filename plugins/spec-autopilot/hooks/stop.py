@@ -16,8 +16,9 @@
   子孫に、同じ秒数の `sleep` が、張った時刻の前後 3 秒に起きて今も動いている（ps で確かめる）。(2) その timer がこの turn の
   最後の tool で、起動応答の後に通知・人の発言が届いていない（起動の直後なので必ず動いている。ps が使えないときの道）。
   timer の死んだ証拠（通知・開き直しの記録）は読まない。後の tool の入力に timer の id が出たら、止められたかもしれないので数えない。
-  待ち中とみなすのは、host の meta.json があり、起動・再開より後の finished が無く、agent の transcript が
-  15 分以内に書かれているときだけ。生きている timer が無ければ、timer を 1 本張ってから終えるよう求める短い
+  待ち中とみなすのは、host の meta.json があり、起動・再開より後の finished が無く（finished があっても、
+  main に最後に届いた知らせが、その agent の途中の完了＝自分の background の作業を待って turn を終えた知らせなら無いものとする。
+  終わりの知らせ・hand-back の行・再開で下ろす）、agent の transcript が 15 分以内に書かれているときだけ。生きている timer が無ければ、timer を 1 本張ってから終えるよう求める短い
   理由で止める。読めないときは止める。background の Bash の待ちは数えない
 - state.json が読めず phase が分からない spec は止める側に倒す。ただし最初の block の後の続行の間
   （payload の stop_hook_active が true）は、その spec だけを放す（人を閉じ込めないための弁）
@@ -172,6 +173,11 @@ TIMER_HINT = ("background の agent の終わりを待っている。Bash で `s
 _AGENT_ID = re.compile(r"[A-Za-z0-9_-]+")
 _SLEEP = re.compile(r"[ \t]*sleep[ \t]+([0-9]+)[ \t]*")
 SHELLS = ("sh", "bash", "zsh", "dash")  # host を探すとき、hook と sleep の間に挟まる shell は飛ばす
+_NOTIFICATION = re.compile(r"<task-notification>(.*?)</task-notification>", re.S)
+_TASK_ID = re.compile(r"<task-id>\s*([A-Za-z0-9_-]+)\s*</task-id>")
+_SUMMARY = re.compile(r"<summary>(.*?)</summary>", re.S)
+_HAND_BACK = re.compile(r'<agent-message from="([A-Za-z0-9_-]+)">')
+INTERIM_SUMMARY = "is waiting on its own background work"  # host が途中の完了の知らせの summary の終わりに書く文
 WINDOW_SEC = 3  # sleep が起きた時刻と、tool_use・起動応答の時刻の差の許し（ps の経過時間は秒で切れる）
 
 
@@ -183,13 +189,30 @@ def _epoch(ts):
         return None
 
 
+def _host_text(r, content):
+    """main に host が書いた知らせ・hand-back の文字列（user の行の本文と、queued_command の attachment の prompt）。
+    tool の結果の本文（content の list の tool_result）は読まない。"""
+    if r.get("type") == "user":
+        if isinstance(content, str):
+            return content
+        return "\n".join(b["text"] for b in content if isinstance(b, dict) and b.get("type") == "text"
+                         and isinstance(b.get("text"), str)) if isinstance(content, list) else ""
+    a = r.get("attachment")
+    if r.get("type") == "attachment" and isinstance(a, dict) and a.get("type") == "queued_command" and isinstance(a.get("prompt"), str):
+        return a["prompt"]
+    return ""
+
+
 def scan(path, deadline=None):
     """transcript から (起動・再開した agent の id → 時刻, 期限 timer の [(id, 張った時刻, 起動応答の時刻, 秒)], この turn の
-    最後の tool の timer の id か None)。timer は起動応答（backgroundTaskId）があり、後の tool の入力にその id が出ていないものだけ。
+    最後の tool の timer の id か None, 途中の完了の知らせが最後に届いた agent の id の集合)。timer は起動応答（backgroundTaskId）があり、
+    後の tool の入力にその id が出ていないものだけ。途中の完了は、host の task-notification の summary が `is waiting on its own
+    background work` で終わるもの。ほかの summary の知らせ・その agent の hand-back の行・起動と再開で外す。host は hand-back の行の
+    後に途中の完了の知らせを書くので、起動・再開の後に hand-back を返した agent（reported）には、途中の完了の印を立てない。
     deadline を過ぎたら transcript.Overdue を投げる。"""
     from transcript import transcript_lines
 
-    agents, pending, timers, last, fresh = {}, {}, {}, None, None
+    agents, pending, timers, last, fresh, interim, reported = {}, {}, {}, None, None, set(), set()
     for line in transcript_lines(path, deadline):
         try:
             r = json.loads(line)
@@ -201,6 +224,17 @@ def scan(path, deadline=None):
         m = r.get("message")
         content = m.get("content") if isinstance(m, dict) else None
         blocks = [b for b in content if isinstance(b, dict)] if isinstance(content, list) else []
+        text = _host_text(r, content if r.get("type") == "user" else None)
+        handed = _HAND_BACK.findall(text)
+        reported.update(handed)
+        interim.difference_update(handed)
+        for note in _NOTIFICATION.findall(text):
+            task, summary = _TASK_ID.search(note), _SUMMARY.search(note)
+            if task and summary:
+                if summary.group(1).strip().endswith(INTERIM_SUMMARY) and task.group(1) not in reported:
+                    interim.add(task.group(1))
+                else:
+                    interim.discard(task.group(1))
         if r.get("type") == "assistant":
             for b in blocks:
                 if b.get("type") != "tool_use":
@@ -221,6 +255,8 @@ def scan(path, deadline=None):
                 res.get("resumedAgentId") if res.get("success") is True else None)
             if isinstance(agent, str) and _AGENT_ID.fullmatch(agent) and at is not None:
                 agents[agent] = at
+                interim.discard(agent)
+                reported.discard(agent)
             task = res.get("backgroundTaskId")
             acks = [b.get("tool_use_id") for b in blocks if isinstance(b.get("tool_use_id"), str)]
             ack = next((t for t in acks if t in pending), None)
@@ -234,7 +270,7 @@ def scan(path, deadline=None):
                 r.get("type") == "attachment" and isinstance(r.get("attachment"), dict)
                 and r["attachment"].get("type") == "queued_command")):
             fresh = None  # 起動応答の後に main へ入力が届いた（通知・人の発言）。この turn の timer ではない
-    return agents, list(timers.values()), fresh if fresh in timers else None
+    return agents, list(timers.values()), fresh if fresh in timers else None, interim
 
 
 def _elapsed(text):
@@ -294,12 +330,13 @@ def _sleeping(procs, host, timer, now):
     return False
 
 
-def _running(subagents, agent, launched_at, now):
-    """host の meta.json があり、起動・再開より後の finished が無く、transcript が新しい。読めなければ False。"""
+def _running(subagents, agent, launched_at, now, interim=False):
+    """host の meta.json があり、起動・再開より後の finished が無く、transcript が新しい。読めなければ False。
+    途中の完了の知らせが最後に届いた agent（interim）は、finished が真でも終わりとみなさない（host は途中でも finished を書く）。"""
     try:
         meta = subagents / f"agent-{agent}.meta.json"
         d = json.loads(meta.read_text(encoding="utf-8"))
-        if d.get("finished") not in (None, False) and meta.stat().st_mtime >= launched_at:
+        if d.get("finished") not in (None, False) and meta.stat().st_mtime >= launched_at and not interim:
             return False
         return now - (subagents / f"agent-{agent}.jsonl").stat().st_mtime < ALIVE_SEC
     except Exception:
@@ -314,9 +351,9 @@ def wait_state(payload, now=None, processes=_processes, deadline=None):
         return None
     try:
         now = time.time() if now is None else now
-        agents, timers, fresh = scan(path, deadline)
+        agents, timers, fresh, interim = scan(path, deadline)
         subagents = Path(path).parent / Path(path).stem / "subagents"
-        if not any(_running(subagents, a, at, now) for a, at in agents.items()):
+        if not any(_running(subagents, a, at, now, a in interim) for a, at in agents.items()):
             return None
         timers = [t for t in timers if t[1] <= now < t[1] + t[3]]  # 時計の上で切れた timer は数えない
         if any(t[0] == fresh for t in timers):

@@ -1,0 +1,9 @@
+- commit: fa597ac06de0508a2cc88dbe6212b216a4a8a973
+
+$ .venv/bin/python -c 'import json;print(json.load(open("plugins/spec-autopilot/.claude-plugin/plugin.json"))["version"])'
+0.1.21
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q -p no:cacheprovider -k "version or marketplace" -rA
+PASSED plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py::test_marketplace_entry_matches_manifest
+PASSED plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py::test_version_is_raised_past_0_1_20
+2 passed, 9 deselected in 0.02s

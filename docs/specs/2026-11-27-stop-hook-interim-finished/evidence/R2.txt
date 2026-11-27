@@ -1,0 +1,35 @@
+- commit: 77e19a2ba6e697cb3f066fbfb7336e50b4d0ba12
+
+$ .venv/bin/python -m pytest plugins/spec-autopilot/tests/test_autopilot.py -q -n auto -rA -k "interim or handback or reported or real_host or finished_meta or marked_the_agent_finished or interim_mark"
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_when_an_interim_notice_follows_the_handback_line[user]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_when_an_interim_notice_follows_the_handback_line[queued]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_when_handback_and_interim_notice_share_one_line
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish[handback-user]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish[handback-queued]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish[final_notice-user]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish[final_notice-queued]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish[resumed-user]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish[resumed-queued]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_when_the_host_marked_the_agent_finished
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_ignores_a_finished_meta_written_before_the_resume
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_reads_the_real_host_notification_shapes[handback-True]
+PASSED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_reads_the_real_host_notification_shapes[final-True]
+21 passed in 5.66s
+
+# 変異: scan の `and task.group(1) not in reported` を外す（hand-back の後の途中の完了の知らせで印を立て直す）
+$ bash .autopilot-qa/mut.sh .autopilot-qa/mut-R2-1.patch plugins/spec-autopilot/hooks/stop.py 77e19a2ba6e697cb3f066fbfb7336e50b4d0ba12 plugins/spec-autopilot/tests/test_autopilot.py -q -p no:xdist -k test_stop_hook_blocks_when_an_interim_notice_follows_the_handback_line
+2 passed, 486 deselected in 2.17s
+APPLIED
+>       assert blocks(repo, path)
+E       AssertionError: assert False
+FAILED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_when_an_interim_notice_follows_the_handback_line[user]
+FAILED plugins/spec-autopilot/tests/test_autopilot.py::test_stop_hook_blocks_when_an_interim_notice_follows_the_handback_line[queued]
+2 failed, 486 deselected in 2.15s
+mutant pytest exit: 1
+restored: yes
+
+# 実物の main の transcript 43 本で、hand-back の後に途中の完了の知らせが届いた並び 86 件が、どれも集合に入らないことを確かめた（期待との差 0 件）
+$ .venv/bin/python .autopilot-qa/real.py 5
+files=43 counts={'interim': 179, 'handback': 2219, 'handback_then_interim': 86, 'in_set': 2, 'loose_handback': 2219, 'loose_interim': 220, 'after_hti': {('handback', 'interim', 'notice'): 54, ('handback', 'interim'): 12, ('handback', 'interim', 'interim', 'notice'): 16, ('handback', 'interim', 'interim', 'interim'): 1, ('handback', 'interim', 'interim', 'interim', 'notice'): 2, ('handback', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'interim', 'notice'): 1}}
+R1 pass
+R2 pass

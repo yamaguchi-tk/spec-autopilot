@@ -1794,9 +1794,12 @@ def timer(sec=900, ago=5, tool="toolu_t", shell="bt1", command=None, background=
              "toolUseResult": {"backgroundTaskId": shell}}]
 
 
-def notice(agent, tool="toolu_1", status="completed", note=""):
+INTERIM = 'Agent "{}" is waiting on its own background work'
+
+
+def notice(agent, tool="toolu_1", status="completed", note="", summary="Agent finished"):
     return (f"<task-notification>\n<task-id>{agent}</task-id>\n<tool-use-id>{tool}</tool-use-id>\n"
-            f"<status>{status}</status>\n<summary>Agent finished</summary>\n{note}<result>done</result>\n</task-notification>")
+            f"<status>{status}</status>\n<summary>{summary}</summary>\n{note}<result>done</result>\n</task-notification>")
 
 
 def notified(agent, **kw):
@@ -1805,6 +1808,19 @@ def notified(agent, **kw):
 
 def queued(agent, **kw):
     return {"type": "attachment", "attachment": {"type": "queued_command", "prompt": notice(agent, **kw), "commandMode": "task-notification"}}
+
+
+def interim(agent, form="user"):
+    """subagent が自分の background の作業を待って turn を終えたときに host が main へ送る、途中の完了の知らせ。"""
+    return (notified if form == "user" else queued)(agent, summary=INTERIM.format(agent))
+
+
+def handback(agent, form="user"):
+    """subagent が SubagentHandback で返したときに host が main の transcript に書く hand-back の行。"""
+    text = f'<agent-message from="{agent}">最終の報告</agent-message>'
+    if form == "user":
+        return {"type": "user", "message": {"role": "user", "content": text}}
+    return {"type": "attachment", "attachment": {"type": "queued_command", "prompt": text}}
 
 
 def alive(path, agent, age_sec=0):
@@ -2107,6 +2123,115 @@ def test_stop_hook_blocks_after_the_agent_finished(repo, tmp_path):
     alive(path, "a1")
     finished(path, "a1")
     assert blocks(repo, path)
+
+
+@pytest.mark.parametrize("form", ["user", "queued"])
+def test_stop_hook_releases_after_an_interim_finish_while_a_live_timer_exists(repo, tmp_path, form):
+    """途中の完了（meta.json は finished 真）の後でも、agent を待ち中に数え、生きている timer があれば放す。"""
+    approved(repo)
+    path = transcript(tmp_path, launched("a1"), interim("a1", form), *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert not blocks(repo, path)
+
+
+@pytest.mark.parametrize("form", ["user", "queued"])
+def test_stop_hook_asks_for_a_timer_after_an_interim_finish_without_a_live_timer(repo, tmp_path, form):
+    approved(repo)
+    path = transcript(tmp_path, launched("a1", ago=1000), interim("a1", form), *timer(sec=60, ago=200))
+    alive(path, "a1")
+    finished(path, "a1")
+    out = json.loads(stop_hook(repo, {"transcript_path": str(path)}).stdout)
+    assert out["decision"] == "block" and out["reason"].startswith("background の agent") and "sleep 900" in out["reason"]
+    assert "自走中の spec" not in out["reason"]
+
+
+def test_stop_hook_does_not_count_an_interim_finish_quoted_in_a_tool_result(repo, tmp_path):
+    """tool の結果の本文に途中の完了の知らせと同じ文言があっても、待ち中に数えない。"""
+    approved(repo)
+    quoted = {"type": "user", "message": {"role": "user", "content": [
+        {"type": "tool_result", "tool_use_id": "toolu_5", "content": notice("a1", summary=INTERIM.format("a1"))}]}}
+    path = transcript(tmp_path, launched("a1"), quoted, *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path)
+
+
+@pytest.mark.parametrize("form", ["user", "queued"])
+@pytest.mark.parametrize("later", ["handback", "final_notice", "resumed"])
+def test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish(repo, tmp_path, form, later):
+    """途中の完了の後に、hand-back の行・終わりの知らせ・再開（の後の終わり）が届いたら、timer が生きていても止める。"""
+    approved(repo)
+    after = {"handback": handback("a1", form), "final_notice": (notified if form == "user" else queued)("a1"),
+             "resumed": resumed("a1", ago=1)}[later]
+    path = transcript(tmp_path, launched("a1", ago=1000), interim("a1", form), after, *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path)
+
+
+@pytest.mark.parametrize("form", ["user", "queued"])
+def test_stop_hook_blocks_when_an_interim_notice_follows_the_handback_line(repo, tmp_path, form):
+    """hand-back の行の後に途中の完了の知らせが届く並び（host が SubagentHandback の後に書く順）でも、最終の報告を返したので止める。"""
+    approved(repo)
+    path = transcript(tmp_path, launched("a1"), handback("a1"), interim("a1", form), *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path)
+
+
+def test_stop_hook_blocks_when_handback_and_interim_notice_share_one_line(repo, tmp_path):
+    approved(repo)
+    both = {"type": "user", "message": {"role": "user", "content":
+            handback("a1")["message"]["content"] + "\n" + notice("a1", summary=INTERIM.format("a1"))}}
+    path = transcript(tmp_path, launched("a1"), both, *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path)
+
+
+def test_stop_hook_counts_an_interim_finish_again_after_the_reported_agent_is_resumed(repo, tmp_path):
+    """hand-back で返した agent を再開したら、その後の途中の完了は待ち中に数える。別の agent の hand-back は影響しない。"""
+    approved(repo)
+    path = transcript(tmp_path, launched("a1", ago=1000), launched("a2", tool="toolu_2"), handback("a1"), handback("a2"),
+                      resumed("a1", ago=1), interim("a1"), interim("a2"), *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert not blocks(repo, path)
+    (path.parent / path.stem / "subagents" / "agent-a1.meta.json").unlink()
+    alive(path, "a2")
+    finished(path, "a2")
+    assert blocks(repo, path)
+
+
+@pytest.mark.parametrize("later,expect_block", [(None, False), ("handback", True), ("final", True)])
+def test_stop_hook_reads_the_real_host_notification_shapes(repo, tmp_path, later, expect_block):
+    """実物の形（summary の Agent の後ろは説明文で agent の id ではない・note と output-file の行がある・hand-back は先頭に文がある）。"""
+    approved(repo)
+    real = ("<task-notification>\n<task-id>a1</task-id>\n<tool-use-id>toolu_1</tool-use-id>\n<output-file>/tmp/x.output</output-file>\n"
+            "<status>completed</status>\n<summary>Agent \"途中の完了を再現する\" is waiting on its own background work</summary>\n"
+            "<note>This agent stopped with background work of its own still running.</note>\n<result>wait</result>\n</task-notification>")
+    final = real.replace("is waiting on its own background work", "finished")
+    rows = {None: [], "handback": [{"type": "user", "message": {"role": "user", "content":
+            'Another Claude session sent a message:\n<agent-message from="a1">\n[Subagent hand-back] 完了\n</agent-message>'}}],
+            "final": [{"type": "user", "message": {"role": "user", "content": final}}]}[later]
+    path = transcript(tmp_path, launched("a1"), {"type": "user", "message": {"role": "user", "content": real}}, *rows, *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path) is expect_block
+
+
+def test_stop_hook_keeps_an_interim_mark_per_agent(repo, tmp_path):
+    """別の agent の終わりの知らせは、途中の完了の印を下ろさない。別の agent の途中の完了は、終わった agent を待ち中にしない。"""
+    approved(repo)
+    path = transcript(tmp_path, launched("a1"), launched("a2", tool="toolu_2"), interim("a1"), notified("a2"), *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert not blocks(repo, path)
+    alive(path, "a2")
+    finished(path, "a2")
+    (path.parent / path.stem / "subagents" / "agent-a1.meta.json").unlink()
+    assert blocks(repo, path)  # a1 が待ち中でなくなれば、a2（途中の完了の印が無い・finished）だけでは放さない
 
 
 @pytest.mark.parametrize("line", [

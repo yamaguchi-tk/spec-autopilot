@@ -65,9 +65,9 @@ def test_cli_messages_point_to_existing_command_sections():
     assert not names - heads, f"見出しに無い節: {sorted(names - heads)}"
 
 
-def test_version_is_raised_past_0_1_18():
+def test_version_is_raised_past_0_1_20():
     v = _load(MANIFEST)["version"]
-    assert tuple(int(x) for x in v.split(".")) > (0, 1, 19)
+    assert tuple(int(x) for x in v.split(".")) > (0, 1, 20)
 
 
 def test_setup_command_exists_and_its_ladder_commands_run(tmp_path):

@@ -1,0 +1,169 @@
+{
+  "phase": "building",
+  "slug": "stop-hook-interim-finished",
+  "created_at": 1795780841.735311,
+  "existing": true,
+  "start": "53cddd6c8284c01ae789c8fafd4b00d9901d585c",
+  "last_active_at": 1795793677.645003,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795789863.446688,
+  "approved_by": "人が「OK」で承認（引き継ぎ後、版数を 0.1.21 に直した spec）",
+  "spec_sha256": "67467d1408edc3a23403df40674e07545c30b99a6259c7612543265a59faff59",
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795792135.623029,
+      "sha": "fa597ac06de0508a2cc88dbe6212b216a4a8a973"
+    },
+    {
+      "high": [],
+      "at": 1795793460.22703,
+      "sha": "77e19a2ba6e697cb3f066fbfb7336e50b4d0ba12"
+    }
+  ],
+  "fails": {
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795792135.623025
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "c016e03e950a2fbd80bc9f4a63ff00c6747adb3a",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795789879.069262,
+      "session": "48306b82-3bc4-4265-95f7-afc78133164a"
+    },
+    {
+      "base": "2b7ceb20bbc6479f8a695293e85aace7a861532c",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795790055.733601,
+      "session": "48306b82-3bc4-4265-95f7-afc78133164a"
+    },
+    {
+      "base": "559ec831d2bfd150a3c587eca8fa33a76fdfdf4c",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795790218.322697,
+      "session": "48306b82-3bc4-4265-95f7-afc78133164a"
+    },
+    {
+      "base": "00132c5c20dc174733bde627c9241b9669eb438a",
+      "tasks": [
+        "T4"
+      ],
+      "reqs": [
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795790352.9919841,
+      "session": "48306b82-3bc4-4265-95f7-afc78133164a"
+    },
+    {
+      "base": "fa597ac06de0508a2cc88dbe6212b216a4a8a973",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795792142.8124769,
+      "session": "48306b82-3bc4-4265-95f7-afc78133164a"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "2b7ceb20bbc6479f8a695293e85aace7a861532c",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795790028.337327
+    },
+    {
+      "tip": "559ec831d2bfd150a3c587eca8fa33a76fdfdf4c",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795790217.931728
+    },
+    {
+      "tip": "00132c5c20dc174733bde627c9241b9669eb438a",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795790352.3531158
+    },
+    {
+      "tip": "fa597ac06de0508a2cc88dbe6212b216a4a8a973",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 3,
+      "at": 1795790510.660067
+    },
+    {
+      "tip": "77e19a2ba6e697cb3f066fbfb7336e50b4d0ba12",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 4,
+      "at": 1795792754.0860002
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 2,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795792135.741583
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795793461.137365
+    }
+  ]
+}
