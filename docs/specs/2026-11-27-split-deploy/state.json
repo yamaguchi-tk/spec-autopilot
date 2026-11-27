@@ -1,0 +1,8 @@
+{
+  "phase": "discovery",
+  "slug": "split-deploy",
+  "created_at": 1795778286.562539,
+  "existing": true,
+  "start": "53cddd6c8284c01ae789c8fafd4b00d9901d585c",
+  "last_active_at": 1795778286.610395
+}
