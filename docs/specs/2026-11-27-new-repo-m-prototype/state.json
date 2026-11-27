@@ -4,7 +4,7 @@
   "created_at": 1795767530.672534,
   "existing": true,
   "start": "a52175cc646f614c05a0e5530cd4cdfd48e3473a",
-  "last_active_at": 1795769249.297577,
+  "last_active_at": 1795769520.2633998,
   "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
   "approved_at": 1795767966.3967738,
   "approved_by": "OK（推奨の spec のまま承認）",
@@ -19,6 +19,11 @@
       "high": [],
       "at": 1795769249.2975528,
       "sha": "aaa023ccdf56b629c8813aa962bbe830a6fa5dfc"
+    },
+    {
+      "high": [],
+      "at": 1795769520.263387,
+      "sha": "1b393060e029b1097e23a888cb136798559aecfa"
     }
   ],
   "fails": {},
@@ -58,6 +63,14 @@
       ],
       "dispatch": 0,
       "at": 1795769248.83862
+    },
+    {
+      "tip": "1b393060e029b1097e23a888cb136798559aecfa",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795769519.11103
     }
   ],
   "lenses": [
