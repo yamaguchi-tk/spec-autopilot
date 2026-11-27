@@ -24,6 +24,8 @@ def why_not(root, s, prev):
     merges = s.get("merges") or []
     if prev != "blocked":
         return f"前の phase が {prev}（blocked の承認し直しだけ持ち越す）"
+    if s.get("rolled_back"):
+        return "前の巡でコマンドで本番を戻した（戻した記録は持ち越さない）"
     if merges[-1].get("rollback"):
         return "最後のマージが戻しのマージ"
     if not merges[-1].get("head"):
