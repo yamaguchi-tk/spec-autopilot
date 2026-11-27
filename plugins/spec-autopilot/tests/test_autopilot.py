@@ -1682,6 +1682,30 @@ def test_session_start_advisor_rule_has_no_stray_space_after_watashite(tmp_path)
     assert "渡して 最初" not in text
 
 
+def test_session_start_advisor_rule_asks_the_human_only_about_facts_permissions_and_purpose_changes(tmp_path):
+    text = context(session_start(tmp_path))
+    assert "人に問うのは (a) 答えを人しか持たない事実、(b) 利用者の規則が 1 操作ごとに求める操作の許可" in text
+    assert "(c) 目的を変える決定（要件を落とす・狭める・非目標を広げる。" in text and "の 3 つだけ" in text
+    # それ以外の迷いは、同じで反証なしなら進み、違うか反証ありなら自走中は park・自走していないときは人に問う
+    assert "main の案と相談役の推奨が同じで advice-checker が `判定: 反証なし` なら人に問わず進む" in text
+    assert "当たる要件だけ park に積んで他を続け" in text and "自走していないときは食い違い（推奨・反証の判定と根拠・自分の案）を添えて人に問う" in text
+
+
+def test_session_start_advisor_rule_reads_values_first_and_proceeds_when_one_option_is_left(tmp_path):
+    text = context(session_start(tmp_path))
+    assert "を作る前に価値観（repo と利用者の CLAUDE.md の設計原則、spec・ADR の人の決定、目的・非目標）を読み" in text
+    assert "価値観に反する案は選択肢に並べず" in text and "`- 価値観で退けた: <案>（<当たる価値観>）`" in text
+    assert "案の数をそろえるために案を作らない" in text
+    assert "残る案が 1 つなら人に問わずにその案で進み、理由を ADR かタスクのメモに残す" in text
+
+
+def test_session_start_advisor_rule_makes_the_advisor_check_the_option_main_chose_not_choose_for_main(tmp_path):
+    text = context(session_start(tmp_path))
+    assert "main の代わりに選ぶ役ではなく、main が価値観で選んだ案が人の選びと同じかを確かめる役" in text
+    assert "main の案を渡さず" in text  # main の案を見る前に推奨を決めさせる
+    assert "ユーザーならどの案を選ぶか" not in text
+
+
 @pytest.mark.parametrize("source", ["startup", "resume", "compact", "clear"])
 def test_session_start_gives_the_advisor_rule_outside_any_spec(tmp_path, source):
     advisor_rule(context(session_start(tmp_path, source)))

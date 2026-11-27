@@ -1,0 +1,9 @@
+- commit: 6b131861756e36062feee40451c3e8c5484bee06
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+
+（R2 の検査: ADVISE「残る案が 1 つなら人に問わずにその案で進み、理由を ADR かタスクのメモに残す」、autopilot.md の A の 4「残る案が 1 つなら、問わずにその案で進み、理由を ADR かタスクのメモに残す」、C の冒頭「残る案が 1 つならその案で進み、理由を残す」、人に戻るとき「残る案が 1 つなら選択肢にせず」がある）

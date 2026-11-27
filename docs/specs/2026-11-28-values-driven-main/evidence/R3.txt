@@ -1,0 +1,16 @@
+- commit: 6b131861756e36062feee40451c3e8c5484bee06
+
+$ echo '{"cwd":".autopilot-qa/repo","session_id":"qa1","source":"compact"}' | SPEC_AUTOPILOT_HOME=.autopilot-qa/home python3 plugins/spec-autopilot/hooks/session_start.py | python3 -c "import json,sys;print(json.load(sys.stdin)['hookSpecificOutput']['additionalContext'][:1700])"
+spec-autopilot の相談役の規則: main は案（作り方・直し方・人に戻るときの選択肢）を作る前に価値観（repo と利用者の CLAUDE.md の設計原則、spec・ADR の人の決定、目的・非目標）を読み、価値観に反する案は選択肢に並べず、退けた理由を 1 行だけ ADR の `- 価値観で退けた: <案>（<当たる価値観>）` の行かタスクのメモに残す。案の数をそろえるために案を作らない。残る案が 1 つなら人に問わずにその案で進み、理由を ADR かタスクのメモに残す。人に問うのは (a) 答えを人しか持たない事実、(b) 利用者の規則が 1 操作ごとに求める操作の許可（マージ・デプロイ・apply・破壊的な削除など）、(c) 目的を変える決定（要件を落とす・狭める・非目標を広げる。要件の数・範囲・合格の条件・非目標のどれかが承認時より狭まるか広がるか）の 3 つだけ。(c) に当たるなら、相談役と同じでも人に問う。それ以外の迷いは、main が価値観で選んだ案を、次の 2 段で確かめて決める。相談役は main の代わりに選ぶ役ではなく、main が価値観で選んだ案が人の選びと同じかを確かめる役。1 段目は spec-autopilot:fable-advisor を 1 本、main の案を渡さず（案に寄らせないため）材料を場所で渡して起動し、推奨を先に出させる。main は推奨を受け取った後に、自分の案と並べて比べる。（中略）main の案と相談役の推奨が同じで advice-checker が `判定: 反証なし` なら人に問わず進む。違うか反証ありなら、自走中（spec の phase が building でこのセッションが引き受けている。状態の行で分かる）は当たる要件だけ park に積んで他を続け、自走していないときは食い違い（推奨・反証の判定と根拠・自分の案）を添えて人に問う。（中略）repo の規則か手順（CLAUDE.md・/gdd-dev など）に別の相談の規定があれば、問う範囲の 3 つも含めてそちらに従う。
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+
+（R3 の検査: ADVISE・autopilot.md の A の 2・人に戻るときが (a)(b)(c) を同じ語で挙げ「3 つだけ」と書く。同じで反証なしなら進む文、違えば自走中は当たる要件だけ park・自走していないときは食い違いを添えて人に問う文が ADVISE・C の冒頭・人に戻るときにある。(c) は ADVISE が「相談役と同じでも人に問う」、C の冒頭が「相談役と同じでも自走で決めず park に積む」で、自走中は autopilot.md の手順が ADVISE の末尾の優先の規定で先に効くので食い違わない）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py::test_session_start_advisor_rule_asks_the_human_only_about_facts_permissions_and_purpose_changes -q
+.
+1 passed
