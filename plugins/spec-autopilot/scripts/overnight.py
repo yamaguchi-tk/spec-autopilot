@@ -430,7 +430,7 @@ def production_errors(d, s, done=True):
         prod = production(d, s)
     except UnreadableAwaits as e:  # 本番を確かめられない。止める側に倒し、マージの後なら先に戻させ、block で人に渡せるようにする
         if not s.get("merges") or going_back(s):
-            return [f"{e}。本番を確かめられないので、block --no-rollback で理由を書いて人に示す"]
+            return [f"{e}。本番を確かめられないので、戻した後なら qa --smoke で確かめてから、block --no-rollback で理由を書いて人に示す"]
         return [f"{e}。本番を確かめられないので、直しより先にロールバック: {rollback}"]
     if prod is None:
         return []
@@ -651,7 +651,8 @@ def review_gate(d, s):
 
 def awaits(d, s, strict=True):
     """今の承認より後に終わった待ちの記録（承認し直した前の夜の記録は読まない）。読めない行があれば止める（_awaits）。
-    strict=False は読める行だけを返す。記録が欠けても断る側にしか倒れない読み手（「通った記録があるか」）と、deploy_floor だけが使う。"""
+    strict=False は読める行だけを返す。記録が欠けても断る側にしか倒れない読み手（「通った記録があるか」）と、deploy_floor と、
+    朝の報告（判定の門に使わない。読めないときは pass の要件も done と書かない）だけが使う。"""
     since = float(s.get("approved_at") or 0)
     return [r for r in _awaits(d, strict) if r["at"] > since]
 
@@ -1284,7 +1285,9 @@ def report(d):
         result, evidence = rows.get(rid, (None, ""))
         ops = [p["op"] for p in parked if p.get("req") == rid]
         state = word.get(result, "まだ動いている")
-        if result == "pass" and (ops or stage_parks):  # 人を待っているものを done と書かない
+        if result == "pass" and not strict:  # 消えた待ちの記録に積んだ段が入っていたかもしれないので、done と書かない
+            state = "確かめていない（待ちの記録が読めない）"
+        elif result == "pass" and (ops or stage_parks):  # 人を待っているものを done と書かない
             state = "確かめていない（積んだ操作に頼る: " + "、".join(ops + sorted(stage_parks)) + "）"
         lines.append(f"- {rid}: {state}" + (f"（{evidence}）" if evidence else "")
                      + f"。マージ: {merged}。直した欠陥 {len((s.get('fails') or {}).get(rid, []))}。"
@@ -1401,8 +1404,10 @@ def notify(d):
         line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
         if where == "Slack の DM":
             line = "\n".join([line, *report(d)[1:]])  # DM は朝の報告の行を載せる（読んで判断できるように）
-    except UnreadableAwaits as e:  # block の後の知らせを、読めない待ちの記録で落とさない
+    except UnreadableAwaits as e:  # block の後の知らせを、読めない待ちの記録で落とさない（report は読めない記録に耐える）
         line = f"{d.name}: {s.get('phase')}。{e}"
+        if where == "Slack の DM":
+            line = "\n".join([line, *report(d)[1:]])
     if where == "デスクトップ":
         try:
             r = subprocess.run(["osascript", "-e", f"display notification {json.dumps(line, ensure_ascii=False)} with title \"spec-autopilot\""],
