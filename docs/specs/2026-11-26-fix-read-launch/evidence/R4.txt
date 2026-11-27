@@ -157,6 +157,7 @@ FAILED plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carrie
 1 failed in 2.90s
 
 # base 側: 落ちるテストを足した commit ead8b01（直しの前）で回す
+# test_a_desktop_note_names_the_unreadable_await_row は後の commit で test_a_note_that_is_not_a_dm_names_the_unreadable_await_row に改名し、範囲と通知の先の 4 通りにした。tip の形での base の出力は 68eacc5 の節
 $ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable plugins/spec-autopilot/tests/test_rollback.py::test_a_desktop_note_names_the_unreadable_await_row -q --no-header -p no:cacheprovider --tb=line -rf
 FF                                                                       [100%]
 =================================== FAILURES ===================================
