@@ -918,6 +918,26 @@ def test_block_and_status_skip_reapproval_when_the_scope_record_is_missing(repo)
     assert "--by-advisor" not in st.stdout and "返事" in st.stdout
 
 
+def change_scope(d):
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 範囲: PR まで", "- 範囲: マージまで"), encoding="utf-8")
+
+
+def test_block_skips_reapproval_when_the_scope_section_changed_before_it(repo):
+    d = approved(repo)
+    change_scope(d)
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "範囲を変えた", "--evidence", "test log")
+    assert r.returncode == 0 and "--by-advisor" not in r.stdout and "人に 1 通" in r.stdout
+    assert "--by-advisor" not in run(repo, "status", str(d)).stdout
+
+
+def test_status_skips_reapproval_when_the_scope_section_changed_after_block(repo):
+    d, _ = blocked_for_reapproval(repo)
+    change_scope(d)
+    r = run(repo, "status", str(d))
+    assert "--by-advisor" not in r.stdout and "人の返事" in r.stdout
+
+
 def test_resume_from_blocked_requires_reapproval(repo):
     d = approved(repo)
     run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y")
