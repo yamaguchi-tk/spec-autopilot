@@ -22,7 +22,7 @@
   overnight.py merged <dir> --pr <n> [--rollback --reason <理由>]   マージを gh で確かめて記録する（冪等）。マージ後の予算はここから数える
   overnight.py qa <dir> --evidence <file> --smoke pass|fail|unknown   デプロイの後に実環境で QA を回した証拠と、変えない挙動の smoke を記録する
       （`- デプロイの起動: なし（マージした commit で QA）` の spec は、デプロイの代わりに最後のマージの記録の後に書いた証拠を受ける）
-  overnight.py notify <dir>                         spec の `- 通知:` の先に、今の状態と本番の状態を 1 行で知らせる（done と block も出す）
+  overnight.py notify <dir>                         spec の `- 通知:` の先に、今の状態と本番の状態を知らせる（Slack の DM は朝の報告の行。done と block も出す）
   overnight.py park <dir> --kind merge|deploy|qa|ci|other --op <操作> --reason <理由> [--req R<n>]
                                                     範囲の外の操作・満たせない要件を、止めずに積む
   overnight.py report <dir>                         朝の報告（done も最後に出す）
@@ -422,13 +422,18 @@ def production_errors(d, s, done=True):
     """本番を壊れたまま・確かめないまま朝にしない。止める側（check・Stop hook・ready・block・wait）が読む唯一の述語。
     done=False（ready・block・wait の門）は、壊れたまま・戻した後の未確認・予算を過ぎた未確認・直せないデプロイ後の要件だけを言う。
     done=True（check・Stop hook）は、確かめていない本番も言う。"""
-    prod = production(d, s)
-    if prod is None:
-        return []
     cmd = rollback_cmd((d / "spec.md").read_text(encoding="utf-8"))
     rollback = (f"spec の `- ロールバック:` の `{cmd}` を打ち、`$ {cmd}` の行と出力を overnight.py rolled-back で記録する" if cmd else
                 "spec のマージを戻す revert の PR を出し、overnight.py ready --rollback と merged --rollback で記録する"
                 "（戻す PR が通らなければ block --no-rollback で人に示す）")
+    try:
+        prod = production(d, s)
+    except UnreadableAwaits as e:  # 本番を確かめられない。止める側に倒し、マージの後なら先に戻させ、block で人に渡せるようにする
+        if not s.get("merges") or going_back(s):
+            return [f"{e}。本番を確かめられないので、block --no-rollback で理由を書いて人に示す（戻した後で smoke を回せるなら、先に qa --smoke で記録する）"]
+        return [f"{e}。本番を確かめられないので、直しより先にロールバック: {rollback}"]
+    if prod is None:
+        return []
     wait = "マージした commit で、" if no_deploy(d) else "デプロイを待ち、"
     if prod == BROKEN:
         return [f"本番が壊れたまま（smoke の fail・unknown）。直しより先にロールバック: {rollback}"]
@@ -644,43 +649,74 @@ def review_gate(d, s):
 
 # --- 待ちの記録と予算（Stop hook と status が読む） ---
 
-def awaits(d, s):
-    """今の承認より後に終わった待ちの記録（承認し直した前の夜の記録は読まない）。読めない行は飛ばす。"""
+def awaits(d, s, strict=True):
+    """今の承認より後に終わった待ちの記録（承認し直した前の夜の記録は読まない）。読めない行があれば止める（_awaits）。
+    strict=False は読める行だけを返す。記録が欠けても断る側にしか倒れない読み手（「通った記録があるか」）と、deploy_floor と、
+    朝の報告（判定の門に使わない。読めないときは pass の要件も done と書かない）だけが使う。"""
     since = float(s.get("approved_at") or 0)
-    return [r for r in _awaits(d) if r["at"] > since]
+    return [r for r in _awaits(d, strict) if r["at"] > since]
 
 
-def _awaits(d):
+def deploy_floor(d, s):
+    """smoke・戻しの証拠が後でなければならない、デプロイの待ちの終わりの時刻。読めない行があるときは、
+    消えた記録の時刻を知れないので、記録のファイルの更新の時刻も足す（書き手は追記だけなので、どの記録よりも後）。"""
+    floor = [float(x["at"]) for x in awaits(d, s, strict=False) if x.get("kind") == "deploy"]
+    try:
+        _awaits(d)
+    except UnreadableAwaits:
+        floor.append((d / AWAITS_LOG).stat().st_mtime)
+    return floor
+
+
+UNREADABLE_PROD = "待ちの記録が読めないので分からない"  # 読めない待ちの記録のときの本番の表示（qa・report・notify）
+
+
+class UnreadableAwaits(ValueError):
+    """awaits.jsonl に記録として読めない行がある（production_errors が「本番が良くない」として受け、block で人に戻せるようにする）。"""
+
+
+def _awaits(d, strict=True):
+    """待ちの記録の行。空でないのに記録として読めない行（書き込みの途中で切れたものなど）があれば、数えずに通さないよう、
+    ファイルと行番号を名指しして UnreadableAwaits で止める（人がその行を直すか消すまで、その spec の判定は止まる）。
+    strict=False はその行を飛ばす（awaits の strict を見る）。"""
     f = d / AWAITS_LOG
     out = []
-    for line in f.read_text(encoding="utf-8").splitlines() if f.exists() else []:
-        try:
-            r = json.loads(line)
-            if isinstance(r, dict) and isinstance(r.get("at"), (int, float)):
-                out.append(r)
-        except ValueError:
+    lines = f.read_bytes().split(b"\n") if f.exists() else []  # "\n" だけで割る（記録の文字列の U+2028 で割らない）
+    for n, line in enumerate(lines, 1):
+        if not line.strip():
             continue
+        try:
+            r = json.loads(line.decode("utf-8"))
+        except ValueError:  # UnicodeDecodeError（マルチバイトの途中で切れた行）も ValueError の子
+            r = None
+        if not (isinstance(r, dict) and isinstance(r.get("at"), (int, float))):
+            if not strict:
+                continue
+            raise UnreadableAwaits(f"{f}:{n} の待ちの記録が読めないので、数えずに止める。行は人が直すか消す"
+                                   "（agent が消すと数え漏れる）。autopilot.py block で人に示す"
+                                   "（本番が良くないと断られたら、先に戻すか、戻せない理由を --no-rollback に書く）")
+        out.append(r)
     return out
 
 
-def parked_ops(d, s):
+def parked_ops(d, s, strict=True):
     """積んだ操作（park と、上限を過ぎた待ち）。"""
     timeouts = [{"kind": a.get("kind"), "op": f"{a.get('kind')} の待ち（PR {a.get('pr')}）",
                  "reason": "待ちの上限を過ぎた", "req": None, "sha": a.get("sha"), "at": a["at"]}
-                for a in awaits(d, s) if a.get("result") == "timeout"]
+                for a in awaits(d, s, strict) if a.get("result") == "timeout"]
     return list(s.get("parked") or []) + timeouts
 
 
-def exempt_kinds(d, s):
+def exempt_kinds(d, s, strict=True):
     """段（merge・deploy・qa）を免除する積んだ操作の kind。要件を名指しした park は、その要件だけの話なので段を免除しない。
     park は最後のマージの後に積んだものだけ、deploy の待ちの上限は最後のマージの commit のものだけを数える。"""
     merges = s.get("merges") or []
     last = merges[-1].get("sha") if merges else None
     kinds = {p.get("kind") for p in s.get("parked") or [] if not p.get("req") and p.get("merges", 0) == len(merges)}
-    kinds |= {a.get("kind") for a in awaits(d, s) if a.get("result") == "timeout" and a.get("kind") == "deploy"
+    kinds |= {a.get("kind") for a in awaits(d, s, strict) if a.get("result") == "timeout" and a.get("kind") == "deploy"
               and a.get("sha") == last}
     since = float(merges[-1].get("at", 0)) if merges else 0
-    if any(a.get("result") == "timeout" and a.get("kind") == "review" and a["at"] > since for a in awaits(d, s)):
+    if any(a.get("result") == "timeout" and a.get("kind") == "review" and a["at"] > since for a in awaits(d, s, strict)):
         kinds.add("merge")  # 承認の待ちが朝まで届かなかったマージは、人の判断を待つものとして積む
     return kinds
 
@@ -818,8 +854,10 @@ def cmd_await(a):
     except Exception as e:  # 読めないときは失敗として main を起こす（黙って待ち続けない）
         result, detail = "error", [f"{type(e).__name__}: {e}"]
     finally:
-        with (d / AWAITS_LOG).open("a", encoding="utf-8") as f:
-            f.write(json.dumps({"kind": a.kind, "pr": a.pr, "sha": sha, "result": result, "started_at": started,
+        log = d / AWAITS_LOG
+        cut = log.exists() and log.stat().st_size and not log.read_bytes().endswith(b"\n")
+        with log.open("a", encoding="utf-8") as f:
+            f.write(("\n" if cut else "") + json.dumps({"kind": a.kind, "pr": a.pr, "sha": sha, "result": result, "started_at": started,
                                 "at": time.time(), "detail": detail}, ensure_ascii=False) + "\n")
         (d / AWAIT_FILE).unlink(missing_ok=True)
     print(f"await {a.kind}: {result}\n- " + "\n- ".join(detail))
@@ -931,7 +969,7 @@ def launches(session, since):
 def read_launch(name, log, since):
     """1 つの subagent の (名前, {model}, {effort}, None)。since より前に起動したものは None。形が違えば例外を投げる。
     model は transcript から読む（meta.json に無いことがある。<synthetic> は host が足す行）。"""
-    lines = [line for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = [line for line in log.read_bytes().decode("utf-8").split("\n") if line.strip()]  # "\n" だけで割る（本文の U+2028 で割らない）
     if datetime.fromisoformat(json.loads(lines[0])["timestamp"].replace("Z", "+00:00")).timestamp() < since:
         return None
     models, efforts = set(), set()
@@ -1090,7 +1128,8 @@ def ready_rollback(d, s, pr):
     if err:
         print(f"ERROR: PR {pr} は spec のマージを戻していない: {err}")
         return 1
-    if not any(x.get("kind") == "ci" and x.get("result") == "success" and x.get("sha") == pr_head for x in awaits(d, s)):
+    # 読めない待ちの記録があっても戻せるよう、読める行だけで見る（記録が欠けても、通った記録が無いと断る側にしか倒れない）
+    if not any(x.get("kind") == "ci" and x.get("result") == "success" and x.get("sha") == pr_head for x in awaits(d, s, strict=False)):
         print(f"ERROR: PR の head（{pr_head}）で CI が通った記録が無い。overnight.py await <dir> --kind ci --pr {pr}")
         return 1
     print("ready: spec のマージを戻す PR で、CI が通っている。gh pr merge を打つ")
@@ -1136,7 +1175,7 @@ def cmd_qa(a):
     f = Path(a.evidence)
     if not f.is_file() or f.stat().st_size == 0:
         sys.exit(f"証拠のファイルが無いか空: {f}")
-    deployed = [x["at"] for x in awaits(d, s) if x.get("kind") == "deploy"]
+    deployed = deploy_floor(d, s)
     deployed += [float(r["at"]) for r in s.get("rolled_back") or []]
     if no_deploy(d):
         deployed += [float(m.get("at", 0)) for m in s.get("merges") or []]
@@ -1149,7 +1188,11 @@ def cmd_qa(a):
         return 0
     s.setdefault("qa_runs", []).append({"evidence": str(f), "mtime": mtime, "smoke": a.smoke, "at": time.time()})
     autopilot.save_state(d, s)
-    print(f"qa: 記録した。本番: {production_label(d, s) or '確かめていない'}")
+    try:
+        label = production_label(d, s) or "確かめていない"
+    except UnreadableAwaits:  # 記録は済んだ。本番の状態だけが読めない
+        label = UNREADABLE_PROD
+    print(f"qa: 記録した。本番: {label}")
     return 0
 
 
@@ -1174,7 +1217,7 @@ def cmd_rolled_back(a):
     if not any(any(y.strip() for y in lines[i + 1:]) for i in at):
         sys.exit(f"証拠のファイルに、宣言したコマンドの `$ {cmd}` の行とその出力が無い: {f}")
     since = [float(m.get("at", 0)) for m in s.get("merges") or []]
-    since += [float(x["at"]) for x in awaits(d, s) if x.get("kind") == "deploy"]
+    since += deploy_floor(d, s)
     since += [float(q["at"]) for q in s.get("qa_runs") or [] if q.get("smoke") in ("fail", "unknown")]
     mtime = f.stat().st_mtime
     if mtime <= max(since, default=0) or any(r.get("evidence") == str(f) and r.get("mtime") == mtime
@@ -1210,7 +1253,13 @@ def cmd_park(a):
 def report(d):
     """朝の報告の行（ketchup の型）。"""
     s = autopilot.load_state(d)
-    parked = parked_ops(d, s)
+    try:
+        _awaits(d)
+        unreadable = None
+    except UnreadableAwaits as e:  # 読めない行を残して block した夜も、block の行は朝の報告に出す
+        unreadable = str(e)
+    strict = unreadable is None
+    parked = parked_ops(d, s, strict)
     waiting = [f"{p['op']}（{p['reason']}）" for p in parked]
     rollbacks = [f"PR {m['pr']}（{m.get('reason')}）" for m in s.get("merges") or [] if m.get("rollback")]
     rollbacks += [f"コマンド（{r.get('reason')}）" for r in s.get("rolled_back") or []]
@@ -1220,8 +1269,11 @@ def report(d):
         waiting.insert(0, f"block: {b.get('req')}（{b.get('reason')}）")
         if b.get("no_rollback"):
             waiting.insert(0, f"本番を戻していない: {b['no_rollback']}")
+    if unreadable:
+        waiting.insert(0, unreadable)
+    prod = (production_label(d, s) or deploy_view(d, s)) if strict else UNREADABLE_PROD
     lines = [f"## 朝の報告: {d.name}",
-             f"本番: {production_label(d, s) or deploy_view(d, s) or 'この夜はデプロイしていない'}" + (f"。戻した: {'、'.join(rollbacks)}" if rollbacks else ""),
+             f"本番: {prod or 'この夜はデプロイしていない'}" + (f"。戻した: {'、'.join(rollbacks)}" if rollbacks else ""),
              ("人の判断を待つもの: " + "、".join(waiting)) if waiting else "人の判断を待つものは無い"]
     rows = {}
     for line in (d / "qa.md").read_text(encoding="utf-8").splitlines():
@@ -1230,19 +1282,21 @@ def report(d):
             rows[m.group(1)] = (m.group(2), m.group(3).strip())
     word = {"pass": "done", "fail": "失敗", "unverified": "確かめていない"}
     scope = scope_of(d)
-    stage_parks = exempt_kinds(d, s) & ({"merge"} if scope == MERGE else {"merge", "deploy", "qa"} if scope == FULL else set())
+    stage_parks = exempt_kinds(d, s, strict) & ({"merge"} if scope == MERGE else {"merge", "deploy", "qa"} if scope == FULL else set())
     merged = "、".join(f"PR {m['pr']}" for m in s.get("merges") or []) or "なし"
     for rid in autopilot.requirements((d / "spec.md").read_text(encoding="utf-8")):
         result, evidence = rows.get(rid, (None, ""))
         ops = [p["op"] for p in parked if p.get("req") == rid]
         state = word.get(result, "まだ動いている")
-        if result == "pass" and (ops or stage_parks):  # 人を待っているものを done と書かない
+        if result == "pass" and not strict:  # 消えた待ちの記録に積んだ段が入っていたかもしれないので、done と書かない
+            state = "確かめていない（待ちの記録が読めない）"
+        elif result == "pass" and (ops or stage_parks):  # 人を待っているものを done と書かない
             state = "確かめていない（積んだ操作に頼る: " + "、".join(ops + sorted(stage_parks)) + "）"
         lines.append(f"- {rid}: {state}" + (f"（{evidence}）" if evidence else "")
                      + f"。マージ: {merged}。直した欠陥 {len((s.get('fails') or {}).get(rid, []))}。"
                      + f"積んだ操作: {'、'.join(ops) or 'なし'}")
     lines.append(f"- 範囲: {scope or '読めない'}。マージ: {merged}")
-    done = awaits(d, s)
+    done = awaits(d, s, strict)
     bad = [a for a in done if a.get("result") != "success"]
     lines.append(f"- 待ち: {len(done)} 回（通らなかった {len(bad)} 回" + "".join(f"、{a.get('kind')} {a.get('result')}" for a in bad) + "）")
     lines.append(f"- 積んだ操作: {len(parked)} 件。異常: {autopilot.anomaly_line(s.get('anomalies') or {})}")
@@ -1345,13 +1399,19 @@ def cmd_lens(a):
 
 
 def notify(d):
-    """spec の `- 通知:` の先に 1 行で知らせる。デスクトップは osascript、Slack の DM は main に送らせる。失敗しても止めない。"""
+    """spec の `- 通知:` の先に知らせる。Slack の DM は朝の報告の行を main に送らせ、ほかは状態と本番の 1 行
+    （読めない待ちの記録があればその場所も）を出す（デスクトップは osascript）。失敗しても止めない。"""
     rows = scope_rows((d / "spec.md").read_text(encoding="utf-8")) or {}
     where = rows.get("通知") or "なし"
     s = autopilot.load_state(d)
-    line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
-    if where == "Slack の DM":
-        line = "\n".join([line, *report(d)[1:]])  # DM は朝の報告の行を載せる（読んで判断できるように）
+    if where == "Slack の DM":  # DM は朝の報告の行を載せる（読んで判断できるように。本番と読めない行は報告の行が 1 回ずつ出す）
+        line = "\n".join([f"{d.name}: {s.get('phase')}", *report(d)[1:]])
+    else:
+        try:  # 読めるかは _awaits で決める（範囲によっては本番の表示が待ちの記録を読まないので、その例外に頼らない）
+            _awaits(d)
+            line = f"{d.name}: {s.get('phase')}。本番: {production_label(d, s) or deploy_view(d, s) or 'デプロイなし'}"
+        except UnreadableAwaits as e:  # block の後の知らせを、読めない待ちの記録で落とさず、どの行を直すかを出す
+            line = f"{d.name}: {s.get('phase')}。本番: {UNREADABLE_PROD}。{e}"
     if where == "デスクトップ":
         try:
             r = subprocess.run(["osascript", "-e", f"display notification {json.dumps(line, ensure_ascii=False)} with title \"spec-autopilot\""],

@@ -25,7 +25,7 @@ def stamp(ago=0.0):
     return t.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
-def subagent_ran(name, reply, form="text", session="s1", ago=0.0, agent_type=None):
+def subagent_ran(name, reply, form="text", session="s1", ago=0.0, agent_type=None, tool_output="ok"):
     """host が subagent の記録（meta.json と transcript）を書く。最後の assistant の行に reply が入る（text か SubagentHandback）。"""
     sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / session / "subagents"
     sub.mkdir(parents=True, exist_ok=True)
@@ -36,14 +36,14 @@ def subagent_ran(name, reply, form="text", session="s1", ago=0.0, agent_type=Non
     rows = [{"type": "user", "timestamp": stamp(ago), "message": {"role": "user", "content": "相談"}},
             {"type": "assistant", "timestamp": stamp(ago), "message": {"model": "claude-fable-5-2", "content": [{"type": "thinking", "thinking": "..."}]}},
             {"type": "assistant", "timestamp": stamp(ago), "message": {"model": "claude-fable-5-2", "content": [block]}},
-            {"type": "user", "timestamp": stamp(ago), "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_1", "content": "ok"}]}}]
+            {"type": "user", "timestamp": stamp(ago), "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_1", "content": tool_output}]}}]
     (sub / f"{agent}.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     time.sleep(0.02)
 
 
-def both_ran(advisor=OK_ADVISOR, checker=OK_CHECKER, form="text"):
-    subagent_ran("fable-advisor", advisor, form)
-    subagent_ran("advice-checker", checker, form)
+def both_ran(advisor=OK_ADVISOR, checker=OK_CHECKER, form="text", tool_output="ok"):
+    subagent_ran("fable-advisor", advisor, form, tool_output=tool_output)
+    subagent_ran("advice-checker", checker, form, tool_output=tool_output)
 
 
 def blocked_spec(repo):
@@ -205,6 +205,34 @@ def test_approve_by_advisor_refuses_an_unreadable_record(repo):
     sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
     (sub / "agent-zzbad.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:fable-advisor"}), encoding="utf-8")
     (sub / "agent-zzbad.jsonl").write_text('{"type":"user","timestamp":"2099-01-01T00:00:00Z"}\n{"type":"assis', encoding="utf-8")
+    r = by_advisor(repo, d)
+    assert r.returncode == 1 and "読めない" in r.stdout and state(d)["phase"] == "blocked"
+
+
+# U+2028・U+2029・U+0085 は生の文字で書かず、エスケープで書く（生で書くと、このファイルを読んだ実装役の transcript が切れる）
+LINE_SEPARATORS = ["\u2028", "\u2029", "\x85"]
+
+
+@pytest.mark.parametrize("sep", LINE_SEPARATORS, ids=["U+2028", "U+2029", "U+0085"])
+def test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator(repo, sep):
+    """読んだファイルの中身（user の tool_result の行）に生の改行に似た文字があっても、1 行として読み、返答の行で判定する。"""
+    d = blocked_spec(repo)
+    both_ran(tool_output=f"読んだ行 a{sep}b 終わり")
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    assert any(sep in f.read_text(encoding="utf-8") for f in sub.glob("*.jsonl"))  # 生の文字がファイルに残っている
+    r = by_advisor(repo, d)
+    assert r.returncode == 0, out(r)
+    assert state(d)["phase"] == "building"
+
+
+def test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator(repo):
+    """生の U+2028 を持つ行と、途中で切れた行が混ざる記録は、読めない記録として止める。"""
+    d = blocked_spec(repo)
+    both_ran(tool_output="a\u2028b")
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    (sub / "agent-zzbad.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:advice-checker"}), encoding="utf-8")
+    good = json.dumps({"type": "user", "timestamp": "2099-01-01T00:00:00Z", "message": {"content": "a\u2028b"}}, ensure_ascii=False)
+    (sub / "agent-zzbad.jsonl").write_text(good + '\n{"type":"assis', encoding="utf-8")
     r = by_advisor(repo, d)
     assert r.returncode == 1 and "読めない" in r.stdout and state(d)["phase"] == "blocked"
 

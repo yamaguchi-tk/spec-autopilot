@@ -2,6 +2,7 @@
 入口（CLI と hook）から確かめる。gh と osascript は PATH に置いた偽物で答える。"""
 import json
 import os
+import re
 import subprocess
 import time
 
@@ -980,3 +981,109 @@ def test_a_command_deploy_merge_without_a_park_still_counts(repo, gh, tmp_path):
     make_done(repo, d)
     merged_only(repo, gh, d)  # 打ったかもしれないが、待ちの記録も park も無い
     assert "本番: 分からない" in night(repo, "report", str(d)).stdout.splitlines()[1]
+
+
+def test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end(repo, gh, tmp_path):
+    """待ちの記録に読めない行があっても、壊れた本番の戻し（ready --rollback・merged --rollback・deploy の待ち・smoke）は回り、
+    最後は block --no-rollback で人に渡せ、朝の報告も出る。smoke は、読めない行がある間は記録のファイルの更新より後のものだけを受ける。"""
+    d = full_spec(repo)
+    sha = broken(repo, gh, d, tmp_path)
+    with (d / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"kind": "deploy", "sha": "x", "res\n')
+    assert "awaits.jsonl:" in run(repo, "check", str(d)).stderr
+    r = run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y")
+    assert r.returncode != 0 and "awaits.jsonl:" in r.stdout + r.stderr and "ロールバック" in r.stdout + r.stderr  # 先に戻すよう促す
+    head = rollback_pr(repo, gh, sha)
+    r = night(repo, "ready", str(d), "--pr", "8", "--rollback")
+    assert r.returncode == 0, r.stdout + r.stderr
+    gh.answers("pr view", [merged_pr(head, head)])
+    assert night(repo, "merged", str(d), "--pr", "8", "--rollback", "--reason", "smoke が落ちた").returncode == 0
+    gh.answers("run list", [deploy_ok()])
+    assert night(repo, "await", str(d), "--kind", "deploy", "--interval", "0").returncode == 0
+    early = tmp_path / "early.txt"
+    early.write_text("smoke pass\n", encoding="utf-8")
+    os.utime(early, (time.time() - 3600, time.time() - 3600))
+    assert night(repo, "qa", str(d), "--evidence", str(early), "--smoke", "pass").returncode != 0
+    assert smoke(repo, d, tmp_path, "pass", "smoke2.txt").returncode == 0
+    r = run(repo, "block", str(d), "--req", "R2", "--reason", "戻した", "--evidence", "smoke2.txt",
+            "--no-rollback", "戻したが、待ちの記録が読めず確かめを数えられない")
+    assert r.returncode == 0, r.stdout + r.stderr
+    out = night(repo, "report", str(d))
+    assert out.returncode == 0 and "awaits.jsonl:" in out.stdout and "block: R2" in out.stdout
+
+
+def cut_await_row(d):
+    time.sleep(0.02)
+    with (d / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"kind": "deploy", "sha": "x", "res\n')
+
+
+def written(tmp_path, name, text):
+    ev = tmp_path / name
+    ev.write_text(text, encoding="utf-8")
+    time.sleep(0.02)
+    return ev
+
+
+def test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file(repo, gh, tmp_path):
+    """読めない行があるときの smoke は、読める deploy の後でも、記録のファイルの更新より前なら受けない（消えた deploy の後とは言えない）。"""
+    d = full_spec(repo)
+    broken(repo, gh, d, tmp_path)
+    old = written(tmp_path, "old.txt", "smoke pass\n")
+    cut_await_row(d)
+    assert night(repo, "qa", str(d), "--evidence", str(old), "--smoke", "pass").returncode != 0
+    new = written(tmp_path, "new.txt", "smoke pass\n")
+    assert night(repo, "qa", str(d), "--evidence", str(new), "--smoke", "pass").returncode == 0
+
+
+def test_with_an_unreadable_await_row_a_rollback_by_command_still_runs(repo, gh, tmp_path):
+    """コマンドで戻す spec でも、読めない行があるまま rolled-back が回り（記録のファイルの更新より後の出力だけ）、block で人に渡せる。"""
+    d = full_spec(repo, **{"ロールバック": "コマンド: ./rollback.sh"})
+    broken(repo, gh, d, tmp_path)
+    old = written(tmp_path, "rb-old.txt", "$ ./rollback.sh\nok\n")
+    cut_await_row(d)
+    assert night(repo, "rolled-back", str(d), "--evidence", str(old), "--reason", "smoke が落ちた").returncode != 0
+    new = written(tmp_path, "rb.txt", "$ ./rollback.sh\nok\n")
+    r = night(repo, "rolled-back", str(d), "--evidence", str(new), "--reason", "smoke が落ちた")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert smoke(repo, d, tmp_path, "pass", "after.txt").returncode == 0
+    r = run(repo, "block", str(d), "--req", "R2", "--reason", "戻した", "--evidence", "after.txt", "--no-rollback", "記録が読めない")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_the_report_does_not_say_done_while_an_await_row_is_unreadable(repo, gh, tmp_path):
+    """読めない行があるときの朝の報告は、pass の要件も done と書かない（消えた待ちの記録に積んだ段が入っていたかもしれない）。"""
+    d = full_spec(repo)
+    broken(repo, gh, d, tmp_path)
+    assert any(x.startswith("- R1: done") for x in night(repo, "report", str(d)).stdout.splitlines())  # 読めるうちは done
+    cut_await_row(d)
+    assert run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y", "--no-rollback", "z").returncode == 0
+    reqs = [x for x in night(repo, "report", str(d)).stdout.splitlines() if x.startswith("- R")]
+    assert reqs and not any(": done" in x for x in reqs) and any("待ちの記録が読めない" in x for x in reqs)
+
+
+def test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable(repo, gh, tmp_path):
+    """読めない行があるときも、Slack の DM の知らせに朝の報告の行（block の理由と読めない行）を 1 回ずつ載せる。"""
+    d = full_spec(repo, **{"通知": "Slack の DM"})
+    broken(repo, gh, d, tmp_path)
+    cut_await_row(d)
+    assert run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y", "--no-rollback", "z").returncode == 0
+    import overnight
+    note = overnight.notify(d)  # 知らせの 1 通（cmd_notify は NOTE の行と、この 1 通を続けて出す）
+    assert note.count("block: R2") == 1 and note.count("awaits.jsonl:") == 1 and note.count("本番:") == 1
+
+
+@pytest.mark.parametrize("scope", [FULL, "マージまで"])
+@pytest.mark.parametrize("where", ["デスクトップ", "なし"])
+def test_a_note_that_is_not_a_dm_names_the_unreadable_await_row(repo, gh, tmp_path, osascript, where, scope):
+    """DM でない知らせ（報告の行を載せない）には、範囲によらず、読めない行のファイルと行番号を 1 回載せる（どの行を直すか分かるように）。"""
+    import overnight
+    d = full_spec(repo, scope, **{"通知": where})
+    if scope == FULL:
+        broken(repo, gh, d, tmp_path)
+    cut_await_row(d)
+    note = overnight.notify(d)
+    named = re.compile(r"awaits\.jsonl:\d+ ")  # 切れた行の番号は、範囲（前に書いた記録の数）で変わる
+    assert len(named.findall(note)) == 1 and f"本番: {overnight.UNREADABLE_PROD}" in note
+    if where == "デスクトップ":
+        assert len(named.findall(osascript.read_text(encoding="utf-8"))) == 1
