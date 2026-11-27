@@ -1,8 +1,14 @@
 {
-  "phase": "discovery",
+  "phase": "queued",
   "slug": "denial-stop-reviewers",
   "created_at": 1795794512.138153,
   "existing": true,
   "start": "c24bf68f5bd4bc7c6e15dbf7e991d15f2df39ee3",
-  "last_active_at": 1795794512.176969
+  "last_active_at": 1795795472.830775,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795795472.829698,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 親 flow-review-goal（人が「まとめて承認」「spec（5 案）もOK」で承認）の R2 のうち評価役の定義。fable-advisor が承認: 可、advice-checker は反証なし（確かめられない 0 / 13）",
+  "spec_sha256": "7d874b4468b0bd83cd6014b1ce62b7340b80aceb67f68e07acda027b41bcf8d3",
+  "after": null
 }
