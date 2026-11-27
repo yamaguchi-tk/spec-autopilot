@@ -40,6 +40,8 @@ import sys
 import time
 from pathlib import Path
 
+import consent  # noqa: E402
+from consent import ADR_LINE, ADR_NUMBER, numberless  # noqa: E402
 from transcript import _iso_epoch, anomalies, anomaly_line, transcript_lines  # noqa: E402
 
 TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
@@ -99,7 +101,6 @@ COMMENT_BLOCK = re.compile(r"<!--.*?-->", re.S)
 LADDER_INVESTIGATE, LADDER_REWORK, MAX_REWORKS = 2, 3, 2  # references/dead-end.md の段（2 回で調べ、3 回で作り方へ、作り直しは要件ごとに 2 回）
 FAIL_SOURCES = ("impl", "qa", "review")
 PROMPT_FILE = "spec-autopilot-last-user-prompt"
-ADR_LINE = re.compile(r"^- ADR:\s*(\S+)\s*$", re.M)
 SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}")  # 先頭は英数字（見回り役が claude の引数に置くので、option と読まれない形だけを受ける）
 QA_ROW = re.compile(r"^\|\s*(R\d+)\s*\|\s*(pass|fail|unverified)\s*\|(.*)\|\s*$")  # 証拠の欄は 1 つの (.*) にし、前後の空白は check で除く（空白の分け方で後戻りしない）
 # pass の証拠の欄の文法（許可リスト。agents/autopilot-reviewer.md の出力の節と同じ形）:
@@ -136,10 +137,6 @@ def save_state(d, s):
     os.replace(tmp, d / "state.json")
 
 
-OWN_ADR = "\0ADR\0"  # 本文に素では書けない置き換え記号
-ADR_NUMBER = re.compile(r"(?!\d{4}-\d{2}-\d{2}-)(\d+)-")  # 連番の ADR のファイル名の番号。日付の名前は番号と読まない
-
-
 def head_and_body(text):
     """spec を、最初の `## ` より前（先頭）と、それ以降（作り方の節を除く本文）に分ける。"""
     head, _, body = text.partition("\n## ")
@@ -156,12 +153,7 @@ def sha(d):
     本文は正規化しない。本文が自分の連番の ADR を名前・番号で書くのは lint が承認の前に止める。ADR があるかは check が確かめる。"""
     head, body = head_and_body((d / "spec.md").read_text(encoding="utf-8"))
 
-    def numberless(m):
-        folder, name = os.path.split(m.group(1))
-        number = ADR_NUMBER.match(name)
-        return m.group(0).replace(m.group(1), os.path.join(folder, OWN_ADR + name[number.end(1):])) if number else m.group(0)
-
-    return hashlib.sha256((ADR_LINE.sub(numberless, head) + body).encode("utf-8")).hexdigest()
+    return hashlib.sha256((numberless(head) + body).encode("utf-8")).hexdigest()
 
 
 def own_adr_words(text):
@@ -962,7 +954,11 @@ def exclude_check_scripts(root):
 
 def cmd_lint(a):
     errors, warnings = lint(Path(a.dir), preflight=True)
-    return report(errors, warnings, "lint: OK")
+    code = report(errors, warnings, "lint: OK")
+    if not errors:
+        for note in consent.record(Path(a.dir)):  # 通った中身を、承認の門の起点に使えるよう残す（approve の中の lint は残さない）
+            print(f"NOTE: {note}")
+    return code
 
 
 def cmd_approve(a):
@@ -983,7 +979,7 @@ def cmd_approve(a):
         sys.exit(f"approve は壁打ち中（discovery）・block の後・done の後だけ受ける（phase={s.get('phase')}）")
     if adr := adr_error(d):
         sys.exit(f"{adr}。作り方の選択を ADR に書いてから承認する")
-    since, what = advisor_approval.since_of(s, (d / "spec.md").stat().st_mtime)
+    since, what = advisor_approval.since_of(s, consent.origin(d, s))
     session = os.environ.get("CLAUDE_CODE_SESSION_ID") if a.by_advisor else require_user_after(d, since, what)
     if a.by_advisor and (errors := goal.child_errors(d, scope, session) if child else advisor_approval.reply_errors(session, since)):
         return report(errors, warnings, "")
