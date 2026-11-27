@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "ladder-counted-by-script",
+  "created_at": 1795757450.3576891,
+  "existing": true,
+  "start": "4e24634d1098d330647a3b4f9efa865854b4f2a2",
+  "last_active_at": 1795758059.9015942,
+  "scope_sha256": "58676828b121b2deb615692cfe754906b3d906b304da66ada561e3e3af72d03b",
+  "approved_at": 1795758059.899832,
+  "approved_by": "人が草案に OK と返した",
+  "spec_sha256": "e61f6c3f44d771f96e56611f7b97ec0c155926a1e16b2f83f2fa0a7da6b7e6fa",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
