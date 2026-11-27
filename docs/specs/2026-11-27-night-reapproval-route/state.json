@@ -1,0 +1,14 @@
+{
+  "phase": "queued",
+  "slug": "night-reapproval-route",
+  "created_at": 1795753067.313378,
+  "existing": true,
+  "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
+  "last_active_at": 1795757260.0751429,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795757260.074273,
+  "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
+  "spec_sha256": "7f1d1a26c298019d46496910929dfdd6669553bea878e4e809861a569371d60f",
+  "after": null
+}
