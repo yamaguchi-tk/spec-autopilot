@@ -1,0 +1,6 @@
+# QA の結果
+
+<!-- 結果は pass / unverified / fail。pass の証拠は `<path>::<テスト名>`（pytest の node id `<path>::<クラス>::<テスト名>` も可。複数は `・` で並べ、同じファイルの続きは `::<テスト名>`。続けて ` と cmd: ...` を書ける。末尾の 1 組の（…）は注記）・`cmd: <実行したことと結果>`・`manual: <操作と結果>`。並べたテストが 1 つでも無ければ check が落ちる。spec の段が手元で実物の要件の pass は `evidence/R<n>.*` に、デプロイ後の pass は `evidence/R<n>.txt` に、`$ <コマンド>` の行とその出力を残す（デプロイ後はデプロイの後に書き、頭に `- commit: <マージの sha>` と `- 結果: Confirmed` を 1 本ずつ）。unverified は spec の `- unverified の承認:` か、その要件を積んだ park があるときだけ通る -->
+| 要件 | 結果 | 証拠 |
+|---|---|---|
+| R1 | pass | plugins/spec-autopilot/tests/test_merge_qa.py::test_smoke_after_the_merge_confirms_production・plugins/spec-autopilot/tests/test_carry.py::test_reapproval_after_a_words_only_fix_carries_the_merge_and_the_deploy・plugins/spec-autopilot/tests/test_overnight.py::test_the_morning_report_lists_per_requirement_merges_fixes_and_parks と cmd: テストを全部回して 1528 passed、overnight.py は 953 行。deploy.py の 71 個の名前の定義が overnight.py に無く、overnight.py が `from deploy import` で取り込む名前は全部 overnight.py の中で読まれる（re-export なし）。plugins の全 .py に `overnight.<移した名前>` と `__import__("overnight").<移した名前>` が 0 件。origin/main と tip で、spec の写しの 4 通りに overnight.py の report・notify・qa・ready・merged・await・park・rolled-back と autopilot.py の lint・check・status・block・wait を回し、64 組の終了コード・stdout・stderr・回した後の state.json が同じ（証拠は evidence/R1.txt） |

@@ -1,0 +1,22 @@
+- commit: f98f107be935618dfc7a6190590e114ffc2de0ce
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+........................................................................ [ 98%]
+................                                                         [100%]
+1528 passed in 317.34s (0:05:17)
+
+$ wc -l plugins/spec-autopilot/scripts/overnight.py
+     953 plugins/spec-autopilot/scripts/overnight.py
+
+$ python3 .autopilot-qa/check.py
+移した名前: 71 個
+overnight.py: 953 行
+CLI の突き合わせ: 64 件
+R1 pass
+
+（check.py の中身: deploy.py の最上位の 71 個の名前が overnight.py に定義されていないこと、overnight.py が deploy から取り込む名前が全部 overnight.py の中で読まれること〔re-export なし〕、overnight.py が carry を使わないこと、
+plugins/spec-autopilot の全 .py で `overnight.<移した名前>`・`__import__("overnight").<移した名前>` が 0 件、`deploy.<名前>` が deploy.py に在ること、watch.py・stop.py が awaiting・tick_one に overnight を渡さないこと、
+変えた 8 ファイルと全テストのファイルに symtable で未定義のグローバル名が無いこと。
+CLI は origin/main（53cddd6、git archive で .autopilot-qa/base に展開）と tip で、同じ spec の写し〔範囲 マージまで / マージ・デプロイ・QA まで × マージの記録なし / あり〕に、
+overnight.py の report・notify・qa・ready（--rollback あり・なし）・merged・await（deploy・ci）・park・rolled-back と autopilot.py の lint・check・status・block・wait の 16 個を回し、
+終了コード・stdout・stderr（traceback の行番号だけを伏せる）・回した後の state.json（時刻を伏せる）・osascript の引数・SPEC_AUTOPILOT_HOME に書いたファイル名の 64 組が同じ）

@@ -139,9 +139,9 @@ def specs_quiet(specs, sec):
     return time.time() - newest > sec
 
 
-def awaiting(overnight, d):
+def awaiting(deploy, d):
     """機械の待ち（overnight.py await）のプロセスが、期限の前で生きているか（host の子孫かは見ない）。"""
-    rec = overnight.await_record(d)
+    rec = deploy.await_record(d)
     if rec is None or time.time() >= rec["deadline"]:
         return False
     try:
@@ -247,13 +247,13 @@ def wake(session, rec, w):
     w["log"] = str(log)
 
 
-def tick_one(ap, overnight, session):
+def tick_one(ap, deploy, session):
     rec = load(host_file(session))
     specs = ap.recorded_specs(session)
     if not specs:
         return
     if not rec:  # host の記録が無い（この版より前に始まった・SessionStart で取り損ねた）。起こせないので報告だけする
-        if specs_quiet(specs, SILENT_SEC) and reasons(ap, session) and not any(awaiting(overnight, d) for d in specs) \
+        if specs_quiet(specs, SILENT_SEC) and reasons(ap, session) and not any(awaiting(deploy, d) for d in specs) \
                 and not others_alive(ap, session, specs):
             wf = home() / "watch" / f"{session}.json"
             w = load(wf)
@@ -263,7 +263,7 @@ def tick_one(ap, overnight, session):
     living = alive(rec.get("pid"), rec.get("started"))
     if not quiet(rec, SILENT_SEC if living else QUIET_SEC):
         return
-    if not reasons(ap, session) or any(awaiting(overnight, d) for d in specs) or others_alive(ap, session, specs):
+    if not reasons(ap, session) or any(awaiting(deploy, d) for d in specs) or others_alive(ap, session, specs):
         return
     wf = home() / "watch" / f"{session}.json"
     w = load(wf)
@@ -293,7 +293,7 @@ def tick_one(ap, overnight, session):
 
 def cmd_tick():
     import autopilot as ap
-    import overnight
+    import deploy
 
     names = {f.name.split(".")[0] for f in (home() / "sessions").glob("*.json")
              if f.name.endswith(".host.json") or f.name.count(".") == 1}  # 記録の無いセッションも報告のために見る
@@ -302,7 +302,7 @@ def cmd_tick():
             print(f"{session!r}: session id の形が受理集合の外なので見回らない", file=sys.stderr)
             continue
         try:
-            tick_one(ap, overnight, session)
+            tick_one(ap, deploy, session)
         except Exception as e:  # 1 つのセッションの失敗で、ほかを見回らないことにしない
             print(f"{session}: {type(e).__name__}: {e}", file=sys.stderr)
     return 0

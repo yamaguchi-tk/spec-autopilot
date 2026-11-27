@@ -69,11 +69,11 @@ def judge(autopilot, d, record=True):
 
 
 def judge_building(autopilot, d, s, record=True):
-    import overnight
+    import deploy
 
-    elapsed, budget, label = overnight.budget_view(d, s)
+    elapsed, budget, label = deploy.budget_view(d, s)
     if elapsed > 2 * budget:
-        bad = overnight.production_errors(d, s)
+        bad = deploy.production_errors(d, s)
         if bad:  # 壊れた・確かめていない本番を残して放さない（block は phase を変えるので閉じ込めない）
             return (f"{d.name}: {label}の予算の 2 倍を過ぎたが、{bad[0]}。"
                     "戻せないなら block --no-rollback で理由を書いて人に示す"), None
@@ -84,19 +84,19 @@ def judge_building(autopilot, d, s, record=True):
     except OSError:
         pass
     errors, _ = autopilot.check(d)
-    if errors and awaiting(overnight, d):
+    if errors and awaiting(deploy, d):
         return None, None  # 機械の待ちのプロセスが生きている。終わりの通知で起きた後の停止で check を当て直す
     if errors:
         return f"{d.name}（{label} {elapsed:.0f} 分 / 予算 {budget:.0f} 分）:\n- " + "\n- ".join(errors), None
     return None, None
 
 
-def awaiting(overnight, d, now=None, processes=None):
+def awaiting(deploy, d, now=None, processes=None):
     """spec の機械の待ち（overnight.py await）が生きているか。放すのは次のすべてを満たすときだけで、読めなければ False:
     記録（await.json）が読める・今が記録の期限より前・pid が host の子孫・argv に overnight.py と await と spec の絶対パス・
     ps の経過時間が記録の開始時刻と前後 WINDOW_SEC で合う（pid の再利用と、別のセッションの await を数えない）。"""
     try:
-        rec = overnight.await_record(d)
+        rec = deploy.await_record(d)
         now = time.time() if now is None else now
         if rec is None or not (rec["started_at"] - WINDOW_SEC <= now < rec["deadline"]):
             return False
@@ -377,10 +377,10 @@ def decide(autopilot, payload, deadline=None):
 def lineup_demand(autopilot, payload):
     """まとめて承認した spec の行列を進める要求の文か None。"""
     import lineup
-    import overnight
+    import deploy
 
     rows = [(d, autopilot.load_state(d)) for d in recorded(autopilot, payload, [])]
-    over = {d for d, s in rows if s.get("phase") == "building" and (lambda v: v[0] > 2 * v[1])(overnight.budget_view(d, s))}
+    over = {d for d, s in rows if s.get("phase") == "building" and (lambda v: v[0] > 2 * v[1])(deploy.budget_view(d, s))}
     return lineup.demand(rows, over)
 
 
