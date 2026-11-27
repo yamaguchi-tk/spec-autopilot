@@ -5,7 +5,7 @@ PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json
 無ければ、prompt に spec が無い・state.json が読めない・途中の例外も含めて deny する。
 評価役（autopilot-reviewer で始まる）の起動は、prompt に書かれた building の spec のうち、review を記録できる（overnight.review_gate が通る）ものが 1 つでもあれば、
 通る spec の state.json の review_launches にだけ時刻を足して通す（書けなかったときは stderr に 1 行出して通す）。building の spec があるのにどれも通らなければ、
-review_gate の文を spec ごとに出して deny する（review を記録できない状態では評価役を起動せず、overnight.py handoff を打ち直してから起動する）。
+review_gate の文（review_gate が例外を出したときは、その型を書いた文）を spec ごとに出して deny する（review を記録できない状態では評価役を起動せず、overnight.py handoff を打ち直してから起動する）。
 building の spec が 1 つも無い（読めない・building でない・prompt に spec が無い）ときは、何も残さずに通す。判定は review_gate 1 つを正本にし、条件を写さない。
 実装役は、最後の評価役の起動より後に review の記録が無い spec も通さない（評価役の結果を記録してから起動し直す）。
 想定するのは事故（dispatch の打ち忘れ・評価役の結果の記録の抜け）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
@@ -112,12 +112,19 @@ def problem(d, name):
 
 
 def review_gate_of(d):
-    """building の spec なら review_gate の文（記録を受けるなら None）を (文,) で返す。building でない・読めない spec は None。"""
+    """building の spec なら review_gate の文（記録を受けるなら None）を (文,) で返す。building でない・読めない spec は None。
+    building と分かった後の review_gate の例外は、review が断るのと同じ側に倒し、例外の型を文にして返す（通さない）。"""
     try:
         s = autopilot.load_state(d)
-        return (overnight.review_gate(d, s)[0],) if s.get("phase") == "building" else None
+        building = s.get("phase") == "building"
     except Exception:
         return None
+    if not building:
+        return None
+    try:
+        return (overnight.review_gate(d, s)[0],)
+    except Exception as e:
+        return (f"review を記録できるか確かめられない（{type(e).__name__}）",)
 
 
 def record_review_launch(d):
