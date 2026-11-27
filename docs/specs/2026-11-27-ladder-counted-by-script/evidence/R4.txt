@@ -1,0 +1,10 @@
+- commit: 900cc9c
+$ python3 .autopilot-qa/check.py
+  [R4] review --high R1: rc=0 streak=1 out='R1: 失敗のあった巡が累計 1 巡'
+  [R4] review --high none: rc=0 streak=1 out='review: high なし'
+  [R4] review --high R1: rc=0 streak=2 out='R1: 失敗のあった巡が累計 2 巡。推測で直さず原因を調べる（references/dead-end.md の 1）\nR1: 実装役の段を上げた: autopilot-implementer→autopilot-implementer-opus（原因調査）'
+  [R4] review --high none: rc=0 streak=2 out='review: high なし'
+  [R4] review --high R1: rc=0 streak=3 out='R1: 失敗のあった巡が累計 3 巡。作り方を変える（references/dead-end.md の 2）\nR1: 実装役の段を上げた: autopilot-implementer-opus→autopilot-implementer-opus-xhigh（作り直し）'
+  [R4] check: rc=1 out='ERROR: 最後のレビューに high（R1）が残っている。直してレビューし直す\nERROR: R1 は失敗のあった巡が累計 3 巡。作り方を変える（references/dead-end.md の 2。新しい ADR を書き、autopilot.py rework で記録する）\n…'
+  [R4] ok: streak=[1, 1, 2, 2, 3] 2 巡目の文に原因を調べる=True 3 巡目に作り方=True check rc=1
+R4 pass

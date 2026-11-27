@@ -1409,18 +1409,44 @@ def test_fails_within_one_round_count_once(repo):
     assert r.returncode == 1 and "R1" in r.stdout and "作り方" in r.stdout and "R2" not in r.stdout
 
 
-def test_round_without_high_or_fail_resets_the_count(repo):
+def test_round_without_high_or_fail_keeps_the_count(repo):
     d = approved(repo)
     make_done(repo, d)
     failed_round(repo, d)
+    assert state(d)["streak"]["R1"] == 1
     run(repo, "review", str(d), "--high", "R1")
+    assert state(d)["streak"]["R1"] == 2
     run(repo, "review", str(d), "--high", "none")
+    assert state(d)["streak"]["R1"] == 2  # high も失敗も無い巡では戻さない
+    assert len(state(d)["fails"]["R1"]) == 2
     run(repo, "review", str(d), "--high", "R1")
-    run(repo, "review", str(d), "--high", "R1")
-    real_run(repo, d, "R1")
-    run(repo, "review", str(d), "--high", "none")
-    assert run(repo, "check", str(d)).returncode == 0
-    assert len(state(d)["fails"]["R1"]) == 4  # 0 に戻しても失敗の記録は消さない
+    assert state(d)["streak"]["R1"] == 3
+
+
+def test_rework_resets_the_count_that_none_rounds_kept(repo):
+    d = approved(repo)
+    make_done(repo, d)
+    for _ in range(3):
+        run(repo, "review", str(d), "--high", "R1")
+        run(repo, "review", str(d), "--high", "none")
+    assert state(d)["streak"]["R1"] == 3
+    assert run(repo, "rework", str(d), "--req", "R1", "--adr", new_adr(repo, "kept.md")).returncode == 0
+    assert state(d)["streak"]["R1"] == 0
+
+
+def test_high_none_high_none_high_reaches_investigate_then_rework(repo):
+    d = approved(repo)
+    make_done(repo, d)
+    outs = []
+    for high in ("R1", "none", "R1", "none", "R1"):
+        r = run(repo, "review", str(d), "--high", high)
+        assert r.returncode == 0, r.stdout + r.stderr
+        outs.append((r.stdout, state(d)["streak"]["R1"]))
+    assert [n for _, n in outs] == [1, 1, 2, 2, 3]
+    assert "原因を調べる" in outs[2][0]
+    assert "作り方を変える" in outs[4][0]
+    r = run(repo, "check", str(d))
+    assert r.returncode == 1 and "R1" in r.stdout and "作り方" in r.stdout
 
 
 def test_third_review_high_in_a_row_requires_rework(repo):
@@ -1601,7 +1627,7 @@ def test_session_start_reports_the_ladder(repo):
     make_done(repo, d)
     failed_round(repo, d)
     failed_round(repo, d)
-    assert "R1: 2 巡続いた失敗" in context(session_start(repo))
+    assert "R1: 失敗のあった巡が累計 2 巡" in context(session_start(repo))
 
 
 def test_another_account_takes_over_the_spec_only_by_adopt(repo, tmp_path):
@@ -3135,7 +3161,7 @@ def test_check_does_not_demand_rework_for_a_parked_requirement(repo):
     three_fails(repo, d)
     assert "作り方" in run(repo, "check", str(d)).stdout
     park_req(d, "R1")
-    assert "R1 は失敗が" not in run(repo, "check", str(d)).stdout
+    assert "R1 は失敗のあった巡が" not in run(repo, "check", str(d)).stdout
 
 
 def test_check_still_demands_rework_for_an_unparked_requirement(repo):
@@ -3144,7 +3170,7 @@ def test_check_still_demands_rework_for_an_unparked_requirement(repo):
     three_fails(repo, d, "R2")
     park_req(d, "R1")
     out = run(repo, "check", str(d)).stdout
-    assert "R2 は失敗が" in out and "R1 は失敗が" not in out
+    assert "R2 は失敗のあった巡が" in out and "R1 は失敗のあった巡が" not in out
 
 
 def test_changed_spec_error_names_revert_park_and_block(repo):

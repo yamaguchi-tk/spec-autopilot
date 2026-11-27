@@ -1,0 +1,6 @@
+- commit: 900cc9c
+$ python3 .autopilot-qa/check.py
+  [R3] ok: high R1 → none → R1 の streak R1=[1, 1, 2] R2=None
+  [R3] ok: fail --from qa の巡で 3、その後の none で 3
+  [R3] ok: rework: rc=0 '' streak=0
+R3 pass

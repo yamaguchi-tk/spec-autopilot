@@ -1,0 +1,16 @@
+- commit: 900cc9c
+$ python3 .autopilot-qa/check.py
+  [R1] ok: handoff で閉じた spec の評価役（絶対・相対/Task/fable）: None None launches=2
+  [R1] ok: building の spec が無い payload: None None 不変=True
+  [R1] ok: dispatch の無い spec: review rc=1 断り='最後の dispatch を、今の HEAD（0d0f406a）で overnight.py handoff が閉じていない。実装役の報告を確かめてから評価役に進む' / gate=('deny', '評価役を起動できない: <work>/r1nodisp/docs/specs/2026-11-27-game: 最後の dispatch を、今の HEAD（0d0f406a）で overnight.py handoff が閉じていない。実装役の報告を確かめてから評価役に進む。review を記録できない状態では評価役を起動しない。overnight.py handoff <dir> --task T<n> を打ち直してから起動する')
+  [R1] ok: 開いた dispatch の spec: review rc=1 / gate=('deny', '評価役を起動できない: <work>/r1nodisp/docs/specs/2026-11-27-game: 最後の dispatch を、今の HEAD（0d0f406a）で overnight.py handoff が閉じていない。…')
+  [R1] ok: spec のファイルだけの commit の後: review rc=1 / gate=('deny', '評価役を起動できない: <work>/r1speccommit/docs/specs/2026-11-27-game: 最後の dispatch を、今の HEAD（ad1c25aa）で overnight.py handoff が閉じていない。…')
+  [R1] ok: commit していないコード: review rc=1 断り='commit していないコードがある: x.py' / gate=('deny', '評価役を起動できない: <work>/r1dirty/docs/specs/2026-11-27-game: commit していないコードがある: x.py。…')
+  [R1] ok: 並べた prompt: None 受ける=1 受けない=0
+  [R1] ok: 書けない spec: decision=None stderr='評価役の起動を記録できなかった（PermissionError）: <work>/r1ro/docs/specs/2026-11-27-game'
+  [R1] ok: git status が落ちる building の spec（review rc=1 'RuntimeError: fatal: .git/index: index file smaller than expected'）: 実際 decision=('deny', '評価役を起動できない: <wt>/.autopilot-qa/work/r1badindex/docs/specs/2026-11-27-game: review を記録できるか確かめられない（RuntimeError）。review を記録できない状態では評価役を起動しない。overnight.py handoff <dir> --task T<n> を打ち直してから起動する') stderr='' launches=0
+R1 pass
+$ git apply .autopilot-qa/mut-R1-3.patch && perl -e 'alarm 100; exec @ARGV' -- python3 -m pytest plugins/spec-autopilot/tests/test_agent_gate.py::test_reviewer_launch_with_a_broken_git_index_is_denied_with_the_directory_and_exception_type -q -p no:xdist; git apply -R .autopilot-qa/mut-R1-3.patch
+E       AssertionError: None
+plugins/spec-autopilot/tests/test_agent_gate.py:40: AssertionError
+1 failed in 3.91s

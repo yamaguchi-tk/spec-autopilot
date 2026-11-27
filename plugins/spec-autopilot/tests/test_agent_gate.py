@@ -3,16 +3,19 @@ payload を stdin で渡す入口と、hooks.json の command（答えを出さ�
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
+import time
 
 import pytest
 
-from test_autopilot import PLUGIN, implementer_ran, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
-from test_overnight import full_spec, night
+from test_autopilot import PLUGIN, hand_off, implementer_ran, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
+from test_overnight import full_spec, gh, git_head, merged_pr, night  # noqa: F401（gh は fixture）
 
 GATE = PLUGIN / "hooks" / "agent_gate.py"
 IMPL = "spec-autopilot:autopilot-implementer"
+REVIEWER = "spec-autopilot:autopilot-reviewer"
 GIT = ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false"]
 
 
@@ -29,6 +32,13 @@ def decision(r):
     out = json.loads(r.stdout)["hookSpecificOutput"]
     assert out["hookEventName"] == "PreToolUse"
     return out["permissionDecision"], out["permissionDecisionReason"]
+
+
+def denial(r):
+    """deny の (kind, 理由)。deny が外れて何も出ないときは、タプルの展開の TypeError でなく assert で落とす。"""
+    got = decision(r)
+    assert got is not None and got[0] == "deny", got
+    return got
 
 
 def building(repo):
@@ -105,6 +115,185 @@ def test_gate_stays_silent_for_an_agent_that_is_not_an_implementer(repo):
     (d / "state.json").write_text("{broken", encoding="utf-8")  # 読めば deny になる状態でも、読まない
     assert decision(fire(repo, f"{d}", agent="spec-autopilot:autopilot-reviewer")) is None
     assert decision(fire(repo, "x", agent="general-purpose")) is None
+
+
+def closed(repo):
+    """最後の dispatch を今の HEAD の handoff で閉じた building の spec（review を記録できる状態）。"""
+    d = building(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")  # handoff は終えたタスクだけ閉じる
+    hand_off(repo, d)
+    return d
+
+
+def test_gate_records_a_reviewer_launch_in_the_building_spec_and_allows_it(repo):
+    d = closed(repo)
+    assert not state(d).get("review_launches")
+    before = time.time()
+    assert decision(fire(repo, f"spec: {d}。base..tip を評価して", agent=REVIEWER)) is None
+    launches = state(d)["review_launches"]
+    assert len(launches) == 1 and launches[0] >= before
+    assert decision(fire(repo, f"spec: {d}", agent="autopilot-reviewer-fable")) is None
+    assert len(state(d)["review_launches"]) == 2
+    assert decision(fire(repo, f"spec は {d.relative_to(repo)} です", agent=REVIEWER, tool="Task")) is None
+    assert len(state(d)["review_launches"]) == 3
+
+
+def test_gate_leaves_state_alone_when_the_reviewer_names_no_building_spec(repo):
+    d = building(repo)
+    other = init_spec(repo, "draft")  # discovery
+    before = {p: (p / "state.json").read_bytes() for p in (d, other)}
+    assert decision(fire(repo, "評価して", agent=REVIEWER)) is None
+    assert decision(fire(repo, f"spec: {other}", agent=REVIEWER)) is None
+    broken = init_spec(repo, "broken")
+    (broken / "state.json").write_text("{not json", encoding="utf-8")
+    before[broken] = (broken / "state.json").read_bytes()
+    assert decision(fire(repo, f"spec: {broken} と docs/specs/2026-11-27-missing", agent=REVIEWER)) is None
+    assert {p: (p / "state.json").read_bytes() for p in (d, other, broken)} == before
+
+
+def test_gate_denies_an_implementer_while_a_reviewer_result_is_not_recorded(repo):
+    d = building(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")
+    hand_off(repo, d)
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert len(state(d)["review_launches"]) == 1
+    s = state(d)
+    s["dispatches"].append({**s["dispatches"][-1], "at": time.time()})  # 直しの dispatch を開く
+    (d / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    kind, why = decision(fire(repo, f"{d}"))
+    assert kind == "deny" and "autopilot.py review" in why and str(d) in why
+
+
+def test_reviewer_launch_while_a_dispatch_is_open_is_denied_and_records_nothing(repo):
+    d = dispatched(repo, building(repo))
+    before = (d / "state.json").read_bytes()
+    kind, why = denial(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "最後の dispatch" in why and "overnight.py handoff" in why and str(d) in why
+    assert "実装役を起動できない" not in why and "overnight.py dispatch" not in why
+    assert (d / "state.json").read_bytes() == before
+    assert decision(fire(repo, f"{d}")) is None
+
+
+def test_reviewer_launch_in_a_spec_without_dispatch_is_denied_and_dispatch_still_opens(repo):
+    d = building(repo)  # 承認の直後（dispatch が 1 つも無い）。review は「handoff が閉じていない」で断る
+    kind, why = denial(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "handoff が閉じていない" in why and "overnight.py handoff" in why
+    assert not state(d).get("review_launches")
+    dispatched(repo, d)
+    assert decision(fire(repo, f"{d}")) is None
+
+
+def test_reviewer_launch_with_uncommitted_code_is_denied_with_the_review_gate_sentence(repo):
+    d = closed(repo)
+    (repo / "uncommitted.py").write_text("x = 1\n", encoding="utf-8")  # review は「commit していないコード」で断る
+    kind, why = denial(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "commit していないコードがある: uncommitted.py" in why
+    assert not state(d).get("review_launches")
+
+
+def test_reviewer_prompt_naming_a_building_and_a_discovery_spec_records_only_the_building_one_and_passes(repo):
+    gated = closed(repo)
+    ungated = init_spec(repo, "ungated")  # discovery は building でないので数えない
+    assert decision(fire(repo, f"{ungated} と {gated}", agent=REVIEWER)) is None
+    assert len(state(gated)["review_launches"]) == 1 and not state(ungated).get("review_launches")
+
+
+def test_reviewer_prompt_naming_a_receiving_and_a_refusing_building_spec_records_only_the_receiving_one(repo):
+    receiving = closed(repo)
+    other = repo / "docs" / "specs" / "2026-11-27-refusing"
+    shutil.copytree(receiving, other)  # 同じ state.json の写し（handoff の記録が別の dispatch の番号を指さない）
+    s = state(other)
+    s["handoffs"] = []  # こちらは handoff が閉じていない
+    (other / "state.json").write_text(json.dumps(s), encoding="utf-8")
+    assert decision(fire(repo, f"{other} と {receiving}", agent=REVIEWER)) is None
+    assert len(state(receiving)["review_launches"]) == 1 and not state(other).get("review_launches")
+    kind, why = denial(fire(repo, f"{other}", agent=REVIEWER))
+    assert kind == "deny" and str(other) in why
+
+
+def test_reviewer_launch_denied_after_only_a_spec_file_commit_passes_after_the_handoff_is_redone(repo):
+    d = closed(repo)
+    (d / "qa.md").write_text("# qa\n", encoding="utf-8")
+    subprocess.run([*GIT, "add", "-f", "-A", "--", "docs/specs"], cwd=repo, check=True)
+    subprocess.run([*GIT, "commit", "-q", "-m", "spec のファイルだけ"], cwd=repo, check=True)
+    kind, why = denial(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "overnight.py handoff" in why and not state(d).get("review_launches")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert len(state(d)["review_launches"]) == 1
+
+
+def test_reviewer_launch_after_the_merge_commit_is_denied_and_passes_after_the_handoff_is_redone(repo, gh):
+    """マージの記録がある building の spec（デプロイ後の QA の段）。checkout をマージの commit に置くと HEAD が動いて deny になる。"""
+    d = closed(repo)
+    gh.answers("pr view", [merged_pr(git_head(repo))])
+    assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
+    subprocess.run([*GIT, "commit", "-q", "--allow-empty", "-m", "Merge pull request #7"], cwd=repo, check=True)  # マージの commit
+    assert state(d)["merges"]
+    kind, why = denial(fire(repo, f"{d}", agent=REVIEWER))
+    assert kind == "deny" and "overnight.py handoff" in why and not state(d).get("review_launches")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert len(state(d)["review_launches"]) == 1
+
+
+def test_reviewer_launch_with_a_broken_git_index_is_denied_with_the_directory_and_exception_type(repo):
+    """handoff で閉じた後に .git/index を壊す（rev-parse HEAD は通り、git status が落ちて review_gate が RuntimeError を出す）。"""
+    d = closed(repo)
+    (repo / ".git" / "index").write_bytes(b"DIRC\x00\x00\x00\x02\x00\x00\x00\x01")
+    assert subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True).returncode == 0
+    assert subprocess.run(["git", "status", "--porcelain"], cwd=repo, capture_output=True).returncode != 0
+    before = (d / "state.json").read_bytes()
+    kind, why = denial(fire(repo, f"{d}", agent=REVIEWER))
+    assert str(d) in why and "RuntimeError" in why and "overnight.py handoff" in why
+    assert (d / "state.json").read_bytes() == before
+
+
+def test_reviewer_launch_with_an_unreadable_state_json_still_passes_and_records_nothing(repo):
+    d = closed(repo)
+    (d / "state.json").write_text("{not json", encoding="utf-8")
+    r = fire(repo, f"{d}", agent=REVIEWER)
+    assert decision(r) is None and (d / "state.json").read_text(encoding="utf-8") == "{not json"
+
+
+def test_reviewer_launch_that_cannot_be_recorded_is_named_on_stderr_and_passes(repo):
+    d = closed(repo)
+    mode = d.stat().st_mode
+    os.chmod(d, stat.S_IRUSR | stat.S_IXUSR)
+    try:
+        r = fire(repo, f"{d}", agent=REVIEWER)
+    finally:
+        os.chmod(d, mode)
+    assert decision(r) is None
+    assert "PermissionError" in r.stderr and str(d) in r.stderr and len(r.stderr.strip().splitlines()) == 1
+    assert not state(d).get("review_launches")
+
+
+def test_dispatch_refuses_until_the_reviewer_result_is_recorded(repo):
+    d = building(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")  # handoff は終えたタスクだけ閉じる
+    hand_off(repo, d)
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    r = night(repo, "dispatch", str(d), "--task", "T1")
+    assert r.returncode != 0 and "autopilot.py review" in r.stdout + r.stderr
+    assert run(repo, "review", str(d), "--high", "none").returncode == 0
+    dispatched(repo, d)
+    assert decision(fire(repo, f"{d}")) is None
+
+
+def test_reapproval_moves_review_launches_to_history_and_starts_empty(repo):
+    d = building(repo)
+    st = state(d)
+    st.update(phase="done", done_at=time.time(), review_launches=[time.time()])
+    (d / "state.json").write_text(json.dumps(st), encoding="utf-8")
+    user_says(repo)
+    r = run(repo, "approve", str(d), "--by", "OK")
+    assert r.returncode == 0, r.stdout + r.stderr
+    s = state(d)
+    assert s["phase"] == "building" and not s.get("review_launches")
+    assert any(len(h.get("review_launches") or []) == 1 for h in s["history"]), s["history"]
 
 
 def test_hooks_json_registers_the_gate_on_agent_and_task():

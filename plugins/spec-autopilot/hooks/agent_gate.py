@@ -3,19 +3,30 @@
 PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json があるもの）のうち、phase が building（または discovery で「## 制約」の大きさが S の試作）・最後の dispatch を
 閉じた handoff が無い・その dispatch の agent が起動する名前と同じ、の 3 つを満たすものが 1 つでもあれば何も出さない。
 無ければ、prompt に spec が無い・state.json が読めない・途中の例外も含めて deny する。
-想定するのは事故（dispatch の打ち忘れ）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
+評価役（autopilot-reviewer で始まる）の起動は、prompt に書かれた building の spec のうち、review を記録できる（overnight.review_gate が通る）ものが 1 つでもあれば、
+通る spec の state.json の review_launches にだけ時刻を足して通す（書けなかったときは stderr に 1 行出して通す）。building の spec があるのにどれも通らなければ、
+review_gate の文（review_gate が例外を出したときは、その型を書いた文）を spec ごとに出して deny する（review を記録できない状態では評価役を起動せず、overnight.py handoff を打ち直してから起動する）。
+building の spec が 1 つも無い（読めない・building でない・prompt に spec が無い）ときは、何も残さずに通す。判定は review_gate 1 つを正本にし、条件を写さない。
+実装役は、最後の評価役の起動より後に review の記録が無い spec も通さない（評価役の結果を記録してから起動し直す）。
+想定するのは事故（dispatch の打ち忘れ・評価役の結果の記録の抜け）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
 答えを出さずに終わった（import の失敗・終了コード 0 以外）ときの deny は、hooks.json の command が出す。"""
 import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import autopilot  # noqa: E402
 import overnight  # noqa: E402
 
 # CLI init が作る spec のディレクトリの名前（<日付>-<英小文字・数字・ハイフン>）を、prompt のパスの手がかりにする
 ANCHOR = re.compile(r"docs/specs/\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*")
+
+
+IMPL_DENY = "実装役を起動できない: "
+IMPL_FIX = "。overnight.py dispatch <dir> --task T<n> を打ってから起動する"
 
 
 def short(name):
@@ -97,36 +108,77 @@ def problem(d, name):
         return f"{d} の最後の dispatch は handoff で閉じている"
     if short(dispatches[-1].get("agent")) != name:
         return f"{d} の最後の dispatch は {dispatches[-1].get('agent')} を指している（起動は {name}）"
-    return None
+    return overnight.ladder.unrecorded_review(d, s)
+
+
+def review_gate_of(d):
+    """building の spec なら review_gate の文（記録を受けるなら None）を (文,) で返す。building でない・読めない spec は None。
+    building と分かった後の review_gate の例外は、review が断るのと同じ側に倒し、例外の型を文にして返す（通さない）。"""
+    try:
+        s = autopilot.load_state(d)
+        building = s.get("phase") == "building"
+    except Exception:
+        return None
+    if not building:
+        return None
+    try:
+        return (overnight.review_gate(d, s)[0],)
+    except Exception as e:
+        return (f"review を記録できるか確かめられない（{type(e).__name__}）",)
+
+
+def record_review_launch(d):
+    """spec の review_launches に今の時刻を足す（書く直前に読み直す）。書けなかったときは、例外の型と spec のディレクトリを stderr に 1 行出して通す。"""
+    try:
+        s = autopilot.load_state(d)
+        s.setdefault("review_launches", []).append(time.time())
+        autopilot.save_state(d, s)
+    except Exception as e:
+        print(f"評価役の起動を記録できなかった（{type(e).__name__}）: {d}", file=sys.stderr)
+
+
+def review_launch(dirs):
+    """評価役の起動の deny の理由（通すなら None）。通る spec があればその spec にだけ記録して通す。"""
+    gates = [(d, g[0]) for d in dirs if (g := review_gate_of(d))]
+    if not gates or any(why is None for _, why in gates):
+        for d, why in gates:
+            if why is None:
+                record_review_launch(d)
+        return None
+    return ("評価役を起動できない: " + "; ".join(f"{d}: {why}" for d, why in gates)
+            + "。review を記録できない状態では評価役を起動しない。overnight.py handoff <dir> --task T<n> を打ち直してから起動する")
 
 
 def decide(payload):
-    """(deny の理由 | None)。"""
+    """deny の理由（通すなら None）。"""
     inp = payload.get("tool_input") or {}
     name = short(inp.get("subagent_type"))
-    if not name.startswith("autopilot-implementer"):
+    is_reviewer = name.startswith("autopilot-reviewer")
+    if not (is_reviewer or name.startswith("autopilot-implementer")):
         return None
     dirs = spec_dirs(str(inp.get("prompt") or ""), payload.get("cwd") or ".")
+    if is_reviewer:
+        return review_launch(dirs)
     if not dirs:
-        return "prompt に spec のディレクトリ（state.json があるもの）が無いので、dispatch を確かめられない"
+        return IMPL_DENY + "prompt に spec のディレクトリ（state.json があるもの）が無いので、dispatch を確かめられない" + IMPL_FIX
     reasons = []
     for d in dirs:
         why = problem(d, name)
         if why is None:
             return None
         reasons.append(why)
-    return "; ".join(reasons)
+    return IMPL_DENY + "; ".join(reasons) + IMPL_FIX
 
 
 def main():
     try:
         why = decide(json.loads(sys.stdin.buffer.read() or b"{}"))
     except Exception as e:
-        why = f"判定の途中で例外が出た（{type(e).__name__}: {e}）"
+        why = IMPL_DENY + f"判定の途中で例外が出た（{type(e).__name__}: {e}）" + IMPL_FIX
     if why:
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse", "permissionDecision": "deny",
-            "permissionDecisionReason": f"実装役を起動できない: {why}。overnight.py dispatch <dir> --task T<n> を打ってから起動する"}},
+            "permissionDecisionReason": why}},
             ensure_ascii=False))
     return 0
 
