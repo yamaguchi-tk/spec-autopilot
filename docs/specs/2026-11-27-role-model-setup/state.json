@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "role-model-setup",
+  "created_at": 1795739013.467732,
+  "existing": true,
+  "start": "1416cb843a5dd25001a438e53d7b4f8f5aa05d76",
+  "last_active_at": 1795739411.493192,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795739411.491934,
+  "approved_by": "推奨のまま OK、承認",
+  "spec_sha256": "c3b101516d1cef165e8d12b5764ad7a0a76a11a7205ab04defffea9d5f12ec1c",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
