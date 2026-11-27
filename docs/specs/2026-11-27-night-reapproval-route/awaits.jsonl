@@ -1,0 +1,2 @@
+{"kind": "ci", "pr": 85, "sha": "cbc34ba5fc60d85f5a41562f542efd7eabbf9cfe", "result": "success", "started_at": 1795761036.976943, "at": 1795761132.9441369, "detail": ["spec-autopilot"]}
+{"kind": "review", "pr": 85, "sha": null, "result": "not_required", "started_at": 1795761147.299702, "at": 1795761148.042599, "detail": ["reviewDecision が「」。レビューの承認はこの PR の要件ではない（承認を待たずにマージを試す）"]}
