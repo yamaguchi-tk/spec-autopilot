@@ -11,4 +11,4 @@
 - [x] T3: 同じ種類の箇所を洗い出し、同じ直しを当てる（当てないなら理由をメモに書く） [R3]
   - メモ: streak を書く箇所は cmd_review（直した）、cmd_rework の 0 戻し（要件どおり残す）、lineup.py:81・89 の承認し直し（reviews と同じく新しい巡に入るので 0 でよい）の 3 つだけで、読む箇所（ladder_errors・status・cmd_rework の前提・raise_reason）は値を比べるだけで巡を数え直さない。fails・raises を読む overnight.py の impl_name と autopilot.py の raise_impl は、巡の数ではなく「失敗の記録の時刻」を見るので R3 の累計と食い違わない。よって追加の直しは無し（文言だけ T4 で直した）
 - [x] T4: dead-end.md・autopilot.md・README.md・hooks.json の数え方の文と、autopilot.py の梯子の文を直す [R6]
-- [ ] T5: review を記録できない状態の評価役の起動を deny にし、複数の spec と書けないときの扱いと文書を合わせる [R1, R6, R7]
+- [x] T5: review を記録できない状態の評価役の起動を deny にし、複数の spec と書けないときの扱いと文書を合わせる [R1, R6, R7]

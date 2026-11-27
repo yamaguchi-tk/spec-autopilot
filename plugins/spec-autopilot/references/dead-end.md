@@ -2,7 +2,7 @@
 
 合意の後に行き詰まっても、人に聞かない。段と回数はこの文書が正本で、`autopilot.py` が要件ごとに数えて `check`（と Stop hook）で強制する。
 
-数えるのは、実装が終わったと言った後に、ある要件の検証が落ちたこと。記録は `autopilot.py fail <dir> --req R<n> --from impl|qa --evidence ...`（implementer が満たせなかったと報告した・QA が fail）と、`autopilot.py review <dir> --high R<n>,...`（最後のレビューの high）で行う。TDD の途中の red と、check の進み具合の誤り（タスクが終わっていないなど）は数えない。数える単位はレビューの巡（`review` の記録から次の `review` まで）。巡の中でその要件に失敗か high が 1 つでもあれば +1（何件あっても 1 回）。high も失敗も無い巡では数えを変えず（0 に戻さず、間に high none の巡を挟んでも累計は減らない）、0 に戻すのは作り直し（rework）だけ。3 巡に届いた要件は、rework まで 0 に戻さない。失敗の記録そのものは消さない。評価役の結果は、評価役を起動するたびに `autopilot.py review` で記録する。記録しないと、次の `overnight.py dispatch` と実装役の起動が止まる（起動の入口の hook が評価役の起動を数え、最後の起動の後に `review` の記録が無い spec を断る）。
+数えるのは、実装が終わったと言った後に、ある要件の検証が落ちたこと。記録は `autopilot.py fail <dir> --req R<n> --from impl|qa --evidence ...`（implementer が満たせなかったと報告した・QA が fail）と、`autopilot.py review <dir> --high R<n>,...`（最後のレビューの high）で行う。TDD の途中の red と、check の進み具合の誤り（タスクが終わっていないなど）は数えない。数える単位はレビューの巡（`review` の記録から次の `review` まで）。巡の中でその要件に失敗か high が 1 つでもあれば +1（何件あっても 1 回）。high も失敗も無い巡では数えを変えず（0 に戻さず、間に high none の巡を挟んでも累計は減らない）、0 に戻すのは作り直し（rework）だけ。3 巡に届いた要件は、rework まで 0 に戻さない。失敗の記録そのものは消さない。評価役の結果は、評価役を起動するたびに `autopilot.py review` で記録する。記録しないと、次の `overnight.py dispatch` と実装役の起動が止まる（起動の入口の hook が評価役の起動を数え、最後の起動の後に `review` の記録が無い spec を断る）。`review` を記録できない状態（最後の dispatch を今の HEAD の handoff が閉じていない・commit していないコードがある）では、評価役の起動そのものを hook が止める。`overnight.py handoff` を打ち直してから起動する。
 
 ## 1. 同じ要件の失敗が累計 2 巡になったら: 原因を調べる
 
