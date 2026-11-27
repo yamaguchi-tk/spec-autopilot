@@ -4,7 +4,7 @@
   "created_at": 1795753067.4874592,
   "existing": true,
   "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
-  "last_active_at": 1795767645.9348512,
+  "last_active_at": 1795769971.671262,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795757261.842288,
   "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
@@ -41,6 +41,18 @@
       "high": [],
       "at": 1795766336.774967,
       "sha": "24d1e1b9ebe6be30137105f6e31827dbc164111a"
+    },
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795769117.466506,
+      "sha": "bacf85f869494a06a006b602e3d05bbaaeafd54b"
+    },
+    {
+      "high": [],
+      "at": 1795769970.606316,
+      "sha": "69b4c5f39dedb041a86edd5f50324b67e5d38580"
     }
   ],
   "fails": {
@@ -61,6 +73,13 @@
         "from": "review",
         "evidence": "最後のレビューの high",
         "at": 1795762898.4612439
+      }
+    ],
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795769117.466502
       }
     ]
   },
@@ -154,6 +173,23 @@
       "agent": "autopilot-implementer",
       "at": 1795766916.6280901,
       "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "bacf85f869494a06a006b602e3d05bbaaeafd54b",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795769121.7085261,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
     }
   ],
   "handoffs": [
@@ -204,6 +240,22 @@
       ],
       "dispatch": 4,
       "at": 1795767645.934848
+    },
+    {
+      "tip": "bacf85f869494a06a006b602e3d05bbaaeafd54b",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 4,
+      "at": 1795768356.031353
+    },
+    {
+      "tip": "69b4c5f39dedb041a86edd5f50324b67e5d38580",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 5,
+      "at": 1795769767.1537669
     }
   ],
   "lenses": [
@@ -220,6 +272,13 @@
       "reproduced": 0,
       "fixed": 0,
       "at": 1795766199.580575
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 1,
+      "at": 1795769971.6712608
     }
   ]
 }
