@@ -1,46 +1,13 @@
-- commit: fb837ebee68f3ed4d4cff07af7b2349b5e58ef0e
+- commit: d8135d0905d350e120d7bf704d161f7b561e606c
 
-.autopilot-qa/check.py の R6 の段。一時の repo（.autopilot-qa/work の下）で、本物の autopilot.py block・status・approve --by-advisor と light.py approve を打った。
+新しい main（4e24634）の上に載せ替えた tip で、.autopilot-qa/check.py の R6 の段を回し直した。一時の repo（.autopilot-qa/work の下）で、本物の autopilot.py block・status・approve --by-advisor と light.py approve を打ち、block・status が示す道と approve --by-advisor の受ける・断るがそろうかを見た。
 
 $ .venv/bin/python3 .autopilot-qa/check.py
-（範囲を block の前に変えた spec）
---- block: 0 blocked: R1。人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない）
---- status: ['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う']
-R6 pass
---- approve --by-advisor: 1 ERROR: `## 自走の範囲` の節が最後の承認のときと違う（範囲を変える承認し直し）。人の返事が要る
-R6 pass
-（範囲を block の後に変え、元に戻した spec）
---- block: 0 blocked: R1。人に示す前に、spec を直し、fable-advisor → advice-checker を起動して `approve --by-advisor` で承認し直すのを試す（数えられるのは spec を直した後に起動した相談役だけ）。通らなければ `lineup.py next` で次に進み、人に 1 通で示す
---- status: ['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う']
-R6 pass
---- status: ['人に戻した: R1（R2 の文を直す必要）。まず spec を直して approve --by-advisor の承認し直しを試し、通らなければ人に 1 通で示して人の返事を待ち、/autopilot の「人に戻るとき」の手順に従う']
-R6 pass
-（範囲の節の末尾にコメントだけを足した spec。門と同じく承認し直しの道）
---- block: 0 blocked: R1。人に示す前に、spec を直し、fable-advisor → advice-checker を起動して `approve --by-advisor` で承認し直すのを試す（数えられるのは spec を直した後に起動した相談役だけ）。通らなければ `lineup.py next` で次に進み、人に 1 通で示す
-R6 pass
 --- approve --by-advisor: 1 ERROR: fable-advisor の起動の記録が、spec.md の最後の変更（block の後なら block）より後に無い
 ERROR: advice-checker の起動の記録が、spec.md の最後の変更（block の後なら block）より後に無い
-R6 pass
-（範囲の節を消した spec）
---- block: 0 blocked: R1。人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない）
---- status: ['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う']
-R6 pass
-（state から scope_sha256 を消した spec）
---- block: 0 blocked: R1。人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない）
---- status: ['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う']
-R6 pass
-（light.py approve で承認した spec）
---- light approve: 0 approved（軽量フロー）: 予算 30 分
---- block: 0 blocked: R1。人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない）
---- status: ['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う']
+--- no-scope-record: block=blocked: R1。人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない） / status=['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う'] / approve=1 ERROR: 最後の承認のときの自走の範囲の節の記録が無い（この版より前に承認した spec）。人の返事が要る
+--- light: block=blocked: R1。人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない） / status=['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う'] / approve=1 ERROR: 最後の承認のときの自走の範囲の節の記録が無い（この版より前に承認した spec）。人の返事が要る
+--- scope-changed-before: block=blocked: R1。人に 1 通で示して返事を待つ（この spec は相談役で承認し直せない） / status=['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う'] / approve=1 ERROR: `## 自走の範囲` の節が最後の承認のときと違う（範囲を変える承認し直し）。人の返事が要る
+--- scope-changed-after: block=blocked: R1。人に示す前に、spec を直し、fable-advisor → advice-checker を起動して `approve --by-advisor` で承認し直すのを試す（数えられるのは spec を直した後に起動した相談役だけ）。通らなければ `lineup.py next` で次に進み、人に 1 通で示す / status=['人に戻した: R1（R2 の文を直す必要）。人の返事を待ち、返事を受けたら /autopilot の「人に戻るとき」の手順に従う'] / approve=1 ERROR: `## 自走の範囲` の節が最後の承認のときと違う（範囲を変える承認し直し）。人の返事が要る
 R6 pass
 exit=0
-
-$ bash .autopilot-qa/mut.sh fb837ebee68f3ed4d4cff07af7b2349b5e58ef0e .autopilot-qa/mut-R6-1.patch plugins/spec-autopilot/scripts/autopilot.py plugins/spec-autopilot/tests/test_autopilot.py::test_block_skips_reapproval_when_the_scope_section_changed_before_it
-1 passed in 29.13s
-変異の前: 通った
-変異の後:
-plugins/spec-autopilot/tests/test_autopilot.py:930: AssertionError
-FAILED plugins/spec-autopilot/tests/test_autopilot.py::test_block_skips_reapproval_when_the_scope_section_changed_before_it
-1 failed in 4.64s
-戻した後の差分: [] 残った印: []
