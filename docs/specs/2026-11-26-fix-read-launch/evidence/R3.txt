@@ -1,4 +1,8 @@
-$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator -v
-plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED
-plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED
-============================== 2 passed in 2.18s ===============================
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator -v --no-header -p no:cacheprovider
+============================= test session starts ==============================
+collecting ... collected 2 items
+
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED [ 50%]
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED [100%]
+
+============================== 2 passed in 4.58s ===============================

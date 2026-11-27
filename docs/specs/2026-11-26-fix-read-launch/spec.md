@@ -21,15 +21,18 @@
 - 版数を上げること（体験会向けの直しがそろってから上げる。手元の checkout には pull で届く）
 
 ## 影響範囲
-- 変える: plugins/spec-autopilot/scripts/overnight.py:931-946（read_launch）
+（行番号は、この直しを入れた後の tip のもの）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:947-962（read_launch）
 - 変える: plugins/spec-autopilot/scripts/advisor_approval.py:96-103（launches）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:653-670（_awaits。1 巡目の独立レビューの high を人に確かめて足した）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:827-831（cmd_await の書き手。2 巡目の再設計で足した）
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:647-650（awaits。overnight.py の 14 か所と、budget_view を通して hooks/stop.py・autopilot.py が呼ぶ）
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:919
+- 変える: plugins/spec-autopilot/scripts/overnight.py:656-677（UnreadableAwaits と _awaits。1 巡目の独立レビューの high を人に確かめて足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:421-428（production_errors が UnreadableAwaits を「本番が良くない」として返す。block --no-rollback で人に戻す道を残す）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:835-839（cmd_await の書き手。2 巡目の再設計で足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1368-1373（notify が読めない待ちの記録で落ちない）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:935
 - 呼び出し元: plugins/spec-autopilot/scripts/advisor_approval.py:118
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:650-653（awaits。overnight.py の 14 か所と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1349-1356（transcript_lines。b"\n" だけで割る）
-- 手本: plugins/spec-autopilot/tests/test_overnight.py:930-940（test_handoff_refuses_an_unreadable_implementer_record）
+- 手本: plugins/spec-autopilot/tests/test_overnight.py:941-951（test_handoff_refuses_an_unreadable_implementer_record）
 - 手本: plugins/spec-autopilot/tests/test_advisor_approval.py:202（test_approve_by_advisor_refuses_an_unreadable_record）
 - 同じ入力: meta.json
 - 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_goal_child.py -q -n auto
@@ -54,7 +57,7 @@
   - path: plugins/spec-autopilot/scripts/advisor_approval.py:96-103
 
 ## 作り方
-この spec の ADR のとおり、read_launch と advisor_approval.launches が transcript を、手本の transcript_lines と同じくバイトで読んで b"\n" だけで割る（`read_bytes().split(b"\n")` を行ごとに utf-8 で読む。text mode の改行の変換を通さない。空の行は今までどおり飛ばす）。overnight._awaits も awaits.jsonl を `read_bytes().decode("utf-8").split("\n")` で割り、空でない読めない行では ValueError で止める（読み手を選んで止めると、通す側に倒れる読み手が残るため）。await の書き手は、前の記録が改行で終わらなければ改行を足す。autopilot.py の transcript_lines は呼ばない（split-transcript がそれを transcript.py に移すので、ここで参照を足すと載せ替えで衝突する）。
+この spec の ADR のとおり、read_launch と advisor_approval.launches が transcript を、バイトで読んで utf-8 で decode し、"\n" だけで割る（`read_bytes().decode("utf-8").split("\n")`。text mode の改行の変換を通さない。不正な UTF-8 は今までどおり記録全体を読めないとする。空の行は今までどおり飛ばす）。overnight._awaits は awaits.jsonl を `read_bytes().split(b"\n")` で割って行ごとに decode し、空でない読めない行（マルチバイトの途中で切れた行を含む）では、ファイルと行番号を名指しした UnreadableAwaits で止める（読み手を選んで止めると、通す側に倒れる読み手が残るため）。production_errors はそれを「本番が良くない」として返し、block --no-rollback で人に戻せるようにする（wait・hold は断る）。await の書き手は、前の記録が改行で終わらなければ改行を足す。autopilot.py の transcript_lines は呼ばない（split-transcript がそれを transcript.py に移すので、ここで参照を足すと載せ替えで衝突する）。
 
 - テストは、U+2028 などを生の文字で書かず、Python の `"\u2028"` のエスケープで書く（生の文字で書くと、このテストのファイルを読んだ実装役の transcript が、直っていない手元の CLI で同じ所で切れる）
 
