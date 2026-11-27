@@ -1,0 +1,324 @@
+{
+  "phase": "building",
+  "slug": "reapproval-carry-merge",
+  "created_at": 1795753067.4874592,
+  "existing": true,
+  "start": "c5fb95633b157d8e8365e4c7f9c85582bc60fd68",
+  "last_active_at": 1795771972.6240158,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795757261.842288,
+  "approved_by": "2 本とも承認（導線 → 持ち越しの順）",
+  "spec_sha256": "5182e393f9b042eb417feeecb1dce03f6a2553a891e48a768993697bc2f14e5c",
+  "after": null,
+  "approved_at": 1795761267.6305192,
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [
+        "R3",
+        "R5"
+      ],
+      "at": 1795762898.4612448,
+      "sha": "26863ecf4f3890c8d52c40d2eb13ff029f70d938"
+    },
+    {
+      "high": [],
+      "at": 1795763724.084517,
+      "sha": "de68ef536c1d11c08ca167dcac64accc3c49f22d"
+    },
+    {
+      "high": [
+        "R3"
+      ],
+      "at": 1795765051.721211,
+      "sha": "c30f62e20d03065315a73504ae4cc0d87e5fa6ff"
+    },
+    {
+      "high": [],
+      "at": 1795766336.774967,
+      "sha": "24d1e1b9ebe6be30137105f6e31827dbc164111a"
+    },
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795769117.466506,
+      "sha": "bacf85f869494a06a006b602e3d05bbaaeafd54b"
+    },
+    {
+      "high": [],
+      "at": 1795769970.606316,
+      "sha": "69b4c5f39dedb041a86edd5f50324b67e5d38580"
+    },
+    {
+      "high": [],
+      "at": 1795771359.820977,
+      "sha": "637dfa065c5669d16c203f1ce7c057f1e0bebbdd"
+    },
+    {
+      "high": [],
+      "at": 1795771964.2810502,
+      "sha": "8ac81165b6002a14efe0af5c058bd6d0f4202fa5"
+    }
+  ],
+  "fails": {
+    "R3": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795762898.46124
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795765051.7212071
+      }
+    ],
+    "R5": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795762898.4612439
+      }
+    ],
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795769117.466502
+      }
+    ]
+  },
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0,
+    "R4": 0,
+    "R5": 0,
+    "R6": 0,
+    "R7": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "d64a62c4105b5425eaba22c2ead38d47e9ec8a85",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795761322.003031,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "35cda00088a3f9a4416de4ec8f57e5cf9bd7d095",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R7"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795761976.9649339,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "26863ecf4f3890c8d52c40d2eb13ff029f70d938",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795762908.839058,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "a06c79479f3c6332d7018a107a173c83cf8d47a6",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795764402.704871,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "0ed300993b051d10149a07f9aa6a89fba9fafa40",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795766916.6280901,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    },
+    {
+      "base": "bacf85f869494a06a006b602e3d05bbaaeafd54b",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795769121.7085261,
+      "session": "74d0a488-97cc-4c36-bb3e-ca0ecfe29804"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "35cda00088a3f9a4416de4ec8f57e5cf9bd7d095",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795761969.173601
+    },
+    {
+      "tip": "26863ecf4f3890c8d52c40d2eb13ff029f70d938",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795762211.969903
+    },
+    {
+      "tip": "de68ef536c1d11c08ca167dcac64accc3c49f22d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 2,
+      "at": 1795763526.263766
+    },
+    {
+      "tip": "c30f62e20d03065315a73504ae4cc0d87e5fa6ff",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 3,
+      "at": 1795765038.880333
+    },
+    {
+      "tip": "24d1e1b9ebe6be30137105f6e31827dbc164111a",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 3,
+      "at": 1795766328.96842
+    },
+    {
+      "tip": "32fb3aa466c06f2b7bdb7c77d3c7eda824236a36",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 4,
+      "at": 1795767645.934848
+    },
+    {
+      "tip": "bacf85f869494a06a006b602e3d05bbaaeafd54b",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 4,
+      "at": 1795768356.031353
+    },
+    {
+      "tip": "69b4c5f39dedb041a86edd5f50324b67e5d38580",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 5,
+      "at": 1795769767.1537669
+    },
+    {
+      "tip": "637dfa065c5669d16c203f1ce7c057f1e0bebbdd",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 5,
+      "at": 1795770380.130698
+    },
+    {
+      "tip": "8ac81165b6002a14efe0af5c058bd6d0f4202fa5",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 5,
+      "at": 1795771517.3701062
+    }
+  ],
+  "lenses": [
+    {
+      "name": "同じ種類の箇所",
+      "found": 2,
+      "reproduced": 2,
+      "fixed": 2,
+      "at": 1795763742.491023
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795766199.580575
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 1,
+      "at": 1795769971.6712608
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795771368.204171
+    },
+    {
+      "name": "同じ種類の箇所",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795771972.624015
+    }
+  ]
+}

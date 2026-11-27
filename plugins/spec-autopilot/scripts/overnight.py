@@ -42,6 +42,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import autopilot  # noqa: E402
+import carry  # noqa: E402
 import ladder  # noqa: E402
 import stages  # noqa: E402
 
@@ -213,7 +214,7 @@ def scope_errors(d, s):
     root, parked = autopilot.repo_root(d), exempt_kinds(d, s)
     merges = s.get("merges") or []
     errors = production_errors(d, s)
-    if "merge" not in parked and not (merges and contains(root, head(root), merges[-1].get("head"))):
+    if "merge" not in parked and not (merges and (contains(root, head(root), merges[-1].get("head")) or carry.holds_head(root, s, merges[-1].get("head")))):
         errors.append("範囲がマージを含むのに、今の HEAD を含むマージを確かめていない（references/after-pr.md。"
                       "マージしたら overnight.py merged <dir> --pr <n>、できないなら overnight.py park --kind merge）")
     late = stages.deployed_reqs(autopilot, (d / "spec.md").read_text(encoding="utf-8"))
@@ -653,7 +654,7 @@ def awaits(d, s, strict=True):
     """今の承認より後に終わった待ちの記録（承認し直した前の夜の記録は読まない）。読めない行があれば止める（_awaits）。
     strict=False は読める行だけを返す。記録が欠けても断る側にしか倒れない読み手（「通った記録があるか」）と、deploy_floor と、
     朝の報告（判定の門に使わない。読めないときは pass の要件も done と書かない）だけが使う。"""
-    since = float(s.get("approved_at") or 0)
+    since = float(s.get("awaits_since") or s.get("approved_at") or 0)  # 持ち越した spec は、持ち越したマージの待ちの記録も読む
     return [r for r in _awaits(d, strict) if r["at"] > since]
 
 
@@ -703,7 +704,7 @@ def parked_ops(d, s, strict=True):
     """積んだ操作（park と、上限を過ぎた待ち）。"""
     timeouts = [{"kind": a.get("kind"), "op": f"{a.get('kind')} の待ち（PR {a.get('pr')}）",
                  "reason": "待ちの上限を過ぎた", "req": None, "sha": a.get("sha"), "at": a["at"]}
-                for a in awaits(d, s, strict) if a.get("result") == "timeout"]
+                for a in carry.this_round_timeouts(awaits(d, s, strict), s)]
     return list(s.get("parked") or []) + timeouts
 
 
@@ -713,10 +714,9 @@ def exempt_kinds(d, s, strict=True):
     merges = s.get("merges") or []
     last = merges[-1].get("sha") if merges else None
     kinds = {p.get("kind") for p in s.get("parked") or [] if not p.get("req") and p.get("merges", 0) == len(merges)}
-    kinds |= {a.get("kind") for a in awaits(d, s, strict) if a.get("result") == "timeout" and a.get("kind") == "deploy"
-              and a.get("sha") == last}
+    kinds |= {a.get("kind") for a in carry.this_round_timeouts(awaits(d, s, strict), s) if a.get("kind") == "deploy" and a.get("sha") == last}
     since = float(merges[-1].get("at", 0)) if merges else 0
-    if any(a.get("result") == "timeout" and a.get("kind") == "review" and a["at"] > since for a in awaits(d, s, strict)):
+    if any(a.get("kind") == "review" and a["at"] > since for a in carry.this_round_timeouts(awaits(d, s, strict), s)):
         kinds.add("merge")  # 承認の待ちが朝まで届かなかったマージは、人の判断を待つものとして積む
     return kinds
 
