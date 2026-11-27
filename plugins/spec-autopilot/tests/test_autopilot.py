@@ -2170,6 +2170,23 @@ def test_stop_hook_blocks_once_the_agent_reported_after_an_interim_finish(repo, 
     assert blocks(repo, path)
 
 
+@pytest.mark.parametrize("later,expect_block", [(None, False), ("handback", True), ("final", True)])
+def test_stop_hook_reads_the_real_host_notification_shapes(repo, tmp_path, later, expect_block):
+    """実物の形（summary の Agent の後ろは説明文で agent の id ではない・note と output-file の行がある・hand-back は先頭に文がある）。"""
+    approved(repo)
+    real = ("<task-notification>\n<task-id>a1</task-id>\n<tool-use-id>toolu_1</tool-use-id>\n<output-file>/tmp/x.output</output-file>\n"
+            "<status>completed</status>\n<summary>Agent \"途中の完了を再現する\" is waiting on its own background work</summary>\n"
+            "<note>This agent stopped with background work of its own still running.</note>\n<result>wait</result>\n</task-notification>")
+    final = real.replace("is waiting on its own background work", "finished")
+    rows = {None: [], "handback": [{"type": "user", "message": {"role": "user", "content":
+            'Another Claude session sent a message:\n<agent-message from="a1">\n[Subagent hand-back] 完了\n</agent-message>'}}],
+            "final": [{"type": "user", "message": {"role": "user", "content": final}}]}[later]
+    path = transcript(tmp_path, launched("a1"), {"type": "user", "message": {"role": "user", "content": real}}, *rows, *timer(ago=0))
+    alive(path, "a1")
+    finished(path, "a1")
+    assert blocks(repo, path) is expect_block
+
+
 def test_stop_hook_keeps_an_interim_mark_per_agent(repo, tmp_path):
     """別の agent の終わりの知らせは、途中の完了の印を下ろさない。別の agent の途中の完了は、終わった agent を待ち中にしない。"""
     approved(repo)
