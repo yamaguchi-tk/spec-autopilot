@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "split-transcript",
   "created_at": 1795701687.201709,
   "existing": true,
   "start": "003e0a5eeeb4b3f64e488c3009560a1e20e84199",
-  "last_active_at": 1795777739.159677,
+  "last_active_at": 1795778156.39605,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795702358.216693,
   "approved_by": "人が「戻しを許可する」と返した。前の巡の実装を revert し、T1 を実装役にやり直させる。要件・自走の範囲は変えていない",
@@ -140,5 +140,22 @@
       "fixed": 0,
       "at": 1795777739.1596758
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 95,
+      "at": 1795778156.0547142,
+      "sha": "53cddd6c8284c01ae789c8fafd4b00d9901d585c",
+      "head": "4fe7adbb2b35637cd875c3de8823f36ca1ff2aef"
+    }
+  ],
+  "merged_at": 1795778156.054719,
+  "paused_at_merge": 0.0,
+  "done_at": 1795778156.302824,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
