@@ -1,9 +1,9 @@
-- commit: 1c90f98f2f4990a0fa74a29a9287416ebfbbcb20
-$ python3 -m pytest plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_whose_dependency_is_not_in_the_session_record plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_whose_dependency_name_matches_two_specs plugins/spec-autopilot/tests/test_lineup.py::test_demand_does_not_count_a_dependent_spec_whose_dependency_cannot_be_found plugins/spec-autopilot/tests/test_lineup.py::test_stop_hook_does_not_demand_next_for_a_dependent_spec_whose_dependency_cannot_be_found plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_when_the_pair_written_at_the_queue_names_another_spec_than_after plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_when_the_dependency_directory_of_the_pair_is_gone -v -p no:cacheprovider
-plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_whose_dependency_is_not_in_the_session_record PASSED [ 16%]
-plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_a_dependent_spec_whose_dependency_name_matches_two_specs PASSED [ 33%]
-plugins/spec-autopilot/tests/test_lineup.py::test_demand_does_not_count_a_dependent_spec_whose_dependency_cannot_be_found PASSED [ 50%]
-plugins/spec-autopilot/tests/test_lineup.py::test_stop_hook_does_not_demand_next_for_a_dependent_spec_whose_dependency_cannot_be_found PASSED [ 66%]
-plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_when_the_pair_written_at_the_queue_names_another_spec_than_after PASSED [ 83%]
-plugins/spec-autopilot/tests/test_lineup.py::test_next_blocks_when_the_dependency_directory_of_the_pair_is_gone PASSED [100%]
-============================== 6 passed in 15.57s ==============================
+- commit: 438e346e61c8ff5f620d16ecc4e44f20d0bb9251
+$ <venv>/bin/python .autopilot-qa/check.py
+R3 pass (test_r3_broken_pair_file_reaches_the_block_reason)
+R3 pass (test_r3_broken_pair_file_reaches_the_stop_hook)
+R3 pass (test_r3_pair_file_not_a_dict_reaches_the_block_reason)
+R3 pass (test_r3_broken_dependency_state_reaches_the_block_reason)
+$ python -m pytest plugins/spec-autopilot/tests/test_lineup.py -q -n auto
+....................................................................     [100%]
+68 passed in 46.92s
