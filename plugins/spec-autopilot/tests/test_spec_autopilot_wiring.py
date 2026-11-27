@@ -67,7 +67,7 @@ def test_cli_messages_point_to_existing_command_sections():
 
 def test_version_is_raised_past_0_1_18():
     v = _load(MANIFEST)["version"]
-    assert tuple(int(x) for x in v.split(".")) > (0, 1, 18)
+    assert tuple(int(x) for x in v.split(".")) > (0, 1, 19)
 
 
 def test_setup_command_exists_and_its_ladder_commands_run(tmp_path):
