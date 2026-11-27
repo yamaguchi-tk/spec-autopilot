@@ -62,7 +62,7 @@ def test_dispatch_in_discovery_accepts_a_medium_spec_in_a_new_repo_and_prints_th
 
 # 大きさの行が 2 行ある spec は、S でも M でも試作を拒む（PR 92 で S の場合が表から消えたので戻した）。
 # 範囲: この表に S の 2 行の場合を足すだけで、門の判定は変えない。想定する脅威: 事故（大きさの行を 2 つ書いた spec）だけ。
-# やらないこと: existing のキーが無い state.json の扱いを変えること（判定が変わるので /autopilot で合意してから直す）。
+# やらないこと: existing の読み方を変えること（PR 97 で直した）。
 @pytest.mark.parametrize("size, existing", [
     ("- 大きさ: M", True), (DEPENDENT_M, False), ("- 大きさ: L", False), (None, False), ("- 大きさ: 小", False), ("- 大きさ: S\n- 大きさ: S", False), ("- 大きさ: M\n- 大きさ: M", False)])
 def test_dispatch_in_discovery_refuses_a_spec_that_is_not_allowed_a_prototype_and_keeps_state(repo, size, existing):
