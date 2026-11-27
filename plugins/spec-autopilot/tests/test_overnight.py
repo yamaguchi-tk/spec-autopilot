@@ -115,7 +115,7 @@ def merged_pr(head, sha="m1"):
 
 def awaits(d):
     f = d / "awaits.jsonl"
-    return [json.loads(x) for x in f.read_text().splitlines()] if f.exists() else []
+    return [json.loads(x) for x in f.read_bytes().decode("utf-8").split("\n") if x] if f.exists() else []
 
 
 def deploy_ok():
@@ -329,6 +329,17 @@ def test_await_ci_exits_zero_when_every_check_passes(repo, gh):
     assert r.returncode == 0, r.stdout + r.stderr
     assert state(d)["phase"] == "building" and not (d / "await.json").exists()
     assert awaits(d)[-1]["result"] == "success" and awaits(d)[-1]["sha"] == "h7"
+
+
+def test_await_starts_a_new_line_after_a_cut_record(repo, gh):
+    """前の記録が途中で切れていても、次の記録を同じ行につなげず、新しい行に書く。"""
+    d = full_spec(repo)
+    (d / "awaits.jsonl").write_text('{"kind": "deploy", "sha": "m0", "res', encoding="utf-8")
+    gh.answers("pr view", [{"out": {"headRefOid": "h7"}}])
+    gh.answers("pr checks", [checks("pass")])
+    ci_await(repo, d)
+    lines = (d / "awaits.jsonl").read_bytes().decode("utf-8").split("\n")
+    assert lines[0] == '{"kind": "deploy", "sha": "m0", "res' and json.loads(lines[1])["sha"] == "h7"
 
 
 def test_await_does_not_take_no_runs_or_only_skips_as_success(repo, gh):
@@ -1099,10 +1110,22 @@ def test_a_failed_deploy_row_with_a_line_separator_is_counted(tmp_path, sep):
     assert overnight.deploy_smoke(tmp_path, s) == (True, None)
 
 
-def test_a_cut_await_row_is_still_skipped(tmp_path):
-    """途中で切れた待ちの記録の行は、今までどおり飛ばして落ちない。"""
+@pytest.mark.parametrize("bad", ['{"kind": "deploy", "sha": "m0", "res', '[1, 2]', '{"kind": "deploy"}'],
+                         ids=["cut", "not-a-dict", "no-at"])
+def test_an_unreadable_await_row_stops_with_the_file_and_line(tmp_path, bad):
+    """空でないのに記録として読めない行があれば、数えずに通さず、ファイルと行番号を名指しして止める。"""
     import overnight
-    s = failed_deploy_rows(tmp_path, " ", 1)
+    s = failed_deploy_rows(tmp_path, " ", 1)
     with (tmp_path / "awaits.jsonl").open("a", encoding="utf-8") as f:
-        f.write('{"kind": "deploy", "sha": "m0", "res\n')
+        f.write(bad + "\n")
+    with pytest.raises(ValueError, match=r"awaits\.jsonl:2 "):
+        overnight.failed_deploys(tmp_path, s)
+
+
+def test_empty_await_rows_are_not_records(tmp_path):
+    """空の行（末尾の改行の後と、書き手が足した改行）は記録ではないので、止めずに飛ばす。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, " ", 1)
+    with (tmp_path / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write("\n\n")
     assert overnight.failed_deploys(tmp_path, s) == 1
