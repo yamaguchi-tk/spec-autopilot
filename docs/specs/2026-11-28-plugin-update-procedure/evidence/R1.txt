@@ -1,0 +1,37 @@
+- commit: 4974e51
+
+$ git rev-parse HEAD
+4974e51c1901ab6a71e138bc5faecbd269e6365d
+
+$ grep -n 'claude plugin update spec-autopilot@spec-autopilot' CLAUDE.md
+19:- 手元の plugin は GitHub の marketplace から入れた版ごとの写しを読む。更新は自走の範囲に入れず、人が頼んだときに `claude plugin update spec-autopilot@spec-autopilot` で行い、更新の後に、走っているセッションで `/reload-plugins` を回し、見回り役の plist を新しい版の `watch.py plist` で出し直す（plist は作った時点の watch.py の実パスを書くため）。開発中の版は `claude --plugin-dir <worktree>/plugins/spec-autopilot` で試す
+
+$ grep -n '/reload-plugins' CLAUDE.md
+19:（上と同じ行）
+
+$ grep -n 'watch.py plist' CLAUDE.md
+19:（上と同じ行）
+
+$ grep -n -- '--plugin-dir' CLAUDE.md
+19:（上と同じ行）
+
+$ grep -c symlink CLAUDE.md
+0
+
+$ grep -c pull-checkout CLAUDE.md
+0
+
+$ claude plugin update --help
+Usage: claude plugin update [options] <plugin>
+
+Update a plugin to the latest version (restart required to apply)
+
+$ grep -n -A3 'spec-autopilot@' ~/.claude/plugins/installed_plugins.json
+338:    "spec-autopilot@spec-autopilot": [
+339-      {
+340-        "scope": "user",
+341-        "installPath": "~/.claude/plugins/cache/spec-autopilot/spec-autopilot/0.1.21",
+
+$ .venv/bin/python3 -m pytest plugins/spec-autopilot/tests/test_ci_workflow.py -q
+......                                                                   [100%]
+6 passed in 0.09s
