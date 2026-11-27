@@ -213,7 +213,7 @@ def scope_errors(d, s):
     root, parked = autopilot.repo_root(d), exempt_kinds(d, s)
     merges = s.get("merges") or []
     errors = production_errors(d, s)
-    if "merge" not in parked and not (merges and contains(root, head(root), merges[-1].get("head"))):
+    if "merge" not in parked and not (merges and (contains(root, head(root), merges[-1].get("head")) or __import__("carry").holds_head(root, s, merges[-1].get("head")))):
         errors.append("範囲がマージを含むのに、今の HEAD を含むマージを確かめていない（references/after-pr.md。"
                       "マージしたら overnight.py merged <dir> --pr <n>、できないなら overnight.py park --kind merge）")
     late = stages.deployed_reqs(autopilot, (d / "spec.md").read_text(encoding="utf-8"))
@@ -653,7 +653,7 @@ def awaits(d, s, strict=True):
     """今の承認より後に終わった待ちの記録（承認し直した前の夜の記録は読まない）。読めない行があれば止める（_awaits）。
     strict=False は読める行だけを返す。記録が欠けても断る側にしか倒れない読み手（「通った記録があるか」）と、deploy_floor と、
     朝の報告（判定の門に使わない。読めないときは pass の要件も done と書かない）だけが使う。"""
-    since = float(s.get("approved_at") or 0)
+    since = float(s.get("awaits_since") or s.get("approved_at") or 0)  # 持ち越した spec は、持ち越したマージの待ちの記録も読む
     return [r for r in _awaits(d, strict) if r["at"] > since]
 
 

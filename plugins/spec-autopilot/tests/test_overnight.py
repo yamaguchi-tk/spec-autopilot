@@ -700,11 +700,14 @@ def block_and_reapprove(repo, d, *extra):
     assert r.returncode == 0, r.stdout + r.stderr
 
 
-def test_reapproving_after_a_post_merge_block_starts_a_fresh_round(repo, gh):
+def test_reapproving_after_a_post_merge_block_with_changed_code_starts_a_fresh_round(repo, gh):
     d = full_spec(repo)
     make_done(repo, d)
     gh.answers("pr view", [merged_pr(git_head(repo))])
     assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
+    (repo / "fix.js").write_text("y\n", encoding="utf-8")  # マージの後に、spec の置き場の外のコードが変わった
+    subprocess.run(["git", "add", "fix.js"], cwd=repo, check=True)
+    subprocess.run([*GIT, "commit", "-q", "-m", "fix after the merge"], cwd=repo, check=True)
     s = state(d)
     s["merged_at"] = time.time() - 10_000 * 60  # マージ後の予算の 2 倍をとうに過ぎて block した
     (d / "state.json").write_text(json.dumps(s), encoding="utf-8")

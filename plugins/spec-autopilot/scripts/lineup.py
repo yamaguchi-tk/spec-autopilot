@@ -120,6 +120,8 @@ def begin(d, s, by, prev):
 
     budget, post = overnight.budgets((d / "spec.md").read_text(encoding="utf-8"))
     history = s.get("history", [])
+    kept, note = __import__("carry").plan(ap.repo_root(d), s, prev)  # コードが同じなら、前の巡のマージとデプロイの記録を持ち越す
+    since = s.get("awaits_since") or s.get("approved_at")
     if prev != "discovery":
         history.append({**{k: s.get(k) for k in ("approved_at", "approved_by", "blocked", "done_at", "anomalies", "reviews",
                                                  "fails", "streak", "reworks", "post_budget_min", "paused_sec", "light", *overnight.ROUND_KEYS)}, "phase": prev})
@@ -127,10 +129,15 @@ def begin(d, s, by, prev):
     keep = ("dispatches", "handoffs") if ds and all(x.get("prototype") for x in ds) else ()  # 承認の前の S の試作の dispatch（印は dispatch が打つ）は、承認の後の handoff で閉じる
     for x in ds if keep else ():
         x.pop("prototype")  # 持ち越したら印を外す。次の巡の再承認では history に移す
-    for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", *(k for k in overnight.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
+    for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", "awaits_since", *(k for k in overnight.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
         s.pop(k, None)
-    s.update(phase="building", approved_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), budget_min=budget,
+    now = time.time()
+    s.update(phase="building", approved_at=now, approved_by=by, spec_sha256=ap.sha(d), budget_min=budget,
              post_budget_min=post, history=history, blocked=None, paused_sec=0, reviews=[], fails={}, streak={}, reworks={})
+    if kept:
+        s.update(merges=kept, merged_at=now, paused_at_merge=0, awaits_since=since)  # マージ後の予算の時計は自走に戻した時刻から数え直す
+    if note:
+        print(note)
     return budget
 
 
