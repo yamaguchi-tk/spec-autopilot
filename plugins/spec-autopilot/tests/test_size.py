@@ -245,3 +245,56 @@ def test_a_new_repo_reapproval_passes_a_declared_large_size_and_done_says_to_spl
     make_done(repo, d)
     r = run(repo, "done", str(d))
     assert r.returncode == 0 and "stacked PR に分ける" in r.stdout, r.stdout
+
+
+def approved_medium_spec(repo):
+    """申告 M・数えた大きさ M で承認した、既存の repo の spec。"""
+    d = existing_spec(repo, size="- 大きさ: M")
+    write_files(repo, {"src/board.js": "x\n", "src/game.js": "y\n"})
+    user_says(repo, prompt="OK")
+    assert run(repo, "approve", str(d), "--by", "OK").returncode == 0
+    return d
+
+
+def test_check_stage_pr_says_to_split_the_pr_when_the_counted_size_grew_to_large(repo):
+    """範囲がマージ以上の spec は done が PR の後になるので、PR を作る前の check --stage pr が L の NOTE を出す。終了コードは変えない。"""
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    six_changed_files(repo)
+    make_done(repo, d)
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "NOTE: 大きさが L になった" in r.stdout and "数えた大きさ L" in r.stdout and "申告 M" in r.stdout, r.stdout
+
+
+def test_check_stage_pr_says_to_split_the_pr_when_the_declared_size_is_large(repo):
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    make_done(repo, d)
+    assert run(repo, "done", str(d)).returncode == 0
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 大きさ: M", "- 大きさ: L"), encoding="utf-8")
+    user_says(repo, prompt="機能を足して")
+    assert run(repo, "approve", str(d), "--by", "機能を足す").returncode == 0
+    make_done(repo, d)
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "NOTE: 大きさが L になった" in r.stdout and "申告 L" in r.stdout, r.stdout
+
+
+def test_check_stage_pr_does_not_say_it_when_neither_size_is_large(repo):
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    make_done(repo, d)
+    r = run(repo, "check", str(d), "--stage", "pr")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "大きさが L になった" not in r.stdout, r.stdout
+
+
+def test_check_without_stage_does_not_say_it_even_when_large(repo):
+    from test_autopilot import make_done
+    d = approved_medium_spec(repo)
+    six_changed_files(repo)
+    make_done(repo, d)
+    r = run(repo, "check", str(d))
+    assert "大きさが L になった" not in r.stdout, r.stdout
