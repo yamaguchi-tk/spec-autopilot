@@ -9,7 +9,7 @@ import time
 
 import pytest
 
-from test_autopilot import PLUGIN, implementer_ran, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
+from test_autopilot import PLUGIN, hand_off, implementer_ran, init_spec, repo, run, state, user_says  # noqa: F401（repo は fixture）
 from test_overnight import full_spec, night
 
 GATE = PLUGIN / "hooks" / "agent_gate.py"
@@ -135,7 +135,17 @@ def test_gate_denies_an_implementer_while_a_reviewer_result_is_not_recorded(repo
     assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
     kind, why = decision(fire(repo, f"{d}"))
     assert kind == "deny" and "autopilot.py review" in why and str(d) in why
+
+
+def test_dispatch_refuses_until_the_reviewer_result_is_recorded(repo):
+    d = building(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")  # handoff は終えたタスクだけ閉じる
+    hand_off(repo, d)
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    r = night(repo, "dispatch", str(d), "--task", "T1")
+    assert r.returncode != 0 and "autopilot.py review" in r.stdout + r.stderr
     assert run(repo, "review", str(d), "--high", "none").returncode == 0
+    dispatched(repo, d)
     assert decision(fire(repo, f"{d}")) is None
 
 
