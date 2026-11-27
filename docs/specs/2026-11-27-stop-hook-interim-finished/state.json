@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "stop-hook-interim-finished",
+  "created_at": 1795780841.735311,
+  "existing": true,
+  "start": "53cddd6c8284c01ae789c8fafd4b00d9901d585c",
+  "last_active_at": 1795789863.4474602,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795789863.446688,
+  "approved_by": "人が「OK」で承認（引き継ぎ後、版数を 0.1.21 に直した spec）",
+  "spec_sha256": "67467d1408edc3a23403df40674e07545c30b99a6259c7612543265a59faff59",
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
