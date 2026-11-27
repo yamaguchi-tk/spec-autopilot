@@ -4,18 +4,226 @@
   "created_at": 1795757450.3576891,
   "existing": true,
   "start": "4e24634d1098d330647a3b4f9efa865854b4f2a2",
-  "last_active_at": 1795758059.9015942,
+  "last_active_at": 1795764762.419754,
   "scope_sha256": "58676828b121b2deb615692cfe754906b3d906b304da66ada561e3e3af72d03b",
-  "approved_at": 1795758059.899832,
-  "approved_by": "人が草案に OK と返した",
-  "spec_sha256": "e61f6c3f44d771f96e56611f7b97ec0c155926a1e16b2f83f2fa0a7da6b7e6fa",
-  "budget_min": 90,
-  "post_budget_min": 90,
-  "history": [],
+  "approved_at": 1795764762.3724759,
+  "approved_by": "R1 を C（review を記録できない状態の評価役の起動は deny）に直し、R6 を広げ、R7・T5 を足し、大きさ L・予算 150 分で合意し直す",
+  "spec_sha256": "2a7112028169cf724ec2906a1f85a2c9b4ab11b72afa15be3ea7c1e19d369c1c",
+  "budget_min": 150,
+  "post_budget_min": 150,
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "T1 のテスト 1 件の手順が成り立たず、直すテストの書き換えを auto mode の分類器が拒んだ。人の判断を待つ",
+      "at": 1795758592.967965
+    },
+    {
+      "approved_at": 1795758059.899832,
+      "approved_by": "人が草案に OK と返した",
+      "blocked": {
+        "req": "R1",
+        "reason": "R1 の文（building の spec の評価役の起動は記録する）と R2（記録の抜けから抜けられる）が、review を記録できない状態（dispatch が無い・最後の dispatch が開いている・今の HEAD で handoff が閉じていない）でぶつかる。R1 の文を直すには合意し直しが要る",
+        "evidence": "評価役の 2 巡: 開いた dispatch の後の起動と、dispatch の無い spec の起動で、記録すると dispatch・review・handoff のどれでも抜けられなかった（.autopilot-qa/check.py の R2）。review_gate の条件で記録を絞ると check.py の R1（dispatch の無い spec で記録を期待）が落ちる。commit 0f7e976",
+        "at": 1795762681.733432
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": [
+        {
+          "high": [
+            "R1",
+            "R2"
+          ],
+          "at": 1795760855.804338,
+          "sha": "b7371b219be22998449054106951ec5e30876261"
+        },
+        {
+          "high": [
+            "R2"
+          ],
+          "at": 1795762082.071242,
+          "sha": "f77f152e40e470ee19c03abbc45ab1a944ca0823"
+        }
+      ],
+      "fails": {
+        "R1": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795760855.804332
+          }
+        ],
+        "R2": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795760855.8043368
+          },
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795762082.0712378
+          }
+        ]
+      },
+      "streak": {
+        "R1": 1,
+        "R2": 2
+      },
+      "reworks": {},
+      "post_budget_min": 90,
+      "paused_sec": 36.432759046554565,
+      "light": null,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": null,
+      "qa_runs": null,
+      "handoffs": [
+        {
+          "tip": "efa865bbcff29cc1a0e1261a1938e077d45cd79c",
+          "tasks": [
+            "T1"
+          ],
+          "dispatch": 0,
+          "at": 1795758277.6423411
+        },
+        {
+          "tip": "c19c9190b9365cec190c895dbe8150018d015109",
+          "tasks": [
+            "T2"
+          ],
+          "dispatch": 1,
+          "at": 1795759099.472526
+        },
+        {
+          "tip": "c3f3476ecff6f837782ea00601c5ea17f6bb2aaa",
+          "tasks": [
+            "T3",
+            "T4"
+          ],
+          "dispatch": 2,
+          "at": 1795759624.5840251
+        },
+        {
+          "tip": "b7371b219be22998449054106951ec5e30876261",
+          "tasks": [
+            "T3",
+            "T4"
+          ],
+          "dispatch": 2,
+          "at": 1795760855.58574
+        },
+        {
+          "tip": "f77f152e40e470ee19c03abbc45ab1a944ca0823",
+          "tasks": [
+            "T2"
+          ],
+          "dispatch": 3,
+          "at": 1795761344.1114419
+        }
+      ],
+      "dispatches": [
+        {
+          "base": "b68da8a8cd3e42f6d911c76cecc685815c209ce5",
+          "tasks": [
+            "T1"
+          ],
+          "reqs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795758072.79166,
+          "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
+        },
+        {
+          "base": "efa865bbcff29cc1a0e1261a1938e077d45cd79c",
+          "tasks": [
+            "T2"
+          ],
+          "reqs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795758277.784091,
+          "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
+        },
+        {
+          "base": "c19c9190b9365cec190c895dbe8150018d015109",
+          "tasks": [
+            "T3",
+            "T4"
+          ],
+          "reqs": [
+            "R3",
+            "R6"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795759099.798641,
+          "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
+        },
+        {
+          "base": "b7371b219be22998449054106951ec5e30876261",
+          "tasks": [
+            "T2"
+          ],
+          "reqs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795760863.9501052,
+          "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
+        },
+        {
+          "base": "7e63ef7016bd7e3aeea7c2cc4e2cadd71c410d83",
+          "tasks": [
+            "T2"
+          ],
+          "reqs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "agent": "autopilot-implementer-opus",
+          "at": 1795762104.512049,
+          "session": "99c3e0ba-e753-4def-a7be-a4c3b7724d04"
+        }
+      ],
+      "lenses": null,
+      "rolled_back": null,
+      "review_launches": null,
+      "phase": "blocked"
+    }
+  ],
   "blocked": null,
   "paused_sec": 0,
   "reviews": [],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "wait": null,
+  "raises": [
+    {
+      "role": "impl",
+      "req": "R2",
+      "reason": "原因調査",
+      "at": 1795762082.071242,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-opus"
+    }
+  ]
 }
