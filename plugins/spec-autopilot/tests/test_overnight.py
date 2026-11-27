@@ -115,7 +115,7 @@ def merged_pr(head, sha="m1"):
 
 def awaits(d):
     f = d / "awaits.jsonl"
-    return [json.loads(x) for x in f.read_text().splitlines()] if f.exists() else []
+    return [json.loads(x) for x in f.read_bytes().decode("utf-8").split("\n") if x] if f.exists() else []
 
 
 def deploy_ok():
@@ -329,6 +329,17 @@ def test_await_ci_exits_zero_when_every_check_passes(repo, gh):
     assert r.returncode == 0, r.stdout + r.stderr
     assert state(d)["phase"] == "building" and not (d / "await.json").exists()
     assert awaits(d)[-1]["result"] == "success" and awaits(d)[-1]["sha"] == "h7"
+
+
+def test_await_starts_a_new_line_after_a_cut_record(repo, gh):
+    """前の記録が途中で切れていても、次の記録を同じ行につなげず、新しい行に書く。"""
+    d = full_spec(repo)
+    (d / "awaits.jsonl").write_text('{"kind": "deploy", "sha": "m0", "res', encoding="utf-8")
+    gh.answers("pr view", [{"out": {"headRefOid": "h7"}}])
+    gh.answers("pr checks", [checks("pass")])
+    ci_await(repo, d)
+    lines = (d / "awaits.jsonl").read_bytes().decode("utf-8").split("\n")
+    assert lines[0] == '{"kind": "deploy", "sha": "m0", "res' and json.loads(lines[1])["sha"] == "h7"
 
 
 def test_await_does_not_take_no_runs_or_only_skips_as_success(repo, gh):
@@ -939,6 +950,56 @@ def test_handoff_refuses_an_unreadable_implementer_record(repo):
     assert r.returncode == 1 and "agent-bad" in r.stdout and "読めない" in r.stdout
 
 
+# U+2028・U+2029・U+0085 は生の文字で書かず、エスケープで書く（生で書くと、このファイルを読んだ実装役の transcript が切れる）
+LINE_SEPARATORS = ["\u2028", "\u2029", "\x85"]
+
+
+def implementer_read(text, model=None):
+    """implementer_ran() の後に、user の tool_result の行と assistant の行を足す（text は生のまま JSON の文字列に残る）。
+    model を渡すと、足す assistant の行だけをその model にする（その行が実際に読まれたかを見分ける）。"""
+    log = max((Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents").glob("*.jsonl"), key=lambda f: f.name)
+    rows = [{"type": "user", "timestamp": "2099-01-01T00:00:00Z",
+             "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t", "content": text}]}},
+            {"type": "assistant", "timestamp": "2099-01-01T00:00:00Z", "effort": json.loads(log.read_text(encoding="utf-8").splitlines()[1])["effort"],
+             "message": {"model": model or json.loads(log.read_text(encoding="utf-8").splitlines()[1])["message"]["model"],
+                         "content": [{"type": "text", "text": text}]}}]
+    with log.open("a", encoding="utf-8", newline="") as f:
+        f.write("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+    assert text in log.read_bytes().decode("utf-8")  # 生の文字がファイルに残っている
+
+
+@pytest.mark.parametrize("sep", LINE_SEPARATORS, ids=["U+2028", "U+2029", "U+0085"])
+def test_handoff_reads_a_record_with_a_line_separator_in_a_string(repo, sep):
+    """tool_result の行と assistant の行の文字列に生の改行に似た文字があっても、読めない記録とせず、model・effort・commit で判定する。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    implementer_read(f"読んだ行 a{sep}b 終わり")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("sep", LINE_SEPARATORS, ids=["U+2028", "U+2029", "U+0085"])
+def test_handoff_judges_the_model_of_a_row_after_a_line_separator(repo, sep):
+    """区切り文字を持つ行も読み飛ばさずに判定に使う（その行の model が定義と違えば止める）。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    implementer_read(f"a{sep}b", model="claude-opus-5-5")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "claude-opus-5-5" in r.stdout and "読めない" not in r.stdout
+
+
+def test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator(repo):
+    """生の U+2028 を持つ行と、途中で切れた行が混ざる実装役の記録は、読めない記録として止める。"""
+    d = dispatched_and_committed(repo)
+    implementer_ran()
+    sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
+    (sub / "agent-bad.meta.json").write_text(json.dumps({"agentType": "spec-autopilot:autopilot-implementer"}), encoding="utf-8")
+    good = json.dumps({"type": "user", "timestamp": "2099-01-01T00:00:00Z", "message": {"content": "a\u2028b"}}, ensure_ascii=False)
+    (sub / "agent-bad.jsonl").write_text(good + '\n{"type":"assistant","mess', encoding="utf-8")
+    r = night(repo, "handoff", str(d), "--task", "T1")
+    assert r.returncode == 1 and "agent-bad" in r.stdout and "読めない" in r.stdout
+
+
 def test_handoff_skips_a_broken_record_of_another_agent(repo):
     sub = Path(os.environ["CLAUDE_CONFIG_DIR"]) / "projects" / "p" / "s1" / "subagents"
     sub.mkdir(parents=True)
@@ -1028,3 +1089,72 @@ def test_handoff_refuses_when_the_closed_tip_is_unreadable(repo):
     _g(repo, "commit", "-q", "--allow-empty", "-m", "moved")
     r = night(repo, "handoff", str(d), "--task", "T1")
     assert r.returncode != 0 and "読めない" in r.stdout
+
+
+def failed_deploy_rows(d, sep, n):
+    """sha の m0..m<n-1> のマージごとに、detail に区切り文字を持つ deploy の failure の行を書く（ensure_ascii=False で await と同じ形）。"""
+    with (d / "awaits.jsonl").open("w", encoding="utf-8") as f:
+        for i in range(n):
+            f.write(json.dumps({"kind": "deploy", "pr": 1, "sha": f"m{i}", "result": "failure", "started_at": 1.0,
+                                "at": 10.0 + i, "detail": [f"deploy{sep}x: 失敗（run 5）"]}, ensure_ascii=False) + "\n")
+    return {"approved_at": 1.0, "merges": [{"sha": f"m{i}"} for i in range(n)]}
+
+
+@pytest.mark.parametrize("sep", LINE_SEPARATORS, ids=["U+2028", "U+2029", "U+0085"])
+def test_a_failed_deploy_row_with_a_line_separator_is_counted(tmp_path, sep):
+    """待ちの記録の文字列に改行に似た文字があっても、deploy の failure を数え、上限と smoke の判定に効かせる。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, sep, overnight.MAX_DEPLOY_FIXES + 1)
+    assert overnight.failed_deploys(tmp_path, s) == overnight.MAX_DEPLOY_FIXES + 1
+    assert overnight.deploy_exhausted(tmp_path, s)
+    assert overnight.deploy_smoke(tmp_path, s) == (True, None)
+
+
+@pytest.mark.parametrize("bad", ['{"kind": "deploy", "sha": "m0", "res', '[1, 2]', '{"kind": "deploy"}'],
+                         ids=["cut", "not-a-dict", "no-at"])
+def test_an_unreadable_await_row_stops_with_the_file_and_line(tmp_path, bad):
+    """空でないのに記録として読めない行があれば、数えずに通さず、ファイルと行番号を名指しして止める。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, " ", 1)
+    with (tmp_path / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write(bad + "\n")
+    with pytest.raises(ValueError, match=r"awaits\.jsonl:2 "):
+        overnight.failed_deploys(tmp_path, s)
+
+
+def test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line(tmp_path):
+    """日本語の途中（UTF-8 の途中）で切れた行の後に記録が続いても、ファイルと行番号を名指しして止める。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, " ", 1)
+    row = json.dumps({"kind": "deploy", "sha": "m0", "detail": ["失敗"]}, ensure_ascii=False).encode("utf-8")
+    with (tmp_path / "awaits.jsonl").open("ab") as f:
+        f.write(row[:row.index("失".encode("utf-8")) + 1] + b"\n")
+    with pytest.raises(ValueError, match=r"awaits\.jsonl:2 "):
+        overnight.failed_deploys(tmp_path, s)
+
+
+def test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human(repo, gh):
+    """読めない待ちの記録は check と Stop hook を止め、block --no-rollback で人に戻せる（戻す道まで止めない）。"""
+    d = full_spec(repo)
+    make_done(repo, d)
+    gh.answers("pr view", [merged_pr(git_head(repo))])
+    assert night(repo, "merged", str(d), "--pr", "7").returncode == 0
+    with (d / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"kind": "deploy", "sha": "m1", "res\n')
+    assert run(repo, "check", str(d)).returncode != 0
+    assert '"block"' in stop_hook(repo).stdout
+    assert '"block"' in stop_hook(repo, {"stop_hook_active": True}).stdout
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y")
+    assert r.returncode != 0 and "awaits.jsonl:" in (r.stdout + r.stderr)
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "x", "--evidence", "y", "--no-rollback", "待ちの記録が切れた")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert state(d)["phase"] == "blocked" and '"block"' not in stop_hook(repo).stdout
+
+
+def test_empty_await_rows_are_not_records(tmp_path):
+    """空の行（末尾の改行の後と、書き手が足した改行）は記録ではないので、止めずに飛ばす。"""
+    import overnight
+    s = failed_deploy_rows(tmp_path, " ", 1)
+    with (tmp_path / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write("\n\n")
+    assert overnight.failed_deploys(tmp_path, s) == 1

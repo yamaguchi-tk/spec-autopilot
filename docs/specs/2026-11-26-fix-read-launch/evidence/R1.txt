@@ -1,0 +1,61 @@
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator -v --no-header -p no:cacheprovider --tb=line -rf
+============================= test session starts ==============================
+collecting ... collected 6 items
+
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2028] PASSED [ 16%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2029] PASSED [ 33%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+0085] PASSED [ 50%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+2028] PASSED [ 66%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+2029] PASSED [ 83%]
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+0085] PASSED [100%]
+
+============================== 6 passed in 5.70s ===============================
+
+# base 側: 落ちるテストを足した commit e29f063（直しの前）。git worktree で e29f063 を取り出した root で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string -q --no-header -p no:cacheprovider --tb=line -rf
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: ERROR: autopilot-implementer の起動の記録 agent-a18ebc194a8687060 が読めない（照合できない）
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc194a8687060 が読めない（照合できない）\n', stderr='').returncode
+<path> AssertionError: ERROR: autopilot-implementer の起動の記録 agent-a18ebc194a8687060 が読めない（照合できない）
+E   AssertionError: ERROR: autopilot-implementer の起動の記録 agent-a18ebc194dd7d7570 が読めない（照合できない）
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc194dd7d7570 が読めない（照合できない）\n', stderr='').returncode
+<path> AssertionError: ERROR: autopilot-implementer の起動の記録 agent-a18ebc194dd7d7570 が読めない（照合できない）
+E   AssertionError: ERROR: autopilot-implementer の起動の記録 agent-a18ebc1951249f418 が読めない（照合できない）
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc1951249f418 が読めない（照合できない）\n', stderr='').returncode
+<path> AssertionError: ERROR: autopilot-implementer の起動の記録 agent-a18ebc1951249f418 が読めない（照合できない）
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2028]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+2029]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_reads_a_record_with_a_line_separator_in_a_string[U+0085]
+3 failed in 3.02s
+
+# base 側: このテストは直しの後に足したので、base（9149045）のコードに tip のテストのファイルを置いて回す（git worktree で 9149045 を取り出し、plugins/spec-autopilot/tests/test_overnight.py を tip のものに替えた root）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator -q --no-header -p no:cacheprovider --tb=line -rf
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert (1 == 1 and 'claude-opus-5-5' in 'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a003a8b1f0 が読めない（照合できない）\n')
+     +  where 1 = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a003a8b1f0 が読めない（照合できない）\n', stderr='').returncode
+     +  and   'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a003a8b1f0 が読めない（照合できない）\n' = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a003a8b1f0 が読めない（照合できない）\n', stderr='').stdout
+<path> AssertionError: assert (1 == 1 and 'claude-opus-5-5' in 'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a003a8b1f0 が読めない（照合できない）\n')
+E   AssertionError: assert (1 == 1 and 'claude-opus-5-5' in 'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a0373c8d70 が読めない（照合できない）\n')
+     +  where 1 = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a0373c8d70 が読めない（照合できない）\n', stderr='').returncode
+     +  and   'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a0373c8d70 が読めない（照合できない）\n' = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a0373c8d70 が読めない（照合できない）\n', stderr='').stdout
+<path> AssertionError: assert (1 == 1 and 'claude-opus-5-5' in 'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a0373c8d70 が読めない（照合できない）\n')
+E   AssertionError: assert (1 == 1 and 'claude-opus-5-5' in 'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a06aea9fe0 が読めない（照合できない）\n')
+     +  where 1 = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a06aea9fe0 が読めない（照合できない）\n', stderr='').returncode
+     +  and   'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a06aea9fe0 が読めない（照合できない）\n' = CompletedProcess(args=['<path>, 'T1'], returncode=1, stdout='ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a06aea9fe0 が読めない（照合できない）\n', stderr='').stdout
+<path> AssertionError: assert (1 == 1 and 'claude-opus-5-5' in 'ERROR: autopilot-implementer の起動の記録 agent-a18ebc1a06aea9fe0 が読めない（照合できない）\n')
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+2028]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+2029]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_handoff_judges_the_model_of_a_row_after_a_line_separator[U+0085]
+3 failed in 3.03s
+
+# 出力の中の手元の絶対パスは <path> に伏せた（sed -E 's#(/private|/Users)/[^ '"'"',)]*#<path>#g'）

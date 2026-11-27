@@ -1,0 +1,210 @@
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_a_rollback_by_command_still_runs plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row -v --no-header -p no:cacheprovider --tb=line -rf
+============================= test session starts ==============================
+collecting ... collected 19 items
+
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2028] PASSED [  5%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2029] PASSED [ 10%]
+plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+0085] PASSED [ 15%]
+plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record PASSED [ 21%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[cut] PASSED [ 26%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[not-a-dict] PASSED [ 31%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[no-at] PASSED [ 36%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line PASSED [ 42%]
+plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human PASSED [ 47%]
+plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end PASSED [ 52%]
+plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable PASSED [ 57%]
+plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable PASSED [ 63%]
+plugins/spec-autopilot/tests/test_overnight.py::test_empty_await_rows_are_not_records PASSED [ 68%]
+plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_qa_takes_only_evidence_newer_than_the_record_file PASSED [ 73%]
+plugins/spec-autopilot/tests/test_rollback.py::test_with_an_unreadable_await_row_a_rollback_by_command_still_runs PASSED [ 78%]
+plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row[\u30c7\u30b9\u30af\u30c8\u30c3\u30d7-\u30de\u30fc\u30b8\u30fb\u30c7\u30d7\u30ed\u30a4\u30fbQA \u307e\u3067] PASSED [ 84%]
+plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row[\u30c7\u30b9\u30af\u30c8\u30c3\u30d7-\u30de\u30fc\u30b8\u307e\u3067] PASSED [ 89%]
+plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row[\u306a\u3057-\u30de\u30fc\u30b8\u30fb\u30c7\u30d7\u30ed\u30a4\u30fbQA \u307e\u3067] PASSED [ 94%]
+plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row[\u306a\u3057-\u30de\u30fc\u30b8\u307e\u3067] PASSED [100%]
+
+======================== 19 passed in 107.93s (0:01:47) ========================
+
+# base 側: 落ちるテストを足した commit 5ac8c3c（直しの前）。git worktree で 5ac8c3c を取り出した root で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted -q --no-header -p no:cacheprovider --tb=line -rf
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 0 == (2 + 1)
+     +  where 0 = <function failed_deploys at 0x10bb5c300>(PosixPath('<path>'), {'approved_at': 1.0, 'merges': [{'sha': 'm0'}, {'sha': 'm1'}, {'sha': 'm2'}]})
+     +    where <function failed_deploys at 0x10bb5c300> = <module 'overnight' from '<path>'>.failed_deploys
+     +  and   2 = <module 'overnight' from '<path>'>.MAX_DEPLOY_FIXES
+<path> AssertionError: assert 0 == (2 + 1)
+E   AssertionError: assert 0 == (2 + 1)
+     +  where 0 = <function failed_deploys at 0x10bb5c300>(PosixPath('<path>'), {'approved_at': 1.0, 'merges': [{'sha': 'm0'}, {'sha': 'm1'}, {'sha': 'm2'}]})
+     +    where <function failed_deploys at 0x10bb5c300> = <module 'overnight' from '<path>'>.failed_deploys
+     +  and   2 = <module 'overnight' from '<path>'>.MAX_DEPLOY_FIXES
+<path> AssertionError: assert 0 == (2 + 1)
+E   AssertionError: assert 0 == (2 + 1)
+     +  where 0 = <function failed_deploys at 0x10bb5c300>(PosixPath('<path>'), {'approved_at': 1.0, 'merges': [{'sha': 'm0'}, {'sha': 'm1'}, {'sha': 'm2'}]})
+     +    where <function failed_deploys at 0x10bb5c300> = <module 'overnight' from '<path>'>.failed_deploys
+     +  and   2 = <module 'overnight' from '<path>'>.MAX_DEPLOY_FIXES
+<path> AssertionError: assert 0 == (2 + 1)
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2028]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+2029]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_a_failed_deploy_row_with_a_line_separator_is_counted[U+0085]
+3 failed in 0.40s
+
+# base 側: 落ちるテストを足した commit 6ead879（直しの前）。git worktree で 6ead879 を取り出した root で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line -q --no-header -p no:cacheprovider --tb=line -rf
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+E   assert ('{"kind": "de...l": ["job0"]}' == '{"kind": "de...": "m0", "res'
+      
+      - {"kind": "deploy", "sha": "m0", "res
+      + {"kind": "deploy", "sha": "m0", "res{"kind": "ci", "pr": 7, "sha": "h7", "result": "success", "started_at": 1795741731.9030359, "at": 1795741731.940259, "detail": ["job0"]})
+<path> assert ('{"kind": "de...l": ["job0"]}' == '{"kind": "de...": "m0", "res'
+E   Failed: DID NOT RAISE ValueError
+<path> Failed: DID NOT RAISE ValueError
+E   Failed: DID NOT RAISE ValueError
+<path> Failed: DID NOT RAISE ValueError
+E   Failed: DID NOT RAISE ValueError
+<path> Failed: DID NOT RAISE ValueError
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_await_starts_a_new_line_after_a_cut_record
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[cut]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[not-a-dict]
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_with_the_file_and_line[no-at]
+4 failed in 1.14s
+
+# base 側: 落ちるテストを足した commit 4974ce3（直しの前）。git worktree で 4974ce3 を取り出した root で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human -q --no-header -p no:cacheprovider --tb=line -rf
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'awaits\\.jsonl:2 '
+      Actual message: "'utf-8' codec can't decode byte 0xe5 in position 180: invalid continuation byte"
+<path> AssertionError: Regex pattern did not match.
+E   AssertionError: Traceback (most recent call last):
+        File "<path>, line 1526, in <module>
+          sys.exit(main())
+                   ~~~~^^
+        File "<path>, line 1522, in main
+          return (globals().get(f"cmd_{a.cmd}") or __import__(a.cmd).cmd)(a)  # cmd_ の無い subcommand は同名の module の cmd
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+        File "<path>, line 1056, in cmd_block
+          gate = __import__("overnight").production_errors(d, s, done=False)
+        File "<path>, line 425, in production_errors
+          prod = production(d, s)
+        File "<path>, line 382, in production
+          events += [(a["at"], "deploy", a) for a in awaits(d, s) if a.get("kind") == "deploy" and a.get("sha") in at_of]
+                                                     ~~~~~~^^^^^^
+        File "<path>, line 650, in awaits
+          return [r for r in _awaits(d) if r["at"] > since]
+                             ~~~~~~~^^^
+        File "<path>, line 667, in _awaits
+          raise ValueError(f"{f}:{n} の待ちの記録が読めない。その行を直すか消してから続ける")
+      ValueError: <path> の待ちの記録が読めない。その行を直すか消してから続ける
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['<path> の待ちの記録が読めない。その行を直すか消してから続ける\n').returncode
+<path> AssertionError: Traceback (most recent call last):
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_await_row_cut_inside_a_multibyte_character_stops_with_the_file_and_line
+FAILED plugins/spec-autopilot/tests/test_overnight.py::test_an_unreadable_await_row_stops_check_and_the_stop_hook_but_block_hands_it_to_the_human
+2 failed in 2.48s
+
+# base 側: 落ちるテストを足した commit 684d387（直しの前）。git worktree で 684d387 を取り出した root で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end -q --no-header -p no:cacheprovider --tb=line -rf
+F                                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert (1 != 0 and 'awaits.jsonl:' in ('' + '本番が良くない: <path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n') and 'ロールバック' in ('' + '本番が良くない: <path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n'))
+     +  where 1 = CompletedProcess(args=['<path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n').returncode
+     +  and   '' = CompletedProcess(args=['<path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n').stdout
+     +  and   '本番が良くない: <path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n' = CompletedProcess(args=['<path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n').stderr
+     +  and   '' = CompletedProcess(args=['<path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n').stdout
+     +  and   '本番が良くない: <path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n' = CompletedProcess(args=['<path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n').stderr
+<path> AssertionError: assert (1 != 0 and 'awaits.jsonl:' in ('' + '本番が良くない: <path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n') and 'ロールバック' in ('' + '本番が良くない: <path> が消すと数え漏れる）。autopilot.py block --no-rollback で理由を書いて人に示す。戻してから block するか、戻せない理由を --no-rollback で書く（朝の報告の先頭に出る）\n'))
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end
+1 failed in 2.45s
+
+# base 側: 朝の報告の done の分岐の前（1ee5e70）のコードに tip のテストのファイルを置いて回す（git worktree で 1ee5e70 を取り出し、plugins/spec-autopilot/tests/test_rollback.py を tip のものに替えた root）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable -q --no-header -p no:cacheprovider --tb=line -rf
+F                                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert (['- R1: done（core.test.js::clears a full line）。マージ: PR 7。直した欠陥 0。積んだ操作: なし', '- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: PR 7。直した欠陥 0。積んだ操作: なし'] and not True)
+     +  where True = any(<generator object test_the_report_does_not_say_done_while_an_await_row_is_unreadable.<locals>.<genexpr> at 0x109019cb0>)
+<path> AssertionError: assert (['- R1: done（core.test.js::clears a full line）。マージ: PR 7。直した欠陥 0。積んだ操作: なし', '- R2: done（cmd: playwright でEnterを押し盤面が空になった）。マージ: PR 7。直した欠陥 0。積んだ操作: なし'] and not True)
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_the_report_does_not_say_done_while_an_await_row_is_unreadable
+1 failed in 5.36s
+
+# base 側: 落ちるテストを足した commit 477d198（直しの前）で回す
+# （このテストの assert は、この後の commit で 3 つの count の形に強めた。tip の形の base の出力は、後ろの節にある）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable -q --no-header -p no:cacheprovider --tb=line -rf
+F                                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert ('block: R2' in '2026-11-27-game: blocked。<path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし' and 2 == 1)
+     +  where 2 = <built-in method count of str object at 0x7525d7c800>('awaits.jsonl:')
+     +    where <built-in method count of str object at 0x7525d7c800> = '2026-11-27-game: blocked。<path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし'.count
+----------------------------- Captured stdout call -----------------------------
+NOTE: Slack の MCP で自分宛ての DM に送る: 2026-11-27-game: blocked。<path> の待ちの記録が読めないので、数えずに止める。行は人が直すか消す（agent が消すと数え漏れる）。autopilot.py block で人に示す（本番が良くないと断られたら、先に戻すか、戻せない理由を --no-rollback に書く）
+本番: 待ちの記録が読めないので分からない
+人の判断を待つもの: <path> の待ちの記録が読めないので、数えずに止める。行は人が直すか消す（agent が消すと数え漏れる）。autopilot.py block で人に示す（本番が良くないと断られたら、先に戻すか、戻せない理由を --no-rollback に書く）、本番を戻していない: z、block: R2（x）
+- R1: 確かめていない（待ちの記録が読めない）（core.test.js::clears a full line）。マージ: PR 7。直した欠陥 0。積んだ操作: なし
+- R2: 確かめていない（待ちの記録が読めない）（cmd: playwright でEnterを押し盤面が空になった）。マージ: PR 7。直した欠陥 0。積んだ操作: なし
+- 範囲: マージ・デプロイ・QA まで。マージ: PR 7
+- 待ち: 1 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+<path> AssertionError: assert ('block: R2' in '2026-11-27-game: blocked。<path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし' and 2 == 1)
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable
+1 failed in 2.90s
+
+# base 側: 落ちるテストを足した commit ead8b01（直しの前）で回す
+# test_a_desktop_note_names_the_unreadable_await_row は後の commit で test_a_note_that_is_not_a_dm_names_the_unreadable_await_row に改名し、範囲と通知の先の 4 通りにした。tip の形での base の出力は 68eacc5 の節
+$ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable plugins/spec-autopilot/tests/test_rollback.py::test_a_desktop_note_names_the_unreadable_await_row -q --no-header -p no:cacheprovider --tb=line -rf
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert (1 == 1 and 1 == 1 and 2 == 1)
+     +  where 1 = <built-in method count of str object at 0x7b4df18c00>('block: R2')
+     +    where <built-in method count of str object at 0x7b4df18c00> = '2026-11-27-game: blocked。本番: 待ちの記録が読めないので分からない\n本番: 待ちの記録が読めないので分からない\n人の判断を待つもの: <path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし'.count
+     +  and   1 = <built-in method count of str object at 0x7b4df18c00>('awaits.jsonl:')
+     +    where <built-in method count of str object at 0x7b4df18c00> = '2026-11-27-game: blocked。本番: 待ちの記録が読めないので分からない\n本番: 待ちの記録が読めないので分からない\n人の判断を待つもの: <path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし'.count
+     +  and   2 = <built-in method count of str object at 0x7b4df18c00>('本番:')
+     +    where <built-in method count of str object at 0x7b4df18c00> = '2026-11-27-game: blocked。本番: 待ちの記録が読めないので分からない\n本番: 待ちの記録が読めないので分からない\n人の判断を待つもの: <path> PR 7。直した欠陥 0。積んだ操作: なし\n- 範囲: マージ・デプロイ・QA まで。マージ: PR 7\n- 待ち: 1 回（通らなかった 0 回）\n- 積んだ操作: 0 件。異常: なし'.count
+----------------------------- Captured stdout call -----------------------------
+NOTE: Slack の MCP で自分宛ての DM に送る: 2026-11-27-game: blocked。本番: 待ちの記録が読めないので分からない
+本番: 待ちの記録が読めないので分からない
+人の判断を待つもの: <path> の待ちの記録が読めないので、数えずに止める。行は人が直すか消す（agent が消すと数え漏れる）。autopilot.py block で人に示す（本番が良くないと断られたら、先に戻すか、戻せない理由を --no-rollback に書く）、本番を戻していない: z、block: R2（x）
+- R1: 確かめていない（待ちの記録が読めない）（core.test.js::clears a full line）。マージ: PR 7。直した欠陥 0。積んだ操作: なし
+- R2: 確かめていない（待ちの記録が読めない）（cmd: playwright でEnterを押し盤面が空になった）。マージ: PR 7。直した欠陥 0。積んだ操作: なし
+- 範囲: マージ・デプロイ・QA まで。マージ: PR 7
+- 待ち: 1 回（通らなかった 0 回）
+- 積んだ操作: 0 件。異常: なし
+<path> AssertionError: assert (1 == 1 and 1 == 1 and 2 == 1)
+E   AssertionError: assert (0 == 1)
+     +  where 0 = <built-in method count of str object at 0x10b12baf0>('awaits.jsonl:2 ')
+     +    where <built-in method count of str object at 0x10b12baf0> = '2026-11-27-game: building。本番: 待ちの記録が読めないので分からない'.count
+<path> AssertionError: assert (0 == 1)
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_a_desktop_note_names_the_unreadable_await_row
+2 failed in 105.45s (0:01:45)
+
+# base 側: 落ちるテストを足した commit 68eacc5（直しの前）で回す（範囲が「マージまで」の 2 通りが落ちる）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row -q --no-header -p no:cacheprovider --tb=line -rf
+.F.F                                                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert (0 == 1)
+     +  where 0 = len([])
+     +    where [] = <built-in method findall of re.Pattern object at 0x10b523880>('2026-11-27-game: building。本番: デプロイなし')
+     +      where <built-in method findall of re.Pattern object at 0x10b523880> = re.compile('awaits\\.jsonl:\\d+ ').findall
+<path> AssertionError: assert (0 == 1)
+E   AssertionError: assert (0 == 1)
+     +  where 0 = len([])
+     +    where [] = <built-in method findall of re.Pattern object at 0x10b523880>('2026-11-27-game: building。本番: デプロイなし')
+     +      where <built-in method findall of re.Pattern object at 0x10b523880> = re.compile('awaits\\.jsonl:\\d+ ').findall
+<path> AssertionError: assert (0 == 1)
+=========================== short test summary info ============================
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row[\u30c7\u30b9\u30af\u30c8\u30c3\u30d7-\u30de\u30fc\u30b8\u307e\u3067]
+FAILED plugins/spec-autopilot/tests/test_rollback.py::test_a_note_that_is_not_a_dm_names_the_unreadable_await_row[\u306a\u3057-\u30de\u30fc\u30b8\u307e\u3067]
+2 failed, 2 passed in 23.77s
+
+# pytest が長い repr を省いた印（...）は、前後のパスと一緒に <path> に含まれることがある。判定には効かない
+# 出力の中の手元の絶対パスは <path> に伏せた（sed -E 's#(/private|/Users)/[^ '"'"',)]*#<path>#g'）

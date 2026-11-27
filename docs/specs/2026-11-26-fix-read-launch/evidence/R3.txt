@@ -1,0 +1,15 @@
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator -v --no-header -p no:cacheprovider --tb=line -rf
+============================= test session starts ==============================
+collecting ... collected 2 items
+
+plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED [ 50%]
+plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator PASSED [100%]
+
+============================== 2 passed in 4.27s ===============================
+
+# base 側: 落ちるテストを足した commit e29f063（直しの前）。git worktree で e29f063 を取り出した root で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_overnight.py::test_handoff_still_refuses_a_cut_line_in_a_record_with_a_line_separator plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_still_refuses_a_cut_line_in_a_record_with_a_line_separator -q --no-header -p no:cacheprovider --tb=line -rf
+..                                                                       [100%]
+2 passed in 2.31s
+
+# 出力の中の手元の絶対パスは <path> に伏せた（sed -E 's#(/private|/Users)/[^ '"'"',)]*#<path>#g'）
