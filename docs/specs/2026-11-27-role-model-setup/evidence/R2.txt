@@ -1,0 +1,20 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h1 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --impl haiku
+受けない段: 実装 の段「haiku」
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable
+評価: 受ける段 opus-high・opus-xhigh・fable
+(exit 1)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h1 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --review sonnet-high
+受けない段: 評価 の段「sonnet-high」
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable
+評価: 受ける段 opus-high・opus-xhigh・fable
+(exit 1)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h1 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup
+--impl か --review か --reset を渡す
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable
+評価: 受ける段 opus-high・opus-xhigh・fable
+(exit 1)
+$ cat <repo>/.autopilot-qa/tmp/h1/models.md
+- 実装: opus-medium
+- 評価: opus-xhigh
+（打つ前と同じバイト列。変異 .autopilot-qa/mut-R2-1.patch〔`if not given or bad:` → `if not given:`〕で plugins/spec-autopilot/tests/test_ladder_setup.py::test_setup_refuses_a_rung_it_does_not_take_and_leaves_models_md は 6 failed〔AssertionError: assert 0 != 0〕、戻した後 7 passed）

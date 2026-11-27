@@ -1,0 +1,27 @@
+- commit: 475a8f081b13ba36fba46fd5c517f936fc275097
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h5 python3 '<repo>/plugins/spec-autopilot/scripts/ladder.py' setup --impl opus-medium --review opus-xhigh
+書いた: <repo>/.autopilot-qa/tmp/h5/models.md
+- 実装: opus-medium
+- 評価: opus-xhigh
+(exit 0)
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h5 python3 '<repo>/plugins/spec-autopilot/scripts/autopilot.py' init game
+<repo>/.autopilot-qa/tmp/repo5/docs/specs/2026-11-27-game
+NOTE: 手元の設定 <repo>/.autopilot-qa/tmp/h5/models.md の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: - 実装: opus-medium / - 評価: opus-xhigh
+(exit 0)
+## モデル の節:
+<!-- 書かなければ既定（実装 sonnet-high・評価 opus-high）。始めから上げる役だけ書く。実装: sonnet-high・opus-medium・opus-xhigh・fable、評価: opus-high・opus-xhigh・fable（評価は既定より下げない） -->
+- 実装: opus-medium
+- 評価: opus-xhigh
+
+$ SPEC_AUTOPILOT_HOME=<repo>/.autopilot-qa/tmp/h5 python3 '<repo>/plugins/spec-autopilot/scripts/autopilot.py' lint '<repo>/.autopilot-qa/tmp/repo5/docs/specs/2026-11-27-game'
+ERROR: 要件が無い（「## 要件」に `- R1: ...` の形で書く）
+ERROR: 予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）
+ERROR: 「## 前提」を書く（目的に届くか・運用・普通のやり方・過去・既存の振る舞いについての前提）
+ERROR: 大きさの行の形が読めない（`- 大きさ: <S|M|L>` だけを書く）: - 大きさ: <S|M>
+ERROR: `- playbook:` の「<名前>[」が読めない。（略）
+ERROR: `- playbook:` の「<名前>]」が読めない。（略）
+ERROR: 「## QA の方向性」の表に段の列が無い（`| 要件 | 段 | 確かめ方 | 合格基準 |`。段は 手元で実物・デプロイ後・代役）
+ERROR: 範囲が「マージ・デプロイ・QA まで」なので `- QA の書き込み先:` を書く
+ERROR: 範囲が「マージ・デプロイ・QA まで」なので `- デプロイの確かめ:` を書く
+(exit 1)
+（雛形のままの欄の ERROR だけで、モデルの節の ERROR は出ない）
