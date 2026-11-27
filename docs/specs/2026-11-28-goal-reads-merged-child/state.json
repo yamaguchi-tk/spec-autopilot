@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "goal-reads-merged-child",
   "created_at": 1795801549.299603,
   "existing": true,
   "start": "4a2edcf0820d23f399f39b0df33bb535bae5fda8",
-  "last_active_at": 1795803154.075017,
+  "last_active_at": 1795803502.6072252,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795802221.071851,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 12）。人は目的の spec を「まとめて承認」「夜なのでできるだけ確認せずに自走して」で承認済み",
@@ -86,5 +86,22 @@
       "dispatch": 1,
       "at": 1795802833.948975
     }
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 107,
+      "at": 1795803502.350898,
+      "sha": "aff73f4d514344093a38b34dae36343f3bffc4bd",
+      "head": "45c12a4d0854201ecc152aa6c68d78947a6bde58"
+    }
+  ],
+  "merged_at": 1795803502.3509,
+  "paused_at_merge": 0.0,
+  "done_at": 1795803502.563017,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
