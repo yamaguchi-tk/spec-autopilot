@@ -8,22 +8,24 @@
 観測: 評価役が返った後に state を commit すると、証拠の頭の `- commit:` が `CLI review` の記録した巡の tip と合わず、check が止まった。違いは state.json の 1 行だけだった。できあがったら、spec の置き場の中だけの commit が挟まっても、評価役を回し直さずに check が通る。
 
 ## 要件
-- R1: 段が手元で実物の要件の証拠（evidence/R<n>.txt）の頭の `- commit:` が、その要件の証拠として数えてよい評価役の巡（最後に high になった巡より後の巡）の sha のどれとも一致しないとき、`- commit:` の commit とその巡の sha の間で spec の置き場（docs/specs と docs/adr）の外のファイルが同じなら、`CLI check` はその証拠をその巡のものとして数える。外が違うか、git で比べられない（commit が無い・読めない）なら、今までどおり「評価役の巡の tip でない」で落とす。
+- R1: 段が手元で実物の要件の証拠（evidence/R<n>.txt）の頭の `- commit:` が、その要件の証拠として数えてよい評価役の巡（最後に high になった巡より後の巡）の sha のどれとも一致しないとき、`- commit:` の commit とその巡の sha の間で spec の置き場（docs/specs と docs/adr）の外のファイルが同じなら、`CLI check` はその証拠をその巡のものとして数える。`- commit:` の値が 7〜40 桁の 16 進でなければ、git に渡さずに今までどおり落とす。外が違うか、git で比べられない（commit が無い・読めない）なら、今までどおり「評価役の巡の tip でない」で落とす。
 
 ## 非目標
 - 証拠が書かれた時刻の条件（最後の high の巡か承認より後）を緩めること
 - デプロイ後の要件の証拠（`- commit:` が最後のマージの sha）の照合を変えること
 - 評価役が書く `- commit:` の値を変えること（評価役の定義には触れない）
 - 版数を上げること（マージの後に版数だけの PR で上げる）
+- commands/autopilot.md:95 の「巡の tip の出力だけを数える」の括弧を直すこと（main と評価役が頭に書く値は今までどおり巡の tip で、手順の指示は変わらない。手順の文は兄弟の子 2 の spec が同じファイルを直すので、そちらと衝突させない）
 
 ## 影響範囲
-- 変える: plugins/spec-autopilot/scripts/stages.py:104-147（checked_in_review、check）
+- 変える: plugins/spec-autopilot/scripts/stages.py（全体）
+  - メモ: 104-147 の checked_in_review と check、8 行目のモジュールの docstring（「評価役の巡の tip のものだけを数える」を、置き場の外が同じ commit も数える文に直す）
 - 呼び出し元: plugins/spec-autopilot/scripts/deploy.py:301-312
   - メモ: stage_errors が stages.check を呼ぶ。repo の root は check の中で autopilot.repo_root(d) から取り、呼び出しの引数は変えない
-- 手本: plugins/spec-autopilot/scripts/carry.py:11-19
+- 手本: plugins/spec-autopilot/scripts/carry.py:7-21
   - メモ: same_outside と同じ pathspec（carry.OUTSIDE）で、git が 0 で終わったときだけ同じとみなす
-- 変える: plugins/spec-autopilot/tests/test_stages.py:98-108（test_a_real_run_output_from_a_failed_round_is_refused）
-  - メモ: 既存のテストは変えず、同じファイルに spec の置き場の中だけの commit と外の commit の 2 つの場合を足す
+- 変える: plugins/spec-autopilot/tests/test_stages.py（全体）
+  - メモ: 既存のテストは変えず、置き場の中だけの commit・外を変えた commit・存在しない sha・16 進でない値（`--output=x` など）の場合のテストを足す
 - 同じ入力: reviews
   - メモ: overnight.py の review_gate と autopilot.py の review が同じ記録を書く・読む。この spec は読み方だけを変える
 - 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_merge_qa.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_rollback.py -q -n auto
@@ -42,16 +44,18 @@
   - path: plugins/spec-autopilot/scripts/stages.py:104-116
 - 前提: `CLI review` は、review_gate が返した tip を巡の sha として記録する
   - path: plugins/spec-autopilot/scripts/autopilot.py:1259-1266
+- 前提: 証拠の頭の `- commit:` の値は、評価役（起動の prompt が渡した tip）か main が書く文字列で、check は形を検査していない（sha の形とは限らない）
+  - path: plugins/spec-autopilot/agents/autopilot-reviewer.md:16、plugins/spec-autopilot/scripts/stages.py:108-116
 - 前提: stages.check の呼び出し元は deploy.py の stage_errors だけ
   - コマンド: `grep -rn "stages.check(" plugins/spec-autopilot/scripts` → deploy.py:306 の 1 件
 
 ## 作り方
-この spec の ADR のとおり。stages.py の checked_in_review に repo の root を渡し、数えてよい巡の sha のどれかと文字列で一致しなければ、`git diff --quiet <commit> <sha> -- <carry.OUTSIDE>` が 0 で終わる巡があるかを見る。check は root を autopilot.repo_root(d) で取って渡す。git が 0 以外で終わる・例外は「同じでない」とする。
+この spec の ADR のとおり。stages.py の checked_in_review に repo の root を渡し、数えてよい巡の sha のどれかと文字列で一致しなければ、`git diff --quiet <commit> <sha> -- <carry.OUTSIDE>` が 0 で終わる巡があるかを見る。check は root を autopilot.repo_root(d) で取って渡す。`- commit:` の値は 7〜40 桁の 16 進だけを git に渡し（`--` で pathspec と分ける）、git が 0 以外で終わる・例外は「同じでない」とする。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |
 |---|---|---|---|
-| R1 | 手元で実物 | 一時の git repo で spec を承認・実装・review まで進め、証拠の頭を review の tip にしたうえで、spec の置き場の中だけを commit し、証拠の頭をその新しい commit に書き直して `CLI check` を回す。spec の外を 1 行変えた commit を頭にした場合と、存在しない sha を頭にした場合も回す | 置き場の中だけの場合は check が R1 の証拠を通し（終了コード 0）、外を変えた場合と存在しない sha の場合は「評価役の巡の tip でない」で落ちる |
+| R1 | 手元で実物 | 一時の git repo で spec を承認・実装・review まで進め、証拠の頭を review の tip にしたうえで、spec の置き場の中だけを commit し、証拠の頭をその新しい commit に書き直して `CLI check` を回す。spec の外を 1 行変えた commit を頭にした場合、存在しない sha を頭にした場合、`--output=<一時のパス>` を頭にした場合も回す | 置き場の中だけの場合は check が R1 の証拠を通し（終了コード 0）、外を変えた場合・存在しない sha・16 進でない値の場合は「評価役の巡の tip でない」で落ちる |
 
 ## 制約
 - 予算: 45 分
@@ -59,6 +63,7 @@
 - playbook: bug-fix
 - 親 spec: 2026-11-27-flow-review-goal
 - 親の要件: R3
+- 想定する脅威: 評価役（外の内容を読む LLM）が証拠の頭に書いた値が、git の option として読まれてファイルを書く・別の ref を指して、コードの違う巡の証拠を通す
 
 ## モデル
 
