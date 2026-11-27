@@ -1051,14 +1051,22 @@ def test_with_an_unreadable_await_row_a_rollback_by_command_still_runs(repo, gh,
 
 
 def test_the_report_does_not_say_done_while_an_await_row_is_unreadable(repo, gh, tmp_path):
-    """読めない行があるときの朝の報告は、pass の要件も done と書かない（消えた待ちの記録に積んだ段が入っていたかもしれない）。
-    Slack の DM の知らせにも、その報告の行を載せる。"""
+    """読めない行があるときの朝の報告は、pass の要件も done と書かない（消えた待ちの記録に積んだ段が入っていたかもしれない）。"""
+    d = full_spec(repo)
+    broken(repo, gh, d, tmp_path)
+    assert any(x.startswith("- R1: done") for x in night(repo, "report", str(d)).stdout.splitlines())  # 読めるうちは done
+    cut_await_row(d)
+    assert run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y", "--no-rollback", "z").returncode == 0
+    reqs = [x for x in night(repo, "report", str(d)).stdout.splitlines() if x.startswith("- R")]
+    assert reqs and not any(": done" in x for x in reqs) and any("待ちの記録が読めない" in x for x in reqs)
+
+
+def test_the_slack_note_carries_the_report_while_an_await_row_is_unreadable(repo, gh, tmp_path):
+    """読めない行があるときも、Slack の DM の知らせに朝の報告の行（block の理由と読めない行）を 1 回ずつ載せる。"""
     d = full_spec(repo, **{"通知": "Slack の DM"})
     broken(repo, gh, d, tmp_path)
     cut_await_row(d)
     assert run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y", "--no-rollback", "z").returncode == 0
-    out = night(repo, "report", str(d)).stdout
-    reqs = [x for x in out.splitlines() if x.startswith("- R")]
-    assert reqs and not any(": done" in x for x in reqs) and any("待ちの記録が読めない" in x for x in reqs)
-    note = night(repo, "notify", str(d)).stdout
-    assert "block: R2" in note and "awaits.jsonl:" in note
+    import overnight
+    note = overnight.notify(d)  # 知らせの 1 通（cmd_notify は NOTE の行と、この 1 通を続けて出す）
+    assert "block: R2" in note and note.count("awaits.jsonl:") == 1
