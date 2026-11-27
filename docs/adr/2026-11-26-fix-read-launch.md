@@ -19,7 +19,7 @@
 ## Consequences
 - split-transcript は pull まで blocked のまま
 - 割り方の正本が transcript_lines と別に 2 か所残る（split-transcript の後に別の spec でまとめる）
-- awaits.jsonl に切れた行が 1 行でも残ると、人がその行を直すか消すまで、その spec の待ちの記録を読む判定（check・ready・Stop hook。Stop hook は予算の 2 倍の弁にも届かない）は止まる。agent が行を消すと数え漏れるので、agent は `autopilot.py block` で人に戻す。本番の判定に効く spec（範囲が「マージ・デプロイ・QA まで」でデプロイ後の要件がある）では、production_errors が読めない記録を「本番が良くない」として返すので、マージの後なら先にロールバックを促し、block は --no-rollback の理由を求め、wait・hold は断る。壊れた本番の戻し（ready --rollback・merged --rollback・deploy の待ち・qa --smoke・rolled-back）と朝の報告は回る（3 巡目の独立レビューの high で、戻しまで止めるのはロールバックの手順を壊すので直した）。Stop hook の文は例外の型名（UnreadableAwaits）だけなので、行番号は CLI を回して見る
+- awaits.jsonl に切れた行が 1 行でも残ると、人がその行を直すか消すまで、その spec の待ちの記録を読む判定（check・ready・dispatch・agent・status・Stop hook。Stop hook は予算の 2 倍の弁にも届かない）は止まる。agent が行を消すと数え漏れるので、agent は `autopilot.py block` で人に戻す。本番の判定に効く spec（範囲が「マージ・デプロイ・QA まで」でデプロイ後の要件がある）では、production_errors が読めない記録を「本番が良くない」として返すので、マージの後なら先にロールバックを促し、block は --no-rollback の理由を求め、wait・hold は断る。壊れた本番の戻し（ready --rollback・merged --rollback・deploy の待ち・qa --smoke・rolled-back）と朝の報告は回る（朝の報告は、読めない間は pass の要件も done と書かない。読めない行は ci や review の記録だったかもしれないが、マージの後は戻す側に倒す）（3 巡目の独立レビューの high で、戻しまで止めるのはロールバックの手順を壊すので直した）。Stop hook の文は例外の型名（UnreadableAwaits）だけなので、行番号は CLI を回して見る
 - 書き手が書いている途中に読むと、書きかけの末尾の行で一時的に止まりうる（次の判定で消える。頻度は測っていない）
 
 ## pre-pr-review の範囲

@@ -1,4 +1,4 @@
-$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -v --no-header -p no:cacheprovider
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -v --no-header -p no:cacheprovider --tb=line -rf
 ============================= test session starts ==============================
 collecting ... collected 3 items
 
@@ -6,11 +6,31 @@ plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_r
 plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+2029] PASSED [ 66%]
 plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+0085] PASSED [100%]
 
-============================== 3 passed in 7.03s ===============================
+============================== 3 passed in 3.30s ===============================
 
-# base 側: 落ちるテストを足した commit e29f063（直しの前）で回す
-$ git checkout e29f063 && python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -q --no-header -p no:cacheprovider
+# base 側: 落ちるテストを足した commit e29f063（直しの前）。git worktree で e29f063 を取り出した root で回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator -q --no-header -p no:cacheprovider --tb=line -rf
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: ERROR: agent-a18ebc1959f70b430 の記録が読めない
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['<path>', '--by', '前提を直した', '--by-advisor'], returncode=1, stdout='ERROR: agent-a18ebc1959f70b430 の記録が読めない\n', stderr='').returncode
+<path> AssertionError: ERROR: agent-a18ebc1959f70b430 の記録が読めない
+E   AssertionError: ERROR: agent-a18ebc195da640718 の記録が読めない
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['<path>', '--by', '前提を直した', '--by-advisor'], returncode=1, stdout='ERROR: agent-a18ebc195da640718 の記録が読めない\n', stderr='').returncode
+<path> AssertionError: ERROR: agent-a18ebc195da640718 の記録が読めない
+E   AssertionError: ERROR: agent-a18ebc19611b7e450 の記録が読めない
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['<path>', '--by', '前提を直した', '--by-advisor'], returncode=1, stdout='ERROR: agent-a18ebc19611b7e450 の記録が読めない\n', stderr='').returncode
+<path> AssertionError: ERROR: agent-a18ebc19611b7e450 の記録が読めない
+=========================== short test summary info ============================
 FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+2028]
 FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+2029]
 FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_reads_a_record_whose_tool_result_holds_a_line_separator[U+0085]
-3 failed in 7.84s
+3 failed in 3.14s
+
+# 出力の中の手元の絶対パスは <path> に伏せた（sed -E 's#(/private|/Users)/[^ '"'"',)]*#<path>#g'）
