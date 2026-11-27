@@ -1,0 +1,12 @@
+- commit: 6b131861756e36062feee40451c3e8c5484bee06
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+
+（R4 の検査: hook の ADVISE が「相談役は main の代わりに選ぶ役ではなく、main が価値観で選んだ案が人の選びと同じかを確かめる役」「main の案を渡さず（案に寄らせないため）…推奨を先に出させる」を持つ。agents/fable-advisor.md の description と本文（守ること の前の段落・ユーザーの価値観 の節）が同じ役を書き、案を見る前に推奨を決め、渡されても寄らないと書く。旧い「ユーザーならどの案を選ぶかの代わり」は残っていない。README の表の fable-advisor の行が同じ役と「main の案を見る前に推奨を出します」を書く）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_rootcause.py plugins/spec-autopilot/tests/test_consent_adr.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py -q -n auto
+580 passed in 62.24s (0:01:02)

@@ -1,0 +1,13 @@
+- commit: 6b131861756e36062feee40451c3e8c5484bee06
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+
+（R1 の検査: SessionStart の hook を一時の repo で回した ADVISE と、autopilot.md の A の 4・C の冒頭・人に戻るときが、価値観を読む手順・反する案を並べない文・`- 価値観で退けた:` の行・数合わせをしない文を持つ。A の 4 で価値観を読むのは「2〜3 個」より前。人に戻るときは「価値観に反する案（例: 依頼を縮める「要件を狭めて承認する」）は並べず」と書き、夜の場面の「狭めて承認する」は選択肢に並ばない。rootcause.check は `- 価値観で退けた:` の行を段の `- 退けた:` として数えない）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_autopilot.py::test_session_start_advisor_rule_reads_values_first_and_proceeds_when_one_option_is_left -q
+.
+1 passed
