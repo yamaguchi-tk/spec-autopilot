@@ -1,14 +1,23 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "goal-reads-merged-child",
   "created_at": 1795801549.299603,
   "existing": true,
   "start": "4a2edcf0820d23f399f39b0df33bb535bae5fda8",
-  "last_active_at": 1795802221.072533,
+  "last_active_at": 1795802228.062818,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795802221.071851,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 12）。人は目的の spec を「まとめて承認」「夜なのでできるだけ確認せずに自走して」で承認済み",
   "spec_sha256": "13ace674e2c12ea8e151d142de07737ac3853576cbd1efce85b1a5d6ee59a79f",
-  "after": null
+  "after": null,
+  "approved_at": 1795802228.0626261,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
