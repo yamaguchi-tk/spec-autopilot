@@ -8,7 +8,7 @@
 観測: 子の done の state はマージの後に子のブランチへ commit され、main に入らない。main の作業ツリーにある子の state.json はマージの前（building）のままなので、親の `goal` は子を done と読めなかった。できあがったら、子を全部マージした後に、main の作業ツリーで `goal` を打てば親を閉じられる。
 
 ## 要件
-- R1: 目的の spec の子の state.json が今の作業ツリーで done でないとき、`CLI goal <親>` は、この repo のブランチのどれかで、同じ子のディレクトリの state.json が done で、その最後のマージの記録（PR の番号と commit）について、PR の記録で次の 6 つが確かめられれば、その子を done と読む: 記録の PR の番号が正の整数で、記録が戻し（rollback）でない、PR が MERGED で mergedAt がある、PR のマージの commit が記録の commit と同じ、PR の base が repo の既定のブランチ、PR の変更したファイルにその子のディレクトリの下のファイルがある。どれかが確かめられない（PR の記録が読めない・done の state が無い）子は、今までどおり作業ツリーの phase で読む。done と読んだ子の行には、読んだブランチと PR の番号を書く。
+- R1: 目的の spec の子の state.json が今の作業ツリーで done でないとき、`CLI goal <親>` は、この repo のブランチのどれかで、同じ子のディレクトリの state.json が done で、その最後のマージの記録（PR の番号と commit）について、PR の記録で次の 7 つが確かめられれば、その子を done と読む: 記録の PR の番号が正の整数で、記録が戻し（rollback）でない、PR が MERGED で mergedAt がある、PR のマージの commit が記録の commit と同じ、PR の base が repo の既定のブランチ、PR の head のブランチ名が done の state を読んだブランチの名前（remote-tracking なら remote の名前を除いたもの）と同じ、PR の変更したファイルにその子のディレクトリの下のファイルがある。どれかが確かめられない（PR の記録が読めない・done の state が無い）子は、今までどおり作業ツリーの phase で読む。done と読んだ子の行には、読んだブランチと PR の番号を書く。
 
 ## 非目標
 - 作業ツリーの子の state.json を書き換えること（goal は親の state だけを書く）
@@ -48,7 +48,7 @@
   - path: plugins/spec-autopilot/references/after-pr.md:21、plugins/spec-autopilot/references/after-pr.md:26
 
 ## 作り方
-この spec の ADR のとおり。merged_child.py に、子のディレクトリ（repo の root からの相対）を受け、`git for-each-ref refs/heads refs/remotes` の各 ref で `git show <ref>:<相対>/state.json` を読み、phase が done で merges の最後に pr と sha がある state を探す関数を置く。見つかれば `gh pr view <pr> --json state,mergedAt,mergeCommit,baseRefName,files` で条件を確かめ、通れば (ブランチ, PR) を返す。PR の番号は int で、真偽値・0 以下・文字列は git・gh に渡さずに「確かめられない」とする。最後のマージの記録が `rollback: true` なら「確かめられない」とする。base は `gh pr view` の baseRefName と `gh repo view --json defaultBranchRef` の名前を比べる。git・gh が失敗する・読めない・例外は「確かめられない」として None を返す。探す ref はローカルのブランチと remote-tracking のブランチ（`refs/heads`・`refs/remotes`）。goal.py の cover は、作業ツリーで done でない子にだけこれを当てる。
+この spec の ADR のとおり。merged_child.py に、子のディレクトリ（repo の root からの相対）を受け、`git for-each-ref refs/heads refs/remotes` の各 ref で `git show <ref>:<相対>/state.json` を読み、phase が done で merges の最後に pr と sha がある state を探す関数を置く。見つかれば `gh pr view <pr> --json state,mergedAt,mergeCommit,baseRefName,headRefName,files` で条件を確かめ、通れば (ブランチ, PR) を返す。PR の番号は int で、真偽値・0 以下・文字列は git・gh に渡さずに「確かめられない」とする。最後のマージの記録が `rollback: true` なら「確かめられない」とする。base は `gh pr view` の baseRefName と `gh repo view --json defaultBranchRef` の名前を比べる。git・gh が失敗する・読めない・例外は「確かめられない」として None を返す。探す ref はローカルのブランチと remote-tracking のブランチ（`refs/heads`・`refs/remotes`）。goal.py の cover は、作業ツリーで done でない子にだけこれを当てる。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |

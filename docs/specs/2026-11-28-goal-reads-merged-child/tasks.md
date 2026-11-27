@@ -2,4 +2,4 @@
 
 <!-- `- [ ] T1: <やること> [R1, R2]` の形。終えたら [x]。すべての要件をどれかのタスクが受け持つ -->
 
-- [ ] T1: merged_child.py に子のブランチの done の state を ref から探して gh でマージを確かめる関数を置き、goal.py の cover が作業ツリーで done でない子に当てて、表の行に読んだブランチと PR を出す。test_goal_merged.py に、両方マージ済み・未マージ・マージの commit 違い・子のディレクトリを変えていない PR・base が既定のブランチでない PR・整数でない PR の番号・rollback の記録・gh の失敗の場合のテストを足す [R1]
+- [ ] T1: merged_child.py に子のブランチの done の state を ref から探して gh でマージを確かめる関数を置き、goal.py の cover が作業ツリーで done でない子に当てて、表の行に読んだブランチと PR を出す。test_goal_merged.py に、両方マージ済み・未マージ・マージの commit 違い・子のディレクトリを変えていない PR・base が既定のブランチでない PR・head のブランチが読んだブランチと違う PR・整数でない PR の番号・rollback の記録・gh の失敗の場合のテストを足す [R1]
