@@ -1,0 +1,9 @@
+- commit: f77f152e40e470ee19c03abbc45ab1a944ca0823
+$ python3 .autopilot-qa/check.py
+  [R1] ok: dispatch の無い building の spec の評価役: decision=None launches=1
+  [R1] ok: handoff で閉じた後の評価役（相対パス・Task・fable）: decision=None launches 0->1
+  [R1] ok: spec の無い評価役: decision=None state 不変=True
+  [R1] ok: discovery の spec の評価役: decision=None state 不変=True
+  [R1] ok: 書けない building の spec の評価役: decision=None stderr='評価役の起動を記録できなかった（PermissionError）: <wt>/.autopilot-qa/work/r1ro/docs/specs/2026-11-27-game'
+  [R1 参考] 開いた dispatch の間の評価役: decision=None launches=0（記録しない設計）
+R1 pass
