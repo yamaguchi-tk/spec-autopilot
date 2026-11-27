@@ -1,4 +1,4 @@
-- commit: f5bd041
+- commit: 33fb694
 - 結果: pass（送信から試作の提示まで 7:20。試作の dispatch の時点で大きさは M）
 
 試走: 手元の一時のディレクトリの空の git repo（空の commit が 1 つ）で、tmux の中で claude --plugin-dir <この tip の plugins/spec-autopilot の写し> --model claude-sonnet-5-5 --permission-mode auto を起動し、spec の QA の方向性の依頼文を送った。写しは 14679c7 の git archive で、14679c7 から上の commit の tip まで plugins の差分は無い（git diff --stat 14679c7 HEAD -- plugins が空）。フォルダの信頼の確認は人が選び、時間は依頼文の送信から測った。下は入れ子の transcript から人の発言と main の文・試作の dispatch の時刻を抜き出した出力（UTC。手元のパスは伏せた）。
