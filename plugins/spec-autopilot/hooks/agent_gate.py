@@ -3,8 +3,8 @@
 PreToolUse hook。prompt に書かれた spec のディレクトリ（state.json があるもの）のうち、phase が building（または discovery で「## 制約」の大きさが S の試作）・最後の dispatch を
 閉じた handoff が無い・その dispatch の agent が起動する名前と同じ、の 3 つを満たすものが 1 つでもあれば何も出さない。
 無ければ、prompt に spec が無い・state.json が読めない・途中の例外も含めて deny する。
-評価役（autopilot-reviewer で始まる）の起動は、prompt に書かれた building の spec で最後の dispatch が handoff で閉じている（無いのを含む）ものの state.json の review_launches に時刻を足して通す
-（読めない spec・開いた dispatch の間は残さずに通す。書けなかったときは stderr に 1 行出して通す）。
+評価役（autopilot-reviewer で始まる）の起動は、prompt に書かれた building の spec で review を記録できる（overnight.review_gate が通る）ものの state.json の review_launches に時刻を足して通す
+（読めない spec・review を記録できない間は残さずに通す。書けなかったときは stderr に 1 行出して通す）。
 実装役は、最後の評価役の起動より後に review の記録が無い spec も通さない（評価役の結果を記録してから起動し直す）。
 想定するのは事故（dispatch の打ち忘れ・評価役の結果の記録の抜け）で、prompt に別の spec を書く・state.json を書き換える形は想定しない。
 答えを出さずに終わった（import の失敗・終了コード 0 以外）ときの deny は、hooks.json の command が出す。"""
@@ -107,15 +107,13 @@ def problem(d, name):
 
 def record_review_launch(d):
     """building の spec の review_launches に今の時刻を足す（書く直前に読み直す）。
-    最後の dispatch が handoff で閉じている（dispatch が無いのを含む）ときだけ残す。開いた dispatch の間の起動は数えない（review を記録できず抜けられなくなる）。
+    review が記録を受ける状態（overnight.review_gate が通る）のときだけ残す。それ以外の起動は数えない（review を記録できず抜けられなくなる）。
     読めない・building でない spec は何も残さず通す。書けなかったときは、例外の型と spec のディレクトリを stderr に 1 行出して通す。"""
     try:
         s = autopilot.load_state(d)
+        if s.get("phase") != "building" or overnight.review_gate(d, s)[0] is not None:
+            return
     except Exception:
-        return
-    dispatches = s.get("dispatches") or []
-    closed = not dispatches or any(h.get("dispatch") == len(dispatches) - 1 for h in s.get("handoffs") or [])
-    if s.get("phase") != "building" or not closed:
         return
     try:
         s.setdefault("review_launches", []).append(time.time())

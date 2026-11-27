@@ -110,8 +110,16 @@ def test_gate_stays_silent_for_an_agent_that_is_not_an_implementer(repo):
     assert decision(fire(repo, "x", agent="general-purpose")) is None
 
 
-def test_gate_records_a_reviewer_launch_in_the_building_spec_and_allows_it(repo):
+def closed(repo):
+    """最後の dispatch を今の HEAD の handoff で閉じた building の spec（review を記録できる状態）。"""
     d = building(repo)
+    (d / "tasks.md").write_text("# タスク\n\n- [x] T1: 規則 [R1, R2]\n", encoding="utf-8")  # handoff は終えたタスクだけ閉じる
+    hand_off(repo, d)
+    return d
+
+
+def test_gate_records_a_reviewer_launch_in_the_building_spec_and_allows_it(repo):
+    d = closed(repo)
     assert not state(d).get("review_launches")
     before = time.time()
     assert decision(fire(repo, f"spec: {d}。base..tip を評価して", agent=REVIEWER)) is None
@@ -152,8 +160,23 @@ def test_reviewer_launch_while_a_dispatch_is_open_is_not_recorded(repo):
     assert decision(fire(repo, f"{d}")) is None
 
 
+def test_reviewer_launch_in_a_spec_without_dispatch_is_not_recorded_and_dispatch_still_opens(repo):
+    d = building(repo)  # 承認の直後（dispatch が 1 つも無い）。review は「handoff が閉じていない」で断る
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert not state(d).get("review_launches")
+    dispatched(repo, d)
+    assert decision(fire(repo, f"{d}")) is None
+
+
+def test_reviewer_launch_with_uncommitted_code_is_not_recorded(repo):
+    d = closed(repo)
+    (repo / "uncommitted.py").write_text("x = 1\n", encoding="utf-8")  # review は「commit していないコード」で断る
+    assert decision(fire(repo, f"{d}", agent=REVIEWER)) is None
+    assert not state(d).get("review_launches")
+
+
 def test_reviewer_launch_that_cannot_be_recorded_is_named_on_stderr_and_passes(repo):
-    d = building(repo)
+    d = closed(repo)
     mode = d.stat().st_mode
     os.chmod(d, stat.S_IRUSR | stat.S_IXUSR)
     try:
