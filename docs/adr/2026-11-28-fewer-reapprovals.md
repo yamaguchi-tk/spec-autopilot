@@ -1,0 +1,31 @@
+# ADR: 承認の門の起点を中身のハッシュで決め、コードが同じ承認し直しでは閉じた handoff を持ち越し、spec を分けるときは目的の spec を既定にする
+
+- 日付: 2026-11-28
+- 状態: Accepted
+- spec: docs/specs/2026-11-28-fewer-reapprovals
+
+## Context
+11/22〜11/28 に /autopilot を使った main のセッション 74 本で、承認の後に人が返事をした 583 回のうち、直前の問いが承認し直しだったのが 47 回、初回の承認が 38 回だった（キーワードでの粗い分類）。transcript で確かめた原因は次の 3 つ。
+
+1. approve は spec.md の最後の変更の時刻より後の人の発言だけを数える（autopilot.py の cmd_approve と advisor_approval.since_of）。人の OK の後に先頭の `- ADR:` 行の連番だけを直した spec で、もう一度 OK を求めた
+2. 承認し直しの begin は、前の巡の dispatch と handoff を history に移す（docs/adr/2026-11-27-reapproval-carry-merge.md で「数え直す」と決めた）。コードが同じでも review の門は新しい dispatch を閉じた handoff を求め、handoff は dispatch の後の commit を求めるので、前の巡の実装を `git restore --source` で戻して作り直そうとし、auto mode に 9 回拒まれた
+3. spec を分けるとき、commands/autopilot.md は分けた spec を「まとめて承認（B の 5）」へ導き、目的の spec（`--goal`）をいつ選ぶかの基準が無い。11/26 に目的の spec が入った後も、使われたのは 3〜4 回だった
+
+## 選択肢
+1. **案 A: 起点を「今の承認の中身のハッシュを lint が初めて見た時刻」にし、コードが同じ承認し直しでは最後の dispatch とそれを閉じた handoff を持ち越し、分けるときは目的の spec を既定にする**
+   - 得るもの: 人が見た中身と同じなら OK を求め直さない。中身が 1 文字でも違えば今までどおり止まる。実装を戻す回避が要らなくなる。分けた spec の承認が 1 回になる
+   - 失うもの: lint の記録が state.json に 1 つ増える。lint を回さずに示した spec は今までどおり mtime を起点にする。持ち越しの判定に分岐が 1 つ増える
+2. **案 B: 昼も承認し直しを相談役 2 本で通す**
+   - 失うもの: 人がいるのに要件の変更を人が見ない。commands/autopilot.md の「夜の間の承認し直し」の対象を広げる決定なので、人に決めてもらう（非目標）
+3. **案 C: approve の起点を、spec の sha（作り方の節を外す）が変わった時刻にする**
+   - 失うもの: 承認の後に作り方を変えても OK を求め直さない。人は承認のときに作り方の推奨と退けた案を見ているので、作り方の変更は人が見ていない中身になる
+4. **案 D: 子ごとに `--queue` で承認する今のまま、示し方だけを 1 通にまとめる**
+   - 失うもの: 子の spec を承認の前に全部書き切る必要があり、人の待ちが長くなる。11/25 の「spec が複数に分かれてそれぞれ毎に承認する形式も無駄」に届かない
+
+## Decision
+1 を選ぶ。承認の中身のハッシュは spec.md の全体（作り方の節を含む）から先頭の `- ADR:` 行の連番の桁だけを外したもので、案 C の失うものを避ける。持ち越しの判定は docs/adr/2026-11-27-reapproval-carry-merge.md と同じく git の pathspec に任せ、決められないときは持ち越さない（止める側に倒す）。レビュー・失敗・QA は持ち越さず、評価役は毎回回し直す。
+
+## Consequences
+- 前の ADR（reapproval-carry-merge）の「dispatch と handoff は数え直す」を、コードが同じときに限って変える
+- 人が要件の文を変えた承認し直しは、昼は今までどおり人の OK が要る
+- 新しい版は、plugin を使う手元の checkout を人が pull したときに効く

@@ -1,0 +1,13 @@
+{
+  "phase": "discovery",
+  "slug": "fewer-reapprovals",
+  "created_at": 1795793310.8498502,
+  "existing": true,
+  "start": "c69e8d87ae1eafbf6032192a10ee2a4b99f4952f",
+  "last_active_at": 1795821383.1977012,
+  "goal": {
+    "at": 1795821383.1977,
+    "by": "人が推奨のまま OK と返した（目的の spec、子 3 本で夜に自走、マージまで）",
+    "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26"
+  }
+}
