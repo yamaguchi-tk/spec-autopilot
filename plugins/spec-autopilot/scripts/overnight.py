@@ -45,7 +45,6 @@ import autopilot  # noqa: E402
 import carry  # noqa: E402
 import ladder  # noqa: E402
 import stages  # noqa: E402
-import transcript  # noqa: E402
 
 SCOPE_SECTION = "自走の範囲"
 FULL, MERGE, PR = "マージ・デプロイ・QA まで", "マージまで", "PR まで"
@@ -1314,7 +1313,7 @@ def report(d):
     done = awaits(d, s, strict)
     bad = [a for a in done if a.get("result") != "success"]
     lines.append(f"- 待ち: {len(done)} 回（通らなかった {len(bad)} 回" + "".join(f"、{a.get('kind')} {a.get('result')}" for a in bad) + "）")
-    lines.append(f"- 積んだ操作: {len(parked)} 件。異常: {transcript.anomaly_line(s.get('anomalies') or {})}")
+    lines.append(f"- 積んだ操作: {len(parked)} 件。異常: {autopilot.anomaly_line(s.get('anomalies') or {})}")
     lines += ladder.report_lines(s.get("raises") or [], s.get("reviews") or [], task_rows(d))
     for x in s.get("lenses") or []:
         lines.append(f"- 観点「{x['name']}」: 指摘 {x['found']}・実行で再現 {x['reproduced']}・直した {x['fixed']}")

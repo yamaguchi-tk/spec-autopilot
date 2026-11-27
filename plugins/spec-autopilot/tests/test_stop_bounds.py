@@ -23,7 +23,6 @@ sys.path.insert(0, str(PLUGIN / "hooks"))
 sys.path.insert(0, str(PLUGIN / "scripts"))
 import autopilot  # noqa: E402
 import stop  # noqa: E402
-import transcript as tr  # noqa: E402
 
 PAST = -1.0  # time.monotonic() からの相対。もう過ぎた予算
 
@@ -34,7 +33,7 @@ def expired():
 
 def test_scan_raises_when_the_budget_has_passed(tmp_path):
     path = transcript(tmp_path, launched("a1"), *timer())
-    with pytest.raises(tr.Overdue):
+    with pytest.raises(autopilot.Overdue):
         stop.scan(path, deadline=expired())
 
 
@@ -70,8 +69,8 @@ def test_decide_blocks_a_building_spec_once_when_the_budget_has_passed_before_ju
 
 def test_anomalies_raises_when_the_budget_has_passed(tmp_path):
     path = transcript(tmp_path, launched("a1"))
-    with pytest.raises(tr.Overdue):
-        tr.anomalies(path, since=0, deadline=expired())
+    with pytest.raises(autopilot.Overdue):
+        autopilot.anomalies(path, since=0, deadline=expired())
 
 
 def test_the_notice_keeps_what_it_counted_before_the_budget(repo, tmp_path, monkeypatch):
@@ -83,10 +82,10 @@ def test_the_notice_keeps_what_it_counted_before_the_budget(repo, tmp_path, monk
     def counted(p, since=None, deadline=None):
         calls.append(1)
         if len(calls) > 1:
-            raise tr.Overdue()
+            raise autopilot.Overdue()
         return {"裏で走った agent": 1}
 
-    monkeypatch.setattr(tr, "anomalies", counted)
+    monkeypatch.setattr(autopilot, "anomalies", counted)
     monkeypatch.setattr(stop, "recorded", lambda a, p, u: [d for d in autopilot.spec_dirs(repo)] * 2)
     msg = stop.anomaly_notice(autopilot, {"transcript_path": str(path), "session_id": "s1"}, deadline=time.monotonic() + 30)
     assert msg and "裏で走った agent" in msg
@@ -109,12 +108,12 @@ def test_scan_reads_lines_with_u2028_and_carriage_returns_inside(tmp_path):
     ("echo while; sleep 1", True),
 ])
 def test_loop_sleep_matches_the_same_commands(cmd, polls):
-    assert tr._polls({"command": cmd}) is polls
+    assert autopilot._polls({"command": cmd}) is polls
 
 
 def test_loop_sleep_ends_quickly_on_a_long_command():
     start = time.monotonic()
-    tr._polls({"command": "while " * 200_000})
+    autopilot._polls({"command": "while " * 200_000})
     assert time.monotonic() - start < 2
 
 

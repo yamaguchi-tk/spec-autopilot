@@ -9,7 +9,7 @@
 - セッションの記録が壊れている・記録した spec が消えたときは、読めない spec として扱う
 - phase が building と分かった spec は、成果物が読めなくても止める。phase が許可リストに無い値なら読めない spec として扱う
 - 連続 block の上限は Claude Code に任せる（自前では数えない）
-- 自走の異常の件数（transcript.anomalies）は知らせるだけで、止める・放すには使わない（with_notice）
+- 自走の異常の件数（autopilot.anomalies）は知らせるだけで、止める・放すには使わない（with_notice）
 - 止める理由があっても、このセッションが background で起動した agent を待っていて、起こし直しの期限 timer
   （background の単独の `sleep <秒>`、60〜900 秒、起動応答のあるもの）が生きていれば放す。timer が生きているとみなすのは、
   時計の上で切れておらず、次のどちらかのときだけ。(1) この Claude Code のプロセス（hook の祖先のうち shell でない最初のもの）の
@@ -186,8 +186,8 @@ def _epoch(ts):
 def scan(path, deadline=None):
     """transcript から (起動・再開した agent の id → 時刻, 期限 timer の [(id, 張った時刻, 起動応答の時刻, 秒)], この turn の
     最後の tool の timer の id か None)。timer は起動応答（backgroundTaskId）があり、後の tool の入力にその id が出ていないものだけ。
-    deadline を過ぎたら transcript.Overdue を投げる。"""
-    from transcript import transcript_lines
+    deadline を過ぎたら autopilot.Overdue を投げる。"""
+    from autopilot import transcript_lines
 
     agents, pending, timers, last, fresh = {}, {}, {}, None, None
     for line in transcript_lines(path, deadline):
@@ -388,8 +388,6 @@ def anomaly_notice(autopilot, payload, deadline=None):
     """自走中の spec ごとに、承認からの異常の件数を transcript で数え、前の停止より増えた型を知らせる文を返す。
     件数は state.json の anomalies に残す（done の報告が読む）。止める・放すの判定には使わない。
     deadline を過ぎたら、数え終えた spec の分だけを返す。"""
-    import transcript
-
     path = payload.get("transcript_path")
     if not isinstance(path, str) or not path:
         return None
@@ -399,15 +397,15 @@ def anomaly_notice(autopilot, payload, deadline=None):
         if s.get("phase") != "building":
             continue
         try:
-            counts = transcript.anomalies(path, since=float(s["approved_at"]), deadline=deadline) or {}
-        except transcript.Overdue:
+            counts = autopilot.anomalies(path, since=float(s["approved_at"]), deadline=deadline) or {}
+        except autopilot.Overdue:
             break
         before = s.get("anomalies") or {}
         grown = {k: v for k, v in counts.items() if v > before.get(k, 0)}
         if grown:
             s["anomalies"] = {**before, **counts}
             autopilot.save_state(d, s)
-            lines.append(f"{d.name}: 自走の異常（手順の約束から外れた動き）: {transcript.anomaly_line(grown)}")
+            lines.append(f"{d.name}: 自走の異常（手順の約束から外れた動き）: {autopilot.anomaly_line(grown)}")
     return "\n".join(lines) or None
 
 
