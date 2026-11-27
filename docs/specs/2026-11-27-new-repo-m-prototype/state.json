@@ -4,16 +4,22 @@
   "created_at": 1795767530.672534,
   "existing": true,
   "start": "a52175cc646f614c05a0e5530cd4cdfd48e3473a",
-  "last_active_at": 1795769520.2633998,
+  "last_active_at": 1795770874.576637,
   "scope_sha256": "faa5a88a501205a6cdace729ac73daab1bb1173c769d4eb6655253e960b90df1",
   "approved_at": 1795767966.3967738,
   "approved_by": "OK（推奨の spec のまま承認）",
   "spec_sha256": "501caed2383131cd85cc43d9723ee3fa926f6338319eb75c70b8f5b0e75a4b39",
   "budget_min": 90,
   "post_budget_min": 90,
-  "history": [],
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "R2 の試走: 入れ子の Claude Code のフォルダの信頼の確認を人が選ぶのを待つ",
+      "at": 1795769521.4232562
+    }
+  ],
   "blocked": null,
-  "paused_sec": 0,
+  "paused_sec": 692.3799698352814,
   "reviews": [
     {
       "high": [],
@@ -24,6 +30,11 @@
       "high": [],
       "at": 1795769520.263387,
       "sha": "1b393060e029b1097e23a888cb136798559aecfa"
+    },
+    {
+      "high": [],
+      "at": 1795770874.57662,
+      "sha": "f5bd041b4636ab8511641a72dc1c084b10c5ee06"
     }
   ],
   "fails": {},
@@ -71,6 +82,14 @@
       ],
       "dispatch": 0,
       "at": 1795769519.11103
+    },
+    {
+      "tip": "f5bd041b4636ab8511641a72dc1c084b10c5ee06",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795770874.139385
     }
   ],
   "lenses": [
@@ -81,5 +100,12 @@
       "fixed": 0,
       "at": 1795769197.816564
     }
-  ]
+  ],
+  "wait": null,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 1,
+    "待ちの poll": 0
+  }
 }

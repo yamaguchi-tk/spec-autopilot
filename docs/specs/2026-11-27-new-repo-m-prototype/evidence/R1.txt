@@ -1,4 +1,4 @@
-- commit: 1b39306
+- commit: f5bd041
 
 $ .venv/bin/python .autopilot-qa/check.py
 new-S: ok 期待=通す rc=0 last=['autopilot-implementer'] gate=allow
