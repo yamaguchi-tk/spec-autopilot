@@ -97,6 +97,16 @@ def test_human_approval_after_a_light_block_keeps_the_light_mark(repo):
     assert r.returncode != 0 and "CLAUDE.md" in r.stdout
 
 
+def test_block_and_status_of_a_light_approved_spec_ask_the_human_without_by_advisor(repo):
+    """軽量フローで承認した spec は承認し直し（--by-advisor）の道に乗せず、人に 1 通で示して返事を待つ。"""
+    d = light_approved(repo)
+    r = run(repo, "block", str(d), "--req", "R1", "--reason", "R2 の文を直す必要", "--evidence", "test log")
+    assert r.returncode == 0 and state(d)["phase"] == "blocked"
+    assert "--by-advisor" not in r.stdout and "人に 1 通" in r.stdout
+    st = run(repo, "status", str(d))
+    assert "--by-advisor" not in st.stdout and "人の返事" in st.stdout
+
+
 # --- 既存の repo（init の前に commit がある）---
 
 def commit_all(repo, msg="c"):
