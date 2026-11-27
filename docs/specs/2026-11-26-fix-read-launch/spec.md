@@ -25,11 +25,11 @@
 - 変える: plugins/spec-autopilot/scripts/overnight.py:965-980（read_launch）
 - 変える: plugins/spec-autopilot/scripts/advisor_approval.py:96-103（launches）
 - 変える: plugins/spec-autopilot/scripts/overnight.py:652-695（awaits・deploy_floor・UnreadableAwaits・_awaits。1 巡目の独立レビューの high を人に確かめて足した）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:421-440（production_errors が UnreadableAwaits を「本番が良くない」として返す。マージの後なら先に戻させ、block --no-rollback で人に戻す道を残す）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:698-718（parked_ops・exempt_kinds が report のために strict を受ける）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1119-1133（ready_rollback の CI の記録は読める行だけで見る）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:421-455（production_errors が UnreadableAwaits を「本番が良くない」として返す。マージの後なら先に戻させ、block --no-rollback で人に戻す道を残す）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:698-717（parked_ops・exempt_kinds が report のために strict を受ける）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1119-1132（ready_rollback の CI の記録は読める行だけで見る）
 - 変える: plugins/spec-autopilot/scripts/overnight.py:1166-1225（qa・rolled-back の証拠の下限は deploy_floor）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1249-1295（report は読めない行を先頭に出し、block の行を落とさない）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1249-1300（report は読めない行を先頭に出し、block の行を落とさない）
 - 変える: plugins/spec-autopilot/scripts/overnight.py:853-857（cmd_await の書き手。2 巡目の再設計で足した）
 - 変える: plugins/spec-autopilot/scripts/overnight.py:1399-1405（notify が読めない待ちの記録で落ちない）
 - 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:953
