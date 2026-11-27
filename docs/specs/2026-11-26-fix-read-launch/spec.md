@@ -11,7 +11,7 @@
 - R1: dispatch の後に起動した実装役の transcript のどれかの行（読んだファイルの中身が入る user の tool_result の行を含む）の文字列の中に、JSON の文字列に生のまま残る改行に似た文字（U+2028・U+2029・U+0085）があるとき、`overnight.py handoff` は、その記録を読めないとせず、ほかの条件（model・effort・commit）だけで判定する。
 - R2: 相談役（fable-advisor・advice-checker）の transcript のどれかの行（user の tool_result の行を含む）の文字列の中に R1 の文字があるとき、`autopilot.py approve --by-advisor` は、その記録を読めないとせず、返答の `承認:`・`判定:` の行で判定する。
 - R3: transcript の 1 行が JSON として壊れているとき（書きかけ・途中で切れた行）、handoff と approve --by-advisor は今までどおり読めない記録として止める。
-- R4: 待ちの記録（awaits.jsonl）の行の文字列の中に R1 の文字があるとき、deploy の failure を数える判定（failed_deploys・deploy_exhausted・deploy_smoke）は、その行を飛ばさずに数える。空でないのに記録として読めない行（途中で切れた行など）があれば、数えずに通さず、ファイルと行番号を名指しして止める。await の書き手は、前の記録が改行で終わっていなければ改行を足してから書く（2 巡目の独立レビューの high を受けた再設計で、人が「源で止める」を選んだ）。
+- R4: 待ちの記録（awaits.jsonl）の行の文字列の中に R1 の文字があるとき、deploy の failure を数える判定（failed_deploys・deploy_exhausted・deploy_smoke）は、その行を飛ばさずに数える。空でないのに記録として読めない行（途中で切れた行など）があれば、数えずに通さず、ファイルと行番号を名指しして止める。読めない行があっても、壊れた本番の戻し（ready --rollback・merged --rollback・deploy の待ち・qa --smoke・rolled-back）と block と朝の報告は回る。await の書き手は、前の記録が改行で終わっていなければ改行を足してから書く（2 巡目の独立レビューの high を受けた再設計で、人が「源で止める」を選んだ）。
 
 ## 非目標
 - 2026-11-26-split-transcript の実装を変えること（resume の後に handoff からやり直す）
@@ -22,15 +22,19 @@
 
 ## 影響範囲
 （行番号は、この直しを入れた後の tip のもの）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:947-962（read_launch）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:965-980（read_launch）
 - 変える: plugins/spec-autopilot/scripts/advisor_approval.py:96-103（launches）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:656-677（UnreadableAwaits と _awaits。1 巡目の独立レビューの high を人に確かめて足した）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:421-428（production_errors が UnreadableAwaits を「本番が良くない」として返す。block --no-rollback で人に戻す道を残す）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:835-839（cmd_await の書き手。2 巡目の再設計で足した）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1368-1373（notify が読めない待ちの記録で落ちない）
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:935
+- 変える: plugins/spec-autopilot/scripts/overnight.py:652-695（awaits・deploy_floor・UnreadableAwaits・_awaits。1 巡目の独立レビューの high を人に確かめて足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:421-440（production_errors が UnreadableAwaits を「本番が良くない」として返す。マージの後なら先に戻させ、block --no-rollback で人に戻す道を残す）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:698-718（parked_ops・exempt_kinds が report のために strict を受ける）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1119-1133（ready_rollback の CI の記録は読める行だけで見る）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1166-1225（qa・rolled-back の証拠の下限は deploy_floor）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1249-1295（report は読めない行を先頭に出し、block の行を落とさない）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:853-857（cmd_await の書き手。2 巡目の再設計で足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1399-1405（notify が読めない待ちの記録で落ちない）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:953
 - 呼び出し元: plugins/spec-autopilot/scripts/advisor_approval.py:118
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:650-653（awaits。overnight.py の 14 か所と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:652-656（awaits。overnight.py の 14 か所と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1349-1356（transcript_lines。b"\n" だけで割る）
 - 手本: plugins/spec-autopilot/tests/test_overnight.py:941-951（test_handoff_refuses_an_unreadable_implementer_record）
 - 手本: plugins/spec-autopilot/tests/test_advisor_approval.py:202（test_approve_by_advisor_refuses_an_unreadable_record）
@@ -57,7 +61,7 @@
   - path: plugins/spec-autopilot/scripts/advisor_approval.py:96-103
 
 ## 作り方
-この spec の ADR のとおり、read_launch と advisor_approval.launches が transcript を、バイトで読んで utf-8 で decode し、"\n" だけで割る（`read_bytes().decode("utf-8").split("\n")`。text mode の改行の変換を通さない。不正な UTF-8 は今までどおり記録全体を読めないとする。空の行は今までどおり飛ばす）。overnight._awaits は awaits.jsonl を `read_bytes().split(b"\n")` で割って行ごとに decode し、空でない読めない行（マルチバイトの途中で切れた行を含む）では、ファイルと行番号を名指しした UnreadableAwaits で止める（読み手を選んで止めると、通す側に倒れる読み手が残るため）。production_errors はそれを「本番が良くない」として返し、block --no-rollback で人に戻せるようにする（wait・hold は断る）。await の書き手は、前の記録が改行で終わらなければ改行を足す。autopilot.py の transcript_lines は呼ばない（split-transcript がそれを transcript.py に移すので、ここで参照を足すと載せ替えで衝突する）。
+この spec の ADR のとおり、read_launch と advisor_approval.launches が transcript を、バイトで読んで utf-8 で decode し、"\n" だけで割る（`read_bytes().decode("utf-8").split("\n")`。text mode の改行の変換を通さない。不正な UTF-8 は今までどおり記録全体を読めないとする。空の行は今までどおり飛ばす）。overnight._awaits は awaits.jsonl を `read_bytes().split(b"\n")` で割って行ごとに decode し、空でない読めない行（マルチバイトの途中で切れた行を含む）では、ファイルと行番号を名指しした UnreadableAwaits で止める（読み手を選んで止めると、通す側に倒れる読み手が残るため）。production_errors はそれを「本番が良くない」として返し（マージの後なら先にロールバックを促す）、block --no-rollback で人に戻せるようにする（本番の判定に効く spec では wait・hold は断る。ほかの範囲の spec は production_errors が先に空を返すので block も wait も今までどおり）。記録が欠けても断る側にしか倒れない読み手（ready --rollback の「CI が通った記録があるか」）は読める行だけで見る。smoke・戻しの証拠の下限（qa・rolled-back）は、読めない行があれば記録のファイルの更新の時刻も足す（どの記録よりも後なので、消えた deploy の後の証拠だけを受ける）。await の書き手は、前の記録が改行で終わらなければ改行を足す。autopilot.py の transcript_lines は呼ばない（split-transcript がそれを transcript.py に移すので、ここで参照を足すと載せ替えで衝突する）。
 
 - テストは、U+2028 などを生の文字で書かず、Python の `"\u2028"` のエスケープで書く（生の文字で書くと、このテストのファイルを読んだ実装役の transcript が、直っていない手元の CLI で同じ所で切れる）
 
@@ -67,7 +71,7 @@
 | R1 | 手元で実物 | user の tool_result の行と assistant の行の文字列に R1 の文字を持つ実装役の transcript を tmp の CLAUDE_CONFIG_DIR に置き、`overnight.py handoff` を回す | base で「読めない」で落ち、tip で通る |
 | R2 | 手元で実物 | user の tool_result の行の文字列に R1 の文字を持つ相談役の transcript を置き、`autopilot.py approve --by-advisor` を回す | base で「読めない」で落ち、tip で通る |
 | R3 | 手元で実物 | 途中で切れた行の transcript で、handoff と approve --by-advisor を回す | tip でも読めない記録として止まる |
-| R4 | 手元で実物 | detail に R1 の文字を持つ deploy の failure の行を awaits.jsonl に書き、failed_deploys・deploy_exhausted・deploy_smoke を呼ぶ | base で数え漏れ、tip で数える。途中で切れた行・記録でない行は tip ではファイルと行番号を名指しして止まり、切れた行の後の await の記録は新しい行に書かれる |
+| R4 | 手元で実物 | detail に R1 の文字を持つ deploy の failure の行を awaits.jsonl に書き、failed_deploys・deploy_exhausted・deploy_smoke を呼ぶ | base で数え漏れ、tip で数える。途中で切れた行・記録でない行は tip ではファイルと行番号を名指しして止まり、切れた行の後の await の記録は新しい行に書かれ、壊れた本番の戻しと block と朝の報告は回る |
 
 ## 制約
 - 予算: 45 分
