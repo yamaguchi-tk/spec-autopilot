@@ -1,14 +1,23 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "evidence-commit-spec-only",
   "created_at": 1795798330.0249338,
   "existing": true,
   "start": "542d70eca70e71ebad7686a7cc66689ceb1b5586",
-  "last_active_at": 1795821930.005933,
+  "last_active_at": 1795821930.821404,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795821930.0052822,
   "approved_by": "人が「承認する」と返した（直した spec を示した後）",
   "spec_sha256": "3309acc88e26dc969cba3ef4c4153e508ef18c6939dfdec0b704cf421351fbd7",
-  "after": null
+  "after": null,
+  "approved_at": 1795821930.821117,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
