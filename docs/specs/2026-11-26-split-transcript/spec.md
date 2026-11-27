@@ -16,18 +16,18 @@
 - 版数を上げること
 
 ## 影響範囲
-- 変える: plugins/spec-autopilot/scripts/autopilot.py:1306-1442（ANOMALY_KINDS、EMPTY_BLOCKS、POLL_SEC、APPROVED_OUT、DONE_OUT、WAIT_OUT、RESUME_OUT、_LOOP、_LOOP_SLEEP、_SLEEP_SEC、_LONE_SLEEP、_NOT_HUMAN、_iso_epoch、_text、_results、Overdue、transcript_lines、_polls、anomalies、anomaly_line）
+- 変える: plugins/spec-autopilot/scripts/autopilot.py:1304-1440（ANOMALY_KINDS、EMPTY_BLOCKS、POLL_SEC、APPROVED_OUT、DONE_OUT、WAIT_OUT、RESUME_OUT、_LOOP、_LOOP_SLEEP、_SLEEP_SEC、_LONE_SLEEP、_NOT_HUMAN、_iso_epoch、_text、_results、Overdue、transcript_lines、_polls、anomalies、anomaly_line）
 - 新規: plugins/spec-autopilot/scripts/transcript.py
 - 呼び出し元: plugins/spec-autopilot/scripts/autopilot.py:251-275
   - メモ: human_said_at が transcript_lines と _iso_epoch を使う。本文は変えず、冒頭の import で取り込む
 - 呼び出し元: plugins/spec-autopilot/scripts/autopilot.py:1013-1027
-- 呼び出し元: plugins/spec-autopilot/scripts/autopilot.py:1445-1476
+- 呼び出し元: plugins/spec-autopilot/scripts/autopilot.py:1443-1474
 - 呼び出し元: plugins/spec-autopilot/hooks/stop.py:185-195
   - メモ: 190 の `from autopilot import transcript_lines` と 189 の docstring
 - 呼び出し元: plugins/spec-autopilot/hooks/stop.py:395-410
   - メモ: 400・401・408。12 行目の docstring も直す
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:1248
-  - メモ: overnight.py の冒頭（43-46 の import の並び）に `import transcript` を足し、1248 を `transcript.anomaly_line` にする
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:1316
+  - メモ: overnight.py の冒頭（44-47 の import の並び）に `import transcript` を足し、1316 を `transcript.anomaly_line` にする
 - 呼び出し元: plugins/spec-autopilot/tests/test_stop_bounds.py:36-116
   - メモ: autopilot.Overdue・autopilot.anomalies・autopilot._polls と、88 行目の monkeypatch の向け先。19-20 で tests のヘルパ関数 `transcript` を import しているので、モジュールは別名で import する
 - 手本: plugins/spec-autopilot/scripts/stages.py:1
@@ -43,15 +43,15 @@
 
 ## 前提
 - 目的に届く: autopilot.py は約 135 行減る。overnight.py の分割（親の R2）は別の子で行う
-- 運用: transcript の数え上げを直すときは transcript.py を直す。CLI の入口は autopilot.py のまま。着手の前とマージの前に `gh pr list --state open` で、別の open の PR が autopilot.py の 1306-1442・stop.py・overnight.py の 1248・test_stop_bounds.py を触っていないかを確かめ、触っていれば先にその PR のマージを待つか、載せ替えてから進める（spec の承認の時点で open の PR は 0 本）
+- 運用: transcript の数え上げを直すときは transcript.py を直す。CLI の入口は autopilot.py のまま。着手の前とマージの前に `gh pr list --state open` で、別の open の PR が autopilot.py の 1304-1440・stop.py・overnight.py の 1316・test_stop_bounds.py を触っていないかを確かめ、触っていれば先にその PR のマージを待つか、載せ替えてから進める（spec の承認の時点で open の PR は 0 本）
 - 普通のやり方: 外から呼ばれる名前の塊を別のモジュールへ移し、呼び出し元を新しいモジュールへ向け直す（互換の re-export を残さない。利用者の規則の「互換レイヤーを足さない」）
 - 過去: stages.py・ladder.py・goal.py・light.py は autopilot.py の横に置いた小さいモジュールで、scripts/ を sys.path に入れて import している（`git log --oneline -- plugins/spec-autopilot/scripts/stages.py` で確かめた）
-- 前提: transcript の区画（1306-1442）は json・re・time・datetime だけを使い、autopilot.py のほかの関数を呼ばない
-  - path: plugins/spec-autopilot/scripts/autopilot.py:1306-1442
-- 前提: autopilot.py の中では human_said_at（257・270・272）、cmd_done（1027）、done_anomalies（1460）、cmd_anomalies（1471）が区画の名前を使う
+- 前提: transcript の区画（1304-1440）は json・re・time・datetime だけを使い、autopilot.py のほかの関数を呼ばない
+  - path: plugins/spec-autopilot/scripts/autopilot.py:1304-1440
+- 前提: autopilot.py の中では human_said_at（257・270・272）、cmd_done（1027）、done_anomalies（1458）、cmd_anomalies（1469）が区画の名前を使う
   - path: plugins/spec-autopilot/scripts/autopilot.py:251-275
   - path: plugins/spec-autopilot/scripts/autopilot.py:1013-1027
-  - path: plugins/spec-autopilot/scripts/autopilot.py:1445-1476
+  - path: plugins/spec-autopilot/scripts/autopilot.py:1443-1474
 - 前提: stop.py は autopilot の import を main の try の中（434）と関数の中（190）に置き、import の失敗を最初の停止なら止め、続行中なら放す
   - path: plugins/spec-autopilot/hooks/stop.py:425-443
   - path: plugins/spec-autopilot/tests/test_stop_bounds.py:202-212
@@ -60,11 +60,11 @@
   - path: plugins/spec-autopilot/scripts/overnight.py:43
 
 ## 作り方
-この spec の ADR のとおり、定数 `ANOMALY_KINDS` から `anomaly_line` まで（autopilot.py:1306-1442）を新しい `scripts/transcript.py` にそのまま移す。
+この spec の ADR のとおり、定数 `ANOMALY_KINDS` から `anomaly_line` まで（autopilot.py:1304-1440）を新しい `scripts/transcript.py` にそのまま移す。
 
 - autopilot.py は冒頭で `from transcript import ...` と、自分の中で使う名前だけを取り込む（human_said_at の本文を書き換えないため）。外へ出し直すための import はしない（外の呼び出し元は transcript を直接参照する）
 - stop.py は、transcript の import を今の autopilot の import と同じく関数の中に置く（import の失敗の守りを外さない）
-- overnight.py は冒頭の import の並びに `import transcript` を足し、1248 を `transcript.anomaly_line` にする
+- overnight.py は冒頭の import の並びに `import transcript` を足し、1316 を `transcript.anomaly_line` にする
 - test_stop_bounds.py は、19-20 で tests のヘルパ関数 `transcript` を import しているので、モジュールを `import transcript as tr` のように別名で取り込み、`autopilot.Overdue` などを `tr.Overdue` に、88 行目の monkeypatch を `tr` に向ける。期待は変えない
 
 ## QA の方向性
