@@ -4,5 +4,10 @@
   "created_at": 1795789871.444167,
   "existing": true,
   "start": "c69e8d87ae1eafbf6032192a10ee2a4b99f4952f",
-  "last_active_at": 1795789871.483027
+  "last_active_at": 1795792839.746608,
+  "goal": {
+    "at": 1795792839.746606,
+    "by": "spec（5 案）もOK。リファクタの後に機能追加。夜なのでできるだけ確認せずに自走",
+    "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e"
+  }
 }
