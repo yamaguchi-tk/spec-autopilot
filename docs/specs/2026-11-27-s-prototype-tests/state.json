@@ -1,0 +1,108 @@
+{
+  "phase": "building",
+  "slug": "s-prototype-tests",
+  "created_at": 1795740768.143438,
+  "existing": true,
+  "start": "40e064c972f41926e36b752e65f609cf09fae6cb",
+  "last_active_at": 1795747380.304756,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795742421.794809,
+  "approved_by": "版数を 0.1.15→0.1.16 に直した点を OK、承認",
+  "spec_sha256": "794c478b87c973c151ea355011d8d0483e22cdb5380e47ef4b22d7f5b851708d",
+  "after": "docs/specs/2026-11-27-s-prototype-size",
+  "blocked": null,
+  "approved_at": 1795746276.7801769,
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [
+    {
+      "approved_at": null,
+      "approved_by": "OK、承認（2 本まとめて。2 本目）",
+      "blocked": {
+        "req": "着手",
+        "reason": "着手の時点で lint が通らない: `- 変える:` の名前 test_version_is_raised_past_0_1_13 が、init の時点の commit の plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py の中に無い",
+        "evidence": "lineup.py next",
+        "at": 1795745608.318374
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": null,
+      "fails": null,
+      "streak": null,
+      "reworks": null,
+      "post_budget_min": null,
+      "paused_sec": null,
+      "light": null,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": null,
+      "qa_runs": null,
+      "handoffs": null,
+      "dispatches": null,
+      "lenses": null,
+      "rolled_back": null,
+      "phase": "blocked"
+    }
+  ],
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795747380.304736,
+      "sha": "ca2e9727e3cfa891b0e73d9d8fc5f0d9e161aacb"
+    }
+  ],
+  "fails": {},
+  "streak": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "a4605043b993d1fa0441d80f8ca7516c61e7516f",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795746302.226655,
+      "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
+    },
+    {
+      "base": "38a131841ff5bb4c62ee21dc87fe99c1fb0fd6ce",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795746448.302847,
+      "session": "3ffbdddd-0328-4a9b-9ba6-f52f93fe3309"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "38a131841ff5bb4c62ee21dc87fe99c1fb0fd6ce",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795746447.870029
+    },
+    {
+      "tip": "ca2e9727e3cfa891b0e73d9d8fc5f0d9e161aacb",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795746700.570324
+    }
+  ]
+}
