@@ -1,0 +1,54 @@
+- commit: cabdc1679d0d417f6c616b80424f59d1123818be
+$ python3 .autopilot-qa/check_evidence_commit.py
+（一時の git repo を .autopilot-qa/evcommit-runs の下に作り、本物の git と CLI で approve・実装・handoff・review まで進めてから、証拠の頭を書き換えて check を回した。以下はその出力）
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # review の tip を頭に書いた証拠
+check: OK
+(終了コード 0、0.22 秒)
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # 置き場の中だけを commit した sha
+check: OK
+(終了コード 0、0.31 秒)
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # 置き場の中だけを commit した sha の先頭 7 文字
+check: OK
+(終了コード 0、0.31 秒)
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # review の tip を頭に書いた証拠
+check: OK
+(終了コード 0、0.35 秒)
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # 置き場の中だけを commit したブランチの名前
+check: OK
+(終了コード 0、0.35 秒)
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # spec の外を 1 行変えた commit
+ERROR: 最後のレビューの後に、テスト・文書の外のコードが変わった（9bd9bb27..d1cd4a5d）。overnight.py handoff を通して評価役を回し直す
+ERROR: R1 の evidence/R1.txt の頭の `- commit:` が、R1 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+ERROR: R2 の evidence/R2.txt の頭の `- commit:` が、R2 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+(終了コード 1、0.27 秒)
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # 存在しない sha
+ERROR: R1 の evidence/R1.txt の頭の `- commit:` が、R1 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+ERROR: R2 の evidence/R2.txt の頭の `- commit:` が、R2 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+(終了コード 1、0.27 秒)
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # option の形の値 --output=<一時のパス>
+ERROR: R1 の evidence/R1.txt の頭の `- commit:` が、R1 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+ERROR: R2 の evidence/R2.txt の頭の `- commit:` が、R2 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+(終了コード 1、0.24 秒)
+$ test -e <一時のパス>  -> 無い
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # option の形の値 --output <一時のパス>
+（R1・R2 とも同じ「評価役の巡の tip でない」の ERROR、終了コード 1）
+$ test -e <一時のパス>  -> 無い
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # option の形の値 -o<一時のパス>
+（R1・R2 とも同じ「評価役の巡の tip でない」の ERROR、終了コード 1）
+$ test -e <一時のパス>  -> 無い
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # option の形の値 --git-dir=<一時のパス>
+（R1・R2 とも同じ「評価役の巡の tip でない」の ERROR、終了コード 1）
+$ test -e <一時のパス>  -> 無い
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # option の形の値 --end-of-options
+（R1・R2 とも同じ「評価役の巡の tip でない」の ERROR、終了コード 1）
+$ test -e <一時のパス>  -> 無い
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check 2026-11-28-game   # 最後の巡が R1 の high で、その後の巡が無い（置き場の中だけの commit）
+ERROR: 最後のレビューに high（R1）が残っている。直してレビューし直す
+ERROR: R1 の evidence/R1.txt の頭の `- commit:` が、R1 を最後に確かめた評価役の巡の tip でない（前の承認か fail の巡の出力。確かめ直して、渡された tip を頭に書いて書き直す）
+(終了コード 1、0.27 秒)
+R1 pass
+
+$ git apply .autopilot-qa/mut-R1-5.patch（rev-parse で引き当たらない値をそのまま git diff に渡す変異）→ python3 -m pytest plugins/spec-autopilot/tests/test_stages.py::test_an_evidence_commit_in_the_shape_of_a_git_option_writes_no_file_and_is_refused -q
+E       AssertionError: assert (0 == 1)
+plugins/spec-autopilot/tests/test_stages.py:181: AssertionError
+1 failed（変異を git apply -R で戻し、git diff --quiet HEAD -- plugins/spec-autopilot/scripts/stages.py が通った）
