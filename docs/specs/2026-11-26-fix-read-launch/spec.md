@@ -22,19 +22,19 @@
 
 ## 影響範囲
 （行番号は、この直しを入れた後の tip のもの）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:965-980（read_launch）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:966-981（read_launch）
 - 変える: plugins/spec-autopilot/scripts/advisor_approval.py:96-103（launches）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:652-695（awaits・deploy_floor・UnreadableAwaits・_awaits。1 巡目の独立レビューの high を人に確かめて足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:652-696（awaits・deploy_floor・UnreadableAwaits・_awaits。1 巡目の独立レビューの high を人に確かめて足した）
 - 変える: plugins/spec-autopilot/scripts/overnight.py:421-455（production_errors が UnreadableAwaits を「本番が良くない」として返す。マージの後なら先に戻させ、block --no-rollback で人に戻す道を残す）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:698-717（parked_ops・exempt_kinds が report のために strict を受ける）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1119-1132（ready_rollback の CI の記録は読める行だけで見る）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1166-1225（qa・rolled-back の証拠の下限は deploy_floor）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1249-1300（report は読めない行を先頭に出し、block の行を落とさない）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:853-857（cmd_await の書き手。2 巡目の再設計で足した）
-- 変える: plugins/spec-autopilot/scripts/overnight.py:1399-1405（notify が読めない待ちの記録で落ちない）
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:953
+- 変える: plugins/spec-autopilot/scripts/overnight.py:699-718（parked_ops・exempt_kinds が report のために strict を受ける）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1120-1133（ready_rollback の CI の記録は読める行だけで見る）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1167-1226（qa・rolled-back の証拠の下限は deploy_floor）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1250-1303（report は読めない行を先頭に出し、block の行を落とさない）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:854-858（cmd_await の書き手。2 巡目の再設計で足した）
+- 変える: plugins/spec-autopilot/scripts/overnight.py:1398-1421（notify が読めない待ちの記録で落ちない）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:954
 - 呼び出し元: plugins/spec-autopilot/scripts/advisor_approval.py:118
-- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:652-656（awaits。overnight.py の 14 か所と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
+- 呼び出し元: plugins/spec-autopilot/scripts/overnight.py:652-657（awaits。overnight.py の 13 か所〔_awaits を直接読む deploy_floor・report は別〕と、budget_view を通して hooks/stop.py・autopilot.py、production_errors を通して autopilot.py の block・wait と lineup.py の hold が呼ぶ）
 - 手本: plugins/spec-autopilot/scripts/autopilot.py:1349-1356（transcript_lines。b"\n" だけで割る）
 - 手本: plugins/spec-autopilot/tests/test_overnight.py:941-951（test_handoff_refuses_an_unreadable_implementer_record）
 - 手本: plugins/spec-autopilot/tests/test_advisor_approval.py:202（test_approve_by_advisor_refuses_an_unreadable_record）
