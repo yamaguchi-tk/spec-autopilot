@@ -1,0 +1,14 @@
+- commit: 9933271a6407df24bc9124b4189dcc3875655a92
+
+$ python3 -m pytest "plugins/spec-autopilot/tests/test_ladder.py::test_every_rung_has_an_agent_with_the_declared_model_and_the_same_body" -q
+.                                                                        [100%]
+1 passed in 1.20s
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ladder.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_light.py -q -n auto
+158 passed in 24.43s
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass

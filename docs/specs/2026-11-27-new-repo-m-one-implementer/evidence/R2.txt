@@ -1,0 +1,10 @@
+- commit: 9933271a6407df24bc9124b4189dcc3875655a92
+
+$ grep -o "どの大きさでも、ヘッドレスのブラウザを動かす自前の検査スクリプトは書かない[^。]*。[^。]*。[^。]*" plugins/spec-autopilot/agents/autopilot-implementer.md
+どの大きさでも、ヘッドレスのブラウザを動かす自前の検査スクリプトは書かない（ブラウザの確かめは評価役が行う。計測では、新しい repo の M で、本体約 16,000 字に対して自前のブラウザ検査スクリプトが約 12,000 字あった）。spec の QA の方向性が repo に足すよう求める E2E のテストは、この数に入れずに書く
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass

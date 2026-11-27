@@ -1,0 +1,12 @@
+- commit: 9933271a6407df24bc9124b4189dcc3875655a92
+
+$ git diff d2ea963e..9933271a -U0 -- plugins/spec-autopilot/agents/autopilot-implementer.md
+@@ -12 +12 @@ （2 の項の 1 行だけが変わる）
+- ... 大きさ S の spec（spec.md の「## 制約」の「大きさ」が S）では、テストは要件ごとに代表の 1〜2 件にし ... 大きさが S でない spec のテストの書き方は変えない ...
++ ... 大きさ S の spec（spec.md の「## 制約」の「大きさ」が S）か、新しく作る repo の大きさ M の spec（「大きさ」が M で、spec のディレクトリの state.json の `existing` が false）では、テストは要件ごとに代表の 1〜2 件にし ... それ以外の spec（既存の repo の M 以上など）のテストの書き方は変えない ...
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass

@@ -1,0 +1,16 @@
+- commit: 9933271a6407df24bc9124b4189dcc3875655a92
+
+$ git diff d2ea963e..9933271a -U0 -- plugins/spec-autopilot/commands/autopilot.md
+@@ -53 +53 @@
++   | M | 画面や API が数個、既存の機能の数か所の変更 | 〜15 | 〜400 行 | 90 分 | タスクごとに implementer（新しく作る repo は、全要件を受け持つタスク 1 つを implementer 1 本で） |
+@@ -66 +66 @@
++ ... S と新しく作る repo の M は E2E のテストを repo に足さず、ロジックの単体テストと、評価役が C の 3 で行うブラウザの操作を証拠にする。既存の repo の M 以上は、制約が許せば Playwright の E2E を devDependency に入れて既定の証拠にする ...
+@@ -89,2 +89,2 @@
++ ... 新しく作る repo の M では、全要件 `[R1, R2, …]` を受け持つタスクを 1 つだけ書く（playbook のタスクがあれば、今のとおり先頭に残す ...
++ ... S と新しく作る repo の M は全要件を 1 本で、既存の repo の M 以上はタスクごとに 1 本を順に、同じ checkout で並行に書かせない ...
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
