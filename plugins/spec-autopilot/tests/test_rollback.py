@@ -980,3 +980,32 @@ def test_a_command_deploy_merge_without_a_park_still_counts(repo, gh, tmp_path):
     make_done(repo, d)
     merged_only(repo, gh, d)  # 打ったかもしれないが、待ちの記録も park も無い
     assert "本番: 分からない" in night(repo, "report", str(d)).stdout.splitlines()[1]
+
+
+def test_an_unreadable_await_row_still_lets_the_rollback_run_to_the_end(repo, gh, tmp_path):
+    """待ちの記録に読めない行があっても、壊れた本番の戻し（ready --rollback・merged --rollback・deploy の待ち・smoke）は回り、
+    最後は block --no-rollback で人に渡せ、朝の報告も出る。smoke は、読めない行がある間は記録のファイルの更新より後のものだけを受ける。"""
+    d = full_spec(repo)
+    sha = broken(repo, gh, d, tmp_path)
+    with (d / "awaits.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"kind": "deploy", "sha": "x", "res\n')
+    assert "awaits.jsonl:" in run(repo, "check", str(d)).stderr
+    r = run(repo, "block", str(d), "--req", "R2", "--reason", "x", "--evidence", "y")
+    assert r.returncode != 0 and "awaits.jsonl:" in r.stdout + r.stderr and "ロールバック" in r.stdout + r.stderr  # 先に戻すよう促す
+    head = rollback_pr(repo, gh, sha)
+    r = night(repo, "ready", str(d), "--pr", "8", "--rollback")
+    assert r.returncode == 0, r.stdout + r.stderr
+    gh.answers("pr view", [merged_pr(head, head)])
+    assert night(repo, "merged", str(d), "--pr", "8", "--rollback", "--reason", "smoke が落ちた").returncode == 0
+    gh.answers("run list", [deploy_ok()])
+    assert night(repo, "await", str(d), "--kind", "deploy", "--interval", "0").returncode == 0
+    early = tmp_path / "early.txt"
+    early.write_text("smoke pass\n", encoding="utf-8")
+    os.utime(early, (time.time() - 3600, time.time() - 3600))
+    assert night(repo, "qa", str(d), "--evidence", str(early), "--smoke", "pass").returncode != 0
+    assert smoke(repo, d, tmp_path, "pass", "smoke2.txt").returncode == 0
+    r = run(repo, "block", str(d), "--req", "R2", "--reason", "戻した", "--evidence", "smoke2.txt",
+            "--no-rollback", "戻したが、待ちの記録が読めず確かめを数えられない")
+    assert r.returncode == 0, r.stdout + r.stderr
+    out = night(repo, "report", str(d))
+    assert out.returncode == 0 and "awaits.jsonl:" in out.stdout and "block: R2" in out.stdout
