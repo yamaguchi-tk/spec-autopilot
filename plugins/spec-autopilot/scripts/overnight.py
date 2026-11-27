@@ -818,8 +818,10 @@ def cmd_await(a):
     except Exception as e:  # 読めないときは失敗として main を起こす（黙って待ち続けない）
         result, detail = "error", [f"{type(e).__name__}: {e}"]
     finally:
-        with (d / AWAITS_LOG).open("a", encoding="utf-8") as f:
-            f.write(json.dumps({"kind": a.kind, "pr": a.pr, "sha": sha, "result": result, "started_at": started,
+        log = d / AWAITS_LOG
+        cut = log.exists() and log.stat().st_size and not log.read_bytes().endswith(b"\n")
+        with log.open("a", encoding="utf-8") as f:
+            f.write(("\n" if cut else "") + json.dumps({"kind": a.kind, "pr": a.pr, "sha": sha, "result": result, "started_at": started,
                                 "at": time.time(), "detail": detail}, ensure_ascii=False) + "\n")
         (d / AWAIT_FILE).unlink(missing_ok=True)
     print(f"await {a.kind}: {result}\n- " + "\n- ".join(detail))
