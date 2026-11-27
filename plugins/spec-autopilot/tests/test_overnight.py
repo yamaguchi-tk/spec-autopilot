@@ -410,8 +410,9 @@ def test_the_wait_is_not_counted_in_the_budget(repo, gh):
     gh.answers("pr view", [{"out": {"headRefOid": "h7"}}])
     gh.answers("pr checks", [checks("pending"), checks("pending"), checks("pass")])
     before = overnight.budget_view(d, autopilot.load_state(d))[0]
-    assert ci_await(repo, d, "--interval", "0.5").returncode == 0
-    assert overnight.budget_view(d, autopilot.load_state(d))[0] < before + 0.5 / 60
+    # 待ちは 2 回で約 4 秒。並列の負荷でプロセスの起動が遅れても、待ちを数える退行（+4 秒）とは区別できる幅にする
+    assert ci_await(repo, d, "--interval", "2").returncode == 0
+    assert overnight.budget_view(d, autopilot.load_state(d))[0] < before + 2 / 60
 
 
 def test_await_refuses_a_relative_dir_and_a_spec_that_is_not_building(repo, gh):
