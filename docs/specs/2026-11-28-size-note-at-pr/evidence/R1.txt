@@ -1,0 +1,64 @@
+- commit: ba6491c9a29136668531d857abe960117f46cea5
+- 結果: Confirmed
+
+一時の git repo（.autopilot-qa/size-note-runs/ の下）で、tip の CLI と base（cbbdac4）の CLI を同じ作り方の repo に回して比べた。
+grownL = 申告 M で承認し、差分が L に育った spec。stayM = 申告 M で M のまま。declL = 合意し直しで申告を L にした spec。
+unfinished_grownL = grownL でタスクが残る（ERROR あり）。unreadable = 承認後に大きさの行を読めない値にした。unapproved = 承認前。
+
+$ python3 .autopilot-qa/check_size_note.py
+R1 pass
+
+$ python3 autopilot.py check <dir> --stage pr   # grownL, tip
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））
+check: OK
+(exit 0)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # grownL, base
+check: OK
+(exit 0)
+
+$ python3 autopilot.py check <dir> --stage pr   # stayM, tip
+check: OK
+(exit 0)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # stayM, base
+check: OK
+(exit 0)
+
+$ python3 autopilot.py check <dir> --stage pr   # declL, tip
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））
+check: OK
+(exit 0)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # declL, base
+check: OK
+(exit 0)
+
+$ python3 autopilot.py check <dir> --stage pr   # unfinished_grownL, tip
+ERROR: T2 が終わっていない
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））
+(exit 1)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # unfinished_grownL, base
+ERROR: T2 が終わっていない
+(exit 1)
+
+$ python3 autopilot.py check <dir> --stage pr   # unreadable, tip
+ERROR: spec.md の要件・QA の方向性・制約などが承認の後に変わった。（以下略）
+NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））
+(exit 1)
+
+$ python3 base/autopilot.py check <dir> --stage pr   # unreadable, base
+ERROR: spec.md の要件・QA の方向性・制約などが承認の後に変わった。（以下略）
+(exit 1)
+
+$ python3 autopilot.py check <dir> --stage pr   # unapproved, tip
+ERROR: 承認されていない（phase=discovery）
+(exit 1)
+
+ほかに同じスクリプトで確かめたこと（どれも一致）:
+- 終了コード: 6 通りすべてで check --stage pr の終了コードが tip と base で同じ（NOTE の有無で変わらない）
+- --stage なしの check: 6 通りすべてで tip と base の stdout・終了コードが同じで、L の NOTE を出さない
+- done: grownL・stayM・declL で、tip と base の done の NOTE の行と終了コードが同じ（grownL・declL は L の NOTE あり、stayM は無し）
+- check --stage pr の L の NOTE の行は、同じ repo の done の L の NOTE の行と同じ本文
+- どの出力にも `NOTE: NOTE` の二重の接頭辞と Traceback が無い
