@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import advisor_approval  # noqa: E402
 import autopilot as ap  # noqa: E402
+import merged_child  # noqa: E402
 
 PARENT = re.compile(r"^- 親 spec:[ \t]*(.*?)[ \t]*$", re.M)
 PARENT_REQS = re.compile(r"^- 親の要件:[ \t]*(.*?)[ \t]*$", re.M)
@@ -119,8 +120,9 @@ def child_errors(d, scope, session):
 
 
 def cover(parent):
-    """({親の要件: [(子のディレクトリ名, 子の phase)]}, 親の要件の番号の並び or None, 読めない子の [(ディレクトリ名, 例外の型)])。
+    """({親の要件: [(子のディレクトリ名, 子の phase, 表に足す注)]}, 親の要件の番号の並び or None, 読めない子の [(ディレクトリ名, 例外の型)])。
     `- 親 spec:` が親で、`- 親の要件:` が読める子だけを数える。state.json はそのたびに読む。
+    作業ツリーで done でない子は、子のブランチの done の state とマージ済みの PR で確かめられれば done と読み、注に読んだブランチと PR を書く（merged_child）。
     spec.md が読めない子は親が分からないので、読めない子として挙げる。state.json が読めない子は、spec.md が親を指すときだけ挙げる。"""
     _, ids = parent_facts(parent)
     table, unreadable = {}, []
@@ -135,12 +137,14 @@ def cover(parent):
             s = ap.load_state(x)
             if not isinstance(s, dict):
                 raise ValueError("state.json が object でない")
-            phase = s.get("phase")
+            phase, note = s.get("phase"), ""
+            if phase != "done" and (found := merged_child.read(ap.repo_root(x), x)):
+                phase, note = "done", f"。ブランチ {found[0]} の PR {found[1]}"
         except (OSError, ValueError) as e:  # UnicodeDecodeError・JSONDecodeError は ValueError
             unreadable.append((x.name, type(e).__name__))
             continue
         for r in reqs:
-            table.setdefault(r, []).append((x.name, phase))
+            table.setdefault(r, []).append((x.name, phase, note))
     return table, ids, unreadable
 
 
@@ -167,10 +171,10 @@ def cmd(a):
             return ap.report([f"{d.name} の `## 要件` が読めない"], [], "")
         errors = [f"{n} が読めない（{t}）" for n, t in unreadable]
         for r in ids:
-            print(f"{r}: " + ("、".join(f"{n}（{p}）" for n, p in table.get(r, [])) or "子なし"))
+            print(f"{r}: " + ("、".join(f"{n}（{p}{w}）" for n, p, w in table.get(r, [])) or "子なし"))
             if r not in table:
                 errors.append(f"{r} を `- 親の要件:` に挙げた子が無い（子の無い要件）")
-        errors += [f"{n} が done でない（phase={p}。{r} の子）" for r in ids for n, p in table.get(r, []) if p != "done"]
+        errors += [f"{n} が done でない（phase={p}。{r} の子）" for r in ids for n, p, _ in table.get(r, []) if p != "done"]
         errors = list(dict.fromkeys(errors))
         if not errors and s.get("phase") != "discovery":
             errors.append(f"目的の spec は discovery のときだけ done にする（phase={s.get('phase')}）")
