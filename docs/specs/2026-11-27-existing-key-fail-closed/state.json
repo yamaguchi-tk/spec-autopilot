@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "existing-key-fail-closed",
+  "created_at": 1795780681.150316,
+  "existing": true,
+  "start": "53cddd6c8284c01ae789c8fafd4b00d9901d585c",
+  "last_active_at": 1795780995.963378,
+  "scope_sha256": "9a41ee6b94d7dfa33cf657b2bd4362a45515ea25dc0bb7c953aa9b07b187ff29",
+  "approved_at": 1795780995.962131,
+  "approved_by": "OK（推奨のまま承認、範囲はマージまで）",
+  "spec_sha256": "c04adb96e772d0606b10e132a00726ce5ce9e43c916ea318f1329f2998a4b11a",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
