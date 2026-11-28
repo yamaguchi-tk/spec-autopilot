@@ -1,4 +1,4 @@
-- commit: e6f5e0b
+- commit: 8044533
 - 環境: 手元の一時 repo（.autopilot-qa/run/r1 に git init）。本物の autopilot.py の CLI を回す。人の発言は transcript の origin=human の行と UserPromptSubmit hook で作る
 $ python3 .autopilot-qa/check.py（R1 の段の抜き出し）
 $ git init r1
@@ -18,4 +18,3 @@ $ git status --porcelain --untracked-files=all
   ?? docs/specs/2026-11-28-game/spec.md
   ?? docs/specs/2026-11-28-game/state.json
   ?? docs/specs/2026-11-28-game/tasks.md
-R1 pass

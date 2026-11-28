@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "blocked",
   "slug": "lint-origin",
   "created_at": 1795821439.061122,
   "existing": true,
   "start": "7bc23c1821287f08dbb9716097e51dd93e927e33",
-  "last_active_at": 1795824665.049736,
+  "last_active_at": 1795825435.567039,
   "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
   "queued_at": 1795822313.379647,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 目的の spec の子 2（親 R4〜R6）。相談役は承認: 可、検証は反証なし（確かめられない 0 / 12）",
@@ -14,7 +14,12 @@
   "budget_min": 90,
   "post_budget_min": 90,
   "history": [],
-  "blocked": null,
+  "blocked": {
+    "req": "R2",
+    "reason": "lint の記録だけでは、lint を通さずに直して示した中身を見分けられず、A→B→連番を変えた A' の順で approve が通る。直すには hook で人の発言のときの中身を残すか、この場合を R2 の外にする合意が要る",
+    "evidence": "docs/specs/2026-11-28-lint-origin/evidence/R2-block.md",
+    "at": 1795825435.567038
+  },
   "paused_sec": 0,
   "reviews": [
     {
@@ -28,6 +33,13 @@
       ],
       "at": 1795824664.970389,
       "sha": "e6f5e0b3be4e4e71c43366d075002670a7b0f2cb"
+    },
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795825419.7464352,
+      "sha": "80445337e3059080e9333b7d1451e55222e962e3"
     }
   ],
   "fails": {
@@ -36,11 +48,16 @@
         "from": "review",
         "evidence": "最後のレビューの high",
         "at": 1795824664.9703848
+      },
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795825419.74643
       }
     ]
   },
   "streak": {
-    "R2": 1
+    "R2": 2
   },
   "reworks": {},
   "dispatches": [
@@ -80,6 +97,18 @@
       "agent": "autopilot-implementer",
       "at": 1795824131.124789,
       "session": "1458e274-2131-47de-a981-b796d5011d85"
+    },
+    {
+      "base": "bf65289474cccb652aafef05450688ca914e0889",
+      "tasks": [
+        "T4"
+      ],
+      "reqs": [
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795824678.7481651,
+      "session": "1458e274-2131-47de-a981-b796d5011d85"
     }
   ],
   "handoffs": [
@@ -106,11 +135,20 @@
       ],
       "dispatch": 2,
       "at": 1795824249.92259
+    },
+    {
+      "tip": "80445337e3059080e9333b7d1451e55222e962e3",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 3,
+      "at": 1795824847.99162
     }
   ],
   "review_launches": [
     1795823528.2613919,
-    1795824254.185534
+    1795824254.185534,
+    1795824868.0714638
   ],
   "lenses": [
     {
@@ -126,6 +164,23 @@
       "reproduced": 1,
       "fixed": 0,
       "at": 1795824665.0497348
+    },
+    {
+      "name": "権限の境界をまたぐ呼び出し",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795825419.836797
+    }
+  ],
+  "raises": [
+    {
+      "role": "impl",
+      "req": "R2",
+      "reason": "原因調査",
+      "at": 1795825419.7464352,
+      "from": "autopilot-implementer",
+      "to": "autopilot-implementer-opus"
     }
   ]
 }

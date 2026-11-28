@@ -1,56 +1,44 @@
-- commit: 00b6d0a08012ab3388e57bea70f0f2a1d45bdbe6
+- commit: 8044533
 - 環境: 手元の一時 repo（.autopilot-qa/run/r2 に git init）。本物の autopilot.py の CLI を回す
 $ python3 .autopilot-qa/check.py（R2 の段の抜き出し）
-$ git init r2
 $ autopilot.py lint <repo>/docs/specs/2026-11-28-req
   lint: OK
   (exit 0)
-# 人の発言（transcript に origin=human の行・UserPromptSubmit hook）
-# spec.md の `- ADR:` を 0007 → 0008、加えて「横 1 列がそろったとき」→「横 2 列がそろったとき」直す
+# 人の発言 → `- ADR:` を 0007 → 0008、加えて「横 1 列がそろったとき」→「横 2 列がそろったとき」
 $ autopilot.py approve <repo>/docs/specs/2026-11-28-req --by OK
   承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）の後に人の発言が記録されていない。人に示して返事を受けてから実行する
   (exit 1)
 R2 req の直しで断る: pass
-$ autopilot.py lint <repo>/docs/specs/2026-11-28-how
-  lint: OK
-  (exit 0)
-# 人の発言（transcript に origin=human の行・UserPromptSubmit hook）
-# spec.md の `- ADR:` を 0007 → 0008、加えて「規則を純粋な JS に分け」→「規則を純粋な TS に分け」直す（作り方の節）
-$ autopilot.py approve <repo>/docs/specs/2026-11-28-how --by OK
-  承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）の後に人の発言が記録されていない。人に示して返事を受けてから実行する
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-how --by OK   （lint → 人 → 連番と「JS」→「TS」）
   (exit 1)
 R2 how の直しで断る: pass
-# （lint を回さない）人の発言（transcript に origin=human の行・UserPromptSubmit hook）
-# spec.md の `- ADR:` を 0007 → 0008 だけ直す
-$ autopilot.py approve <repo>/docs/specs/2026-11-28-nolint --by OK
-  承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）の後に人の発言が記録されていない。人に示して返事を受けてから実行する
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-nolint --by OK   （lint せずに人 → 連番だけ）
   (exit 1)
 R2 lint していない spec は連番だけでも断る: pass
-$ autopilot.py lint <repo>/docs/specs/2026-11-28-relint
-  lint: OK
-  (exit 0)
-# 人の発言（transcript に origin=human の行・UserPromptSubmit hook）
-# spec.md の `- ADR:` を 0007 → 0008、加えて「横 1 列がそろったとき」→「横 2 列がそろったとき」直す
-$ autopilot.py lint <repo>/docs/specs/2026-11-28-relint
-  lint: OK
-  (exit 0)
-$ autopilot.py approve <repo>/docs/specs/2026-11-28-relint --by OK
-  承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）の後に人の発言が記録されていない。人に示して返事を受けてから実行する
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-relint --by OK   （lint → 人 → 中身を直して lint）
   (exit 1)
 R2 人の後に中身を直して lint し直しても断る: pass
-$ autopilot.py lint <repo>/docs/specs/2026-11-28-blk
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-aba --by OK   （lint(A) → B（lint せず）→ 人 → A）
+  (exit 1)
+R2 人の発言の後に中身を lint した中身へ戻しても断る: pass
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-abap
   lint: OK
   (exit 0)
+# spec.md の「横 1 列がそろったとき」→「横 2 列がそろったとき」に直す（lint しない。人はこの中身を見る）
 # 人の発言（transcript に origin=human の行・UserPromptSubmit hook）
-$ autopilot.py approve <repo>/docs/specs/2026-11-28-blk --by OK
+# 人の発言の後に、spec.md を「横 2 列がそろったとき」→「横 1 列がそろったとき」に戻し、`- ADR:` を 0007 → 0008 に直す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-abap --by OK
   approved: 予算 30 分。ここから自走する
   (exit 0)
-$ autopilot.py block <repo>/docs/specs/2026-11-28-blk --req R1 --reason x --evidence y
-  blocked: R1。（以下略）
-  (exit 0)
-# spec.md の `- ADR:` を 0007 → 0008 だけ直す
-$ autopilot.py approve <repo>/docs/specs/2026-11-28-blk --by OK
+R2 人の発言の後に要件の文を lint した中身へ戻し連番も変えても断る: fail: 人の発言の後に要件の文を「横 2 列がそろったとき」→「横 1 列がそろったとき」に変えたのに approve が exit 0・phase building で通った（期待: 人の発言を求めて断る）
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-blk --by OK   （block の後に連番だけ）
   blockの後に人の発言が記録されていない。人に示して返事を受けてから実行する
   (exit 1)
 R2 block の後は連番だけでも block の後の人の発言を求める: pass
-R2 pass
+$ bash .autopilot-qa/mut.sh mut-R2-3 plugins/spec-autopilot/scripts/consent.py <test_consent.py の 2 本>
+before: pass
+E       AssertionError: assert (0 != 0)
+plugins/spec-autopilot/tests/test_consent.py:111: AssertionError
+plugins/spec-autopilot/tests/test_consent.py:123: AssertionError
+2 failed in 6.42s
+mutated exit: 1
