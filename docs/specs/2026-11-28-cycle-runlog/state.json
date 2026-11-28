@@ -1,8 +1,14 @@
 {
-  "phase": "discovery",
+  "phase": "queued",
   "slug": "cycle-runlog",
   "created_at": 1795832464.529783,
   "existing": true,
   "start": "8eb6d94d089e8f30386522db542c08414318e38d",
-  "last_active_at": 1795832464.6169522
+  "last_active_at": 1795852772.263206,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795852772.262323,
+  "approved_by": "人が「人が承認する」と返した（相談役は可、検証役は反証なし・確かめられない 1 / 20〔道具の fan-out の数え方〕を見たうえで）",
+  "spec_sha256": "28c537fd251bae5516560720171acab84cbe61019e9507d26899791b093f6990",
+  "after": null
 }
