@@ -3399,3 +3399,11 @@ def test_done_does_not_count_the_size_when_existing_is_false(repo):
     r = run(repo, "done", str(d))
     assert r.returncode == 0, r.stdout + r.stderr
     assert "大きさを数えられない" not in r.stdout
+
+
+def test_autopilot_md_points_at_advisor_rule_phrases_that_session_start_gives(tmp_path):
+    text = context(session_start(tmp_path))
+    command = (PLUGIN / "commands" / "autopilot.md").read_text(encoding="utf-8")
+    for named in ("2 段の相談", "規則の 2 段目"):  # autopilot.md の承認し直しが名指しする指し先
+        assert named in command
+    assert "2 段の相談" in text and "2 段目は、その推奨の" in text
