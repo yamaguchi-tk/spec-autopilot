@@ -129,7 +129,7 @@ $ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_
 exit=0
 実装・評価・相談・検証・照合が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r2/home/sessions/qa-sess-1.models.md）
 
-- 追記（859c884 で取り直した観測。置き場は R2 だけの一時のもの。打った順に、各コマンドの出力と exit をそのまま残す）
+- 追記（ae7c468 で取り直した観測。置き場は R2 だけの一時のもの。打った順に、各コマンドの出力と exit をそのまま残す）
 $ SPEC_AUTOPILOT_HOME=<r2>/home python3 plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high
 書いた: <r2>/home/models.md
 - 相談: fable-high

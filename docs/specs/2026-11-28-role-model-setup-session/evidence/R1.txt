@@ -25,7 +25,7 @@ exit=0
 読み替え（照合）: autopilot-spec-checker → spec-autopilot:autopilot-spec-checker-opus
 実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
 
-- 追記（859c884 で取り直した観測。置き場は R1 だけの一時のもの。打った順に、各コマンドの出力と exit をそのまま残す）
+- 追記（ae7c468 で取り直した観測。置き場は R1 だけの一時のもの。打った順に、各コマンドの出力と exit をそのまま残す）
 $ SPEC_AUTOPILOT_HOME=<r1>/home python3 plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high
 書いた: <r1>/home/models.md
 - 相談: fable-high
