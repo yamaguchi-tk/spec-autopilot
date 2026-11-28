@@ -464,3 +464,15 @@ def test_show_does_not_list_the_rung_of_a_session_override_that_has_an_error(hom
     advisor = next(l for l in r.stdout.splitlines() if l.startswith("相談:"))
     assert "このセッション opus-high" not in advisor
     assert "このセッション 使わない（誤りがある）" in advisor
+
+
+def test_setup_session_into_a_sessions_dir_it_cannot_write_fails_without_a_traceback(home):
+    assert ladder("setup", "--session", "--advisor", "opus-high", session="sess-1").returncode == 0
+    os.chmod(home / "sessions", 0o500)
+    try:
+        r = ladder("setup", "--session", "--checker", "fable-high", session="sess-1")
+    finally:
+        os.chmod(home / "sessions", 0o700)
+    assert r.returncode != 0
+    assert "Traceback" not in both(r)
+    assert sfile(home).read_text(encoding="utf-8") == "- 相談: opus-high\n"
