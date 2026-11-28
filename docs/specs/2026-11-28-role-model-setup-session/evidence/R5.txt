@@ -1,0 +1,45 @@
+- commit: 61573e56be90d11e83844bb56b9a4a2020f5974d
+
+$ python3 .autopilot-qa/check.py  # R5 の部分（下が各コマンドと出力）
+R5 pass
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID=None python3 ./plugins/spec-autopilot/scripts/ladder.py setup --impl opus-medium --review opus-xhigh --advisor fable-high
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r5/home/models.md
+- 実装: opus-medium
+- 評価: opus-xhigh
+- 相談: fable-high
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 ./plugins/spec-autopilot/scripts/ladder.py setup --session --impl fable --checker fable-high
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r5/home/sessions/qa-sess-1.models.md
+- 実装: fable
+- 検証: fable-high
+読み替え（検証）: advice-checker → spec-autopilot:advice-checker-fable
+実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 ./plugins/spec-autopilot/scripts/autopilot.py init qa-a
+exit=0
+<worktree>/.autopilot-qa/work/r5/repo/docs/specs/2026-11-28-qa-a
+NOTE: 手元の設定・セッションの上書きの行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: - 実装: fable / - 評価: opus-xhigh
+
+$ sed -n '/^## モデル/,/^## 自走/p' .autopilot-qa/work/r5/repo/docs/specs/2026-11-28-qa-a/spec.md
+
+- 実装: fable
+- 評価: opus-xhigh
+
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 ./plugins/spec-autopilot/scripts/ladder.py setup --session --review fable
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r5/home/sessions/qa-sess-1.models.md
+- 実装: fable
+- 評価: fable
+- 検証: fable-high
+読み替え（検証）: advice-checker → spec-autopilot:advice-checker-fable
+実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID=qa-sess-other python3 ./plugins/spec-autopilot/scripts/autopilot.py init qa-b
+exit=0
+<worktree>/.autopilot-qa/work/r5/repo/docs/specs/2026-11-28-qa-b
+NOTE: 手元の設定の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: - 実装: opus-medium / - 評価: opus-xhigh
+
