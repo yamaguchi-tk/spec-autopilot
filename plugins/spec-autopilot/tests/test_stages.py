@@ -1,5 +1,6 @@
 """QA の方向性の段（手元で実物・デプロイ後・代役）と、段ごとの証拠の要求を、入口（CLI）から確かめる。"""
 import json
+import re
 import subprocess
 import time
 
@@ -13,6 +14,12 @@ R2_ROW = "| R2 | 手元で実物 | ブラウザで操作 | 再開後に盤面が
 
 def with_r2(spec, stage, *lines):
     return spec.replace(R2_ROW, R2_ROW.replace("手元で実物", stage) + ("\n\n" + "\n".join(lines) if lines else ""))
+
+
+def with_purpose(spec, *lines):
+    """GOOD_SPEC の `- 目的の確かめ:` の行を、渡した行（無ければ行なし）に差し替える。"""
+    bare = re.sub(r"^- 目的の確かめ:.*\n\n?", "", spec, flags=re.M)
+    return bare.replace("## 制約", "".join(f"{line}\n" for line in lines) + ("\n" if lines else "") + "## 制約", 1)
 
 
 def lint(repo, text):
@@ -31,6 +38,24 @@ def approve(repo, text):
 
 
 # --- lint ---
+
+@pytest.mark.parametrize("lines", [
+    [],
+    ["- 目的の確かめ: R1", "- 目的の確かめ: R2"],
+    ["- 目的の確かめ: R9"],
+    ["- 目的の確かめ: マージ後（）"],
+    ["- 目的の確かめ: 手で見る"],
+])
+def test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check(repo, lines):
+    r = lint(repo, with_purpose(GOOD_SPEC, *lines))
+    assert r.returncode == 1 and "目的の確かめ" in r.stdout, r.stdout
+
+
+@pytest.mark.parametrize("line", ["- 目的の確かめ: R1", "- 目的の確かめ: マージ後（5 本の run の transcript を数え直す）"])
+def test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge(repo, line):
+    r = lint(repo, with_purpose(GOOD_SPEC, line))
+    assert r.returncode == 0, r.stdout
+
 
 @pytest.mark.parametrize("stage", ["", "単体", "本番"])
 def test_lint_rejects_a_row_without_a_known_stage(repo, stage):
