@@ -1,0 +1,114 @@
+# spec-autopilot の scripts を、行数でなく複雑さ・凝集度・結合度の指標で測って、挙動を変えずに良くする
+
+- ADR: docs/adr/2026-11-28-metrics-refactor-goal.md
+
+## 目的
+人の発言（順に）:「リファクタは完了した？」「行数以外のソフトウェアメトリクスでは？」「結合度　凝集度　複雑さ 等々の必要なソフトウェアメトリクスを指標にして欲しい」「最初にリファクタリングして その後に機能追加を実施して」「スキルを作り終わったら / 5案を先に進めて / その後にリファクタで良い」「リファクタの spec」。
+
+観測: 前のリファクタ（2026-11-26-split-modules）は行数で分けただけで、指標で測ると、20 を超える複雑度の関数の数も重複も変わらず、互いに import し合う組は増え、autopilot.py の凝集度は下がった（移しただけ）。今の plugins/spec-autopilot/scripts は、複雑度 20 を超える関数が 18 本、deploy.py の LCOM4 が 5、8 つのモジュールが 1 つの import の輪になっている。
+
+できあがったら、spec-autopilot に行を足す改善を、複雑な関数と import の輪に足さずに始められる。リファクタの spec は、行数でなく指標の前後で良くなったかを確かめられる。挙動・CLI の出力・エラー文は変わらない。
+
+## 要件
+- R1: リファクタの spec を書くとき、/autopilot の playbook に refactor があり、それを選んだ spec は、変える前の指標の値を前提に書き、QA の方向性の合格基準を「指標の前後の比べ方で悪化が無く、狙った指標が目標の値に届き、移しただけでない」にする。
+- R2: plugins/spec-autopilot/scripts を測ったとき、循環的複雑度が 20 を超える関数は 9 本以下になり、変える前に 20 を超えていた関数で値が上がったものは無い。
+- R3: plugins/spec-autopilot/scripts/deploy.py を測ったとき、LCOM4 は 2 以下になる。
+- R4: plugins/spec-autopilot/scripts を測ったとき、互いに import し合うモジュールの輪は無い。
+- R5: R2〜R4 のどの子をマージした後も、テストの全量が通り、CLI の出力とエラー文は変わらず、指標の前後の比べ方で悪化は無く、「移しただけ」と出ない。
+
+## 非目標
+- 挙動・CLI の出力・エラー文を変えること
+- hooks/ と tests/ を指標で直すこと（hooks は Stop hook の時間の上限があり、別の spec で扱う。テストは利用者の規則の対象外）
+- `~/.claude/rules/code-health.md` を直すこと（repo の外の利用者の規則で、人が別に決める）
+- 版数を上げること（挙動を変えないので、R1 の playbook だけを、マージの後に版数だけの PR で届ける）
+
+## 影響範囲
+- 変える: plugins/spec-autopilot/scripts/autopilot.py（全体）
+  - メモ: R2 の lint（593）・impact（429）・check（690）・evidence_problem（805）、R4 の関数の中の import 10 か所。子を作る時点の行番号で書き直す
+- 変える: plugins/spec-autopilot/scripts/overnight.py（全体）
+  - メモ: R2 の report（711）・cmd_await（247）・input_kinds（59）・cmd_handoff（507）・launch_errors（432）・impl_name（782）・cmd_rolled_back（657）
+- 変える: plugins/spec-autopilot/scripts/deploy.py（全体）
+  - メモ: R2 の production（322）・scope_lint（103）・scope_errors（173）と、R3 の分け方
+- 変える: plugins/spec-autopilot/scripts/transcript.py（全体）
+  - メモ: R2 の anomalies（70）
+- 変える: plugins/spec-autopilot/scripts/ladder.py（全体）
+  - メモ: R2 の report_lines（125）
+- 変える: plugins/spec-autopilot/scripts/watch.py（全体）
+  - メモ: R2 の tick_one（250）
+- 変える: plugins/spec-autopilot/scripts/stages.py（全体）
+  - メモ: R2 の check（154）
+- 変える: plugins/spec-autopilot/commands/autopilot.md（全体）
+  - メモ: R1 の playbook の索引の表に 1 行
+- 新規: plugins/spec-autopilot/references/playbooks/refactor.md
+- 変える: plugins/spec-autopilot/tests/test_playbooks.py（全体）
+  - メモ: R1。期待するファイルの一覧に refactor を足し、「ファイルの無い名前」の例の refactor を別の名前に替える
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:73
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:213
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:417-428
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:473
+  - メモ: autopilot・deploy・transcript を import する。R3・R4 で名前の置き場が変わるなら向け直す
+- 手本: plugins/spec-autopilot/scripts/carry.py:1-21（ほかの scripts を import しない小さいモジュール）
+- 同じ入力: なし
+- 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+
+## 変えない挙動
+- テストの全量: plugins/spec-autopilot/tests/
+- Stop hook の走査は予算を過ぎたら止める側に倒れる: plugins/spec-autopilot/tests/test_stop_bounds.py
+- 自走の異常の数え方と出力: plugins/spec-autopilot/tests/test_anomalies.py
+- マージ・デプロイ・QA の段の判定: plugins/spec-autopilot/tests/test_merge_qa.py
+
+## 前提
+- 目的に届く: R2〜R4 で、行を足す改善の多くが当たる関数（lint・check・report）と、import の輪の中心の autopilot.py が軽くなる。複雑度 20 以下の 51 本の警告の関数は残る
+- 運用: 指標は repo の外の測る道具（lizard を土台にした refactor-metrics の skill）で測る。道具は repo に入れない。評価役は、手元にある道具で前と後を測る。道具の無い人は、R1 の playbook の合格基準を、lizard などで同じ形に測る
+- 普通のやり方: 複雑度の高い関数は、早期 return と条件の塊の抽出で下げる。LCOM4 の高いモジュールは、つながりの塊ごとに分ける。import の輪は、共通の部分を下の層に出し、依存の向きを 1 つにそろえる
+  - メモ: lizard（https://github.com/terryyin/lizard）の README の指標の説明と、測る skill の直し方の表
+- 過去: 2026-11-26-split-modules は行数で transcript.py と deploy.py を切り出したが、指標で測ると複雑度・重複は変わらず、import の輪は増えた。この spec は前後の指標で合否を決める
+  - メモ: docs/specs/2026-11-26-split-modules/spec.md の要件は行数だけで書かれている
+- 前提: 今の scripts は、関数 317 本・複雑度の平均 7.50・20 を超える関数 18 本・10 を超える関数 69 本・重複の塊 2（0.92%）・import の輪 1（8 モジュール）
+  - コマンド: `uv run --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts` → 上の値（main の 06a73a8 で測った）
+- 前提: LCOM4 は deploy.py が 5、autopilot.py・advisor_approval.py・ladder.py が 4、overnight.py が 3
+  - コマンド: `uv run --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --json` → modules の lcom4
+- 前提: import の輪は autopilot.py・deploy.py・goal.py・light.py・lineup.py・overnight.py・preflight.py・runlog.py の 8 つで、autopilot.py が関数の中で 10 か所、輪の中のモジュールを import している
+  - コマンド: `grep -n "^\s\+import \(deploy\|goal\|light\|lineup\|overnight\|preflight\|runlog\)" plugins/spec-autopilot/scripts/autopilot.py` → 10 件
+- 前提: refactor の playbook はまだ無い
+  - path: plugins/spec-autopilot/references/playbooks/feature.md（ほかに bug-fix・external-service・iac だけ）
+
+## 作り方
+この spec の ADR のとおり、目的の spec として 1 回承認し、要件ごとに子を 1 本ずつ、R1 → R2 → R4 → R3 の順に回す。R5 は R2〜R4 の子の全部が受け持つ。子は main から順にブランチを切り、前の子のマージの後に、その時点の行番号で書く。子の承認は相談役と検証役の経路（`approve --queue --by-advisor`）で通す。
+
+- 子 1（R1）: playbook の refactor.md を足し、索引と test_playbooks.py を直す。playbook には道具の名前もパスも書かない
+- 子 2（R2）: 複雑度の高い順に、早期 return・条件の塊の抽出・分岐の表で下げる。M に収まらなければ子を 2 本に分ける（autopilot.py と、ほかのファイル）
+- 子 3（R4）: 輪の中で autopilot.py が使う名前を下の層のモジュールに出し、autopilot.py の関数の中の import を無くすか、向きを 1 つにそろえる。R3 より先に回す（deploy.py の分け方が import の向きで決まるため）
+- 子 4（R3）: deploy.py のつながりの塊ごとにモジュールを分ける。分けた先の LCOM4 と輪が悪化しないことも確かめる
+
+## QA の方向性
+| 要件 | 段 | 確かめ方 | 合格基準 |
+|---|---|---|---|
+| R1 | 手元で実物 | playbook のテストを回し、`CLI lint` を `- playbook: refactor` の spec に回す | テストが通り、lint が refactor を受け、refactor.md に道具の名前とパスが無い |
+| R2 | 手元で実物 | 子の着手の commit を前にして、指標の前後の比べ方を回す | 20 を超える関数が 9 本以下、悪化 0、移しただけでない |
+| R3 | 手元で実物 | 同じく前後の比べ方を回し、deploy.py と分けた先の LCOM4 を読む | deploy.py の LCOM4 が 2 以下、分けた先も 2 以下、悪化 0 |
+| R4 | 手元で実物 | 同じく前後の比べ方を回し、輪の数を読む | 輪が 0、悪化 0 |
+| R5 | 手元で実物 | テストの全量を回し、CLI の check・lint・report を前と後で同じ spec に回して出力を突き合わせる | 全部通り、出力が同じ |
+
+## 制約
+- 予算: 240 分
+- 大きさ: L
+- playbook: なし（挙動を変えないリファクタで、refactor の playbook は R1 で作る）
+- 想定する脅威: なし（hook と判定の結果を変えない。判定の関数の中を書き換えるので、変えない挙動のテストの全量で守る）
+
+## モデル
+
+## 自走の範囲
+- 範囲: マージまで
+- QA の環境:
+- QA の書き込み先:
+- デプロイの起動:
+- デプロイの確かめ:
+- ロールバック: revert の PR をマージし、デプロイの完了を確かめる
+- 通知: デスクトップ
+- AWS の profile: なし
+
+## 止まる条件
+- 合意した要件のどれかを満たす方法が無いと分かったとき（その要件だけを park に積み、ほかを進める。どの要件も進められないときだけ block）
+- 承認した自走の範囲の外の操作が要るとき（実行せずに park に積む）
+- 子の前後の比べ方で悪化が出て、直すと別の指標が悪化するとき（その子を discovery に残し、朝の報告に書く）
