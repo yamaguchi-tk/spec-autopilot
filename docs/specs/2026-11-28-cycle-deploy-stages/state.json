@@ -1,8 +1,14 @@
 {
-  "phase": "discovery",
+  "phase": "queued",
   "slug": "cycle-deploy-stages",
   "created_at": 1795830426.555039,
   "existing": true,
   "start": "d344a42d56461646e907b8a59304c39f747844cd",
-  "last_active_at": 1795830426.639775
+  "last_active_at": 1795831162.7575061,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795831162.756602,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 16）。人は目的の spec を「承認する」で承認済み",
+  "spec_sha256": "740e7256f78bb7891069707539296b72c956e607aabd93e00acb8e19404964d7",
+  "after": null
 }
