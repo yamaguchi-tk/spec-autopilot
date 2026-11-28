@@ -1,0 +1,10 @@
+- commit: b4c33db
+
+$ git diff --stat 06a73a8..b4c33db -- plugins/spec-autopilot/scripts/advisor_approval.py plugins/spec-autopilot/scripts/goal.py
+（出力なし: 差分なし）
+
+$ python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_goal_child.py plugins/spec-autopilot/tests/test_advisor_approval.py
+71 passed in 142.49s (0:02:22)
+
+$ python3 .autopilot-qa/check.py
+R5 pass

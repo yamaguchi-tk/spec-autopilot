@@ -1,0 +1,14 @@
+- commit: b4c33db
+
+$ python3 .autopilot-qa/check.py
+hook: (1) 価値観で案が 1 つに絞れたときは、相談役も検証役も回さずに進む。
+R3 pass
+
+$ grep -n -o "案が 1 つに絞れたら相談役も検証役も回さずに進み" plugins/spec-autopilot/commands/autopilot.md
+44:案が 1 つに絞れたら相談役も検証役も回さずに進み
+
+$ grep -n -o "残る案が 1 つなら選択肢にせず[^。]*。" plugins/spec-autopilot/commands/autopilot.md
+150:残る案が 1 つなら選択肢にせず、その案を推奨として理由つきで示す（相談役も検証役も回さない）。
+
+$ python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_autopilot.py -k "advisor_rule or points_at_advisor_rule"
+14 passed, 481 deselected in 29.31s
