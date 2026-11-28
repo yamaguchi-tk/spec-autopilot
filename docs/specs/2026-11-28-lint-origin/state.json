@@ -4,7 +4,7 @@
   "created_at": 1795821439.061122,
   "existing": true,
   "start": "7bc23c1821287f08dbb9716097e51dd93e927e33",
-  "last_active_at": 1795827273.659583,
+  "last_active_at": 1795828877.040302,
   "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
   "queued_at": 1795822313.379647,
   "approved_by": "R1〜R5 の 2 本の子（子 1 を閉じ R3・版数を非目標、示す前の lint と R2 の除外を足す）の推奨のままで OK",
@@ -191,7 +191,13 @@
   ],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795828876.960596,
+      "sha": "0fddc89495d0a47bd1b3ccbdde2ec3feb043f190"
+    }
+  ],
   "fails": {},
   "streak": {},
   "reworks": {},
@@ -299,6 +305,14 @@
       ],
       "dispatch": 3,
       "at": 1795827250.048828
+    },
+    {
+      "tip": "0fddc89495d0a47bd1b3ccbdde2ec3feb043f190",
+      "tasks": [
+        "T5"
+      ],
+      "dispatch": 4,
+      "at": 1795827553.7606452
     }
   ],
   "raises": [
@@ -309,6 +323,18 @@
       "at": 1795825419.7464352,
       "from": "autopilot-implementer",
       "to": "autopilot-implementer-opus"
+    }
+  ],
+  "review_launches": [
+    1795827564.34241
+  ],
+  "lenses": [
+    {
+      "name": "権限の境界をまたぐ呼び出し",
+      "found": 0,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795828877.040301
     }
   ]
 }

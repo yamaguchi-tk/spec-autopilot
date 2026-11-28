@@ -1,0 +1,47 @@
+- commit: 0fddc89495d0a47bd1b3ccbdde2ec3feb043f190
+- 環境: 手元の一時 repo（.autopilot-qa/run/r4 に git init）。本物の autopilot.py の CLI を回す
+$ grep -n "毎回 \`CLI lint <dir>\` を通してから示す\|3 のとおり \`CLI lint\` を通してから" plugins/spec-autopilot/commands/autopilot.md
+74:3. `CLI lint <dir>` を通す。ERROR は直す。spec を人に示す前と、照合役の `ng` や人の直しの指示で直して示し直す前には、毎回 `CLI lint <dir>` を通してから示す（lint が通した中身だけが、5 の承認の起点の記録に残る。…）
+77:5. …approve は、承認の起点（人に示す前に `CLI lint` が通した中身なら、その中身を lint が初めて見た時刻。lint を通していなければ spec.md の最後の変更）より後に…。返事の後に spec を直したら、3 のとおり `CLI lint` を通してから、もう一度示して返事を受ける。…
+$ python3 .autopilot-qa/check.py（R4 の段の抜き出し。macOS の更新の NOTE の行は略した）
+$ git init r4
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-b-num
+  lint: OK
+  (exit 0)
+# 照合役の ng で「横 1 列がそろったとき」→「横 2 列がそろったとき」に直す
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-b-num
+  lint: OK
+  (exit 0)
+# 人の発言
+# spec.md の `- ADR:` を 0007 → 0008 だけ直す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-b-num --by OK
+  approved: 予算 30 分。ここから自走する
+  (exit 0)
+R4 lint(B) の後の連番だけの直しは通る: pass
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-back-a2
+  lint: OK
+  (exit 0)
+# 照合役の ng で「横 1 列がそろったとき」→「横 2 列がそろったとき」に直す
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-back-a2
+  lint: OK
+  (exit 0)
+# 人の発言
+# 連番ごと A に戻す（A'）
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-back-a2 --by OK
+  承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）の後に人の発言が記録されていない。人に示して返事を受けてから実行する
+  (exit 1)
+R4 lint(B) を示した後に連番ごと A に戻すと断る: pass
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-back-a
+  lint: OK
+  (exit 0)
+# 照合役の ng で「横 1 列がそろったとき」→「横 2 列がそろったとき」に直す
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-back-a
+  lint: OK
+  (exit 0)
+# 人の発言
+# A そのままに戻す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-back-a --by OK
+  承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）の後に人の発言が記録されていない。人に示して返事を受けてから実行する
+  (exit 1)
+R4 lint(B) を示した後に A そのままに戻すと断る: pass
+R4 pass

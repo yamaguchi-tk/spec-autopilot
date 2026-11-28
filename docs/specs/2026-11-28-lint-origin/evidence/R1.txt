@@ -1,6 +1,6 @@
-- commit: 8044533
-- 環境: 手元の一時 repo（.autopilot-qa/run/r1 に git init）。本物の autopilot.py の CLI を回す。人の発言は transcript の origin=human の行と UserPromptSubmit hook で作る
-$ python3 .autopilot-qa/check.py（R1 の段の抜き出し）
+- commit: 0fddc89495d0a47bd1b3ccbdde2ec3feb043f190
+- 環境: 手元の一時 repo（.autopilot-qa/run/r1 に git init）。本物の autopilot.py の CLI を回す
+$ python3 .autopilot-qa/check.py（R1 の段の抜き出し。macOS の更新の NOTE の行は略した）
 $ git init r1
 $ autopilot.py lint <repo>/docs/specs/2026-11-28-game
   lint: OK
@@ -18,3 +18,25 @@ $ git status --porcelain --untracked-files=all
   ?? docs/specs/2026-11-28-game/spec.md
   ?? docs/specs/2026-11-28-game/state.json
   ?? docs/specs/2026-11-28-game/tasks.md
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-relint-after
+  lint: OK
+  (exit 0)
+# 人の発言
+# spec.md の `- ADR:` を 0007 → 0008 だけ直す
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-relint-after
+  lint: OK
+  (exit 0)
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-relint-after --by OK
+  approved: 予算 30 分。ここから自走する
+  (exit 0)
+R1 連番だけ直した後に lint し直しても approve が通る: pass
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-twice
+  lint: OK
+  (exit 0)
+# 人の発言
+# spec.md の `- ADR:` を 0007 → 0008 だけ直す
+# もう一度 0008 → 0009 に改番する
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-twice --by OK
+  approved: 予算 30 分。ここから自走する
+  (exit 0)
+R1 連番を 2 回直しても approve が通る: pass
