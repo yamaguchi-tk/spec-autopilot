@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "advisor-description-scenes",
+  "created_at": 1795830015.027894,
+  "existing": true,
+  "start": "d344a42d56461646e907b8a59304c39f747844cd",
+  "last_active_at": 1795830278.285663,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795830278.282068,
+  "approved_by": "OK（承認）: 相談役の description の場面の例を 4 つの場面に合わせる",
+  "spec_sha256": "c378518e3bc0fca010f05248f22b35378742d28608d1d56b61da038467a4821a",
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
