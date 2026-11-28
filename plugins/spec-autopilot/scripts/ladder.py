@@ -226,7 +226,7 @@ def render(rows):
     return "".join(f"- {k}: {rows[k]}\n" for k in CONFIG_KEY.values() if k in rows)
 
 
-def edit(change, path=None):
+def edit(change, path=None, session=False):
     """ロックの中で読み直し、change(読める行) が返した行だけで書き換える（空なら消す）。壊れていた元の中身は毎回別の名前で残す。
     置き場に書けない（OSError）ときは traceback で落とさず、0 以外で終わる。"""
     path = path or config_path()
@@ -234,24 +234,24 @@ def edit(change, path=None):
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path.with_name(path.name + ".lock"), "w") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
-            return _edit_locked(change, path)
+            return _edit_locked(change, path, session)
     except OSError as e:
         block = next((d for d in [path.parent, *path.parent.parents] if os.path.isfile(d)), None)
         why = f"{block} がファイル" if block else type(e).__name__
         sys.exit(f"{path.parent} に書けない（{why}）。{path} は変えていない")
 
 
-def _edit_locked(change, path):
+def _edit_locked(change, path, session):
     raw, rows, errors = read_config(path)
     if errors:
         if raw is None:
             sys.exit("; ".join(errors))
         kept = path.with_name(f"{path.name}.bad-{time.time_ns()}-{os.getpid()}")
         kept.write_bytes(raw)
-        if path.parent.name == "sessions":  # 誤りのあるセッションの上書きは使わない層なので、読めた行も持ち越さない
+        if session:  # 誤りのあるセッションの上書きは使わない層なので、読めた行も持ち越さない
             rows = {}
         print(f"NOTE: {path} に誤りがあった（{'; '.join(errors)}）。元の中身を退避した: {kept}。"
-              + ("読めた行も持ち越さない" if not rows else "読めた行だけで続ける"), file=sys.stderr)
+              + ("読めた行も持ち越さない" if session else "読めた行だけで続ける"), file=sys.stderr)
     rows = change(dict(rows))
     if not rows:
         path.unlink(missing_ok=True)
@@ -334,13 +334,13 @@ def cmd_setup(a):
         if a.reset != "all" and a.reset not in TABLE or given:
             sys.exit(f"--reset は単独で、役は「{'」「'.join(TABLE)}」だけを渡す")
         keys = list(TABLE) if a.reset == "all" else [a.reset]
-        edit(lambda rows: {k: v for k, v in rows.items() if k not in keys}, path)
+        edit(lambda rows: {k: v for k, v in rows.items() if k not in keys}, path, a.session)
         print(f"{'・'.join(TABLE) if a.reset == 'all' else a.reset}が既定に戻った（{'セッションの上書き' if a.session else '設定'}のファイル: {path}）")
         return 0
     bad = [f"{CONFIG_KEY[r]} の段「{v}」" for r in ROLES for v in [getattr(a, r)] if v is not None and v not in ROLES[r]]
     if not given or bad:
         sys.exit(("受けない段: " + "、".join(bad) + "\n" if bad else "--impl か --review か --advisor か --checker か --spec-checker か --reset を渡す\n") + "\n".join(accepted_lines()))
-    rows = edit(lambda cur: {**cur, **given}, path)
+    rows = edit(lambda cur: {**cur, **given}, path, a.session)
     print(f"書いた: {path}\n{render(rows)}", end="")
     if a.session:
         for role in ADVISORS:
