@@ -4,7 +4,7 @@
   "created_at": 1795827179.0898712,
   "existing": true,
   "start": "256ced70d33e753e1626782643565a9b4492ee02",
-  "last_active_at": 1795827655.2720692,
+  "last_active_at": 1795829418.133814,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795827650.706514,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 25）。人は目的の spec を「承認する」で承認済み",
@@ -16,8 +16,43 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795829418.1337962,
+      "sha": "06de29e77909a40de59181d80dd03857b4ad1306"
+    }
+  ],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "49c5664ab770333a7673f3f2f3cf9e146d9e9169",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795827660.2891421,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "06de29e77909a40de59181d80dd03857b4ad1306",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795828882.828392
+    }
+  ],
+  "review_launches": [
+    1795829114.104674
+  ]
 }
