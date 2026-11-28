@@ -1,0 +1,21 @@
+{
+  "phase": "building",
+  "slug": "fewer-advisor-calls",
+  "created_at": 1795826385.546604,
+  "existing": true,
+  "start": "06a73a81766790739ac8b0e354d36016b772e10f",
+  "last_active_at": 1795827830.4496472,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "approved_at": 1795827830.433163,
+  "approved_by": "OK（承認）: 相談役は承認の門・名指し・IaC の初回だけ、ほかは main の案を検証役に repo の事実があるときだけ当てる",
+  "spec_sha256": "7cab8da4e86a90d578a918623ec0c52da3352588a86480b7fb62e5e70aa14c90",
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
