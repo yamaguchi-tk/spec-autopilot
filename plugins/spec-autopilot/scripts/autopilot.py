@@ -496,6 +496,7 @@ def counted_size(d, text, tip=None):
     return size, diffed, f"数えた大きさ {size}（" + "・".join(f"{k} {v}" for k, v in counts.items()) + "）", errors
 
 
+# L の ERROR の文。範囲: 文だけを変え、出す条件は変えない。想定する脅威: なし（案内の文）。やらないこと: 目的の spec の道で ERROR を消すこと
 SPLIT_L = ("大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする。"
            "目的の spec にするなら、ほかの ERROR を 0 にして 1 本のまま示し、`approve <dir> --by \"<返事の要約>\" --goal` で承認する（子へ分けるのは承認の後）")
 SPLIT_PR = "大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける"
