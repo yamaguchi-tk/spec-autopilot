@@ -1,14 +1,78 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "role-model-setup-advisors",
   "created_at": 1795827336.695856,
   "existing": true,
   "start": "06a73a81766790739ac8b0e354d36016b772e10f",
-  "last_active_at": 1795829366.459777,
+  "last_active_at": 1795830561.3837829,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795829366.458844,
   "approved_by": "OK（2 本承認）",
   "spec_sha256": "14be5f61f28d344078fb64a7ca446b18d22c76448824b95283afde0619b2055d",
-  "after": null
+  "after": null,
+  "approved_at": 1795829373.5139751,
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "2574858ba3f3ae1541ef9a97450d5e640baffba7",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R7"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795829387.475303,
+      "session": "38935b5c-a9c7-4069-b340-0dee0b291583"
+    },
+    {
+      "base": "5f61f36d8ccf24ba278843b89b424623ee52dcb9",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R5",
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795830112.9642189,
+      "session": "38935b5c-a9c7-4069-b340-0dee0b291583"
+    }
+  ],
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 1,
+    "待ちの poll": 0
+  },
+  "handoffs": [
+    {
+      "tip": "5f61f36d8ccf24ba278843b89b424623ee52dcb9",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795830112.4276822
+    },
+    {
+      "tip": "2af23208f4c3b045770880ea1f9ba7eccaf9701a",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795830561.383782
+    }
+  ]
 }
