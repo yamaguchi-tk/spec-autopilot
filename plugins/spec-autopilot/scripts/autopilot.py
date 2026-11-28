@@ -500,6 +500,26 @@ GOAL_WAY = ("。目的の spec にするなら、ほかの ERROR を 0 にし、
 SPLIT_PR = "大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける"
 
 
+def size_notes(d, s):
+    """「大きさが L になった」の NOTE の本文の一覧を返す（NOTE: は付けない。`done` と `check --stage pr` が出す）。
+    PR を作る前に、PR を分けるかを決められるようにする。範囲がマージ以上の spec は done が PR の後になるので、check --stage pr でも出す。
+    申告の大きさか数えた大きさが L のとき出す。大きさの行が読めないときは L とみなす（cmd_size と同じ向き）。新しく作る repo は数えない。"""
+    text = (d / "spec.md").read_text(encoding="utf-8")
+    out = []
+    stated, size_err = stated_size(COMMENT_BLOCK.sub("", section(text, "制約") or ""))
+    size, detail = None, "数えていない"
+    if size_err:
+        stated, detail = "L", size_err
+    if not is_new_repo(s):
+        try:
+            size, _, detail, _ = counted_size(d, COMMENT_BLOCK.sub("", section(text, "影響範囲") or ""))
+        except RuntimeError as e:
+            out.append(f"大きさを数えられない（{e}）。PR の大きさは差分を見て決める")
+    if "L" in (stated, size):  # 合意し直しと自走中に育った L も、PR を作る前に受け持つ
+        out.append(f"{SPLIT_PR}（申告 {stated or 'なし'}・{detail}）")
+    return out
+
+
 def size_errors(d, impact_text, stated, first_agreement, at_approve, goal_way=""):
     """既存の repo の、申告した大きさと数えた大きさを突き合わせる。(errors, warnings) を返す。大きさは申告と数えた大きさの大きい側だけで決め、人の発言では小さくしない。L は初回の合意（first_agreement）でだけ止める。"""
     if stated is None:
@@ -734,6 +754,21 @@ def without_tail(text):
     return text[:i]
 
 
+def evidence_items(root, tests):
+    """pass の証拠の欄を、テストの並びに区切る。区切りの候補（EVIDENCE_SEP）の後ろの `::` の前が空か repo のファイルのときだけ区切る（名前の中の ・、 は前の名前に戻す）。"""
+    out, start = [], 0
+    for m in EVIDENCE_SEP.finditer(tests):
+        head = tests[m.end():].split("::", 1)[0].strip().strip("`")
+        try:
+            if head and not (root / head).is_file():
+                continue
+        except OSError:
+            continue
+        out.append(tests[start:m.start()])
+        start = m.end()
+    return out + [tests[start:]]
+
+
 def evidence_problem(root, evidence, seen=None):
     """pass の証拠の欄を EVIDENCE_* の文法で読み、テストが 1 つでも無ければ問題を返す。
     seen は 1 回の check の中で共有する、読んだファイル・見つけた名前・走査したバイト数。"""
@@ -750,7 +785,7 @@ def evidence_problem(root, evidence, seen=None):
     if not tests:
         return None if free else EVIDENCE_FORMS
     path = None
-    for item in __import__("evidence").items(root, tests, EVIDENCE_SEP):
+    for item in evidence_items(root, tests):
         p, sep, names = item.strip().strip("`").partition("::")
         path = p.strip() or path
         names = [n.strip() for n in names.split("::")]
@@ -955,7 +990,7 @@ def cmd_check(a):
     d = Path(a.dir)
     errors, notes = check(d, a.stage)
     if a.stage == "pr" and not errors and (d / "spec.md").exists():  # PR を作る前に、PR を分けるかを決められるようにする（done の NOTE と同じ）。errors があるときは base と同じ ERROR だけ出す
-        notes += __import__("size_note").notes(sys.modules[__name__], d, load_state(d))
+        notes += size_notes(d, load_state(d))
     return report(errors, notes, "check: OK")
 
 
@@ -974,7 +1009,7 @@ def cmd_done(a):
         __import__("runlog").record(d, s, "done", s["done_at"])
     minutes = lambda since: round((s["done_at"] - since) / 60, 1)  # noqa: E731
     print(f"done: 承認から {minutes(s['approved_at'] + s.get('paused_sec', 0))} 分（確認待ちを除く）、着手から {minutes(s['created_at'])} 分。異常: {anomaly_line(s.get('anomalies') or {})}。{commit_note(s)}")
-    for line in __import__("size_note").notes(sys.modules[__name__], d, s):
+    for line in size_notes(d, s):
         print(f"NOTE: {line}")
     overnight = __import__("overnight")
     print("\n".join(overnight.report(d)))

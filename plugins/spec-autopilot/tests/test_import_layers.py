@@ -126,3 +126,34 @@ def test_stages_repo_root_and_git_lines_call_git_through_one_function():
 def test_session_id_is_defined_only_in_stages_and_the_other_scripts_import_it():
     defined = [m for m in sorted(MODULES) if any(isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "SESSION_ID" for t in n.targets) for n in ast.walk(tree(f"{m}.py")))]
     assert defined == ["stages"]
+
+
+def module_passes():
+    """autopilot.py の `sys.modules[__name__]` の出る場所の数と、それを引数に渡している `__import__("x")` の x。"""
+    t = tree("autopilot.py")
+    refs = [n for n in ast.walk(t) if isinstance(n, ast.Subscript) and "modules" in ast.dump(n.value) and "__name__" in ast.dump(n.slice)]
+    passed = set()
+    for n in ast.walk(t):
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and isinstance(n.func.value, ast.Call):
+            inner = n.func.value
+            if isinstance(inner.func, ast.Name) and inner.func.id == "__import__" and any("modules" in ast.dump(a) for a in n.args):
+                passed.add(inner.args[0].value)
+    return len(refs), passed
+
+
+def test_evidence_and_size_note_are_folded_into_autopilot():
+    assert not {"evidence", "size_note"} & MODULES
+    assert not {"evidence", "size_note"} & imported(tree("autopilot.py"))
+    assert not (SCRIPTS / "evidence.py").exists() and not (SCRIPTS / "size_note.py").exists()
+    names = {n.name for n in tree("autopilot.py").body if isinstance(n, ast.FunctionDef)}
+    assert {"evidence_items", "size_notes"} <= names
+
+
+def test_autopilot_imports_fifteen_scripts_modules():
+    assert len(imported(tree("autopilot.py")) & MODULES) == 15
+
+
+def test_autopilot_passes_sys_modules_only_to_premises_and_rootcause():
+    count, passed = module_passes()
+    assert count == 2
+    assert passed == {"premises", "rootcause"}
