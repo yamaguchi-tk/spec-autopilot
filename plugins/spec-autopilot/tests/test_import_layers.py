@@ -121,3 +121,8 @@ def test_stages_repo_root_and_git_lines_call_git_through_one_function():
     for name in ("repo_root", "git_lines"):
         assert not calls(funcs[name], "run"), name
         assert "run_git" in {c.func.id for c in calls(funcs[name])}, name
+
+
+def test_session_id_is_defined_only_in_stages_and_the_other_scripts_import_it():
+    defined = [m for m in sorted(MODULES) if any(isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "SESSION_ID" for t in n.targets) for n in ast.walk(tree(f"{m}.py")))]
+    assert defined == ["stages"]

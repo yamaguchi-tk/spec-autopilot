@@ -35,6 +35,7 @@ COMMENT_BLOCK = re.compile(r"<!--.*?-->", re.S)
 QA_ROW = re.compile(r"^\|\s*(R\d+)\s*\|\s*(pass|fail|unverified)\s*\|(.*)\|\s*$")  # 証拠の欄は 1 つの (.*) にし、前後の空白は check で除く（空白の分け方で後戻りしない）
 SIZE_LINE = re.compile(r"^- 大きさ:[ \t]*([SML])[ \t]*$", re.M)
 SIZE_ANY = re.compile(r"^- 大きさ:.*$", re.M)
+SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}")  # 先頭は英数字（見回り役が claude の引数に置くので、option と読まれない形だけを受ける。ladder.py も autopilot に依らず使う）
 MAX_REWORKS = 2  # references/dead-end.md の段: 作り直しは要件ごとに 2 回
 
 
