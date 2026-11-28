@@ -1,6 +1,7 @@
 """セッションごとの、自走させる spec の記録の読み書き。SESSION_ID のほかに scripts を import しない下の層。"""
 import json
 import os
+import sys
 from pathlib import Path
 
 from stages import SESSION_ID
