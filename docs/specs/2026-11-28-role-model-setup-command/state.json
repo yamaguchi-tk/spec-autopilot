@@ -1,14 +1,23 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "role-model-setup-command",
   "created_at": 1795827528.082718,
   "existing": true,
-  "start": "662e96665a763d81a21e90b1eb859176fb3e35c2",
-  "last_active_at": 1795829366.855032,
+  "start": "0de22ca9da1e4a8589dc174379985fa0412e1829",
+  "last_active_at": 1795832235.050563,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795829366.854167,
   "approved_by": "OK（2 本承認）",
   "spec_sha256": "68e497f990170738fade6bbb30a1d7dd2deeeb0cdc93cd136e58d955dd26173d",
-  "after": "2026-11-28-role-model-setup-advisors"
+  "after": "2026-11-28-role-model-setup-advisors",
+  "approved_at": 1795832235.050157,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
