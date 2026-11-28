@@ -4,7 +4,7 @@
   "created_at": 1795821439.061122,
   "existing": true,
   "start": "7bc23c1821287f08dbb9716097e51dd93e927e33",
-  "last_active_at": 1795824122.4161239,
+  "last_active_at": 1795824665.049736,
   "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
   "queued_at": 1795822313.379647,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 目的の spec の子 2（親 R4〜R6）。相談役は承認: 可、検証は反証なし（確かめられない 0 / 12）",
@@ -21,10 +21,27 @@
       "high": [],
       "at": 1795824122.317686,
       "sha": "00b6d0a08012ab3388e57bea70f0f2a1d45bdbe6"
+    },
+    {
+      "high": [
+        "R2"
+      ],
+      "at": 1795824664.970389,
+      "sha": "e6f5e0b3be4e4e71c43366d075002670a7b0f2cb"
     }
   ],
-  "fails": {},
-  "streak": {},
+  "fails": {
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795824664.9703848
+      }
+    ]
+  },
+  "streak": {
+    "R2": 1
+  },
   "reworks": {},
   "dispatches": [
     {
@@ -51,6 +68,18 @@
       "agent": "autopilot-implementer",
       "at": 1795823133.627347,
       "session": "1458e274-2131-47de-a981-b796d5011d85"
+    },
+    {
+      "base": "fea6b9df6d5e4a3e396315e42f0b76eb0a28ca72",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795824131.124789,
+      "session": "1458e274-2131-47de-a981-b796d5011d85"
     }
   ],
   "handoffs": [
@@ -69,10 +98,19 @@
       ],
       "dispatch": 1,
       "at": 1795823503.41116
+    },
+    {
+      "tip": "e6f5e0b3be4e4e71c43366d075002670a7b0f2cb",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795824249.92259
     }
   ],
   "review_launches": [
-    1795823528.2613919
+    1795823528.2613919,
+    1795824254.185534
   ],
   "lenses": [
     {
@@ -81,6 +119,13 @@
       "reproduced": 2,
       "fixed": 0,
       "at": 1795824122.416123
+    },
+    {
+      "name": "権限の境界をまたぐ呼び出し",
+      "found": 2,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795824665.0497348
     }
   ]
 }

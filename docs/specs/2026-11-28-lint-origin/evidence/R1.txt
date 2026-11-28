@@ -1,4 +1,4 @@
-- commit: 00b6d0a08012ab3388e57bea70f0f2a1d45bdbe6
+- commit: e6f5e0b
 - 環境: 手元の一時 repo（.autopilot-qa/run/r1 に git init）。本物の autopilot.py の CLI を回す。人の発言は transcript の origin=human の行と UserPromptSubmit hook で作る
 $ python3 .autopilot-qa/check.py（R1 の段の抜き出し）
 $ git init r1
@@ -14,7 +14,6 @@ R1 連番だけの直しで approve が通る: pass
 $ git status --porcelain --untracked-files=all
   ?? docs/adr/0008-game.md
   ?? docs/adr/2026-01-01-game.md
-  ?? docs/specs/2026-11-28-game/.state.json.lock
   ?? docs/specs/2026-11-28-game/qa.md
   ?? docs/specs/2026-11-28-game/spec.md
   ?? docs/specs/2026-11-28-game/state.json
