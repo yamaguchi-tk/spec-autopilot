@@ -1,0 +1,2 @@
+{"kind": "ci", "pr": 123, "sha": "e21b6ba12a28264b945b30101c1f8f48158281ae", "result": "error", "started_at": 1795854125.426063, "at": 1795854126.454279, "detail": ["RuntimeError: gh pr checks 123 --json name,bucket,link が読めない（exit 1）: no checks reported on the 'claude/cycle-goal-runlog' branch"]}
+{"kind": "ci", "pr": 123, "sha": "bc55b557bf0f74d0931462dcfb53e5988beec2a3", "result": "success", "started_at": 1795854199.317452, "at": 1795854510.501942, "detail": ["spec-autopilot"]}
