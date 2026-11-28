@@ -46,6 +46,6 @@ argument-hint: <やりたいこと>
 3. `CLI lint <dir>` を通す。ERROR は直す
 4. `autopilot-spec-checker` agent を前景で 1 回起動する（`commands/autopilot.md` の B の 3 と同じ。渡すのは spec のディレクトリだけ）。`ng` は直し、直したら `CLI lint <dir>` だけを通し直す（照合役は回し直さない）
 5. S と、新しく作る repo の M（`- 依る spec:` の行が無いもの）では、`references/small-prototype.md` に従って試作を作る（壁打ちの道では、ここで初めて作る）
-6. spec を示して OK を求める（示す中身は `commands/autopilot.md` の B の 4）。この turn で `CLI approve` は打たない
+6. spec を示して OK を求める（示す中身は `commands/autopilot.md` の B の 4）。この turn では approve を打たない
 
-人の OK の返事を受けたら、`commands/autopilot.md` の B の 5（`CLI approve`）に進み、承認のあとは C で自走する。OK でなく直しの返事なら、spec を直して `CLI lint <dir>` を通してから示し直す（照合役は回し直さない）。
+人の OK の返事を受けたら、`commands/autopilot.md` の B の 5（approve）に進み、承認のあとは C で自走する。OK でなく直しの返事なら、spec を直して `CLI lint <dir>` を通してから示し直す（照合役は回し直さない）。
