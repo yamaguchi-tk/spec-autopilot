@@ -1,0 +1,78 @@
+{
+  "phase": "building",
+  "slug": "fold-evidence-size-note",
+  "created_at": 1795855095.28001,
+  "existing": true,
+  "start": "22c69e633cb6d9486ba206a3e51130760b326ad6",
+  "last_active_at": 1795857888.215533,
+  "consent": {
+    "sha256": "c3d8ae752f5ccde926ed9b94a1a9a0cc5d23b00a87df2b229c7d16f312f4fe57",
+    "full": "c3d8ae752f5ccde926ed9b94a1a9a0cc5d23b00a87df2b229c7d16f312f4fe57",
+    "at": 1795855501.456339,
+    "mtime": 1795855500.8851953
+  },
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795855771.3973088,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 13）。人は目的の spec を「承認する」で承認済みで、「次の子へ進む」と返した",
+  "spec_sha256": "d12a13ec2fae235ebaaea0ec8b2c47ffa4272a4074bb2f3316f3311716c3012d",
+  "after": null,
+  "approved_at": 1795855772.79315,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795856501.896117,
+      "sha": "ee642d85bcf01a7e5264faae1ba62f26670f091e"
+    },
+    {
+      "high": [],
+      "at": 1795857888.21552,
+      "sha": "a57bd57777a03c980e90d7ebe7024834e1ab79ba"
+    }
+  ],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "8d7cc9005e8557443349a8cffa3cdabdb7b3191c",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795855773.209443,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "ee642d85bcf01a7e5264faae1ba62f26670f091e",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795855941.776833
+    },
+    {
+      "tip": "a57bd57777a03c980e90d7ebe7024834e1ab79ba",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795857401.4176252
+    }
+  ],
+  "review_launches": [
+    1795855953.21207,
+    1795857410.5538611
+  ]
+}
