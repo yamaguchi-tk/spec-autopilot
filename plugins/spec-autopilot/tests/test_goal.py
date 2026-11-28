@@ -85,6 +85,15 @@ def test_lint_l_error_does_not_name_the_goal_approval_for_a_queued_spec(repo):
     assert len(errors) == 1 and "--goal" not in errors[0], errors
 
 
+def test_lint_l_error_does_not_name_the_goal_approval_for_a_child_of_a_goal_spec(repo):
+    """目的の spec の子は相談役で --queue 承認する前提なので、L の ERROR は --goal を案内しない。"""
+    d = large_goal(repo)
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 大きさ: L", "- 大きさ: L\n- 親 spec: 2026-11-28-parent\n- 親の要件: R1"), encoding="utf-8")
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
+
+
 def test_approve_without_goal_still_stops_a_large_spec(repo):
     d = large_goal(repo)
     user_says(repo)
