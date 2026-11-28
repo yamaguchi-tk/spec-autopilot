@@ -399,3 +399,31 @@ def test_advice_checker_definition_gives_one_verdict_line_form_that_the_gate_acc
     assert r.returncode == 0, out(r)
     assert state(d)["phase"] == "building"
     assert re.findall(r"`判定: 反証(?:あり|なし)", before) == []
+
+
+@pytest.mark.parametrize("advisor_name", ["fable-advisor-high", "fable-advisor-opus"])
+def test_approve_by_advisor_counts_the_advisor_of_every_stage_in_the_table(repo, advisor_name):
+    d = blocked_spec(repo)
+    subagent_ran(advisor_name, OK_ADVISOR)
+    subagent_ran("advice-checker", OK_CHECKER)
+    r = by_advisor(repo, d)
+    assert r.returncode == 0, out(r)
+    assert state(d)["phase"] == "building"
+
+
+@pytest.mark.parametrize("other", ["opus-advisor", "fable-advisor-xhigh", "autopilot-reviewer"])
+def test_approve_by_advisor_does_not_count_an_agent_that_is_not_in_the_stage_table(repo, other):
+    d = blocked_spec(repo)
+    subagent_ran(other, OK_ADVISOR)
+    subagent_ran("advice-checker", OK_CHECKER)
+    r = by_advisor(repo, d)
+    assert r.returncode == 1 and "fable-advisor" in r.stdout and state(d)["phase"] == "blocked"
+
+
+def test_approve_by_advisor_uses_the_last_advisor_record_across_the_stage_names(repo):
+    d = blocked_spec(repo)
+    subagent_ran("fable-advisor-high", OK_ADVISOR)
+    subagent_ran("fable-advisor-opus", "承認: 否\n")
+    subagent_ran("advice-checker", OK_CHECKER)
+    r = by_advisor(repo, d)
+    assert r.returncode == 1 and "承認: 可" in out(r) and state(d)["phase"] == "blocked"

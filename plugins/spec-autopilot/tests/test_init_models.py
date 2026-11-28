@@ -88,3 +88,20 @@ def test_init_copies_the_rows_in_the_order_and_form_the_file_has(repo):
     put("<!-- 手元の設定 -->\n- 評価:   opus-xhigh  \n- 実装: sonnet-high\n")
     _, text, _ = init(repo)
     assert re.search(r"-->\n- 評価: opus-xhigh\n- 実装: sonnet-high\n", model_section(text))
+
+
+def test_init_does_not_copy_the_advisor_and_checker_rows_and_lint_stays_clean(repo):
+    put("- 実装: opus-medium\n- 相談: opus-high\n- 検証: opus-high\n")
+    d, text, err = init(repo)
+    sec = model_section(text)
+    assert "- 実装: opus-medium\n" in sec and "相談" not in sec and "検証" not in sec
+    assert "相談" not in err and "検証" not in err and "誤り" not in err, err
+    lint = run(repo, "lint", str(d)).stdout
+    assert not re.search(r"ERROR.*モデル", lint), lint
+
+
+def test_init_with_only_advisor_rows_writes_the_template_as_it_is(repo):
+    put("- 相談: fable-high\n")
+    _, text, err = init(repo)
+    assert text == TEMPLATE.read_text(encoding="utf-8")
+    assert "NOTE: 手元の設定" not in err

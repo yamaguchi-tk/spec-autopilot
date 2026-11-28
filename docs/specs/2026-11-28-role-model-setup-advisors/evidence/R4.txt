@@ -1,0 +1,10 @@
+- commit: cf01b565f1497e0a60c34a272eff32c997bd60fa
+
+$ python3 .autopilot-qa/check.py   （R4: ladder.ADVISORS["advisor"] の段ごとに agents/<名前>.md の frontmatter を読み、本文を fable-advisor.md と比べる）
+(frontmatter of agents/fable-advisor.md) name=fable-advisor model=fable effort=medium tools=Read, Grep, Glob body==fable-advisor:True
+(frontmatter of agents/fable-advisor-high.md) name=fable-advisor-high model=fable effort=high tools=Read, Grep, Glob body==fable-advisor:True
+(frontmatter of agents/fable-advisor-opus.md) name=fable-advisor-opus model=opus effort=high tools=Read, Grep, Glob body==fable-advisor:True
+R4 pass
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ladder.py plugins/spec-autopilot/tests/test_ladder_setup.py plugins/spec-autopilot/tests/test_init_models.py plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_goal_child.py plugins/spec-autopilot/tests/test_advisors.py plugins/spec-autopilot/tests/test_autopilot.py -q -n auto
+672 passed in 58.58s
