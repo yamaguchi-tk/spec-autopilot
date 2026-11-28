@@ -313,3 +313,16 @@ def test_child_queue_by_advisor_refuses_a_text_change_or_an_unlinted_spec(repo):
     r = queue_by_advisor(repo, d)
     assert r.returncode == 1 and "fable-advisor" in r.stdout, out(r)
     assert state(d)["phase"] == "discovery"
+
+
+def test_lint_notes_and_exits_0_when_the_spec_directory_is_not_writable_and_leaves_no_tmp(repo):
+    d = init_spec(repo)
+    d.chmod(0o555)
+    try:
+        r = run(repo, "lint", str(d))
+        assert r.returncode == 0, out(r)
+        assert "lint: OK" in r.stdout and "NOTE:" in r.stdout and "Traceback" not in r.stdout + r.stderr, out(r)
+        assert "consent" not in state(d)
+        assert [p.name for p in d.iterdir() if p.name.startswith(".state.json.")] == []
+    finally:
+        d.chmod(0o755)

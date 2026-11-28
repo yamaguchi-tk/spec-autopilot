@@ -11,6 +11,7 @@
   A → B（lint しない）→ 連番だけ違う A' は履歴が無く見分けられない（ADR の「残る限界」）
 - 想定するのは事故（中身の違う spec で承認を通すこと）。state.json の偽造は守らない
 """
+import contextlib
 import fcntl
 import hashlib
 import json
@@ -100,14 +101,19 @@ def record(d):
         cur = s.get("consent")
         if valid(cur) and cur["sha256"] == digest:
             return notes
-        if "consent" in s and not valid(cur):
-            kept = d / f"state.json.consent-broken-{time.time_ns()}"
-            kept.write_text(json.dumps(cur, ensure_ascii=False) + "\n", encoding="utf-8")
-            notes.append(f"state.json の consent の形が違う。元の中身は {kept.name} に残し、今の中身で記録し直す")
-        s["consent"] = {"sha256": digest, "full": full_sha(text), "at": time.time(), "mtime": mtime}
         tmp = d / f".state.json.{os.getpid()}"
-        tmp.write_text(json.dumps(s, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        os.replace(tmp, f)
+        try:
+            if "consent" in s and not valid(cur):
+                kept = d / f"state.json.consent-broken-{time.time_ns()}"
+                kept.write_text(json.dumps(cur, ensure_ascii=False) + "\n", encoding="utf-8")
+                notes.append(f"state.json の consent の形が違う。元の中身は {kept.name} に残し、今の中身で記録し直す")
+            s["consent"] = {"sha256": digest, "full": full_sha(text), "at": time.time(), "mtime": mtime}
+            tmp.write_text(json.dumps(s, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            os.replace(tmp, f)
+        except OSError as e:
+            with contextlib.suppress(OSError):
+                tmp.unlink()
+            return [*notes, f"state.json の隣に書き込めない（{type(e).__name__}）ので、承認の中身の記録は残さない"]
     finally:
         os.close(fd)
     return notes
