@@ -1,0 +1,1 @@
+{"kind": "ci", "pr": 127, "sha": "452df7ed8ac3b3e5bc608b4bd8ec2d80f8c703d6", "result": "error", "started_at": 1795856963.716064, "at": 1795856964.606687, "detail": ["RuntimeError: gh pr checks 127 --json name,bucket,link が読めない（exit 1）: no checks reported on the 'claude/fold-evidence-size-note' branch"]}

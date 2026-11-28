@@ -59,6 +59,57 @@ def test_lint_of_a_declared_large_goal_spec_in_a_new_repo_leaves_only_the_split_
     assert len(errors) == 1 and "大きさ L の spec は 1 本のまま合意しない" in errors[0], errors
 
 
+def test_lint_l_error_names_the_goal_approval_as_the_way_to_keep_one_spec(repo):
+    """L の ERROR は、分けるほかに、目的の spec として 1 本のまま `--goal` で承認する道も示す。"""
+    errors = lint_errors(repo, large_goal(repo))
+    assert len(errors) == 1 and "--goal" in errors[0], errors
+    assert errors[0].index("（申告 L") < errors[0].index("目的の spec にするなら"), errors  # 数えた大きさは L の言い切りの直後
+
+
+def test_lint_l_error_names_the_goal_approval_in_a_new_repo(repo):
+    d = init_spec(repo)
+    (d / "spec.md").write_text(GOOD_SPEC.replace("- 大きさ: S", "- 大きさ: L"), encoding="utf-8")
+    errors = lint_errors(repo, d)
+    assert len(errors) == 1 and "--goal" in errors[0], errors
+
+
+def test_lint_l_error_does_not_name_the_goal_approval_when_the_stated_size_is_smaller(repo):
+    """申告 M で数えると L の spec は、--goal の lint で申告の小ささの ERROR になるので、--goal を案内しない。"""
+    d = existing_spec(repo, size="- 大きさ: M")
+    six_changed_files(repo)
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
+
+
+def test_lint_l_error_does_not_name_the_goal_approval_for_a_spec_with_a_dependency(repo):
+    """依る spec のある spec は --goal で承認できないので、L の ERROR は --goal を案内しない。"""
+    d = large_goal(repo)
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 大きさ: L", "- 大きさ: L\n- 依る spec: 2026-11-28-earlier"), encoding="utf-8")
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
+
+
+def test_lint_l_error_does_not_name_the_goal_approval_for_a_queued_spec(repo):
+    """queued の spec（着手のときの数え直しも同じ）は --goal で承認できないので、L の ERROR は --goal を案内しない。"""
+    d = large_goal(repo)
+    f = d / "state.json"
+    s = json.loads(f.read_text(encoding="utf-8"))
+    s["phase"] = "queued"
+    f.write_text(json.dumps(s), encoding="utf-8")
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
+
+
+def test_lint_l_error_does_not_name_the_goal_approval_for_a_child_of_a_goal_spec(repo):
+    """目的の spec の子は相談役で --queue 承認する前提なので、L の ERROR は --goal を案内しない。"""
+    d = large_goal(repo)
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 大きさ: L", "- 大きさ: L\n- 親 spec: 2026-11-28-parent\n- 親の要件: R1"), encoding="utf-8")
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
+
+
 def test_approve_without_goal_still_stops_a_large_spec(repo):
     d = large_goal(repo)
     user_says(repo)
