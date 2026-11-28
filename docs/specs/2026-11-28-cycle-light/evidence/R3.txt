@@ -1,0 +1,13 @@
+- commit: ed0d5fe
+$ grep -nE '^(import|from) ' plugins/spec-autopilot/scripts/light_rules.py
+import os
+import re
+import subprocess
+from pathlib import Path
+import deploy
+from stages import COMMENT_BLOCK, classify, repo_root, section
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --json
+light_rules.py: {'lang': 'py', 'fan_out': 2, 'fan_in': 2, 'lcom4': 1}
+$ python3 .autopilot-qa/check.py
+light_rules.py: scripts imports=['deploy', 'stages'] lcom4=1
+R3 pass
