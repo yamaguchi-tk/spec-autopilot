@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "advisor-description-scenes",
   "created_at": 1795830015.027894,
   "existing": true,
   "start": "d344a42d56461646e907b8a59304c39f747844cd",
-  "last_active_at": 1795830612.638944,
+  "last_active_at": 1795831138.4087481,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795830278.282068,
   "approved_by": "OK（承認）: 相談役の description の場面の例を 4 つの場面に合わせる",
@@ -51,5 +51,22 @@
   ],
   "review_launches": [
     1795830516.2340858
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 115,
+      "at": 1795831136.905938,
+      "sha": "9251b35f707295752825d9bf531d0f1684075a33",
+      "head": "41dbf39f827a8cec7550ca6831aa3bea08929ead"
+    }
+  ],
+  "merged_at": 1795831136.905941,
+  "paused_at_merge": 0.0,
+  "done_at": 1795831138.390815,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
