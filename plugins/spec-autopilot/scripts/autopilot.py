@@ -499,7 +499,7 @@ def counted_size(d, text, tip=None):
 # L の ERROR の文。範囲: 文だけを変え、出す条件は変えない。想定する脅威: なし（案内の文）。やらないこと: 目的の spec の道で ERROR を消すこと
 SPLIT_L = "大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする"
 GOAL_WAY = ("。目的の spec にするなら、ほかの ERROR を 0 にし、/autopilot の A の 3 の L の項のとおり照合役を回して 1 本のまま示し、"
-            "`approve <dir> --by \"<返事の要約>\" --goal` で承認する（子へ分けるのは承認の後）")  # --goal で人が承認する spec（discovery で、依る spec も親 spec も無い）にだけ足す
+            "`approve <dir> --by \"<返事の要約>\" --goal` で承認する（子へ分けるのは承認の後）")  # --goal を案内する spec（申告 L・discovery で、依る spec も親 spec も無い。子は --queue --by-advisor で承認する）にだけ足す
 SPLIT_PR = "大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける"
 
 
@@ -516,7 +516,7 @@ def stated_size(constraints):
     return m.group(1), None
 
 
-def size_errors(d, impact_text, stated, first_agreement, at_approve, split_l=SPLIT_L):
+def size_errors(d, impact_text, stated, first_agreement, at_approve, goal_way=""):
     """既存の repo の、申告した大きさと数えた大きさを突き合わせる。(errors, warnings) を返す。大きさは申告と数えた大きさの大きい側だけで決め、人の発言では小さくしない。L は初回の合意（first_agreement）でだけ止める。"""
     if stated is None:
         return ["既存の repo では「## 制約」に `- 大きさ: <S|M|L>` を書く"], []
@@ -527,7 +527,7 @@ def size_errors(d, impact_text, stated, first_agreement, at_approve, split_l=SPL
     if errors:
         return errors, []
     if first_agreement and "L" in (stated, size):  # 合意し直しでは L を理由には止めない。実装はもう同じブランチにあり、spec を分けても PR は分かれない。PR は check --stage pr か done の NOTE で分けさせる
-        return [f"{split_l}（申告 {stated}・{detail}）"], []
+        return [f"{SPLIT_L}（申告 {stated}・{detail}）{goal_way}"], []
     if stated == "S" and diffed == 0:
         if at_approve:
             return ["大きさ S を確かめる試作の差分が無い。承認の前に試作を作って数えるか、大きさを M 以上にする"], []
@@ -572,8 +572,8 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     stated, size_err = stated_size(constraints)
     errors += ([size_err] if size_err else []) + __import__("playbooks").lint(constraints)
     first_agreement = load_state(d).get("phase") in ("discovery", "queued") and not goal  # L を止めるのは初回の合意だけ。目的の spec（--goal）は止めない
-    split_l = SPLIT_L + (GOAL_WAY if load_state(d).get("phase") == "discovery" and not __import__("lineup").after_name(d)
-                                   and not __import__("goal").parent_lines(d)[0] else "")
+    goal_way = GOAL_WAY if (stated == "L" and load_state(d).get("phase") == "discovery" and not __import__("lineup").after_name(d)
+                            and not __import__("goal").parent_lines(d)[0]) else ""  # 申告が L より小さいと --goal の lint が申告の小ささで止める
     if not is_new_repo(load_state(d)):
         body = {name: COMMENT_BLOCK.sub("", section(text, name) or "") for name in EXISTING_SECTIONS}
         for name in EXISTING_SECTIONS:
@@ -582,15 +582,15 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
         if not REGRESSION.search(body["影響範囲"]):
             errors.append("既存の repo では「## 影響範囲」に `- 回帰テスト: <関係するテストを回すコマンド>` を書く")
         if not size_err and base:
-            more_err, size_warn = size_errors(d, body["影響範囲"], stated, first_agreement, at_approve, split_l)
+            more_err, size_warn = size_errors(d, body["影響範囲"], stated, first_agreement, at_approve, goal_way)
             errors += more_err
             warnings += size_warn
         elif not size_err:  # 依る spec の承認: 数えるのは着手のとき。行の形と申告だけを見る
             errors += impact(repo_root(d), None, body["影響範囲"], commit=False)[1]
             errors += ["既存の repo では「## 制約」に `- 大きさ: <S|M|L>` を書く"] if stated is None else []
-            errors += [split_l] if first_agreement and stated == "L" else []
+            errors += [SPLIT_L + goal_way] if first_agreement and stated == "L" else []
     elif first_agreement and stated == "L":
-        errors.append(split_l)
+        errors.append(SPLIT_L + goal_way)
     for word in sorted(set(own_adr_words(text))):
         errors.append(f"本文が自分の ADR を「{word}」で指している。ADR の番号は並行の branch と取り合って改番されるので、"
                       "本文では「この spec の ADR」と書く（作り方の節では書いてよい）")
