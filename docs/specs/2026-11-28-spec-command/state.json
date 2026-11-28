@@ -4,7 +4,7 @@
   "created_at": 1795858736.073002,
   "existing": true,
   "start": "9e2a102f4f7a69eef23bc90373c7c17d561859b3",
-  "last_active_at": 1795864197.609186,
+  "last_active_at": 1795866775.0806332,
   "consent": {
     "sha256": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
     "full": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
@@ -17,9 +17,15 @@
   "spec_sha256": "133d5755598c57b79e34840e2985df215852a880fac9bb43e14156f7024341d1",
   "budget_min": 90,
   "post_budget_min": 90,
-  "history": [],
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "承認済み spec.md:10 と spec の commit 208dd3e に勤め先の repo 名がある。push の前に、語を直して承認し直すことと、履歴の書き換えの可否を人に確かめる",
+      "at": 1795864236.778035
+    }
+  ],
   "blocked": null,
-  "paused_sec": 0,
+  "paused_sec": 2538.3015401363373,
   "reviews": [
     {
       "high": [
@@ -276,5 +282,6 @@
       "merges": 0,
       "at": 1795864123.443449
     }
-  ]
+  ],
+  "wait": null
 }
