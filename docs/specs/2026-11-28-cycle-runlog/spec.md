@@ -53,6 +53,8 @@
   - メモ: docs/adr/2026-11-28-cycle-deploy-stages.md
 - 前提: 今の輪は autopilot・goal・light・lineup・overnight・runlog の 6 つで、循環の組は 15、stages.py の LCOM4 は 2（git_lines が孤立）、autopilot.py の fan-out は 16・LCOM4 は 4
   - コマンド: `uv run --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --json` → 上の値（main の 8eb6d94 で測った）
+- 前提: autopilot.py が import する scripts のモジュールは 16（advisor_approval・deploy・evidence・goal・ladder・light・lineup・overnight・playbooks・preflight・premises・rootcause・runlog・size_note・stages・transcript）で、道具の fan-out はこの数。新しいモジュールを足して autopilot.py が import すると 17 になる
+  - コマンド: `for m in $(ls plugins/spec-autopilot/scripts/*.py | xargs -n1 basename | sed 's/\.py$//'); do grep -qE "^\s*(import|from) $m\b|__import__\(\"$m\"\)|^\s*import .*\b$m\b" plugins/spec-autopilot/scripts/autopilot.py && echo $m; done` → 上の 16 行
 - 前提: runlog.py が scripts から import するのは、record の中の autopilot だけで、使う名前は COMMENT_BLOCK・section・stated_size・repo_root
   - path: plugins/spec-autopilot/scripts/runlog.py:37（ほかに 41・42・43・53）
 - 前提: stages.py の repo_root と git_lines は、どちらも `subprocess.run(["git", ...], cwd=..., capture_output=True, text=True)` で git を呼ぶ
