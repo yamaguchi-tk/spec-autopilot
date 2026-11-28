@@ -6,6 +6,7 @@ Opus xhigh で 2 回落ちたら、Fable を 1 回だけ試す。Fable でも落
 
 手元の設定は SPEC_AUTOPILOT_HOME（無ければ ~/.claude/spec-autopilot）の models.md に、spec の `## モデル` と同じ形の行で置く。
 `ladder.py setup`・`show` で書く・見る。init が spec.md を作るときに、実装・評価の行を `## モデル` に写す（梯子は spec の節だけを読む）。
+セッション単位の上書きは、同じ置き場の `sessions/<id>.models.md` に同じ行の形で置く（`setup --session`）。役ごとの段は、セッションの上書き → 手元の設定 → 同梱の既定の順（`resolve`）。
 相談役・検証役・照合役は梯子に入れず（`ADVISORS`）、models.md の `- 相談:`・`- 検証:`・`- 照合:` の行を SessionStart が読んで使う agent を示す。
 """
 import argparse
@@ -16,6 +17,8 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+
+import stages
 
 # 役 → 段の名前 → (agent の名前, model, effort)。順は安い順で、先頭が既定
 RUNGS = {
@@ -166,13 +169,24 @@ def report_lines(raises, reviews, rows=None):
     return lines
 
 
+def home_path():
+    return Path(os.environ.get("SPEC_AUTOPILOT_HOME") or Path.home() / ".claude" / "spec-autopilot")
+
+
 def config_path():
-    return Path(os.environ.get("SPEC_AUTOPILOT_HOME") or Path.home() / ".claude" / "spec-autopilot") / "models.md"
+    return home_path() / "models.md"
+
+
+def session_path(session):
+    """セッションの上書きのファイル。id が無いか、セッション id の形（stages.SESSION_ID）でなければ None。"""
+    if not isinstance(session, str) or not stages.SESSION_ID.fullmatch(session):
+        return None
+    return home_path() / "sessions" / f"{session}.models.md"
 
 
 def read_config(path=None):
     """手元の設定を読む。(元のバイト列 or None, 読める行 {実装|評価|相談|検証|照合: 段}, 誤りの一覧)。無ければ (None, {}, [])。
-    読める行は、受ける段で、同じ役の 1 本目だけ。"""
+    読める行は、受ける段で、同じ役の 1 本目だけ。セッションの上書きも同じ読み方（path を渡す）。"""
     path = path or config_path()
     try:
         raw = path.read_bytes()
@@ -191,13 +205,30 @@ def read_config(path=None):
     return raw, rows, lint(text, config=True)
 
 
+def resolve(session):
+    """役ごとの段を決める 1 か所。(決めた行 {役の語: 段}, 手元の設定の行, セッションの上書きの行, 誤りの一覧 [(層の名前, path, [誤り])])。
+    順はセッションの上書き → 手元の設定 → 同梱の既定（行が無い役は同梱の既定。呼ぶ側が先頭の段を使う）。session は id（無ければ None）。
+    誤りのあるセッションの上書きは、読める行があっても決めた行に使わない（write_spec が層ごと写さないのと同じ。3 つ目の over は show 用に読めた行を返す）。"""
+    path = config_path()
+    _, base, errors = read_config(path)
+    bad = [("手元の設定", path, errors)] if errors else []
+    over = {}
+    spath = session_path(session)
+    if spath:
+        _, over, errors = read_config(spath)
+        if errors:
+            bad.append(("セッションの上書き", spath, errors))
+    used = {} if any(layer == "セッションの上書き" for layer, _, _ in bad) else over
+    return {**base, **used}, base, over, bad
+
+
 def render(rows):
     return "".join(f"- {k}: {rows[k]}\n" for k in CONFIG_KEY.values() if k in rows)
 
 
-def edit(change):
+def edit(change, path=None):
     """ロックの中で読み直し、change(読める行) が返した行だけで書き換える（空なら消す）。壊れていた元の中身は毎回別の名前で残す。"""
-    path = config_path()
+    path = path or config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path.with_name(path.name + ".lock"), "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -220,18 +251,24 @@ def edit(change):
 
 
 def write_spec(src, dst):
-    """init が spec.md を作る。手元の設定の実装・評価の行を、雛形の `## モデル` のコメントの後に写す（相談・検証・照合の行は写さない。読めない設定は写さず NOTE で直し方を出す）。"""
+    """init が spec.md を作る。実装・評価の行（セッションの上書き → 手元の設定の順）を、雛形の `## モデル` のコメントの後に写す
+    （相談・検証・照合の行は写さない。読めない層は写さず NOTE で直し方を出す）。"""
     text = Path(src).read_text(encoding="utf-8")
-    path = config_path()
-    raw, _, errors = read_config(path)
-    if errors:
-        print(f"NOTE: 手元の設定 {path} に誤りがあるので、spec の `## モデル` は雛形のまま（{'; '.join(errors)}）。"
-              f"直す: `ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す（{Path(__file__).resolve()}）", file=sys.stderr)
-    elif raw is not None:
-        lines = [f"- {k}: {v}" for k, v in parse(raw.decode("utf-8"))[0]]
-        if lines:
-            text = re.sub(r"^(## モデル\n(?:<!--.*?-->\n)?)", lambda m: m.group(1) + "\n".join(lines) + "\n", text, count=1, flags=re.M | re.S)
-            print(f"NOTE: 手元の設定 {path} の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: {' / '.join(lines)}", file=sys.stderr)
+    _, base, over, bad = resolve(os.environ.get("CLAUDE_CODE_SESSION_ID"))
+    for layer, path, errors in bad:
+        fix = "`ladder.py setup --session --impl <段> --review <段>` で書き直すか、`ladder.py setup --session --reset` で消す" if layer == "セッションの上書き" else \
+            "`ladder.py setup --impl <段> --review <段>` で書き直すか、`ladder.py setup --reset` で消す"
+        print(f"NOTE: {layer} {path} に誤りがあるので、その層は spec の `## モデル` に写さない（{'; '.join(errors)}）。直す: {fix}（{Path(__file__).resolve()}）", file=sys.stderr)
+    spec_keys = SPEC_KEY.values()
+    layers = [(name, rows) for name, rows in (("手元の設定", base), ("セッションの上書き", over)) if name not in {b[0] for b in bad}]
+    merged = {}
+    for _, rows in layers:
+        merged.update({k: v for k, v in rows.items() if k in spec_keys})
+    lines = [f"- {k}: {v}" for k, v in merged.items()]
+    if lines:
+        text = re.sub(r"^(## モデル\n(?:<!--.*?-->\n)?)", lambda m: m.group(1) + "\n".join(lines) + "\n", text, count=1, flags=re.M | re.S)
+        used = "・".join(name for name, rows in layers if any(k in spec_keys for k in rows))
+        print(f"NOTE: {used}の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: {' / '.join(lines)}", file=sys.stderr)
     Path(dst).write_text(text, encoding="utf-8")
 
 
@@ -239,32 +276,55 @@ def accepted_lines():
     return [f"{CONFIG_KEY[role]}: 受ける段 {'・'.join(rungs)}" for role, rungs in ROLES.items()]
 
 
+def swap_line(role, rung):
+    """相談・検証・照合の段を、今のセッションで使う agent の名前に読み替える 1 行（既定の agent なら読み替え無し）。"""
+    default = next(iter(ADVISORS[role].values()))[0]
+    agent = ADVISORS[role][rung][0]
+    return f"{default} → spec-autopilot:{agent}" if agent != default else None
+
+
 def cmd_show(a):
     path = config_path()
-    _, rows, errors = read_config(path)
+    session = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    _, base, over, bad = resolve(session)
     for (role, rungs), line in zip(ROLES.items(), accepted_lines()):
-        print(f"{line} / 既定 {next(iter(rungs))} / 手元の設定 {rows.get(CONFIG_KEY[role], 'なし')}")
+        print(f"{line} / 既定 {next(iter(rungs))} / 手元の設定 {base.get(CONFIG_KEY[role], 'なし')} / このセッション {over.get(CONFIG_KEY[role], 'なし')}")
     print(f"設定のファイル: {path}")
-    for e in errors:
-        print(f"設定の誤り: {e}（`ladder.py setup` か `ladder.py setup --reset` で直す）")
+    spath = session_path(session)
+    if spath:
+        print(f"セッションのファイル: {spath}")
+    for layer, _, errors in bad:
+        fix = "`ladder.py setup --session` か `ladder.py setup --session --reset`" if layer == "セッションの上書き" else "`ladder.py setup` か `ladder.py setup --reset`"
+        for e in errors:
+            print(f"{layer}の誤り: {e}（{fix} で直す）")
     return 0
 
 
 def cmd_setup(a):
     path = config_path()
+    if a.session:
+        path = session_path(os.environ.get("CLAUDE_CODE_SESSION_ID"))
+        if path is None:
+            sys.exit("今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない")
     given = {CONFIG_KEY[r]: v for r in ROLES for v in [getattr(a, r)] if v is not None}
     if a.reset is not None:
         if a.reset != "all" and a.reset not in TABLE or given:
             sys.exit(f"--reset は単独で、役は「{'」「'.join(TABLE)}」だけを渡す")
         keys = list(TABLE) if a.reset == "all" else [a.reset]
-        edit(lambda rows: {k: v for k, v in rows.items() if k not in keys})
-        print(f"{'・'.join(TABLE) if a.reset == 'all' else a.reset}が既定に戻った（設定のファイル: {path}）")
+        edit(lambda rows: {k: v for k, v in rows.items() if k not in keys}, path)
+        print(f"{'・'.join(TABLE) if a.reset == 'all' else a.reset}が既定に戻った（{'セッションの上書き' if a.session else '設定'}のファイル: {path}）")
         return 0
     bad = [f"{CONFIG_KEY[r]} の段「{v}」" for r in ROLES for v in [getattr(a, r)] if v is not None and v not in ROLES[r]]
     if not given or bad:
         sys.exit(("受けない段: " + "、".join(bad) + "\n" if bad else "--impl か --review か --advisor か --checker か --spec-checker か --reset を渡す\n") + "\n".join(accepted_lines()))
-    rows = edit(lambda cur: {**cur, **given})
+    rows = edit(lambda cur: {**cur, **given}, path)
     print(f"書いた: {path}\n{render(rows)}", end="")
+    if a.session:
+        for role in ADVISORS:
+            if CONFIG_KEY[role] in rows:
+                print(f"読み替え（{CONFIG_KEY[role]}）: {swap_line(role, rows[CONFIG_KEY[role]]) or '既定のまま'}")
+        if any(k in rows for k in SPEC_KEY.values()):
+            print("実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）")
     return 0
 
 
@@ -276,6 +336,7 @@ def main(argv=None):
     for role in ROLES:
         sp.add_argument("--" + role.replace("_", "-"))
     sp.add_argument("--reset", nargs="?", const="all")
+    sp.add_argument("--session", action="store_true")
     a = p.parse_args(argv)
     return {"show": cmd_show, "setup": cmd_setup}[a.cmd](a)
 

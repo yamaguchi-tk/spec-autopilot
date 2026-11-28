@@ -1,0 +1,60 @@
+- commit: 095babd1217d6fc456bb8cc51907b2147475a257
+
+$ python3 .autopilot-qa/check.py  # R4 の部分（読めない上書きの 4 通りでは、セッションの段 fable-advisor-opus が出ず、「既定の段で作る」が出て、読み替えの文の出どころにセッションの上書きが入らないことも検査した。下が各コマンドと出力）
+R4 pass
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high --checker fable-high
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r4/home/models.md
+- 相談: fable-high
+- 検証: fable-high
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md
+- 相談: opus-high
+読み替え（相談）: fable-advisor → spec-autopilot:fable-advisor-opus
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）とこのセッションの上書き（<worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-opus、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "qa-sess-1", "source": "resume", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）とこのセッションの上書き（<worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-opus、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。 spec-autopilot: セッションの上書き <worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md に読めない行がある（<worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md が UTF-8 で読めない）。この上書きは使わず、手元の設定と既定の段で作る。`python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show` で見て、`setup --session` で書き直すか `setup --session --reset` で消す。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。 spec-autopilot: セッションの上書き <worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md に読めない行がある（モデルの節の `- 相談:` は「fable-medium」「fable-high」「opus-high」のどれか（今は「haiku」））。この上書きは使わず、手元の設定と既定の段で作る。`python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show` で見て、`setup --session` で書き直すか `setup --session --reset` で消す。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。 spec-autopilot: セッションの上書き <worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md に読めない行がある（モデルの節に `- 相談:` が 2 本以上ある; モデルの節の `- 相談:` は「fable-medium」「fable-high」「opus-high」のどれか（今は「fable」））。この上書きは使わず、手元の設定と既定の段で作る。`python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show` で見て、`setup --session` で書き直すか `setup --session --reset` で消す。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。 spec-autopilot: セッションの上書き <worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md に読めない行がある（モデルの節の `- 検証:` は「opus-high」「fable-high」のどれか（今は「haiku」））。この上書きは使わず、手元の設定と既定の段で作る。`python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show` で見て、`setup --session` で書き直すか `setup --session --reset` で消す。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。 spec-autopilot: セッションの上書き <worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md に読めない行がある（<worktree>/.autopilot-qa/work/r4/home/sessions/qa-sess-1.models.md を読めない（IsADirectoryError））。この上書きは使わず、手元の設定と既定の段で作る。`python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show` で見て、`setup --session` で書き直すか `setup --session --reset` で消す。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "../sessions/qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "-x", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": "", "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r4/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r4/cwd", "session_id": null, "source": "compact", "hook_event_name": "SessionStart"}
+exit=0
+additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r4/home/models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。

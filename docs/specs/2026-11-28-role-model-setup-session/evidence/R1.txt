@@ -1,0 +1,26 @@
+- commit: b4601aa3bfdda3b11285eca38810f7db8d532e3d
+
+$ python3 .autopilot-qa/check.py  # R1 の部分（下が各コマンドと出力。models.md のバイト列が打つ前と同じことも検査した）
+R1 pass
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high --impl opus-medium
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r1/home/models.md
+- 実装: opus-medium
+- 相談: fable-high
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r1/home/sessions/qa-sess-1.models.md
+- 相談: opus-high
+読み替え（相談）: fable-advisor → spec-autopilot:fable-advisor-opus
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --review fable --spec-checker opus-high
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r1/home/sessions/qa-sess-1.models.md
+- 評価: fable
+- 相談: opus-high
+- 照合: opus-high
+読み替え（相談）: fable-advisor → spec-autopilot:fable-advisor-opus
+読み替え（照合）: autopilot-spec-checker → spec-autopilot:autopilot-spec-checker-opus
+実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）

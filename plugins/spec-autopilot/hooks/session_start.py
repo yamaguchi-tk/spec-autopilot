@@ -62,24 +62,28 @@ ADVISE = ("spec-autopilot の相談役の規則: main は案（作り方・直�
           "repo の規則か手順（CLAUDE.md・/gdd-dev など）に別の相談の規定があれば、問う範囲の 3 つも含めてそちらに従う。")
 
 
-def advisor_setting():
-    """手元の設定（models.md）の相談・検証の段を読み、ADVISE に足す 1 行（段が既定でなければ「既定の名前 → 使う名前」、設定が読めなければ直し方）。無ければ None。"""
+def advisor_setting(session=None):
+    """相談・検証・照合の段（セッションの上書き → 手元の設定 → 同梱の既定の順で決めた段）の、ADVISE に足す 1 行（段が既定でなければ「既定の名前 → 使う名前」、設定が読めなければ直し方）。無ければ None。
+    session は payload の session_id（セッション id の形でなければセッションの層は使わない）。"""
     import ladder
 
-    path = ladder.config_path()
-    _, rows, errors = ladder.read_config(path)
+    rows, _, over, bad = ladder.resolve(session)
+    session_bad = any(layer == "セッションの上書き" for layer, _, _ in bad)
     swaps = []
     for role, rungs in ladder.ADVISORS.items():
-        agent = rungs[rows[ladder.CONFIG_KEY[role]]][0] if ladder.CONFIG_KEY[role] in rows else None
-        if agent and agent != next(iter(rungs.values()))[0]:
-            swaps.append(f"{next(iter(rungs.values()))[0]} → spec-autopilot:{agent}")
+        swap = ladder.swap_line(role, rows[ladder.CONFIG_KEY[role]]) if ladder.CONFIG_KEY[role] in rows else None
+        if swap:
+            swaps.append(swap)
     out = []
     if swaps:
-        out.append("spec-autopilot の手元の設定（" + str(path) + "）で相談役・検証役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: "
+        where = f"手元の設定（{ladder.config_path()}）" + (f"とこのセッションの上書き（{ladder.session_path(session)}）" if over and not session_bad else "")
+        out.append(f"spec-autopilot の{where}で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: "
                    + "、".join(swaps) + "（人が opus-advisor を名指ししたときは今のとおり）。")
-    if errors:
-        out.append(f"spec-autopilot: 手元の設定 {path} に読めない行がある（{'; '.join(errors)}）。読める行だけを使う。"
-                   f"`python3 {Path(ladder.__file__).resolve()} show` で見て、`setup` で書き直すか `setup --reset` で消す。")
+    for layer, path, errors in bad:
+        fix = "`setup --session` で書き直すか `setup --session --reset` で消す" if layer == "セッションの上書き" else "`setup` で書き直すか `setup --reset` で消す"
+        use = "この上書きは使わず、手元の設定と既定の段で作る" if layer == "セッションの上書き" else "読める行だけを使う"
+        out.append(f"spec-autopilot: {layer} {path} に読めない行がある（{'; '.join(errors)}）。{use}。"
+                   f"`python3 {Path(ladder.__file__).resolve()} show` で見て、{fix}。")
     return " ".join(out) or None
 
 
@@ -119,7 +123,7 @@ def main():
         mine = [p for ok, p in found if ok and p] + unreadable
         others = [p for ok, p in found if not ok and p]
         try:  # 設定が読めなくても再開を止めない
-            setting = advisor_setting()
+            setting = advisor_setting(payload.get("session_id"))
         except Exception as e:
             setting = f"spec-autopilot: 手元の設定を読めなかった（{type(e).__name__}）。`ladder.py show` で確かめる。"
         blocks = [ADVISE] + ([setting] if setting else []) + ([HEADER + "\n\n" + "\n\n".join(mine)] if mine else []) + (

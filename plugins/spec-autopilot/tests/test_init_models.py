@@ -105,3 +105,44 @@ def test_init_with_only_advisor_rows_writes_the_template_as_it_is(repo):
     _, text, err = init(repo)
     assert text == TEMPLATE.read_text(encoding="utf-8")
     assert "NOTE: 手元の設定" not in err
+
+
+# --- セッションの上書き（3 本目: R5）。run は CLAUDE_CODE_SESSION_ID=s1 で動かす ---
+
+def session_md(content, sid="s1"):
+    p = Path(os.environ["SPEC_AUTOPILOT_HOME"]) / "sessions" / f"{sid}.models.md"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(content.encode("utf-8") if isinstance(content, str) else content)
+    return p
+
+
+def test_init_puts_the_session_impl_and_review_rows_over_the_default_and_leaves_the_other_default_row(repo):
+    put("- 実装: opus-medium\n- 評価: opus-xhigh\n- 相談: opus-high\n")
+    session_md("- 実装: fable\n- 相談: fable-high\n")
+    d, text, err = init(repo)
+    sec = model_section(text)
+    assert "- 実装: fable\n" in sec and "- 実装: opus-medium" not in sec and "- 評価: opus-xhigh\n" in sec
+    assert "相談" not in sec and "NOTE" in err and "セッション" in err, err
+    assert not re.search(r"ERROR.*モデル", run(repo, "lint", str(d)).stdout)
+    assert models_md().read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: opus-xhigh\n- 相談: opus-high\n"
+    session_md("- 評価: fable\n")  # 作った後の spec は変わらない
+    assert model_section((d / "spec.md").read_text(encoding="utf-8")) == sec
+
+
+def test_init_ignores_the_session_file_of_another_session_and_a_run_without_a_session_id(repo):
+    put("- 実装: opus-medium\n")
+    session_md("- 実装: fable\n", "s2")
+    assert "- 実装: opus-medium\n" in init(repo, "a")[1]
+    r = run(repo, "init", "b", session=None)
+    assert r.returncode == 0 and "- 実装: opus-medium\n" in (Path(r.stdout.strip()) / "spec.md").read_text(encoding="utf-8")
+
+
+def test_init_with_only_session_rows_copies_them_and_with_an_unreadable_session_file_keeps_the_default_rows_and_notes_the_fix(repo):
+    session_md("- 評価: fable\n")
+    _, text, _ = init(repo, "a")
+    assert "- 評価: fable\n" in model_section(text) and "- 実装:" not in model_section(text)
+    put("- 実装: opus-medium\n")
+    session_md("- 実装: haiku\n")
+    _, text, err = init(repo, "b")
+    assert "- 実装: opus-medium\n" in model_section(text) and "haiku" not in model_section(text)
+    assert "setup --session --reset" in err and "sessions" in err, err

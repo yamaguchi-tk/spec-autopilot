@@ -82,7 +82,7 @@ def test_setup_command_exists_and_its_ladder_commands_run(tmp_path):
     text = setup.read_text(encoding="utf-8")
     cmds = re.findall(r'^python3 "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ladder\.py" ([^\n<>]+)$', text, re.M)
     assert any(c.split()[0] == "show" for c in cmds), "setup.md に ladder.py show の行が無い"
-    env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path)}
+    env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path), "CLAUDE_CODE_SESSION_ID": "wiring-session-1"}
     for c in cmds:
         r = subprocess.run([sys.executable, str(PLUGIN / "scripts" / "ladder.py"), *shlex.split(c)], env=env, capture_output=True, text=True)
         assert r.returncode == 0, f"{c}: {r.stdout}{r.stderr}"
@@ -125,9 +125,9 @@ def test_setup_command_writes_every_role_with_a_flag_ladder_setup_takes_and_rese
     env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path)}
     ladder = [sys.executable, str(PLUGIN / "scripts" / "ladder.py")]
     helptext = subprocess.run([*ladder, "setup", "-h"], env=env, capture_output=True, text=True).stdout
-    taken = set(re.findall(r"--(?!reset|help)([a-z-]+)", helptext))
+    taken = set(re.findall(r"--(?!reset|help|session)([a-z-]+)", helptext))
     lines = re.findall(r'^python3 "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ladder\.py" setup ([^\n]+)$', text, re.M)
-    used = {f for ln in lines for f in re.findall(r"--(?!reset)([a-z-]+)", ln)}
+    used = {f for ln in lines for f in re.findall(r"--(?!reset|session)([a-z-]+)", ln)}
     assert taken == {"impl", "review", "advisor", "checker", "spec-checker"}
     assert used == taken, f"setup.md の旗: {sorted(used)} / setup が受ける旗: {sorted(taken)}"
     show = subprocess.run([*ladder, "show"], env=env, capture_output=True, text=True).stdout
@@ -135,3 +135,25 @@ def test_setup_command_writes_every_role_with_a_flag_ladder_setup_takes_and_rese
     assert len(roles) == 5
     for role in roles:
         assert f"--reset {role}" in text, f"setup.md に --reset {role} が無い"
+
+
+def test_setup_command_writes_session_overrides_with_session_flag_and_resets_them_per_role(tmp_path):
+    """setup.md は `setup --session` の旗の行と、役ごとの `--session --reset` を持ち、--session の行は今のセッションのファイルだけを変える。"""
+    import os
+    import subprocess
+    import sys
+
+    text = (PLUGIN / "commands" / "setup.md").read_text(encoding="utf-8")
+    lines = re.findall(r'^python3 "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ladder\.py" (setup [^\n]*--session[^\n]*)$', text, re.M)
+    assert any("--advisor" in ln and "--reset" not in ln for ln in lines), "setup.md に setup --session の旗の行が無い"
+    for role in ["実装", "評価", "相談", "検証", "照合"]:
+        assert f"--session --reset {role}" in text, f"setup.md に --session --reset {role} が無い"
+    assert "--session --reset" in text
+    env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path), "CLAUDE_CODE_SESSION_ID": "wiring-session-2"}
+    ladder = [sys.executable, str(PLUGIN / "scripts" / "ladder.py")]
+    r = subprocess.run([*ladder, "setup", "--session", "--advisor", "opus-high"], env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not (tmp_path / "models.md").exists()
+    assert (tmp_path / "sessions" / "wiring-session-2.models.md").is_file()
+    show = subprocess.run([*ladder, "show"], env=env, capture_output=True, text=True).stdout
+    assert re.search(r"^相談: .*このセッション opus-high", show, re.M), show

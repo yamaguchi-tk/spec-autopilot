@@ -1,0 +1,1 @@
+{"kind": "ci", "pr": 126, "sha": "02b44dadda1f2c4ce20e005497b476b50a081b75", "result": "failure", "started_at": 1795855861.934319, "at": 1795856209.077332, "detail": ["spec-autopilot: 失敗（run 46127690828）"]}
