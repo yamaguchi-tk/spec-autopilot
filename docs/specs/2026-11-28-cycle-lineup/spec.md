@@ -25,7 +25,7 @@
 
 ## 影響範囲
 - 変える: plugins/spec-autopilot/scripts/lineup.py（全体）
-  - メモ: after_name・AFTER・NEXT・pairs_file・pairs・remember を after.py に、begin を building.py に移す。queue_lint・enqueue・minutes・session_of を autopilot.py に移す。lineup.py は移した名前を after・building から import して、今の名前のまま使う
+  - メモ: after_name・AFTER・NEXT・pairs_file・pairs を after.py に、begin を building.py に移す。queue_lint・enqueue・minutes・session_of・remember を autopilot.py に移す。lineup.py は移した名前を after・building から import して、今の名前のまま使う
 - 変える: plugins/spec-autopilot/scripts/autopilot.py（全体）
   - メモ: 505・535・887-912 の lineup の呼び出しを、after・building の名前と、移した queue_lint・enqueue に替える。head_and_body・sha を building.py に移し、autopilot.py は import して使う
 - 新規: plugins/spec-autopilot/scripts/after.py
@@ -34,6 +34,8 @@
   - メモ: 承認の対象のハッシュ（head_and_body・sha）と、承認した spec を自走中にする begin
 - 変える: plugins/spec-autopilot/tests/test_import_layers.py（全体）
   - メモ: autopilot.py の import 先の数の期待を直し、R1〜R3 のテストを足す
+- 変える: plugins/spec-autopilot/tests/test_lineup.py:479（test_concurrent_queues_keep_every_pair_written_to_the_file_outside_the_repo）
+  - メモ: lineup.remember を別のプロセスで呼ぶ。remember が autopilot.py に移るので、呼ぶ先を autopilot.remember に向け直す（期待は変えない）
 - 呼び出し元: plugins/spec-autopilot/scripts/light.py:41
   - メモ: lineup.after_name と lineup.begin（57）を呼ぶ。lineup.py が移した名前を import するので、light.py は変えない
 - 手本: plugins/spec-autopilot/scripts/light_rules.py:1-20（入口から出した、stages と deploy だけを import する下の層のモジュール。前の子で足した）
@@ -62,16 +64,16 @@
   - path: plugins/spec-autopilot/scripts/autopilot.py:119（head_and_body。sha は 129-135）
 - 前提: queue_lint・enqueue が使う lineup の補助は session_of・minutes・after_name・remember・NEXT で、remember は pairs_file・pairs を使い、lineup.py の released（196）と block（155）と demand（270・271）と hold（346）も pairs・NEXT を使う
   - コマンド: `grep -nE 'session_of|minutes\(|remember\(|pairs\(|pairs_file|NEXT' plugins/spec-autopilot/scripts/lineup.py` → 上の行
-- 前提: テストは lineup.remember・lineup.pairs を読む（test_lineup.py:479・486）ので、lineup.py が after から import し直せば変えずに通る
+- 前提: テストは lineup.remember・lineup.pairs を読む（test_lineup.py:479・486）。移した後の lineup.py は remember を使わないので、479 は呼ぶ先を autopilot.remember に向け直す（親の R5 が許す名前の向け先の変更）。pairs は released が使うので lineup.py が after から import し、486 は変えずに通る
   - path: plugins/spec-autopilot/tests/test_lineup.py:479（remember を別のプロセスで呼ぶ）
 - 前提: lineup.py の fan-out は、begin の carry が building に移り、after・building が増えて 5 から 6 に上がる（deploy は cmd_hold、runlog は block が使い続ける）。指標の道具は、後の値が警告の目安（fan-out 10）を超え、かつ前より大きいときだけ悪化に数えるので、6 は悪化にならない
   - path: plugins/spec-autopilot/scripts/lineup.py:332（cmd_hold の deploy。block の runlog は 158）
   - コマンド: `grep -n THRESHOLDS <refactor-metrics の skill>/scripts/measure.py` → fan_out の目安は (10, 15)
-- 前提: after.py の LCOM4 は 2（after_name と、pairs_file・pairs・remember の 2 つの塊）、building.py の LCOM4 は 1（begin が sha を呼び、sha が head_and_body を呼ぶ）、autopilot.py の fan-out は lineup が after・building に替わって 19
+- 前提: after.py の LCOM4 は 2（after_name と、pairs_file・pairs の 2 つの塊）、building.py の LCOM4 は 1（begin が sha を呼び、sha が head_and_body を呼ぶ）、autopilot.py の fan-out は lineup が after・building に替わって 19
   - 未確認: 移した後に道具で測る値で、着手の前の repo の中では確かめられない
 
 ## 作り方
-この spec の ADR のとおり、lineup.py の after_name・AFTER・NEXT・pairs_file・pairs・remember を after.py に、autopilot.py の head_and_body・sha と lineup.py の begin を building.py に、中身を変えずに移す（`ap.` の名前は stages・consent から import して直接使い、関数の中の `import deploy`・`__import__("carry")` は先頭の import にする）。lineup.py の queue_lint・enqueue・minutes・session_of は autopilot.py に移す（minutes は autopilot.py の done の中の同じ名前の変数と紛れないよう queue_minutes にする）。lineup.py と autopilot.py は移した名前を import して今の名前のまま使う。判定・文・順は変えない。
+この spec の ADR のとおり、lineup.py の after_name・AFTER・NEXT・pairs_file・pairs を after.py に、autopilot.py の head_and_body・sha と lineup.py の begin を building.py に、中身を変えずに移す（`ap.` の名前は stages・consent から import して直接使い、関数の中の `import deploy`・`__import__("carry")` は先頭の import にする）。lineup.py の queue_lint・enqueue・minutes・session_of・remember は autopilot.py に移す（minutes は autopilot.py の done の中の同じ名前の変数と紛れないよう queue_minutes にする）。lineup.py と autopilot.py は移した名前を import して今の名前のまま使う。判定・文・順は変えない。
 
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |
