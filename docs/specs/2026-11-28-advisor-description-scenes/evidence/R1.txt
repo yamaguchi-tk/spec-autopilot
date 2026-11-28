@@ -1,0 +1,18 @@
+- commit: a43d53c
+$ sed -n 8p plugins/spec-autopilot/agents/fable-advisor.md | grep -c -e 'レビュー指摘の直し方' -e '設計判断'
+0
+$ sed -n 8p plugins/spec-autopilot/agents/fable-advisor.md | grep -o -e '目的の spec の子の承認' -e 'block の後の承認し直し' -e 'IaC の初回の apply を含む spec'
+目的の spec の子の承認
+block の後の承認し直し
+IaC の初回の apply を含む spec
+$ sed -n 8p plugins/spec-autopilot/agents/opus-advisor.md | grep -c -e 'レビュー指摘の直し方' -e '設計判断'
+0
+$ sed -n 8p plugins/spec-autopilot/agents/opus-advisor.md | grep -o -e '目的の spec の子の承認' -e 'block の後の承認し直し' -e 'IaC の初回の apply を含む spec'
+目的の spec の子の承認
+block の後の承認し直し
+IaC の初回の apply を含む spec
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R1 pass
+R2 pass

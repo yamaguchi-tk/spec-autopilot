@@ -4,7 +4,7 @@
   "created_at": 1795830015.027894,
   "existing": true,
   "start": "d344a42d56461646e907b8a59304c39f747844cd",
-  "last_active_at": 1795830278.285663,
+  "last_active_at": 1795830612.638944,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795830278.282068,
   "approved_by": "OK（承認）: 相談役の description の場面の例を 4 つの場面に合わせる",
@@ -14,8 +14,42 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795830612.638928,
+      "sha": "a43d53c0a433c0d5a3d807ae92071896cab5e884"
+    }
+  ],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "2f3f9884b08689d0eef8467b736a74dc1591b67a",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795830279.6607208,
+      "session": "9daa0137-3b45-4a96-8aca-cafef7e13876"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "a43d53c0a433c0d5a3d807ae92071896cab5e884",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795830511.789613
+    }
+  ],
+  "review_launches": [
+    1795830516.2340858
+  ]
 }
