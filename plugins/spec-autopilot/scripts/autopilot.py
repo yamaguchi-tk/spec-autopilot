@@ -44,7 +44,7 @@ import consent  # noqa: E402
 from consent import ADR_LINE, ADR_NUMBER, numberless  # noqa: E402
 import stages  # noqa: E402
 from stages import (  # noqa: E402（deploy.py・stages.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
-    BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section, stated_size,
+    BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, SESSION_ID, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section, stated_size,
 )
 from transcript import _iso_epoch, anomalies, anomaly_line, transcript_lines  # noqa: E402
 
@@ -97,7 +97,6 @@ QA_SEP = re.compile(r"^\|[\s|:-]+\|\s*$")
 LADDER_INVESTIGATE, LADDER_REWORK = 2, 3  # references/dead-end.md の段（2 回で調べ、3 回で作り方へ。作り直しの回数 MAX_REWORKS は stages.py）
 FAIL_SOURCES = ("impl", "qa", "review")
 PROMPT_FILE = "spec-autopilot-last-user-prompt"
-SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}")  # 先頭は英数字（見回り役が claude の引数に置くので、option と読まれない形だけを受ける）
 # pass の証拠の欄の文法（許可リスト。agents/autopilot-reviewer.md の出力の節と同じ形）:
 #   <テスト>[<区切り><テスト>...][ と cmd: ...][。<文>][（注記）]  か  cmd: ...  か  manual: ...
 #   末尾の 1 組の（…）は注記、最初の 。から後ろは文として読まない（文の中に :: があれば落とす）
