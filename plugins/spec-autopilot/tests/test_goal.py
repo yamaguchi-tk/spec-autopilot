@@ -63,6 +63,22 @@ def test_lint_l_error_names_the_goal_approval_as_the_way_to_keep_one_spec(repo):
     """L の ERROR は、分けるほかに、目的の spec として 1 本のまま `--goal` で承認する道も示す。"""
     errors = lint_errors(repo, large_goal(repo))
     assert len(errors) == 1 and "--goal" in errors[0], errors
+    assert errors[0].index("（申告 L") < errors[0].index("目的の spec にするなら"), errors  # 数えた大きさは L の言い切りの直後
+
+
+def test_lint_l_error_names_the_goal_approval_in_a_new_repo(repo):
+    d = init_spec(repo)
+    (d / "spec.md").write_text(GOOD_SPEC.replace("- 大きさ: S", "- 大きさ: L"), encoding="utf-8")
+    errors = lint_errors(repo, d)
+    assert len(errors) == 1 and "--goal" in errors[0], errors
+
+
+def test_lint_l_error_does_not_name_the_goal_approval_when_the_stated_size_is_smaller(repo):
+    """申告 M で数えると L の spec は、--goal の lint で申告の小ささの ERROR になるので、--goal を案内しない。"""
+    d = existing_spec(repo, size="- 大きさ: M")
+    six_changed_files(repo)
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
 
 
 def test_lint_l_error_does_not_name_the_goal_approval_for_a_spec_with_a_dependency(repo):
