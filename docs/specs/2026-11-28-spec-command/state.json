@@ -4,7 +4,7 @@
   "created_at": 1795858736.073002,
   "existing": true,
   "start": "9e2a102f4f7a69eef23bc90373c7c17d561859b3",
-  "last_active_at": 1795866775.0806332,
+  "last_active_at": 1795867027.357507,
   "consent": {
     "sha256": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
     "full": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
@@ -12,9 +12,9 @@
     "mtime": 1795859173.637211
   },
   "scope_sha256": "5154ac38ea7ca8613380744f491d20510da0f62451e2b5b1d5683bd0b83c0624",
-  "approved_at": 1795861846.368602,
-  "approved_by": "推奨のまま OK（/spec の壁打ち、R1〜R6）",
-  "spec_sha256": "133d5755598c57b79e34840e2985df215852a880fac9bb43e14156f7024341d1",
+  "approved_at": 1795867000.054972,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 目的の文の勤め先の repo 名を伏せ、大きさを数えた L に直して承認し直す（人の指示「書き換えて進めて」、fable-advisor 可・advice-checker 反証なし）",
+  "spec_sha256": "c510d0278da234929ad6ba10da6f27a354892eeb3dc1847ca0abc7f26e233c1d",
   "budget_min": 90,
   "post_budget_min": 90,
   "history": [
@@ -22,108 +22,250 @@
       "phase": "wait",
       "reason": "承認済み spec.md:10 と spec の commit 208dd3e に勤め先の repo 名がある。push の前に、語を直して承認し直すことと、履歴の書き換えの可否を人に確かめる",
       "at": 1795864236.778035
+    },
+    {
+      "approved_at": 1795861846.368602,
+      "approved_by": "推奨のまま OK（/spec の壁打ち、R1〜R6）",
+      "blocked": {
+        "req": "R2",
+        "reason": "公開 repo に出せない勤め先の repo 名を目的の文（R2 の目的の確かめが指す節）から伏せた（人の指示）。承認し直しの lint が実装後の差分を L と数えるので、大きさを L に直して承認し直す",
+        "evidence": "spec.md:10 の目的の文。autopilot.py lint が「大きさ M は数えた大きさ L より小さい」の ERROR",
+        "at": 1795866844.891387
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": [
+        {
+          "high": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "at": 1795863351.012728,
+          "sha": "8d770a8bf9775a6262371bf814f5ce2d29749bfb"
+        },
+        {
+          "high": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "at": 1795864106.3743439,
+          "sha": "44d89ed7ecfefb09470e27d05f4a1930769fd44f"
+        },
+        {
+          "high": [],
+          "at": 1795864197.609161,
+          "sha": "44d89ed7ecfefb09470e27d05f4a1930769fd44f"
+        }
+      ],
+      "fails": {
+        "R1": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795863351.012722
+          },
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795864106.374335
+          }
+        ],
+        "R2": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795863351.012727
+          },
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795864106.374341
+          }
+        ],
+        "R3": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795863351.012727
+          },
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795864106.374342
+          }
+        ],
+        "R4": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795863351.012728
+          },
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795864106.374343
+          }
+        ],
+        "R5": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795863351.012728
+          },
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795864106.374343
+          }
+        ]
+      },
+      "streak": {
+        "R1": 2,
+        "R2": 2,
+        "R3": 2,
+        "R4": 2,
+        "R5": 2
+      },
+      "reworks": {},
+      "post_budget_min": 90,
+      "paused_sec": 2538.3015401363373,
+      "light": null,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": [
+        {
+          "kind": "qa",
+          "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R1 を実物で確かめ直す",
+          "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+          "req": "R1",
+          "merges": 0,
+          "at": 1795864120.973871
+        },
+        {
+          "kind": "qa",
+          "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R2 を実物で確かめ直す",
+          "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+          "req": "R2",
+          "merges": 0,
+          "at": 1795864121.475571
+        },
+        {
+          "kind": "qa",
+          "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R3 を実物で確かめ直す",
+          "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+          "req": "R3",
+          "merges": 0,
+          "at": 1795864122.1122508
+        },
+        {
+          "kind": "qa",
+          "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R4 を実物で確かめ直す",
+          "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+          "req": "R4",
+          "merges": 0,
+          "at": 1795864122.863408
+        },
+        {
+          "kind": "qa",
+          "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R5 を実物で確かめ直す",
+          "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+          "req": "R5",
+          "merges": 0,
+          "at": 1795864123.443449
+        }
+      ],
+      "qa_runs": null,
+      "handoffs": [
+        {
+          "tip": "29439a5a258d4c271cdc6201256475b69ce98596",
+          "tasks": [
+            "T1"
+          ],
+          "dispatch": 0,
+          "at": 1795862204.509851
+        },
+        {
+          "tip": "8d770a8bf9775a6262371bf814f5ce2d29749bfb",
+          "tasks": [
+            "T2"
+          ],
+          "dispatch": 1,
+          "at": 1795862462.991584
+        },
+        {
+          "tip": "44d89ed7ecfefb09470e27d05f4a1930769fd44f",
+          "tasks": [
+            "T3"
+          ],
+          "dispatch": 2,
+          "at": 1795863826.478027
+        }
+      ],
+      "dispatches": [
+        {
+          "base": "2b0e0cd6277ae03cfd21e6e8a37977648074cb67",
+          "tasks": [
+            "T1"
+          ],
+          "reqs": [
+            "R6"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795861859.627376,
+          "session": "7eb932bb-a040-4e16-a668-6f067ab1a0d6"
+        },
+        {
+          "base": "29439a5a258d4c271cdc6201256475b69ce98596",
+          "tasks": [
+            "T2"
+          ],
+          "reqs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795862204.62638,
+          "session": "7eb932bb-a040-4e16-a668-6f067ab1a0d6"
+        },
+        {
+          "base": "3ff0333a63af3ede8d62ed164499e04cec229441",
+          "tasks": [
+            "T3"
+          ],
+          "reqs": [
+            "R1",
+            "R4",
+            "R5"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795863359.187178,
+          "session": "7eb932bb-a040-4e16-a668-6f067ab1a0d6"
+        }
+      ],
+      "lenses": null,
+      "rolled_back": null,
+      "review_launches": [
+        1795862475.950688,
+        1795863845.560797
+      ],
+      "phase": "blocked"
     }
   ],
   "blocked": null,
-  "paused_sec": 2538.3015401363373,
-  "reviews": [
-    {
-      "high": [
-        "R1",
-        "R2",
-        "R3",
-        "R4",
-        "R5"
-      ],
-      "at": 1795863351.012728,
-      "sha": "8d770a8bf9775a6262371bf814f5ce2d29749bfb"
-    },
-    {
-      "high": [
-        "R1",
-        "R2",
-        "R3",
-        "R4",
-        "R5"
-      ],
-      "at": 1795864106.3743439,
-      "sha": "44d89ed7ecfefb09470e27d05f4a1930769fd44f"
-    },
-    {
-      "high": [],
-      "at": 1795864197.609161,
-      "sha": "44d89ed7ecfefb09470e27d05f4a1930769fd44f"
-    }
-  ],
-  "fails": {
-    "R1": [
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795863351.012722
-      },
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795864106.374335
-      }
-    ],
-    "R2": [
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795863351.012727
-      },
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795864106.374341
-      }
-    ],
-    "R3": [
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795863351.012727
-      },
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795864106.374342
-      }
-    ],
-    "R4": [
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795863351.012728
-      },
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795864106.374343
-      }
-    ],
-    "R5": [
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795863351.012728
-      },
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795864106.374343
-      }
-    ]
-  },
-  "streak": {
-    "R1": 2,
-    "R2": 2,
-    "R3": 2,
-    "R4": 2,
-    "R5": 2
-  },
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
   "reworks": {},
   "dispatches": [
     {
@@ -193,11 +335,15 @@
       ],
       "dispatch": 2,
       "at": 1795863826.478027
+    },
+    {
+      "tip": "3d15cd3413795faa91f92d91f8b9f2d7b518bbad",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795867027.357505
     }
-  ],
-  "review_launches": [
-    1795862475.950688,
-    1795863845.560797
   ],
   "raises": [
     {
@@ -239,48 +385,6 @@
       "at": 1795864106.3743439,
       "from": "autopilot-implementer",
       "to": "autopilot-implementer-opus"
-    }
-  ],
-  "parked": [
-    {
-      "kind": "qa",
-      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R1 を実物で確かめ直す",
-      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
-      "req": "R1",
-      "merges": 0,
-      "at": 1795864120.973871
-    },
-    {
-      "kind": "qa",
-      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R2 を実物で確かめ直す",
-      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
-      "req": "R2",
-      "merges": 0,
-      "at": 1795864121.475571
-    },
-    {
-      "kind": "qa",
-      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R3 を実物で確かめ直す",
-      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
-      "req": "R3",
-      "merges": 0,
-      "at": 1795864122.1122508
-    },
-    {
-      "kind": "qa",
-      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R4 を実物で確かめ直す",
-      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
-      "req": "R4",
-      "merges": 0,
-      "at": 1795864122.863408
-    },
-    {
-      "kind": "qa",
-      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/drive.py all && python3 .autopilot-qa/check.py を回し、headless の claude で R5 を実物で確かめ直す",
-      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
-      "req": "R5",
-      "merges": 0,
-      "at": 1795864123.443449
     }
   ],
   "wait": null
