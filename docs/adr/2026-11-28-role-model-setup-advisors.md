@@ -13,7 +13,7 @@
 3. setup が plugin の agent の定義を書き換える、または user の agents に定義を生成する: plugin の更新で消えるか、名前空間が変わって門・規則が名指しする名前と合わない
 
 ## Decision
-1 を選ぶ。前の spec の ADR と同じ理由で、段の定義を選ぶ形なら model・effort が定義で決まり、門と規則が名前で数えられる。ADVISE の文は並行の spec が直しているので変えず、読み替えの 1 行を足す。相談・検証はセッションで使うので、spec の `## モデル` に写さず、SessionStart が models.md を直接読む。
+1 を選ぶ。opus-advisor は本文と `承認:` の欄が違うので、相談の opus の段は fable-advisor の本文を写した定義にする。前の spec の ADR と同じ理由で、段の定義を選ぶ形なら model・effort が定義で決まり、門と規則が名前で数えられる。ADVISE の文は並行の spec が直しているので変えず、読み替えの 1 行を足す。相談・検証はセッションで使うので、spec の `## モデル` に写さず、SessionStart が models.md を直接読む。
 
 - 直し方: 設計を変える
 - 退けた: 要らなくする（既存の setup と spec の `## モデル` は実装・評価しか受けず、相談役の model・effort を変える道が無い）
