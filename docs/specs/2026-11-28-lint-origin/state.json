@@ -1,64 +1,199 @@
 {
-  "phase": "blocked",
+  "phase": "building",
   "slug": "lint-origin",
   "created_at": 1795821439.061122,
   "existing": true,
   "start": "7bc23c1821287f08dbb9716097e51dd93e927e33",
-  "last_active_at": 1795825435.567039,
+  "last_active_at": 1795827250.0488288,
   "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
   "queued_at": 1795822313.379647,
-  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 目的の spec の子 2（親 R4〜R6）。相談役は承認: 可、検証は反証なし（確かめられない 0 / 12）",
-  "spec_sha256": "ea57d6c5c927a42257a069eb8c499c2e7834e7252762f1862a1d8fcab8783e98",
+  "approved_by": "R1〜R5 の 2 本の子（子 1 を閉じ R3・版数を非目標、示す前の lint と R2 の除外を足す）の推奨のままで OK",
+  "spec_sha256": "d045876a1e4500b80e107115edb1bdcd6c119808234ea01b1cdfe78e4e10211d",
   "after": null,
-  "approved_at": 1795822549.466868,
+  "approved_at": 1795827227.4161391,
   "budget_min": 90,
   "post_budget_min": 90,
-  "history": [],
-  "blocked": {
-    "req": "R2",
-    "reason": "lint の記録だけでは、lint を通さずに直して示した中身を見分けられず、A→B→連番を変えた A' の順で approve が通る。直すには hook で人の発言のときの中身を残すか、この場合を R2 の外にする合意が要る",
-    "evidence": "docs/specs/2026-11-28-lint-origin/evidence/R2-block.md",
-    "at": 1795825435.567038
-  },
-  "paused_sec": 0,
-  "reviews": [
+  "history": [
     {
-      "high": [],
-      "at": 1795824122.317686,
-      "sha": "00b6d0a08012ab3388e57bea70f0f2a1d45bdbe6"
-    },
-    {
-      "high": [
-        "R2"
+      "approved_at": 1795822549.466868,
+      "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 目的の spec の子 2（親 R4〜R6）。相談役は承認: 可、検証は反証なし（確かめられない 0 / 12）",
+      "blocked": {
+        "req": "R2",
+        "reason": "lint の記録だけでは、lint を通さずに直して示した中身を見分けられず、A→B→連番を変えた A' の順で approve が通る。直すには hook で人の発言のときの中身を残すか、この場合を R2 の外にする合意が要る",
+        "evidence": "docs/specs/2026-11-28-lint-origin/evidence/R2-block.md",
+        "at": 1795825435.567038
+      },
+      "done_at": null,
+      "anomalies": null,
+      "reviews": [
+        {
+          "high": [],
+          "at": 1795824122.317686,
+          "sha": "00b6d0a08012ab3388e57bea70f0f2a1d45bdbe6"
+        },
+        {
+          "high": [
+            "R2"
+          ],
+          "at": 1795824664.970389,
+          "sha": "e6f5e0b3be4e4e71c43366d075002670a7b0f2cb"
+        },
+        {
+          "high": [
+            "R2"
+          ],
+          "at": 1795825419.7464352,
+          "sha": "80445337e3059080e9333b7d1451e55222e962e3"
+        }
       ],
-      "at": 1795824664.970389,
-      "sha": "e6f5e0b3be4e4e71c43366d075002670a7b0f2cb"
-    },
-    {
-      "high": [
-        "R2"
+      "fails": {
+        "R2": [
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795824664.9703848
+          },
+          {
+            "from": "review",
+            "evidence": "最後のレビューの high",
+            "at": 1795825419.74643
+          }
+        ]
+      },
+      "streak": {
+        "R2": 2
+      },
+      "reworks": {},
+      "post_budget_min": 90,
+      "paused_sec": 0,
+      "light": null,
+      "merges": null,
+      "merged_at": null,
+      "paused_at_merge": null,
+      "parked": null,
+      "qa_runs": null,
+      "handoffs": [
+        {
+          "tip": "d299aca1ec3dfd585d1b4683a8d77387e9505ed8",
+          "tasks": [
+            "T1"
+          ],
+          "dispatch": 0,
+          "at": 1795823122.5246458
+        },
+        {
+          "tip": "00b6d0a08012ab3388e57bea70f0f2a1d45bdbe6",
+          "tasks": [
+            "T2"
+          ],
+          "dispatch": 1,
+          "at": 1795823503.41116
+        },
+        {
+          "tip": "e6f5e0b3be4e4e71c43366d075002670a7b0f2cb",
+          "tasks": [
+            "T3"
+          ],
+          "dispatch": 2,
+          "at": 1795824249.92259
+        },
+        {
+          "tip": "80445337e3059080e9333b7d1451e55222e962e3",
+          "tasks": [
+            "T4"
+          ],
+          "dispatch": 3,
+          "at": 1795824847.99162
+        }
       ],
-      "at": 1795825419.7464352,
-      "sha": "80445337e3059080e9333b7d1451e55222e962e3"
+      "dispatches": [
+        {
+          "base": "abb5e31289693b2637c5c87f2de91f9dbd415739",
+          "tasks": [
+            "T1"
+          ],
+          "reqs": [
+            "R1",
+            "R2"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795822562.822443,
+          "session": "1458e274-2131-47de-a981-b796d5011d85"
+        },
+        {
+          "base": "bc37ca64924312c62b64ccfe8b42ac9f3e98f640",
+          "tasks": [
+            "T2"
+          ],
+          "reqs": [
+            "R3"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795823133.627347,
+          "session": "1458e274-2131-47de-a981-b796d5011d85"
+        },
+        {
+          "base": "fea6b9df6d5e4a3e396315e42f0b76eb0a28ca72",
+          "tasks": [
+            "T3"
+          ],
+          "reqs": [
+            "R1"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795824131.124789,
+          "session": "1458e274-2131-47de-a981-b796d5011d85"
+        },
+        {
+          "base": "bf65289474cccb652aafef05450688ca914e0889",
+          "tasks": [
+            "T4"
+          ],
+          "reqs": [
+            "R2"
+          ],
+          "agent": "autopilot-implementer",
+          "at": 1795824678.7481651,
+          "session": "1458e274-2131-47de-a981-b796d5011d85"
+        }
+      ],
+      "lenses": [
+        {
+          "name": "権限の境界をまたぐ呼び出し",
+          "found": 2,
+          "reproduced": 2,
+          "fixed": 0,
+          "at": 1795824122.416123
+        },
+        {
+          "name": "権限の境界をまたぐ呼び出し",
+          "found": 2,
+          "reproduced": 1,
+          "fixed": 0,
+          "at": 1795824665.0497348
+        },
+        {
+          "name": "権限の境界をまたぐ呼び出し",
+          "found": 1,
+          "reproduced": 1,
+          "fixed": 0,
+          "at": 1795825419.836797
+        }
+      ],
+      "rolled_back": null,
+      "review_launches": [
+        1795823528.2613919,
+        1795824254.185534,
+        1795824868.0714638
+      ],
+      "phase": "blocked"
     }
   ],
-  "fails": {
-    "R2": [
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795824664.9703848
-      },
-      {
-        "from": "review",
-        "evidence": "最後のレビューの high",
-        "at": 1795825419.74643
-      }
-    ]
-  },
-  "streak": {
-    "R2": 2
-  },
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
   "reworks": {},
   "dispatches": [
     {
@@ -143,34 +278,14 @@
       ],
       "dispatch": 3,
       "at": 1795824847.99162
-    }
-  ],
-  "review_launches": [
-    1795823528.2613919,
-    1795824254.185534,
-    1795824868.0714638
-  ],
-  "lenses": [
-    {
-      "name": "権限の境界をまたぐ呼び出し",
-      "found": 2,
-      "reproduced": 2,
-      "fixed": 0,
-      "at": 1795824122.416123
     },
     {
-      "name": "権限の境界をまたぐ呼び出し",
-      "found": 2,
-      "reproduced": 1,
-      "fixed": 0,
-      "at": 1795824665.0497348
-    },
-    {
-      "name": "権限の境界をまたぐ呼び出し",
-      "found": 1,
-      "reproduced": 1,
-      "fixed": 0,
-      "at": 1795825419.836797
+      "tip": "af4a9abb883a1f4488f735311839944d6ea52517",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 3,
+      "at": 1795827250.048828
     }
   ],
   "raises": [
