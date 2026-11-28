@@ -4,7 +4,7 @@
   "created_at": 1795858736.073002,
   "existing": true,
   "start": "9e2a102f4f7a69eef23bc90373c7c17d561859b3",
-  "last_active_at": 1795861846.3694541,
+  "last_active_at": 1795863351.012754,
   "consent": {
     "sha256": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
     "full": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
@@ -20,8 +20,113 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
-  "reworks": {}
+  "reviews": [
+    {
+      "high": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "at": 1795863351.012728,
+      "sha": "8d770a8bf9775a6262371bf814f5ce2d29749bfb"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795863351.012722
+      }
+    ],
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795863351.012727
+      }
+    ],
+    "R3": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795863351.012727
+      }
+    ],
+    "R4": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795863351.012728
+      }
+    ],
+    "R5": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795863351.012728
+      }
+    ]
+  },
+  "streak": {
+    "R1": 1,
+    "R2": 1,
+    "R3": 1,
+    "R4": 1,
+    "R5": 1
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "2b0e0cd6277ae03cfd21e6e8a37977648074cb67",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795861859.627376,
+      "session": "7eb932bb-a040-4e16-a668-6f067ab1a0d6"
+    },
+    {
+      "base": "29439a5a258d4c271cdc6201256475b69ce98596",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795862204.62638,
+      "session": "7eb932bb-a040-4e16-a668-6f067ab1a0d6"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "29439a5a258d4c271cdc6201256475b69ce98596",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795862204.509851
+    },
+    {
+      "tip": "8d770a8bf9775a6262371bf814f5ce2d29749bfb",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795862462.991584
+    }
+  ],
+  "review_launches": [
+    1795862475.950688
+  ]
 }

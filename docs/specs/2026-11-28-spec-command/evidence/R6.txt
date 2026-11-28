@@ -1,0 +1,12 @@
+- commit: 8d770a8bf9775a6262371bf814f5ce2d29749bfb
+$ python3 -m pytest plugins/spec-autopilot/tests/test_stages.py::test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check plugins/spec-autopilot/tests/test_stages.py::test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge -v
+test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines0] PASSED
+test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines1] PASSED
+test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines2] PASSED
+test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines3] PASSED
+test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines4] PASSED
+test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge[- 目的の確かめ: R1] PASSED
+test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge[- 目的の確かめ: マージ後（5 本の run の transcript を数え直す）] PASSED
+7 passed in 44.64s
+$ python3 .autopilot-qa/check.py   （R6 の部: 一時 repo .autopilot-qa/tmp/r6/repo で CLI init → spec.md を差し替え → CLI lint。R1・マージ後は通る、無い・2 本・R9・制約の節にだけある・コメントの中にだけある・R10 は ERROR と期待）
+R6 pass
