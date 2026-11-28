@@ -106,8 +106,8 @@ def test_runlog_has_no_autopilot_reference_or_sys_modules():
         assert not (isinstance(n, ast.Attribute) and n.attr == "modules" and isinstance(n.value, ast.Name) and n.value.id == "sys"), f"runlog.py:{n.lineno}"
 
 
-def test_import_cycle_is_exactly_the_five_modules_without_runlog():
-    assert in_cycle() == {"autopilot", "goal", "light", "lineup", "overnight"}
+def test_import_cycle_is_exactly_the_four_modules_without_goal():
+    assert in_cycle() == {"autopilot", "light", "lineup", "overnight"}
 
 
 def test_stages_repo_root_and_git_lines_call_git_through_one_function():
@@ -149,11 +149,46 @@ def test_evidence_and_size_note_are_folded_into_autopilot():
     assert {"evidence_items", "size_notes"} <= names
 
 
-def test_autopilot_imports_fifteen_scripts_modules():
-    assert len(imported(tree("autopilot.py")) & MODULES) == 15
+def test_autopilot_imports_eighteen_scripts_modules():
+    assert len(imported(tree("autopilot.py")) & MODULES) == 18
 
 
 def test_autopilot_passes_sys_modules_only_to_premises_and_rootcause():
     count, passed = module_passes()
     assert count == 2
     assert passed == {"premises", "rootcause"}
+
+
+LOWER = {"state": {"load_state", "save_state"}, "out": {"report", "refuse", "AFTER_DONE"}, "session": {"session_file", "recorded_specs", "release"}}
+
+
+def test_goal_does_not_import_or_name_autopilot_even_inside_functions():
+    t = tree("goal.py")
+    assert "autopilot" not in imported(t)
+    assert not {"importlib", "<dynamic>"} & imported(t)
+    for n in ast.walk(t):
+        assert not (isinstance(n, ast.Name) and n.id in ("autopilot", "ap")), f"goal.py:{n.lineno}"
+        assert not (isinstance(n, ast.Attribute) and n.attr == "modules" and isinstance(n.value, ast.Name) and n.value.id == "sys"), f"goal.py:{n.lineno}"
+
+
+def test_goal_is_outside_the_import_cycle():
+    assert "goal" not in in_cycle()
+
+
+def test_state_out_session_import_only_stages_among_scripts():
+    for name in LOWER:
+        t = tree(f"{name}.py")
+        assert imported(t) & MODULES <= {"stages"}, name
+        assert not {"autopilot", "importlib", "<dynamic>"} & imported(t), name
+
+
+def test_moved_names_are_defined_in_state_out_session_and_not_redefined_in_autopilot():
+    for name, names in LOWER.items():
+        defined = {n.name for n in tree(f"{name}.py").body if isinstance(n, ast.FunctionDef)} | {t.id for n in tree(f"{name}.py").body if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)}
+        assert names <= defined, name
+        imports = {a.name for n in tree("autopilot.py").body if isinstance(n, ast.ImportFrom) and n.module == name for a in n.names}
+        assert names <= imports, name
+    all_names = set().union(*LOWER.values())
+    for n in tree("autopilot.py").body:
+        defined = {n.name} if isinstance(n, ast.FunctionDef) else {t.id for t in getattr(n, "targets", []) if isinstance(t, ast.Name)}
+        assert not defined & all_names, defined

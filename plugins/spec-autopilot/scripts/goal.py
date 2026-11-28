@@ -18,8 +18,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import advisor_approval  # noqa: E402
-import autopilot as ap  # noqa: E402
 import merged_child  # noqa: E402
+from out import refuse, report  # noqa: E402
+from session import release  # noqa: E402
+from stages import COMMENT_BLOCK, REQ, repo_root, section  # noqa: E402
+from state import load_state, save_state  # noqa: E402
 
 PARENT = re.compile(r"^- 親 spec:[ \t]*(.*?)[ \t]*$", re.M)
 PARENT_REQS = re.compile(r"^- 親の要件:[ \t]*(.*?)[ \t]*$", re.M)
@@ -28,9 +31,9 @@ REQ_ID = re.compile(r"R\d+")
 
 def record(d, by, scope):
     """目的として承認した記録（時刻・要約・自走の範囲の節のハッシュ）を足す。書く直前に state.json を読み直し、goal のキーだけを変える。"""
-    s = ap.load_state(d)
+    s = load_state(d)
     s["goal"] = {"at": time.time(), "by": by, "scope_sha256": scope}
-    ap.save_state(d, s)
+    save_state(d, s)
 
 
 def refuse_mix(a):
@@ -41,11 +44,11 @@ def refuse_mix(a):
 
 def approve(d, by, scope, warnings):
     """approve --goal。人の発言の門と lint は呼び出し側が通した後に呼ぶ。壁打ち中（discovery）の spec だけ受ける。"""
-    s = ap.load_state(d)
+    s = load_state(d)
     if s.get("phase") != "discovery":
-        ap.refuse(s, "--goal は壁打ち中（discovery）の spec だけ受ける")
+        refuse(s, "--goal は壁打ち中（discovery）の spec だけ受ける")
     record(d, by, scope)
-    return ap.report([], warnings, "goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）")
+    return report([], warnings, "goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）")
 
 
 def parse_reqs(text):
@@ -56,20 +59,20 @@ def parse_reqs(text):
 
 def parent_lines(d):
     """子の `## 制約` の (`- 親 spec:` の値のリスト, `- 親の要件:` の値のリスト)。コメントの中は読まない。"""
-    text = ap.COMMENT_BLOCK.sub("", ap.section((d / "spec.md").read_text(encoding="utf-8"), "制約") or "")
+    text = COMMENT_BLOCK.sub("", section((d / "spec.md").read_text(encoding="utf-8"), "制約") or "")
     return PARENT.findall(text), PARENT_REQS.findall(text)
 
 
 def parent_facts(parent):
     """親の (目的の承認の記録 or None, 親の要件の番号の `## 要件` の順のリスト or None)。読めなければ None（親が無い・壊れた）。"""
     try:
-        g = ap.load_state(parent).get("goal")
+        g = load_state(parent).get("goal")
         g = g if isinstance(g, dict) and isinstance(g.get("scope_sha256"), str) else None
     except (OSError, ValueError):
         g = None
     try:
-        body = ap.COMMENT_BLOCK.sub("", ap.section((parent / "spec.md").read_text(encoding="utf-8"), "要件") or "")
-        return g, list(dict.fromkeys(m[0] for m in ap.REQ.findall(body)))
+        body = COMMENT_BLOCK.sub("", section((parent / "spec.md").read_text(encoding="utf-8"), "要件") or "")
+        return g, list(dict.fromkeys(m[0] for m in REQ.findall(body)))
     except OSError:
         return g, None
 
@@ -82,7 +85,7 @@ def last_sibling_queued_at(d, name):
         if x.resolve() == d.resolve() or not (x / "state.json").is_file() or not (x / "spec.md").is_file():
             continue
         try:
-            at = ap.load_state(x).get("queued_at")
+            at = load_state(x).get("queued_at")
             if parent_lines(x)[0] == [name] and isinstance(at, (int, float)) and not isinstance(at, bool):
                 times.append(float(at))
         except (OSError, ValueError):
@@ -135,11 +138,11 @@ def cover(parent):
             reqs = parse_reqs(lines[0]) if len(lines) == 1 else None
             if names != [parent.name] or reqs is None:
                 continue
-            s = ap.load_state(x)
+            s = load_state(x)
             if not isinstance(s, dict):
                 raise ValueError("state.json が object でない")
             phase, note = s.get("phase"), ""
-            if phase != "done" and (found := merged_child.read(ap.repo_root(x), x)):
+            if phase != "done" and (found := merged_child.read(repo_root(x), x)):
                 phase, note = "done", f"。ブランチ {found[0]} の PR {found[1]}"
         except (OSError, ValueError) as e:  # UnicodeDecodeError・JSONDecodeError は ValueError
             unreadable.append((x.name, type(e).__name__))
@@ -154,22 +157,22 @@ def cmd(a):
     判定と書き込みは spec のディレクトリに掛けたロックの中で、その時点の子と親の記録から求める（同時の呼び出しで done の行を 2 つ書かない）。"""
     d = Path(a.dir)
     if not d.is_dir():
-        return ap.report([f"{d} が無い（spec のディレクトリではない）"], [], "")
+        return report([f"{d} が無い（spec のディレクトリではない）"], [], "")
     fd = os.open(d, os.O_RDONLY)  # ロックは spec のディレクトリ自身に掛ける（隣にロックファイルを残さない）
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         try:
-            s = ap.load_state(d)
+            s = load_state(d)
         except (OSError, ValueError) as e:
-            return ap.report([f"{d.name} の state.json が読めない（{type(e).__name__}）"], [], "")
+            return report([f"{d.name} の state.json が読めない（{type(e).__name__}）"], [], "")
         g = s.get("goal")
         if not isinstance(g, dict):
-            return ap.report([f"{d.name} は目的として承認されていない（`approve --goal` の記録が無い）"], [], "")
+            return report([f"{d.name} は目的として承認されていない（`approve --goal` の記録が無い）"], [], "")
         if s.get("phase") == "done":
-            return ap.report([], [], "goal: 親はすでに done")
+            return report([], [], "goal: 親はすでに done")
         table, ids, unreadable = cover(d)
         if not ids:
-            return ap.report([f"{d.name} の `## 要件` が読めない"], [], "")
+            return report([f"{d.name} の `## 要件` が読めない"], [], "")
         errors = [f"{n} が読めない（{t}）" for n, t in unreadable]
         for r in ids:
             print(f"{r}: " + ("、".join(f"{n}（{p}{w}）" for n, p, w in table.get(r, [])) or "子なし"))
@@ -180,12 +183,12 @@ def cmd(a):
         if not errors and s.get("phase") != "discovery":
             errors.append(f"目的の spec は discovery のときだけ done にする（phase={s.get('phase')}）")
         if errors:
-            return ap.report(errors, [], "")
+            return report(errors, [], "")
         s.update(phase="done", done_at=time.time())
-        ap.save_state(d, s)
+        save_state(d, s)
     finally:
         os.close(fd)
-    ap.release(d)
+    release(d)
     __import__("runlog").record(d, {**s, "approved_at": g.get("at")}, "done", s["done_at"])  # 親に approved_at は無いので、目的の承認の時刻から数える
     print(f"goal: {d.name} を done にした（要件 {len(ids)} 件を、子が全部 done で受け持った）")
     return 0

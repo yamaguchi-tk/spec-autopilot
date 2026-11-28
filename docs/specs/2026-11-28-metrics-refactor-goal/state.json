@@ -4,10 +4,10 @@
   "created_at": 1795826210.214218,
   "existing": true,
   "start": "06a73a81766790739ac8b0e354d36016b772e10f",
-  "last_active_at": 1795827158.745781,
+  "last_active_at": 1795862375.013988,
   "goal": {
-    "at": 1795827158.7457778,
-    "by": "人が「承認する」と返した（草案を示した後）",
+    "at": 1795862375.013985,
+    "by": "人が「承認する」（R4 の子で autopilot.py の LCOM4 と fan-out の悪化を数えないただし書き、test_import_layers の期待の例外、出し直しは R4 の最後の子で判定）",
     "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e"
   }
 }

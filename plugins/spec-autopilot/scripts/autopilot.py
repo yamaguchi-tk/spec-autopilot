@@ -46,6 +46,9 @@ import stages  # noqa: E402
 from stages import (  # noqa: E402（deploy.py・stages.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
     BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, SESSION_ID, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section, stated_size,
 )
+from out import AFTER_DONE, refuse, report  # noqa: E402（goal.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
+from session import recorded_specs, release, session_file  # noqa: E402
+from state import load_state, save_state  # noqa: E402
 from transcript import _iso_epoch, anomalies, anomaly_line, transcript_lines  # noqa: E402
 
 TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
@@ -110,17 +113,6 @@ EVIDENCE_FORMS = "形が読めない（`<path>::<テスト名>` を `・` で並
 def is_new_repo(s):
     """state.json の existing が bool の False のときだけ新しく作る repo。キーが無い・null・文字列・0 などは既存の repo（止める側に倒す）。"""
     return s.get("existing") is False
-
-
-def load_state(d):
-    return json.loads((d / "state.json").read_text(encoding="utf-8"))
-
-
-def save_state(d, s):
-    s["last_active_at"] = time.time()  # 中断の後の再開で、止まっていた時間を予算から外すために残す
-    tmp = d / f".state.json.{os.getpid()}"  # 書きかけを Stop hook に読ませない（読めない spec は続行中に放される）
-    tmp.write_text(json.dumps(s, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, d / "state.json")
 
 
 def head_and_body(text):
@@ -288,25 +280,6 @@ def require_user_after(d, since, what):
     return session
 
 
-def session_file(session):
-    """セッションごとの、自走させる spec の絶対パスの記録。Stop hook は cwd によらずこれを読む。"""
-    if not isinstance(session, str) or not SESSION_ID.fullmatch(session):
-        return None
-    home = Path(os.environ.get("SPEC_AUTOPILOT_HOME") or Path.home() / ".claude" / "spec-autopilot")
-    return home / "sessions" / f"{session}.json"
-
-
-def recorded_specs(session):
-    """記録した spec のディレクトリ。記録が無ければ []、壊れていれば例外を投げる。"""
-    f = session_file(session)
-    if f is None or not f.exists():
-        return []
-    paths = json.loads(f.read_text(encoding="utf-8"))
-    if not isinstance(paths, list) or not all(isinstance(x, str) for x in paths):
-        raise ValueError(f"{f} の形が読めない")
-    return [Path(x) for x in paths]
-
-
 def record_spec(d, session):
     """spec をセッションの記録に足す。セッションが分からなければ False。"""
     f = session_file(session)
@@ -321,24 +294,6 @@ def record_spec(d, session):
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(paths, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return True
-
-
-def release(d):
-    """done・block の後に、このセッション（CLAUDE_CODE_SESSION_ID）の記録から spec を外す（take_over の対）。
-    外せないときは記録を残して NOTE を出す（残るのは止める側。壊れた記録は書き直さない）。"""
-    session = os.environ.get("CLAUDE_CODE_SESSION_ID")
-    f = session_file(session)
-    try:
-        if f is None:
-            raise ValueError("セッションの id が無い")
-        paths = [str(x) for x in recorded_specs(session)]
-        if str(d.resolve()) in paths:
-            paths.remove(str(d.resolve()))
-            tmp = f.with_name(f.name + ".tmp")
-            tmp.write_text(json.dumps(paths, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            tmp.replace(f)
-    except (OSError, ValueError) as e:
-        print(f"NOTE: このセッションの spec の記録から外せなかった（{type(e).__name__}）。spec のディレクトリが消えると Stop hook が 1 回止める")
 
 
 def take_over(d, session, what):
@@ -831,16 +786,6 @@ def active(root):
     return found
 
 
-def report(errors, extra, ok_message):
-    for e in errors:
-        print(f"ERROR: {e}")
-    for w in extra:
-        print(f"NOTE: {w}")
-    if not errors:
-        print(ok_message)
-    return 1 if errors else 0
-
-
 def has_code(root):
     """docs/specs・docs/adr の外に、コードのファイルが 1 つでもあるか。
 
@@ -1138,18 +1083,6 @@ def cmd_active(a):
     for d in active(repo_root(Path.cwd())):
         print(d)
     return 0
-
-
-AFTER_DONE = ("done の後は Stop hook が止めないので、確認は wait を使わずにそのまま人に聞く。"
-              "人に直しを頼まれたら、spec を直さずに済むなら tasks.md に直しのタスクを足して "
-              "autopilot.py approve <dir> --by <返事の要約> で自走に戻る（spec を直すなら /autopilot の「done の後に直しを頼まれたとき」の手順に従う）")
-
-
-def refuse(s, what):
-    """受けない phase のときに止める。done なら、done の後の道（approve で戻る・そのまま聞く）を示す。"""
-    if s.get("phase") == "done":
-        sys.exit(f"{what}（phase=done）。{AFTER_DONE}")
-    sys.exit(f"{what}（phase={s.get('phase')}）")
 
 
 def building_state(d):

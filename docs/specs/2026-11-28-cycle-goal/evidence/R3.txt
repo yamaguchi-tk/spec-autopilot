@@ -1,0 +1,16 @@
+- commit: f13851ee061db7bb7808966011a129aeb475b617
+$ grep -nE '^(import|from) ' plugins/spec-autopilot/scripts/state.py plugins/spec-autopilot/scripts/out.py plugins/spec-autopilot/scripts/session.py
+plugins/spec-autopilot/scripts/session.py:2:import json
+plugins/spec-autopilot/scripts/session.py:3:import os
+plugins/spec-autopilot/scripts/session.py:4:from pathlib import Path
+plugins/spec-autopilot/scripts/session.py:6:from stages import SESSION_ID
+plugins/spec-autopilot/scripts/out.py:2:import sys
+plugins/spec-autopilot/scripts/state.py:2:import json
+plugins/spec-autopilot/scripts/state.py:3:import os
+plugins/spec-autopilot/scripts/state.py:4:import time
+$ python3 .autopilot-qa/check.py
+state.py: scripts import=[] lcom4=2 fan_out=0 defines=['load_state', 'save_state']
+out.py: scripts import=[] lcom4=2 fan_out=0 defines=['AFTER_DONE', 'refuse', 'report']
+session.py: scripts import=['stages'] lcom4=1 fan_out=1 defines=['recorded_specs', 'release', 'session_file']
+R3 pass
+（LCOM4 は measure.py --base 887cc260 --json の report.modules から読んだ値。import は AST で数えた）

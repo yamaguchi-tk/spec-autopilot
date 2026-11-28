@@ -1,0 +1,23 @@
+- commit: f13851ee061db7bb7808966011a129aeb475b617
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 887cc260
+前: 関数 330・CC の平均 7.43・目安を超えた関数 ccn 70・nloc 4・nesting 1・params 5・循環の組 10・重複の塊 2（0.89%）
+後: 関数 330・CC の平均 7.43・目安を超えた関数 ccn 70・nloc 4・nesting 1・params 5・循環の組 6・重複の塊 2（0.89%）
+
+## 悪化（2）
+- autopilot.py の fan_out が 15 → 18（高）
+- autopilot.py の lcom4 が 4 → 8（高）
+
+## 改善（1）
+- 循環の組が 10 → 6
+（--json の diff.moved_only は false。除いた 2 つ: autopilot.py の fan_out 15 → 18、LCOM4 4 → 8。ほかの悪化は 0）
+$ python3 .autopilot-qa/check.py
+worsened: ['autopilot.py の fan_out が 15 → 18（高）', 'autopilot.py の lcom4 が 4 → 8（高）'] improved: ['循環の組が 10 → 6'] moved_only: False
+autopilot.py after: fan_out 18 lcom4 8 / goal.py after: fan_out 7 lcom4 2
+R4 pass
+steps: ['status-approved', 'lint', 'check-before', 'done-before', 'check-after', 'status-before-done', 'done', 'done-again', 'status-done', 'block-on-done', 'block', 'status-blocked', 'block-again', 'block-nosession', 'lint-broken', 'goal-nochild', 'goal-partial', 'goal-notdone', 'goal-done', 'goal-again', 'status-parent', 'goal-notgoal', 'goal-missing', 'goal-broken-child', 'runs.jsonl', 'sessions/s1.json', 'sessions/s1.prompt.json']
+compared: 27 steps; runs.jsonl rows: [('done', 'game'), ('block', 'blk'), ('block', 'blk2'), ('done', 'parent')]
+R4 pass
+（.autopilot-qa/cli_run.py で、git archive 887cc260 の plugin と tip の plugin のそれぞれで、同じ筋書きの status 5 回・lint 2 回・check 2 回・done 3 回・block 4 回（done の後・blocked の後の拒否、セッションの id の無い block を含む）・goal 8 回（子なし・一部・未完・全部 done・done の後・目的でない spec・無いディレクトリ・壊れた子の state.json）を一時の SPEC_AUTOPILOT_HOME で回し、stdout・stderr・終了コード・runs.jsonl・sessions/*.json を、作業の root のパス・時刻の数値・sha を伏せて突き合わせ、27 段すべて同じ）
+$ python3 -m pytest <spec の回帰テスト 31 ファイル> -q -n auto
+1677 passed in 177.76s (0:02:57)
+（全量は PR の CI が回す。未確認）

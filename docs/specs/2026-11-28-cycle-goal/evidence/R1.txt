@@ -1,0 +1,17 @@
+- commit: f13851ee061db7bb7808966011a129aeb475b617
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 887cc260
+前: 関数 330・CC の平均 7.43・目安を超えた関数 ccn 70・nloc 4・nesting 1・params 5・循環の組 10・重複の塊 2（0.89%）
+後: 関数 330・CC の平均 7.43・目安を超えた関数 ccn 70・nloc 4・nesting 1・params 5・循環の組 6・重複の塊 2（0.89%）
+
+## 悪化（2）
+- autopilot.py の fan_out が 15 → 18（高）
+- autopilot.py の lcom4 が 4 → 8（高）
+
+## 改善（1）
+- 循環の組が 10 → 6
+$ python3 .autopilot-qa/check.py
+cycles: [['autopilot.py', 'light.py', 'lineup.py', 'overnight.py']]
+R1 pass
+（--json の report.cycles を読んだ。輪は 1 つで goal.py は入らない）
+$ python3 -m pytest <spec の回帰テスト 31 ファイル（test_import_layers.py を含む）> -q -n auto
+1677 passed in 177.76s (0:02:57)

@@ -1,0 +1,99 @@
+{
+  "phase": "building",
+  "slug": "cycle-goal",
+  "created_at": 1795862487.713616,
+  "existing": true,
+  "start": "44cbae8add8147f8b407abef1503f1d5587bffa2",
+  "last_active_at": 1795865048.403038,
+  "consent": {
+    "sha256": "d30157c4a3e837af422dbe6a0ba085c218e66d8a7ead93ec87f5eed8f5e635e6",
+    "full": "d30157c4a3e837af422dbe6a0ba085c218e66d8a7ead93ec87f5eed8f5e635e6",
+    "at": 1795862767.5013309,
+    "mtime": 1795862764.4861934
+  },
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795863018.466995,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役「承認: 可」、検証役「反証なし（確かめられない 0 / 13）」",
+  "spec_sha256": "4d115991440a2bdee416b5d2bffd82dcb8f9dcbcbdf1de2a0b6932913851cb17",
+  "after": null,
+  "approved_at": 1795863042.782573,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795864423.7405481,
+      "sha": "308d28904d65925fd0b44071a266fa1b1dd1a949"
+    },
+    {
+      "high": [],
+      "at": 1795865048.403022,
+      "sha": "f13851ee061db7bb7808966011a129aeb475b617"
+    }
+  ],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "887cc260ad5f045f22f4f622511e3aac577c827b",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795863057.578221,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    },
+    {
+      "base": "308d28904d65925fd0b44071a266fa1b1dd1a949",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R3"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795864429.595847,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "e7d7574082b564218579e1741b5dbd843ffceb42",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795863346.196293
+    },
+    {
+      "tip": "308d28904d65925fd0b44071a266fa1b1dd1a949",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795864423.556692
+    },
+    {
+      "tip": "f13851ee061db7bb7808966011a129aeb475b617",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795864500.436095
+    }
+  ],
+  "review_launches": [
+    1795863352.637082,
+    1795864507.363392
+  ]
+}
