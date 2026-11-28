@@ -46,6 +46,7 @@ import stages  # noqa: E402
 from stages import (  # noqa: E402（deploy.py・stages.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
     BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, SESSION_ID, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section, stated_size,
 )
+from light_rules import errors as light_errors  # noqa: E402（light.py の判定を下の層に出した。light.py は autopilot.py の上に立つ入口）
 from out import AFTER_DONE, refuse, report  # noqa: E402（goal.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
 from session import recorded_specs, release, session_file  # noqa: E402
 from state import load_state, save_state  # noqa: E402
@@ -662,7 +663,7 @@ def check(d, stage="all"):
     import overnight
     errors += ladder_errors(s) + overnight.review_errors(d, s)
     errors += deploy.stage_errors(d, s, {r: rows[r] for r in reqs if r in rows}, stage)
-    return errors + (deploy.scope_errors(d, s) if stage != "pr" else []) + __import__("light").errors(d, s), notes
+    return errors + (deploy.scope_errors(d, s) if stage != "pr" else []) + light_errors(d, s), notes
 
 
 def ladder_errors(s):
