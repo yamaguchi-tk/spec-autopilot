@@ -1,0 +1,10 @@
+- commit: e7d7574082b564218579e1741b5dbd843ffceb42
+$ grep -nE 'import autopilot|autopilot\.[A-Za-z_]|\bap\.[A-Za-z_]|importlib|sys\.modules|__import__' plugins/spec-autopilot/scripts/goal.py
+4:  autopilot.py approve <dir> --by .. --goal   目的として承認した記録を state.json の `goal` に残す（phase は discovery のまま）
+5:  autopilot.py approve <dir> --by .. --queue --by-advisor   子の spec を、親の記録と相談役 2 本の記録で承認する（child_errors）
+6:  autopilot.py goal <親の dir>   親の要件ごとの子と phase を出し、全部の要件を受け持つ子が全部 done なら親を done にする（cmd）
+192:    __import__("runlog").record(d, {**s, "approved_at": g.get("at")}, "done", s["done_at"])  # 親に approved_at は無いので、目的の承認の時刻から数える
+（4〜6 行は docstring の中の語、192 行は名前を文字列で渡す __import__("runlog")。どちらも合格基準が除くもの）
+$ python3 .autopilot-qa/check.py
+R2 pass
+（AST で goal.py の import・from・Name の autopilot/ap/importlib・sys.modules・変数を渡す __import__ を数え、文字列とコメントを除いた本文を grep して 0 件）
