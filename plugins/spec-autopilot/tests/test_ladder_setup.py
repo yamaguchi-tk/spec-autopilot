@@ -351,7 +351,17 @@ def test_show_reports_an_unreadable_session_file_and_keeps_the_good_layers(home)
     r = ladder("show", session="sess-1")
     assert r.returncode == 0
     assert "セッションの上書きの誤り" in r.stdout and "setup --session --reset" in r.stdout
-    assert f"{ADVISOR} / 既定 fable-medium / 手元の設定 なし / このセッション opus-high" in r.stdout.splitlines()
+    assert f"{ADVISOR} / 既定 fable-medium / 手元の設定 なし / このセッション なし（誤りがあるので使わない）" in r.stdout.splitlines()
+
+
+def test_setup_session_when_the_sessions_place_is_a_file_fails_with_one_line_and_no_traceback(home):
+    home.mkdir(parents=True, exist_ok=True)
+    (home / "sessions").write_text("x", encoding="utf-8")
+    r = ladder("setup", "--session", "--advisor", "opus-high", session="sess-1")
+    assert r.returncode != 0
+    assert "Traceback" not in r.stderr and len(r.stderr.strip().splitlines()) == 1
+    assert str(home / "sessions") in r.stderr
+    assert (home / "sessions").read_text(encoding="utf-8") == "x"
 
 
 def test_a_broken_session_file_is_kept_aside_each_time_when_setup_session_writes(home):
