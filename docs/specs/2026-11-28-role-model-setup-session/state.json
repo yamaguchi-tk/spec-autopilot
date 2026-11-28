@@ -4,7 +4,7 @@
   "created_at": 1795829840.5669959,
   "existing": true,
   "start": "5fb245d2c255e110d6d73992e19c9edb98221677",
-  "last_active_at": 1795854014.637299,
+  "last_active_at": 1795855599.860778,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795830278.876441,
   "approved_by": "OK（3 本目承認）",
@@ -13,11 +13,91 @@
   "approved_at": 1795854014.6366699,
   "budget_min": 60,
   "post_budget_min": 60,
-  "history": [],
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "実装役が別の worktree への Write を hook に拒まれた。3 本目をその worktree のセッションで回すかを人に確かめる",
+      "at": 1795854199.690541
+    }
+  ],
   "blocked": null,
-  "paused_sec": 0,
-  "reviews": [],
+  "paused_sec": 86.0673279762268,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795855599.860766,
+      "sha": "61573e56be90d11e83844bb56b9a4a2020f5974d"
+    }
+  ],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "c80b4bbe7edd2ee8f068c8dd755f91b8828b512a",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795854036.469291,
+      "session": "38935b5c-a9c7-4069-b340-0dee0b291583"
+    },
+    {
+      "base": "c80b4bbe7edd2ee8f068c8dd755f91b8828b512a",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795854342.5866618,
+      "session": "3c2cb42e-8b63-4d5a-828f-ff2317eaae4c"
+    },
+    {
+      "base": "ab50e63a00cd2f4c4cac087a4feafd9fc0a00603",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795854749.4224498,
+      "session": "3c2cb42e-8b63-4d5a-828f-ff2317eaae4c"
+    }
+  ],
+  "wait": null,
+  "handoffs": [
+    {
+      "tip": "ab50e63a00cd2f4c4cac087a4feafd9fc0a00603",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 1,
+      "at": 1795854749.274122
+    },
+    {
+      "tip": "61573e56be90d11e83844bb56b9a4a2020f5974d",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795855026.232239
+    }
+  ],
+  "review_launches": [
+    1795855032.5110688
+  ]
 }
