@@ -9,7 +9,8 @@
 
 ## 要件
 - R1: spec の「## 制約」に `- playbook: refactor` を書いて `CLI lint` を回したとき、lint は playbook の行を ERROR にしない。
-- R2: references/playbooks/refactor.md を読んだとき、既存の playbook と同じ 3 節（spec を書くとき・自走のタスク・評価役の観点）があり、spec を書くときの節は、変える前の指標の値を測ったコマンドと結果で「## 前提」に書かせ、QA の方向性の合格基準を「指標の前後の比べ方で悪化が無く、狙った指標が目標の値に届き、移しただけでない」の形にさせ、評価役の観点の節は「移しただけで複雑さが変わっていないか」を見させ、測る道具の名前とパスを書かない。
+- R2: /autopilot の A の 0 で playbook を選ぶとき、commands/autopilot.md の playbook の索引の表に refactor の行があり、選ぶときの文はリファクタ（挙動を変えずに構造を直す）を指す。
+- R3: references/playbooks/refactor.md を読んだとき、既存の playbook と同じ 3 節（spec を書くとき・自走のタスク・評価役の観点）があり、spec を書くときの節は、変える前の指標の値を測ったコマンドと結果で「## 前提」に書かせ、QA の方向性の合格基準を「指標の前後の比べ方で悪化が無く、狙った指標が目標の値に届き、移しただけでない」の形にさせ、評価役の観点の節は「移しただけで複雑さが変わっていないか」を見させ、測る道具の名前とパスを書かない。
 
 ## 非目標
 - 測る道具を repo に入れること（道具は repo の外に置く）
@@ -23,11 +24,11 @@
   - メモ: 37-40 の playbook の索引の表に refactor の行を 1 行足す
 - 変える: plugins/spec-autopilot/tests/test_playbooks.py（全体）
   - メモ: 15-16 の期待するファイルの一覧に refactor を足し、31 の「ファイルの無い名前」の例の refactor を別の名前に替え、refactor を受ける例を足す
-- 呼び出し元: plugins/spec-autopilot/scripts/playbooks.py:22
-  - メモ: lint は DIR の `*.md` の一覧で名前を閉じるので、コードは変えない
+- 呼び出し元: plugins/spec-autopilot/scripts/autopilot.py:626
+  - メモ: lint が playbooks.lint を呼ぶ。playbooks.py は DIR の `*.md` の一覧で名前を閉じるので、コードは変えない
 - 手本: plugins/spec-autopilot/references/playbooks/bug-fix.md:1-25
 - 同じ入力: DIR
-  - メモ: playbooks.py が references/playbooks/ のファイル名を読む。この spec はファイルを 1 つ足すだけ
+  - メモ: playbooks.py:22 が DIR の `*.md` のファイル名を読む。この spec はファイルを 1 つ足すだけ
 - 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/test_playbooks.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_stages.py -q -n auto
 
 ## 変えない挙動
@@ -44,6 +45,8 @@
   - path: plugins/spec-autopilot/scripts/playbooks.py:5（DIR）、plugins/spec-autopilot/scripts/playbooks.py:22（glob）
 - 前提: テストは期待するファイルの一覧を 4 つで持ち、ファイルの無い名前の例に refactor を使っている
   - path: plugins/spec-autopilot/tests/test_playbooks.py:15-16、plugins/spec-autopilot/tests/test_playbooks.py:31
+- 前提: 評価役に差し込む観点は、main が spec の playbook の「評価役の観点」の節から選んで渡す
+  - path: plugins/spec-autopilot/commands/autopilot.md:96
 - 前提: 既存の playbook は「spec を書くとき」「自走のタスク」「評価役の観点」の 3 節で書かれている
   - path: plugins/spec-autopilot/references/playbooks/bug-fix.md:5（ほかに 14・22）
 
@@ -54,7 +57,8 @@
 | 要件 | 段 | 確かめ方 | 合格基準 |
 |---|---|---|---|
 | R1 | 手元で実物 | test_playbooks.py を回し、一時の repo で `- playbook: refactor` の spec に `CLI lint` を回す | テストが通り、lint が playbook の行を ERROR にしない |
-| R2 | 手元で実物 | refactor.md の見出しを grep し、本文を読み、道具の名前（lizard・measure.py・refactor-metrics）とパスを grep する | 3 節があり、前提・合格基準・観点の文が要件のとおりで、道具の名前とパスが 0 件 |
+| R2 | 手元で実物 | commands/autopilot.md の索引の表を grep し、refactor の行を読む | 表に refactor の行が 1 行あり、選ぶときの文がリファクタを指す |
+| R3 | 手元で実物 | refactor.md の見出しを grep し、本文を読み、道具の名前（lizard・measure.py・refactor-metrics）とパスを grep する | 3 節があり、前提・合格基準・観点の文が要件のとおりで、道具の名前とパスが 0 件 |
 
 ## 制約
 - 予算: 45 分
