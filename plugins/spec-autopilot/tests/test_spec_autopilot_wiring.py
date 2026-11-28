@@ -96,7 +96,7 @@ def _setup_options(rungs, default, cur):
     return opts + [f"既定に戻す（{default}）"] + [r for r in rungs if r not in (cur, default)]
 
 
-@pytest.mark.parametrize("role", ["実装", "評価"])
+@pytest.mark.parametrize("role", ["実装", "評価", "相談", "検証", "照合"])
 def test_setup_options_fit_ask_user_question_limit_for_every_current_rung(role, tmp_path):
     """show の受ける段と既定から作る選択肢は、今の段がどれでも 2〜4 個で、受ける段のどれにも届く。"""
     import os
@@ -113,3 +113,25 @@ def test_setup_options_fit_ask_user_question_limit_for_every_current_rung(role, 
         assert 2 <= len(opts) <= 4, f"{role} 今 {cur}: {opts}"
         reach = {cur, *(r for r in rungs if r in opts), *([default] if cur != default else [])}
         assert reach == set(rungs), f"{role} 今 {cur}: {opts}"
+
+
+def test_setup_command_writes_every_role_with_a_flag_ladder_setup_takes_and_resets_every_role(tmp_path):
+    """setup.md が書く setup の旗は ladder.py setup が受ける旗の全部（5 つの役）で、show の役の全部を reset で戻せる。"""
+    import os
+    import subprocess
+    import sys
+
+    text = (PLUGIN / "commands" / "setup.md").read_text(encoding="utf-8")
+    env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path)}
+    ladder = [sys.executable, str(PLUGIN / "scripts" / "ladder.py")]
+    helptext = subprocess.run([*ladder, "setup", "-h"], env=env, capture_output=True, text=True).stdout
+    taken = set(re.findall(r"--(?!reset|help)([a-z-]+)", helptext))
+    lines = re.findall(r'^python3 "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ladder\.py" setup ([^\n]+)$', text, re.M)
+    used = {f for ln in lines for f in re.findall(r"--(?!reset)([a-z-]+)", ln)}
+    assert taken == {"impl", "review", "advisor", "checker", "spec-checker"}
+    assert used == taken, f"setup.md の旗: {sorted(used)} / setup が受ける旗: {sorted(taken)}"
+    show = subprocess.run([*ladder, "show"], env=env, capture_output=True, text=True).stdout
+    roles = re.findall(r"^(\S+): 受ける段", show, re.M)
+    assert len(roles) == 5
+    for role in roles:
+        assert f"--reset {role}" in text, f"setup.md に --reset {role} が無い"

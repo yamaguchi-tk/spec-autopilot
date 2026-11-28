@@ -2,4 +2,4 @@
 
 <!-- `- [ ] T1: <やること> [R1, R2]` の形。終えたら [x]。すべての要件をどれかのタスクが受け持つ -->
 - [x] T1: 段の表に照合の役と検証の fable-high を足し、定義 2 つを足す [R1, R2, R3, R4]
-- [ ] T2: commands/setup.md と README を 5 つの役に広げる [R5]
+- [x] T2: commands/setup.md と README を 5 つの役に広げる [R5]
