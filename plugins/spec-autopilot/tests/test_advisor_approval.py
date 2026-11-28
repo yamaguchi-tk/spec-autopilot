@@ -76,6 +76,15 @@ def test_approve_by_advisor_returns_a_blocked_spec_to_building(repo, form):
     assert s["history"][-1]["phase"] == "blocked"
 
 
+def test_approve_by_advisor_counts_a_fable_checker_record_as_the_second_stage(repo):
+    d = blocked_spec(repo)
+    subagent_ran("fable-advisor", OK_ADVISOR)
+    subagent_ran("advice-checker-fable", OK_CHECKER)
+    r = by_advisor(repo, d)
+    assert r.returncode == 0, out(r)
+    assert state(d)["phase"] == "building"
+
+
 def test_approve_by_advisor_uses_the_later_advisor_reply_when_it_was_asked_again(repo):
     d = blocked_spec(repo)
     subagent_ran("fable-advisor", "承認: 否\n")
