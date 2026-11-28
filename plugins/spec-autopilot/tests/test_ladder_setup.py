@@ -402,14 +402,36 @@ def test_session_start_without_a_swap_when_the_session_stage_is_the_bundled_defa
     assert "読み替え" not in start_text(tmp_path)
 
 
-@pytest.mark.parametrize("content", [b"\xff\xfe", "- 相談: sonnet-high\n".encode(), "- 検証: opus-high\n- 検証: fable-high\n".encode()])
+UNREADABLE = {
+    "duplicate-role-row": "- 相談: opus-high\n- 相談: fable\n".encode(),
+    "one-row-with-a-rung-the-role-does-not-accept": "- 相談: opus-high\n- 検証: haiku\n".encode(),
+    "not-utf8": b"\xff\xfe broken",
+    "only-a-rung-the-role-does-not-accept": "- 相談: haiku\n".encode(),
+    "duplicate-row-of-another-role": "- 検証: opus-high\n- 検証: fable-high\n".encode(),
+    "a-directory": None,
+}
+
+
+@pytest.mark.parametrize("content", UNREADABLE.values(), ids=UNREADABLE.keys())
 def test_session_start_with_an_unreadable_session_file_uses_the_default_stage_and_says_how_to_fix(home, tmp_path, content):
     ladder("setup", "--advisor", "fable-high")
     (home / "sessions").mkdir()
-    sfile(home).write_bytes(content)
+    if content is None:
+        sfile(home).mkdir()
+    else:
+        sfile(home).write_bytes(content)
     text = start_text(tmp_path)
-    assert "fable-advisor → spec-autopilot:fable-advisor-high" in text
+    assert "fable-advisor → spec-autopilot:fable-advisor-high" in text and "fable-advisor-opus" not in text
     assert "setup --session --reset" in text and str(LADDER) in text and str(sfile(home)) in text
+    assert "既定の段で作る" in text and "読める行だけを使う" not in text
+
+
+@pytest.mark.parametrize("source", ["compact", "resume"])
+def test_session_start_with_a_readable_session_file_names_the_session_stage_on_compact_and_resume(home, tmp_path, source):
+    ladder("setup", "--advisor", "fable-high")
+    ladder("setup", "--session", "--advisor", "opus-high", session="sess-1")
+    text = start_text(tmp_path, source=source)
+    assert "fable-advisor → spec-autopilot:fable-advisor-opus" in text and "fable-advisor-high" not in text and "既定の段で作る" not in text
 
 
 @pytest.mark.parametrize("sid", ["../x", "-a", "a/b", "", None])

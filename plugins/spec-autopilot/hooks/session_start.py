@@ -68,6 +68,7 @@ def advisor_setting(session=None):
     import ladder
 
     rows, _, over, bad = ladder.resolve(session)
+    session_bad = any(layer == "セッションの上書き" for layer, _, _ in bad)
     swaps = []
     for role, rungs in ladder.ADVISORS.items():
         swap = ladder.swap_line(role, rows[ladder.CONFIG_KEY[role]]) if ladder.CONFIG_KEY[role] in rows else None
@@ -75,12 +76,13 @@ def advisor_setting(session=None):
             swaps.append(swap)
     out = []
     if swaps:
-        where = f"手元の設定（{ladder.config_path()}）" + (f"とこのセッションの上書き（{ladder.session_path(session)}）" if over else "")
+        where = f"手元の設定（{ladder.config_path()}）" + (f"とこのセッションの上書き（{ladder.session_path(session)}）" if over and not session_bad else "")
         out.append(f"spec-autopilot の{where}で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: "
                    + "、".join(swaps) + "（人が opus-advisor を名指ししたときは今のとおり）。")
     for layer, path, errors in bad:
         fix = "`setup --session` で書き直すか `setup --session --reset` で消す" if layer == "セッションの上書き" else "`setup` で書き直すか `setup --reset` で消す"
-        out.append(f"spec-autopilot: {layer} {path} に読めない行がある（{'; '.join(errors)}）。読める行だけを使う。"
+        use = "この上書きは使わず、手元の設定と既定の段で作る" if layer == "セッションの上書き" else "読める行だけを使う"
+        out.append(f"spec-autopilot: {layer} {path} に読めない行がある（{'; '.join(errors)}）。{use}。"
                    f"`python3 {Path(ladder.__file__).resolve()} show` で見て、{fix}。")
     return " ".join(out) or None
 
