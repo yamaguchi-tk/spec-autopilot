@@ -62,6 +62,27 @@ ADVISE = ("spec-autopilot の相談役の規則: main は案（作り方・直�
           "repo の規則か手順（CLAUDE.md・/gdd-dev など）に別の相談の規定があれば、問う範囲の 3 つも含めてそちらに従う。")
 
 
+def advisor_setting():
+    """手元の設定（models.md）の相談・検証の段を読み、ADVISE に足す 1 行（段が既定でなければ「既定の名前 → 使う名前」、設定が読めなければ直し方）。無ければ None。"""
+    import ladder
+
+    path = ladder.config_path()
+    _, rows, errors = ladder.read_config(path)
+    swaps = []
+    for role, rungs in ladder.ADVISORS.items():
+        agent = rungs[rows[ladder.CONFIG_KEY[role]]][0] if ladder.CONFIG_KEY[role] in rows else None
+        if agent and agent != next(iter(rungs.values()))[0]:
+            swaps.append(f"{next(iter(rungs.values()))[0]} → spec-autopilot:{agent}")
+    out = []
+    if swaps:
+        out.append("spec-autopilot の手元の設定（" + str(path) + "）で相談役・検証役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: "
+                   + "、".join(swaps) + "（人が opus-advisor を名指ししたときは今のとおり）。")
+    if errors:
+        out.append(f"spec-autopilot: 手元の設定 {path} に読めない行がある（{'; '.join(errors)}）。読める行だけを使う。"
+                   f"`python3 {Path(ladder.__file__).resolve()} show` で見て、`setup` で書き直すか `setup --reset` で消す。")
+    return " ".join(out) or None
+
+
 def describe(autopilot, d, payload, own):
     """(このセッションが引き受けた spec か, 状態の文) を返す。知らせない spec は文が None。"""
     mine = False  # 場所が読めない spec は、引き受けていないものとして扱う（続ける指示を出さない）
@@ -97,7 +118,11 @@ def main():
             pass
         mine = [p for ok, p in found if ok and p] + unreadable
         others = [p for ok, p in found if not ok and p]
-        blocks = [ADVISE] + ([HEADER + "\n\n" + "\n\n".join(mine)] if mine else []) + (
+        try:  # 設定が読めなくても再開を止めない
+            setting = advisor_setting()
+        except Exception as e:
+            setting = f"spec-autopilot: 手元の設定を読めなかった（{type(e).__name__}）。`ladder.py show` で確かめる。"
+        blocks = [ADVISE] + ([setting] if setting else []) + ([HEADER + "\n\n" + "\n\n".join(mine)] if mine else []) + (
             [OTHERS + "\n\n" + "\n\n".join(others)] if others else [])
         out = {"hookSpecificOutput": {"hookEventName": "SessionStart",
                                       "additionalContext": "\n\n".join(blocks)}}

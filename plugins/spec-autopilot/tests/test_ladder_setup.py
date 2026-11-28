@@ -185,3 +185,37 @@ def test_concurrent_setups_of_the_four_roles_all_stay(home):
     procs = [subprocess.Popen([sys.executable, str(LADDER), "setup", flag, rung], env=env, stdout=subprocess.DEVNULL) for flag, rung in flags * 6]
     assert [p.wait() for p in procs] == [0] * 24
     assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: opus-xhigh\n- 相談: opus-high\n- 検証: opus-high\n"
+
+
+# --- SessionStart の相談役の読み替え（R5）---
+
+def start_context(tmp_path):
+    from test_autopilot import context, session_start
+    cwd = tmp_path / "cwd"
+    cwd.mkdir(exist_ok=True)
+    return context(session_start(cwd, "startup"))
+
+
+def test_session_start_names_the_advisor_agent_of_a_non_default_stage(home, tmp_path):
+    home.mkdir(exist_ok=True)
+    for rung, name in [("fable-high", "fable-advisor-high"), ("opus-high", "fable-advisor-opus")]:
+        (home / "models.md").write_text(f"- 相談: {rung}\n", encoding="utf-8")
+        text = start_context(tmp_path)
+        assert f"fable-advisor → spec-autopilot:{name}" in text and "読み替え" in text
+
+
+def test_session_start_is_unchanged_when_the_rows_are_absent_or_the_default_stage(home, tmp_path):
+    base = start_context(tmp_path)
+    assert "読み替え" not in base and "ladder.py" not in base
+    home.mkdir(exist_ok=True)
+    (home / "models.md").write_text("- 実装: opus-medium\n- 相談: fable-medium\n- 検証: opus-high\n", encoding="utf-8")
+    assert start_context(tmp_path) == base
+
+
+@pytest.mark.parametrize("content", [b"\xff\xfe", "- 相談: sonnet-high\n".encode(), "- 相談: opus-high\n- 検証: fable-high\n".encode()])
+def test_session_start_adds_how_to_fix_an_unreadable_setting(home, tmp_path, content):
+    base = start_context(tmp_path)
+    home.mkdir(exist_ok=True)
+    (home / "models.md").write_bytes(content)
+    text = start_context(tmp_path)
+    assert "setup --reset" in text and str(LADDER) in text and text.startswith(base.split("\n")[0])
