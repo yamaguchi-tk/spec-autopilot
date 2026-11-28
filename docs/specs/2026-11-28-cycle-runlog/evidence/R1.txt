@@ -1,0 +1,20 @@
+- commit: 19c9851dd0cc7384871a4fac57bdfb7f383754d7
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 3ce13e3b
+前: 関数 317・CC の平均 7.51・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 15・重複の塊 2（0.92%）
+後: 関数 318・CC の平均 7.49・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 10・重複の塊 2（0.92%）
+
+## 悪化（0）
+- なし
+
+## 改善（1）
+- 循環の組が 15 → 10
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 3ce13e3b --json  （report.cycles を読む）
+cycles [['autopilot.py', 'goal.py', 'light.py', 'lineup.py', 'overnight.py']]
+runlog.py {'lang': 'py', 'fan_out': 1, 'fan_in': 3, 'lcom4': 1}
+$ python3 -m pytest plugins/spec-autopilot/tests/test_import_layers.py plugins/spec-autopilot/tests/test_runlog.py -q
+25 passed in 27.52s
+$ python3 .autopilot-qa/runlog/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass

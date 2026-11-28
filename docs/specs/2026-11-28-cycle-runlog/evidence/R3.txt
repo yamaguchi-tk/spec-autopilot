@@ -1,0 +1,17 @@
+- commit: 19c9851dd0cc7384871a4fac57bdfb7f383754d7
+$ grep -nE '^\s*(import|from) ' plugins/spec-autopilot/scripts/stages.py
+12:import re
+13:import subprocess
+14:from pathlib import Path
+16:import carry
+$ grep -n 'def stated_size' plugins/spec-autopilot/scripts/stages.py
+85:def stated_size(constraints):
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 3ce13e3b --json  （report.modules を読む）
+stages.py {'lang': 'py', 'fan_out': 1, 'fan_in': 4, 'lcom4': 2}
+autopilot.py {'lang': 'py', 'fan_out': 16, 'fan_in': 5, 'lcom4': 4}
+diff {'worsened': [], 'improved': ['循環の組が 15 → 10'], 'moved_only': False}
+$ python3 .autopilot-qa/runlog/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass

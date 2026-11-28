@@ -4,7 +4,7 @@
   "created_at": 1795832464.529783,
   "existing": true,
   "start": "8eb6d94d089e8f30386522db542c08414318e38d",
-  "last_active_at": 1795853262.1332521,
+  "last_active_at": 1795853758.0981288,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795852772.262323,
   "approved_by": "人が「人が承認する」と返した（相談役は可、検証役は反証なし・確かめられない 1 / 20〔道具の fan-out の数え方〕を見たうえで）",
@@ -16,7 +16,13 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795853758.098114,
+      "sha": "19c9851dd0cc7384871a4fac57bdfb7f383754d7"
+    }
+  ],
   "fails": {},
   "streak": {},
   "reworks": {},
@@ -45,6 +51,17 @@
       ],
       "dispatch": 0,
       "at": 1795853262.133247
+    },
+    {
+      "tip": "19c9851dd0cc7384871a4fac57bdfb7f383754d7",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795853305.8325279
     }
+  ],
+  "review_launches": [
+    1795853313.009056
   ]
 }
