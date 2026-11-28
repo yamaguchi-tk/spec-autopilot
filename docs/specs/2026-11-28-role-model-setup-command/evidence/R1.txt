@@ -1,0 +1,36 @@
+- commit: df02a14fcf94968eb26fe3cfc176a53c1d4c9e39
+$ SPEC_AUTOPILOT_HOME=<tmp>/ev python3 plugins/spec-autopilot/scripts/ladder.py setup --spec-checker opus-high
+書いた: <tmp>/ev/models.md
+- 照合: opus-high
+(exit=0)
+$ SPEC_AUTOPILOT_HOME=<tmp>/ev python3 plugins/spec-autopilot/scripts/ladder.py setup --checker fable-high
+書いた: <tmp>/ev/models.md
+- 検証: fable-high
+- 照合: opus-high
+(exit=0)
+$ SPEC_AUTOPILOT_HOME=<tmp>/ev python3 plugins/spec-autopilot/scripts/ladder.py setup --spec-checker fable
+受けない段: 照合 の段「fable」
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable
+評価: 受ける段 opus-high・opus-xhigh・fable
+相談: 受ける段 fable-medium・fable-high・opus-high
+検証: 受ける段 opus-high・fable-high
+照合: 受ける段 sonnet-high・opus-high
+(exit=1)
+$ cat <tmp>/ev/models.md
+- 検証: fable-high
+- 照合: opus-high
+$ SPEC_AUTOPILOT_HOME=<tmp>/ev python3 plugins/spec-autopilot/scripts/ladder.py setup --reset 照合
+照合が既定に戻った（設定のファイル: <tmp>/ev/models.md）
+(exit=0)
+$ cat <tmp>/ev/models.md
+- 検証: fable-high
+$ python3 .autopilot-qa/check.py <worktree>
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass
+
+$ git apply mut-R1-1.patch && python3 -m pytest plugins/spec-autopilot/tests/test_ladder_setup.py::test_setup_refuses_an_advisor_or_checker_rung_it_does_not_take_and_lists_each_role -q; git apply -R mut-R1-1.patch
+3 failed, 7 passed（--spec-checker の受けない段の 3 件が assert で落ちた）
+reverted

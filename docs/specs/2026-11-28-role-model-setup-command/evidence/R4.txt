@@ -1,0 +1,8 @@
+- commit: df02a14fcf94968eb26fe3cfc176a53c1d4c9e39
+$ printf -- '- 照合: opus-high\n' > <tmp>/ev/models.md; echo '{"cwd":"<tmp>/cwd","session_id":"qa1","source":"startup","hook_event_name":"SessionStart"}' | SPEC_AUTOPILOT_HOME=<tmp>/ev python3 plugins/spec-autopilot/hooks/session_start.py
+spec-autopilot の手元の設定（<tmp>/ev/models.md）で相談役・検証役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: autopilot-spec-checker → spec-autopilot:autopilot-spec-checker-opus（人が opus-advisor を名指ししたときは今のとおり）。
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_counts_a_fable_checker_record_as_the_second_stage (回帰テストの全量の中で)
+663 passed in 135.25s (0:02:15)
+$ python3 .autopilot-qa/check.py <worktree>
+R4 pass
+（照合だけ・検証と照合の読み替えが SessionStart に出る、既定の段では出ない、autopilot.py init の spec の ## モデル に照合・検証の行が写らない）

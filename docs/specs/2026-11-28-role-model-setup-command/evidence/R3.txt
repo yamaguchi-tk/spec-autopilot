@@ -1,0 +1,9 @@
+- commit: df02a14fcf94968eb26fe3cfc176a53c1d4c9e39
+$ head -6 plugins/spec-autopilot/agents/advice-checker-fable.md plugins/spec-autopilot/agents/autopilot-spec-checker-opus.md
+==> advice-checker-fable.md: name: advice-checker-fable / model: fable / effort: high / tools: Read, Grep, Glob / omitClaudeMd: true
+==> autopilot-spec-checker-opus.md: name: autopilot-spec-checker-opus / model: opus / effort: high / tools: Read, Grep, Glob
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ladder.py ... (spec の回帰テスト 7 ファイル) -q -n auto
+663 passed in 135.25s (0:02:15)
+$ python3 .autopilot-qa/check.py <worktree>
+R3 pass
+（本文が既定の advice-checker・autopilot-spec-checker と同一、name・model・effort が段の表のとおり、tools・omitClaudeMd が既定と同じ）

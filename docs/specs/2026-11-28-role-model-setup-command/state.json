@@ -4,7 +4,7 @@
   "created_at": 1795827528.082718,
   "existing": true,
   "start": "0de22ca9da1e4a8589dc174379985fa0412e1829",
-  "last_active_at": 1795852878.6318452,
+  "last_active_at": 1795852960.278562,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795829366.854167,
   "approved_by": "OK（2 本承認）",
@@ -83,7 +83,18 @@
       ],
       "dispatch": 2,
       "at": 1795852878.631843
+    },
+    {
+      "tip": "df02a14fcf94968eb26fe3cfc176a53c1d4c9e39",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795852946.673922
     }
   ],
-  "wait": null
+  "wait": null,
+  "review_launches": [
+    1795852952.474696
+  ]
 }

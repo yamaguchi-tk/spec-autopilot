@@ -1,0 +1,11 @@
+- commit: df02a14fcf94968eb26fe3cfc176a53c1d4c9e39
+$ SPEC_AUTOPILOT_HOME=<tmp>/ev python3 plugins/spec-autopilot/scripts/ladder.py show
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 なし
+評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 なし
+相談: 受ける段 fable-medium・fable-high・opus-high / 既定 fable-medium / 手元の設定 なし
+検証: 受ける段 opus-high・fable-high / 既定 opus-high / 手元の設定 fable-high
+照合: 受ける段 sonnet-high・opus-high / 既定 sonnet-high / 手元の設定 なし
+設定のファイル: <tmp>/ev/models.md
+(exit=0)
+$ python3 .autopilot-qa/check.py <worktree>
+R2 pass
