@@ -14,7 +14,7 @@
 - R2: plugins/spec-autopilot/scripts を測ったとき、循環的複雑度が 20 を超える関数は 0 本になり、変える前に 20 を超えていた関数で値が上がったものは無い。
 - R3: plugins/spec-autopilot/scripts を測ったとき、変える前に LCOM4 が 4 以上だったモジュール（deploy.py・advisor_approval.py・ladder.py と、R4 の子のマージの後に測り直して 4 以上の autopilot.py）と、それを分けた先のモジュールの LCOM4 は 2 以下になる。
 - R4: plugins/spec-autopilot/scripts を測ったとき、互いに import し合うモジュールの輪は無く、依存の向きは autopilot.py（CLI の入口）→ 各モジュール → 下の層の 1 つになる。輪を `importlib`・変数で名前を渡す `__import__`・モジュールごとを渡す引数（`sys.modules[__name__]` など）に替えて道具に見えなくする形と、下の層に出した名前を autopilot.py 経由で使い続ける出し直し（re-export）は無い。
-- R5: R2〜R4 のどの子をマージした後も、テストの全量が通り、CLI の出力とエラー文は変わらず、指標の前後の比べ方で悪化は無く、「移しただけ」と出ない。テストは名前の向け先だけを変え、期待は変えない。ただし R4 の子では autopilot.py の LCOM4 の悪化を、R3・R4 の子では autopilot.py の fan-out の悪化を数えない（autopilot.py の LCOM4 は R3 の子で 2 以下にする。除いた値は子の証拠に前と後を書く）。tests/test_import_layers.py の輪と import 先の数の期待は、R4・R3 の子が輪と import 先を変えるのと同時に新しい値に直してよい。
+- R5: R2〜R4 のどの子をマージした後も、テストの全量が通り、CLI の出力とエラー文は変わらず、指標の前後の比べ方で悪化は無く、「移しただけ」と出ない。テストは名前の向け先だけを変え、期待は変えない。ただし R4 の子では、autopilot.py の LCOM4 と fan-out の悪化は数えない（autopilot.py の LCOM4 は R3 の子で 2 以下にする。除いた値は子の証拠に前と後を書く）。tests/test_import_layers.py の輪と import 先の数の期待は、R4 の子が輪と import 先を変えるのと同時に新しい値に直してよい。
 
 ## 非目標
 - 挙動・CLI の出力・エラー文を変えること
@@ -24,7 +24,7 @@
 
 ## 影響範囲
 - 変える: plugins/spec-autopilot/scripts/autopilot.py（全体）
-  - メモ: R2 の lint（593）・impact（429）・check（690）・evidence_problem（805）、R4 の関数の中の import（`import` と `__import__("…")` の 15 行と、970 の `import advisor_approval, goal, lineup`）。子を作る時点の行番号で書き直す
+  - メモ: R2 の lint（593）・impact（429）・check（690）・evidence_problem（805）、R4 の関数の中の import（`import` と `__import__("…")` の 15 行と、970 の `import advisor_approval, goal, lineup`、入口の dispatch の `__import__(a.cmd)`）。子を作る時点の行番号で書き直す
 - 変える: plugins/spec-autopilot/scripts/overnight.py（全体）
   - メモ: R2 の report（711）・cmd_await（247）・input_kinds（59）・cmd_handoff（507）・launch_errors（432）・impl_name（782）・cmd_rolled_back（657）
 - 変える: plugins/spec-autopilot/scripts/deploy.py（全体）
@@ -58,11 +58,11 @@
   - メモ: R4 で、輪の中のモジュールが autopilot.py から使う名前を出す下の層の候補。名前と置き場は子 2 で確定する。R3 で deploy.py から分けるモジュールも子 4 で確定する
 - 呼び出し元: plugins/spec-autopilot/scripts/watch.py:250
   - メモ: tick_one が deploy を引数で受ける。R3 で名前の置き場が変わるなら向け直す
-- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:61
-- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:84
-- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:419
-- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:435
-- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:446
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:73
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:213
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:417-428
+- 呼び出し元: plugins/spec-autopilot/hooks/stop.py:473
+  - メモ: autopilot・deploy・transcript を import する。autopilot.load_state・save_state は 61・84・419・435・446 で使う
 - 呼び出し元: plugins/spec-autopilot/hooks/agent_gate.py:118
   - メモ: ほかに 133・135
 - 呼び出し元: plugins/spec-autopilot/hooks/session_start.py:91
@@ -79,7 +79,7 @@
 - マージ・デプロイ・QA の段の判定: plugins/spec-autopilot/tests/test_merge_qa.py
 
 ## 前提
-- 目的に届く: R2〜R4 で、行を足す改善の多くが当たる関数（lint・check・report）と、import の輪の中心の autopilot.py が軽くなる。複雑度 20 以下の 51 本の警告の関数は残る。LCOM4 は 4 以上を直し、overnight.py の 3 は残す（autopilot.py は R4 で塊が変わるので、R4 の後の値で入れる）。fan-out は入口の autopilot.py だけが高く、目標にしない。R4 の子で補助を下の層に出すと autopilot.py の LCOM4 と fan-out が上がり、R3 の子で塊ごとに分けた先を入口が import すると fan-out が上がるので、R4 の子の LCOM4 と、R3・R4 の子の fan-out は悪化に数えない。autopilot.py の LCOM4 は R3 の子で塊ごとに分けて直す
+- 目的に届く: R2〜R4 で、行を足す改善の多くが当たる関数（lint・check・report）と、import の輪の中心の autopilot.py が軽くなる。複雑度 20 以下の 51 本の警告の関数は残る。LCOM4 は 4 以上を直し、overnight.py の 3 は残す（autopilot.py は R4 で塊が変わるので、R4 の後の値で入れる）。fan-out は入口の autopilot.py だけが高く、目標にしない。R4 の子で補助を下の層に出すと autopilot.py の LCOM4 と fan-out が上がるので、R4 の子では悪化に数えない。autopilot.py の LCOM4 は R3 の子で塊ごとに分けて直す
 - 運用: 指標は repo の外の測る道具（lizard を土台にした refactor-metrics の skill）で測る。道具は repo に入れない。評価役は、手元にある道具で前と後を測る。道具の無い人は、R1 の playbook の合格基準を、lizard などで同じ形に測る
 - 普通のやり方: 複雑度の高い関数は、早期 return と条件の塊の抽出で下げる。LCOM4 の高いモジュールは、つながりの塊ごとに分ける。import の輪は、共通の部分を下の層に出し、依存の向きを 1 つにそろえる
   - メモ: lizard（https://github.com/terryyin/lizard）の README の指標の説明と、測る skill の直し方の表
