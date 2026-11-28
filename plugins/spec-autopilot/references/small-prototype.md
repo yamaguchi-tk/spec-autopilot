@@ -1,6 +1,6 @@
 # 承認の前の試作（大きさ S の spec と、新しく作る repo の M の spec）
 
-次のどちらかの spec では、承認の前に動く試作を作って人に触ってもらう（`commands/autopilot.md` の A の 2 から読む。playbook の名前ではなく、大きさの行と repo の種類で決まる）。
+次のどちらかの spec では、承認の前に動く試作を作って人に触ってもらう（`commands/autopilot.md` の A の 2 から読む。`commands/spec.md` の壁打ちの道では、「固めて」の後、spec を示す前に作る。playbook の名前ではなく、大きさの行と repo の種類で決まる）。
 
 - `- 大きさ: S`
 - `- 大きさ: M` で、新しく作る repo（state.json の `existing` が false〔bool〕。キーが無い・ほかの値なら既存の repo とみなす。false は、init のときに docs/specs・docs/adr の外に git が追うファイル（git の外では、ファイル）が無ければ init が書く。dispatch と hook は state.json の `existing` だけを見る）で、「## 制約」に `- 依る spec:` の行が無い。依る spec のある M は、前の spec の変更がまだ載っていない木に書くことになるので作らない。既存の repo の M・L も承認の前にコードを書かない
