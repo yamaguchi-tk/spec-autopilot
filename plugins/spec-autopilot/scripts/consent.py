@@ -3,10 +3,12 @@
 
 - 承認の中身のハッシュは、spec.md の全体（作り方の節を含める）から、先頭の `- ADR:` 行の連番の桁だけを外して計算する。
   連番は並行の branch との番号の取り合いで改番されるので外す。要件・作り方の文は 1 文字でも変えれば別のハッシュになる
-- `autopilot.py lint` の CLI が通ったときだけ、{ハッシュ, そのハッシュを初めて見た時刻} を state.json の `consent` に残す
-  （同じハッシュでは時刻を書き換えない）。approve の中の lint の検査は記録しない
-- 起点は、今のハッシュの記録があればその時刻（spec.md の最後の変更の時刻より前のときだけ。連番だけの直しで spec.md が
-  新しくなっても、人が見た中身の記録まで戻る）。記録が無い・読めないときは spec.md の最後の変更の時刻
+- `autopilot.py lint` の CLI が通ったときだけ、{ハッシュ, そのハッシュを初めて見た時刻, そのときの spec.md の mtime,
+  連番を含む本文全体のハッシュ} を state.json の `consent` に残す（同じハッシュでは書き換えない）。approve の中の lint の検査は記録しない
+- 起点は、今のハッシュの記録があり、かつ「spec.md の mtime が記録のままか、本文全体が lint の時点から連番の桁だけ違う」ときに
+  限って、記録の時刻（spec.md の最後の変更の時刻より前のときだけ）。lint の後に別の中身 B に直して A に戻した（本文全体が
+  lint の時点と同じまま mtime だけ変わった）ときや、記録が無い・読めないときは spec.md の最後の変更の時刻。
+  A → B（lint しない）→ 連番だけ違う A' は履歴が無く見分けられない（ADR の「残る限界」）
 - 想定するのは事故（中身の違う spec で承認を通すこと）。state.json の偽造は守らない
 """
 import fcntl
@@ -40,11 +42,23 @@ def content_sha(text):
     return hashlib.sha256((numberless(head) + sep + rest).encode("utf-8")).hexdigest()
 
 
+def full_sha(text):
+    """連番を含む本文全体のハッシュ。"""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _hex(v):
+    return isinstance(v, str) and re.fullmatch(r"[0-9a-f]{64}", v) is not None
+
+
+def _num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
 def valid(rec):
-    """記録の形の厳密な検査。{sha256: 64 桁の 16 進, at: 有限の数}。"""
-    return (isinstance(rec, dict) and set(rec) == {"sha256", "at"} and isinstance(rec["sha256"], str)
-            and re.fullmatch(r"[0-9a-f]{64}", rec["sha256"]) is not None
-            and isinstance(rec["at"], (int, float)) and not isinstance(rec["at"], bool) and math.isfinite(rec["at"]))
+    """記録の形の厳密な検査。{sha256, full: 64 桁の 16 進, at, mtime: 有限の数}。"""
+    return (isinstance(rec, dict) and set(rec) == {"sha256", "full", "at", "mtime"}
+            and _hex(rec["sha256"]) and _hex(rec["full"]) and _num(rec["at"]) and _num(rec["mtime"]))
 
 
 def origin(d, s):
@@ -52,7 +66,10 @@ def origin(d, s):
     spec = d / "spec.md"
     mtime = spec.stat().st_mtime
     rec = s.get("consent")
-    if valid(rec) and rec["sha256"] == content_sha(spec.read_text(encoding="utf-8")):
+    if not valid(rec):
+        return mtime
+    text = spec.read_text(encoding="utf-8")
+    if rec["sha256"] == content_sha(text) and (mtime == rec["mtime"] or full_sha(text) != rec["full"]):
         return min(rec["at"], mtime)
     return mtime
 
@@ -66,7 +83,10 @@ def record(d):
     f = d / "state.json"
     if not f.is_file():
         return notes
-    digest = content_sha((d / "spec.md").read_text(encoding="utf-8"))
+    spec = d / "spec.md"
+    mtime = spec.stat().st_mtime
+    text = spec.read_text(encoding="utf-8")
+    digest = content_sha(text)
     fd = os.open(d, os.O_RDONLY)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
@@ -84,7 +104,7 @@ def record(d):
             kept = d / f"state.json.consent-broken-{time.time_ns()}"
             kept.write_text(json.dumps(cur, ensure_ascii=False) + "\n", encoding="utf-8")
             notes.append(f"state.json の consent の形が違う。元の中身は {kept.name} に残し、今の中身で記録し直す")
-        s["consent"] = {"sha256": digest, "at": time.time()}
+        s["consent"] = {"sha256": digest, "full": full_sha(text), "at": time.time(), "mtime": mtime}
         tmp = d / f".state.json.{os.getpid()}"
         tmp.write_text(json.dumps(s, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         os.replace(tmp, f)

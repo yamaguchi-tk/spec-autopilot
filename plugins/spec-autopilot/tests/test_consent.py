@@ -96,6 +96,47 @@ def test_approve_asks_for_a_new_reply_when_text_other_than_the_adr_number_change
         (repo / NEW).rename(repo / OLD)
 
 
+def test_approve_asks_for_a_reply_when_the_linted_content_is_restored_after_the_reply(repo):
+    """lint(A) → lint せずに B に直す → 人の発言 → A に戻す。人は B を見たので、A に戻した approve は断る。
+    （連番だけ違う A' に戻す場合は履歴が無く見分けられない。ADR の「残る限界」）"""
+    d = init_spec(repo)
+    numbered_spec(repo, d)
+    lint_ok(repo, d)
+    (d / "spec.md").write_text(NUMBERED.replace("横 1 列がそろったとき", "横 2 列がそろったとき"), encoding="utf-8")
+    time.sleep(0.02)
+    user_says(repo)
+    time.sleep(0.02)
+    (d / "spec.md").write_text(NUMBERED, encoding="utf-8")
+    r = approve(repo, d)
+    assert r.returncode != 0 and "人の発言が記録されていない" in out(r)
+    assert state(d)["phase"] == "discovery"
+
+
+def test_approve_asks_for_a_reply_when_only_the_mtime_changed_after_the_reply(repo):
+    d = init_spec(repo)
+    numbered_spec(repo, d)
+    lint_ok(repo, d)
+    user_says(repo)
+    time.sleep(0.02)
+    (d / "spec.md").write_text(NUMBERED, encoding="utf-8")  # 本文は lint の時点と同じまま mtime だけ新しくなる
+    r = approve(repo, d)
+    assert r.returncode != 0 and "人の発言が記録されていない" in out(r)
+    assert state(d)["phase"] == "discovery"
+
+
+def test_approve_asks_for_a_reply_when_the_content_is_fixed_and_linted_again_after_the_reply(repo):
+    d = init_spec(repo)
+    numbered_spec(repo, d)
+    lint_ok(repo, d)
+    user_says(repo)
+    time.sleep(0.02)
+    renumber(repo, d, NUMBERED.replace("横 1 列がそろったとき", "横 2 列がそろったとき"))
+    lint_ok(repo, d)
+    r = approve(repo, d)
+    assert r.returncode != 0 and "人の発言が記録されていない" in out(r)
+    assert state(d)["phase"] == "discovery"
+
+
 def test_approve_asks_for_a_reply_when_the_spec_was_not_linted_before_it(repo):
     d = init_spec(repo)
     numbered_spec(repo, d)
