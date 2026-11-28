@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "fold-evidence-size-note",
   "created_at": 1795855095.28001,
   "existing": true,
   "start": "22c69e633cb6d9486ba206a3e51130760b326ad6",
-  "last_active_at": 1795857888.215533,
+  "last_active_at": 1795858230.853132,
   "consent": {
     "sha256": "c3d8ae752f5ccde926ed9b94a1a9a0cc5d23b00a87df2b229c7d16f312f4fe57",
     "full": "c3d8ae752f5ccde926ed9b94a1a9a0cc5d23b00a87df2b229c7d16f312f4fe57",
@@ -74,5 +74,22 @@
   "review_launches": [
     1795855953.21207,
     1795857410.5538611
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 127,
+      "at": 1795858229.554102,
+      "sha": "9e2a102f4f7a69eef23bc90373c7c17d561859b3",
+      "head": "85899355cd8e1e7ea8855f38acdc4a5e1caf0227"
+    }
+  ],
+  "merged_at": 1795858229.554105,
+  "paused_at_merge": 0.0,
+  "done_at": 1795858230.653413,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
