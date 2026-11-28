@@ -33,12 +33,18 @@ BUDGET = re.compile(r"^- 予算:\s*(\d+)\s*分\s*$", re.M)
 COMMENT = re.compile(r"^\s*<!--.*-->\s*$")
 COMMENT_BLOCK = re.compile(r"<!--.*?-->", re.S)
 QA_ROW = re.compile(r"^\|\s*(R\d+)\s*\|\s*(pass|fail|unverified)\s*\|(.*)\|\s*$")  # 証拠の欄は 1 つの (.*) にし、前後の空白は check で除く（空白の分け方で後戻りしない）
+SIZE_LINE = re.compile(r"^- 大きさ:[ \t]*([SML])[ \t]*$", re.M)
+SIZE_ANY = re.compile(r"^- 大きさ:.*$", re.M)
 MAX_REWORKS = 2  # references/dead-end.md の段: 作り直しは要件ごとに 2 回
+
+
+def run_git(cwd, args):
+    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
 
 
 def repo_root(start):
     try:
-        out = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=start, capture_output=True, text=True)
+        out = run_git(start, ["rev-parse", "--show-toplevel"])
     except OSError:
         return Path(start)
     return Path(out.stdout.strip()) if out.returncode == 0 else Path(start)
@@ -76,9 +82,22 @@ def requirements(text):
     return dict(requirement_lines(text)[0])
 
 
+def stated_size(constraints):
+    """「## 制約」の大きさの行を読み、(大きさ, ERROR) を返す。行が無ければ (None, None)。1 行だけで `- 大きさ: <S|M|L>` の形のものだけを受ける。"""
+    lines = SIZE_ANY.findall(constraints)
+    if not lines:
+        return None, None
+    if len(lines) > 1:
+        return None, f"大きさの行が {len(lines)} 行ある（`- 大きさ: <S|M|L>` を 1 行だけ書く）"
+    m = SIZE_LINE.match(lines[0])
+    if not m:
+        return None, f"大きさの行の形が読めない（`- 大きさ: <S|M|L>` だけを書く）: {lines[0]}"
+    return m.group(1), None
+
+
 def git_lines(root, *args):
     """git の出力を NUL 区切りで読む。失敗したら例外を投げる（数えられないまま通さない）。"""
-    out = subprocess.run(["git", "-c", "core.quotePath=false", args[0], "-z", *args[1:]], cwd=root, capture_output=True, text=True)
+    out = run_git(root, ["-c", "core.quotePath=false", args[0], "-z", *args[1:]])
     if out.returncode not in (0, 1):
         raise RuntimeError(out.stderr.strip() or f"git {args[0]} が {out.returncode} で終わった")
     return [f for f in out.stdout.split("\0") if f]

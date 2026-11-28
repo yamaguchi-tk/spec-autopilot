@@ -76,8 +76,8 @@ def test_deploy_preflight_and_stages_are_outside_the_import_cycle():
 
 
 def test_autopilot_uses_stages_for_the_moved_helpers():
-    names = {"section", "classify", "requirement_lines", "requirements", "repo_root", "git_lines"}
-    top = {"REQ", "COMMENT", "COMMENT_BLOCK", "BUDGET", "QA_ROW", "TEST_PATH", "NOT_CODE", "MAX_REWORKS"}
+    names = {"section", "classify", "requirement_lines", "requirements", "repo_root", "git_lines", "stated_size"}
+    top = {"REQ", "COMMENT", "COMMENT_BLOCK", "BUDGET", "QA_ROW", "TEST_PATH", "NOT_CODE", "MAX_REWORKS", "SIZE_LINE", "SIZE_ANY"}
     in_stages = tree("stages.py").body
     assert names <= {n.name for n in in_stages if isinstance(n, ast.FunctionDef)}
     assert top <= {t.id for n in in_stages if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)}
@@ -91,3 +91,33 @@ def test_diff_size_calls_a_top_level_grep_instead_of_a_nested_function():
     diff_size = next(n for n in t.body if isinstance(n, ast.FunctionDef) and n.name == "diff_size")
     assert not [n for n in ast.walk(diff_size) if isinstance(n, ast.FunctionDef) and n is not diff_size]
     assert any(isinstance(n, ast.FunctionDef) and n.name == "grep" for n in t.body)
+
+
+def test_runlog_does_not_import_autopilot_even_inside_functions():
+    t = tree("runlog.py")
+    assert "autopilot" not in imported(t)
+    assert not {"importlib", "<dynamic>"} & imported(t)
+    assert imported(t) & MODULES <= {"stages"}
+
+
+def test_runlog_has_no_autopilot_reference_or_sys_modules():
+    for n in ast.walk(tree("runlog.py")):
+        assert not (isinstance(n, ast.Name) and n.id in ("autopilot", "ap")), f"runlog.py:{n.lineno}"
+        assert not (isinstance(n, ast.Attribute) and n.attr == "modules" and isinstance(n.value, ast.Name) and n.value.id == "sys"), f"runlog.py:{n.lineno}"
+
+
+def test_import_cycle_is_exactly_the_five_modules_without_runlog():
+    assert in_cycle() == {"autopilot", "goal", "light", "lineup", "overnight"}
+
+
+def test_stages_repo_root_and_git_lines_call_git_through_one_function():
+    funcs = {n.name: n for n in tree("stages.py").body if isinstance(n, ast.FunctionDef)}
+
+    def calls(f, attr=None):
+        return [n for n in ast.walk(f) if isinstance(n, ast.Call) and (
+            attr is None and isinstance(n.func, ast.Name) or attr and isinstance(n.func, ast.Attribute) and n.func.attr == attr)]
+
+    assert calls(funcs["run_git"], "run")
+    for name in ("repo_root", "git_lines"):
+        assert not calls(funcs[name], "run"), name
+        assert "run_git" in {c.func.id for c in calls(funcs[name])}, name
