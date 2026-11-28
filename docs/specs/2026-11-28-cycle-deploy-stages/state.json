@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "cycle-deploy-stages",
   "created_at": 1795830426.555039,
   "existing": true,
   "start": "d344a42d56461646e907b8a59304c39f747844cd",
-  "last_active_at": 1795831993.3253372,
+  "last_active_at": 1795832368.0588071,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795831162.756602,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 16）。人は目的の spec を「承認する」で承認済み",
@@ -55,5 +55,22 @@
   ],
   "review_launches": [
     1795831600.2500632
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 117,
+      "at": 1795832367.291826,
+      "sha": "8eb6d94d089e8f30386522db542c08414318e38d",
+      "head": "3348c7f60138efea982f6aa7e7ead6a3a7517e47"
+    }
+  ],
+  "merged_at": 1795832367.291829,
+  "paused_at_merge": 0.0,
+  "done_at": 1795832367.9663181,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
