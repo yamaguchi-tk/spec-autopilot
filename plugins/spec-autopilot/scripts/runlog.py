@@ -5,6 +5,8 @@ import re
 import time
 from pathlib import Path
 
+import stages
+
 REWORK = re.compile(r"^- 手戻り元:[ \t]*(\S.*?)[ \t]*$", re.M)
 
 
@@ -34,13 +36,11 @@ def active_min(s, top_end):
 
 def record(d, s, kind, end, top_end="same"):
     """1 行を追記する。書けなければ NOTE を出す。top_end は今の巡の終わり（既定は end、None で今の巡を足さない）。"""
-    import autopilot as ap
-
     d = Path(d)
     try:
-        text = ap.COMMENT_BLOCK.sub("", (d / "spec.md").read_text(encoding="utf-8"))
-        constraints = ap.section(text, "制約") or ""
-        size = ap.stated_size(constraints)[0]
+        text = stages.COMMENT_BLOCK.sub("", (d / "spec.md").read_text(encoding="utf-8"))
+        constraints = stages.section(text, "制約") or ""
+        size = stages.stated_size(constraints)[0]
         rework = REWORK.search(constraints)
         history = s.get("history") or []
         blocks = [r["blocked"] for r in history if r.get("blocked")]
@@ -50,7 +50,7 @@ def record(d, s, kind, end, top_end="same"):
         for m in [m for r in history for m in r.get("merges") or []] + list(s.get("merges") or []):
             if m.get("pr") not in prs:
                 prs.append(m.get("pr"))
-        row = {"kind": kind, "at": time.time(), "spec": d.resolve().name, "repo": str(ap.repo_root(d).resolve()),
+        row = {"kind": kind, "at": time.time(), "spec": d.resolve().name, "repo": str(stages.repo_root(d).resolve()),
                "active_min": active_min(s, end if top_end == "same" else top_end),
                "total_min": minutes(end - s["created_at"]), "size": size,
                "blocks": [{"req": b.get("req"), "reason": b.get("reason")} for b in blocks],

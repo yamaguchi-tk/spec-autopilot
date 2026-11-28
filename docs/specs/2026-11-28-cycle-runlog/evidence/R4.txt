@@ -1,0 +1,32 @@
+- commit: 19c9851dd0cc7384871a4fac57bdfb7f383754d7
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_goal_done.py plugins/spec-autopilot/tests/test_import_layers.py plugins/spec-autopilot/tests/test_light.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_qa_evidence.py plugins/spec-autopilot/tests/test_runlog.py plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_main_progress.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_watch.py -q -n auto
+1093 passed in 110.28s (0:01:50)
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 3ce13e3b
+前: 関数 317・CC の平均 7.51・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 15・重複の塊 2（0.92%）
+後: 関数 318・CC の平均 7.49・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 10・重複の塊 2（0.92%）
+
+## 悪化（0）
+- なし
+
+## 改善（1）
+- 循環の組が 15 → 10
+（--json の diff: {'worsened': [], 'improved': ['循環の組が 15 → 10'], 'moved_only': False}）
+$ python3 .autopilot-qa/runlog/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+（check.py は 3ce13e3b と HEAD の plugins/spec-autopilot を git archive で .autopilot-qa/runlog/{base,tip} に写し、この spec のディレクトリの写し〔通知だけ「なし」〕に、一時の SPEC_AUTOPILOT_HOME・CLAUDE_CONFIG_DIR と CLAUDE_CODE_SESSION_ID を外した環境で、lint・check・check --stage pr・status を CLI で回し、autopilot.main の block と done〔check だけ差し替え〕を time.time を固定して回し、git が無い PATH・GIT_DIR が壊れたときの runlog.record と repo_root、git_lines の終了コード 0・1・128 と git が無いときを集めて、前後の 20 項目を突き合わせた。全項目が一致）
+$ python3 -c "...tip.json を読む"  （tip の主な値）
+lint {"rc": 0, "stdout": "NOTE: 数えた大きさ M（変える 3・呼び出し元 2・別の実装 0）\n...lint: OK\n"}
+block_rows [{"kind": "block", "at": 1800000000.0, "spec": "2026-11-28-cycle-runlog", "repo": "<T>", "active_min": 69120.3, "total_min": 69458.9, "size": "M", "blocks": [{"req": "R1", "reason": "qa の理由"}], "rework_of": null, "prs": [], "light": false}]
+done_rows [{"kind": "done", "at": 1800000000.0, "spec": "2026-11-28-cycle-runlog", "repo": "<T>", "active_min": 69120.3, "total_min": 69458.9, "size": "M", "blocks": [], "rework_of": null, "prs": [], "light": false}]
+record_rows_after（git が無い・GIT_DIR が壊れた）: repo が "<W>/d/2026-11-28-cycle-runlog"（spec のディレクトリに落ちる）の 2 行
+repo_root_nogit "<W>/d/2026-11-28-cycle-runlog"
+repo_root_badgit "<W>/d/2026-11-28-cycle-runlog"
+git_lines_rc1 {"rc": []}
+git_lines_rc128 {"rc": "RuntimeError: fatal: Needed a single revision"}
+git_lines_badgit {"rc": "RuntimeError: fatal: not a git repository: '<W>/no-such-git-dir'"}
+git_lines_nogit {"rc": "FileNotFoundError: [Errno 2] No such file or directory: 'git'"}
+$ git status --short
+ M docs/specs/2026-11-28-cycle-runlog/state.json  （確かめる前からの変更。写しだけに書いた）

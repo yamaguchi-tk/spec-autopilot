@@ -44,7 +44,7 @@ import consent  # noqa: E402
 from consent import ADR_LINE, ADR_NUMBER, numberless  # noqa: E402
 import stages  # noqa: E402
 from stages import (  # noqa: E402（deploy.py・stages.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
-    BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section,
+    BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section, stated_size,
 )
 from transcript import _iso_epoch, anomalies, anomaly_line, transcript_lines  # noqa: E402
 
@@ -53,8 +53,6 @@ ARTIFACTS = ("spec.md", "tasks.md", "qa.md")
 SECTIONS = ("目的", "要件", "非目標", "作り方", "QA の方向性", "制約", "止まる条件")
 EXISTING_SECTIONS = ("影響範囲", "変えない挙動")  # init の時点でコードがあった repo だけで必須
 REGRESSION = re.compile(r"^- 回帰テスト:[ \t]*\S", re.M)
-SIZE_LINE = re.compile(r"^- 大きさ:[ \t]*([SML])[ \t]*$", re.M)
-SIZE_ANY = re.compile(r"^- 大きさ:.*$", re.M)
 _RANGE = r"(?::\d+(?:[-〜～]\d+)?)?"  # 行と行の範囲。影響範囲と前提で同じものを受ける
 _PATH = rf"`?(?P<path>[^`\s:（）]+){_RANGE}`?"
 _NAME = r"`?[A-Za-z_$][\w$]*(?:[.#][A-Za-z_$][\w$]*)*(?:\(\))?`?"
@@ -498,19 +496,6 @@ def counted_size(d, text, tip=None):
 
 SPLIT_L = "大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする"
 SPLIT_PR = "大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける"
-
-
-def stated_size(constraints):
-    """「## 制約」の大きさの行を読み、(大きさ, ERROR) を返す。行が無ければ (None, None)。1 行だけで `- 大きさ: <S|M|L>` の形のものだけを受ける。"""
-    lines = SIZE_ANY.findall(constraints)
-    if not lines:
-        return None, None
-    if len(lines) > 1:
-        return None, f"大きさの行が {len(lines)} 行ある（`- 大きさ: <S|M|L>` を 1 行だけ書く）"
-    m = SIZE_LINE.match(lines[0])
-    if not m:
-        return None, f"大きさの行の形が読めない（`- 大きさ: <S|M|L>` だけを書く）: {lines[0]}"
-    return m.group(1), None
 
 
 def size_errors(d, impact_text, stated, first_agreement, at_approve):

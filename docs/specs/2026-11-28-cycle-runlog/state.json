@@ -1,0 +1,67 @@
+{
+  "phase": "building",
+  "slug": "cycle-runlog",
+  "created_at": 1795832464.529783,
+  "existing": true,
+  "start": "8eb6d94d089e8f30386522db542c08414318e38d",
+  "last_active_at": 1795853989.66253,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795852772.262323,
+  "approved_by": "人が「人が承認する」と返した（相談役は可、検証役は反証なし・確かめられない 1 / 20〔道具の fan-out の数え方〕を見たうえで）",
+  "spec_sha256": "28c537fd251bae5516560720171acab84cbe61019e9507d26899791b093f6990",
+  "after": null,
+  "approved_at": 1795852780.524433,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795853758.098114,
+      "sha": "19c9851dd0cc7384871a4fac57bdfb7f383754d7"
+    }
+  ],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "3ce13e3b6c40c85e29161115d38fac8165bfa4c6",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795852785.956785,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "bf43cf685713b9acc7b34e0c9df6664f6df791b5",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795853262.133247
+    },
+    {
+      "tip": "19c9851dd0cc7384871a4fac57bdfb7f383754d7",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795853305.8325279
+    }
+  ],
+  "review_launches": [
+    1795853313.009056
+  ]
+}
