@@ -34,7 +34,12 @@ def test_spec_command_cli_invocations_parse_with_the_real_argparse(monkeypatch):
     assert {n for n, _ in seen} >= {"cmd_init", "cmd_lint"}
 
 
-def test_autopilot_a_points_to_the_spec_command_file():
-    """A が壁打ちの手順の置き場として指す commands/spec.md が実在する。"""
-    assert "commands/spec.md" in AUTOPILOT_CMD.read_text(encoding="utf-8")
-    assert SPEC_CMD.is_file()
+def test_every_commands_md_reference_in_commands_exists():
+    """commands/*.md が書く `commands/<x>.md` の参照は、全部実在する（spec.md と autopilot.md の相互参照を含む）。"""
+    refs = set()
+    for f in (PLUGIN / "commands").glob("*.md"):
+        refs |= set(re.findall(r"commands/[\w.-]+\.md", f.read_text(encoding="utf-8")))
+    assert refs, "commands/*.md に commands/<x>.md の参照が無い"
+    missing = sorted(r for r in refs if not (PLUGIN / r).is_file())
+    assert not missing, f"実在しない参照: {missing}"
+    assert SPEC_CMD.is_file() and AUTOPILOT_CMD.is_file()

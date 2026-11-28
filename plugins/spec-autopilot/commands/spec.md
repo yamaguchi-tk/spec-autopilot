@@ -13,8 +13,8 @@ argument-hint: <やりたいこと>
 
 依頼に、**要件**（何を作る・変えるか）と**完了条件**（何が見えたら満たしたと言えるか。Issue の受入条件を指すのでもよい）の両方が明示されているかを判断する。迷ったら明示されていないとして扱う。
 
-- 両方明示されている: 壁打ちに入らず、`commands/autopilot.md` の A の 0 から B の手順（最初の返事から lint を通した草案を示す）で進める。
-- どちらかが無い: 下の壁打ちに入る。
+- 両方明示されている: 壁打ちに入らず、まず `commands/autopilot.md` の「## 0. 準備」（worktree で始める・既存の repo の下調べ・GDD の確かめ・verify skill）を済ませ、A の 0 から B の手順（最初の返事から lint を通した草案を示す）で進める。
+- どちらかが無い: 下の壁打ちに入る。`commands/autopilot.md` の「## 0. 準備」は、壁打ちの間は Read・Grep・Glob で読むだけにし、worktree と verify skill は「固めて」の前に用意する（5 の 1）。
 
 ## 1. 壁打ちの間は速く返す
 
@@ -41,7 +41,7 @@ argument-hint: <やりたいこと>
 
 人が「固めて」と言ったら、次を順に 1 回ずつ行う。
 
-1. `CLI init <slug>` を実行する（この会話で init していなければ。init 済みならそのまま使う）
+1. `commands/autopilot.md` の「## 0. 準備」を済ませる（worktree で始める・既存の repo の下調べ・GDD の確かめ・verify skill の用意。済んでいる分は繰り返さない）。そのあと `CLI init <slug>` を実行する（この会話で init していなければ。init 済みならそのまま使う）
 2. playbook を選んで読み（`commands/autopilot.md` の A の 0）、spec.md と ADR を書く（`commands/autopilot.md` の B の 1・2）。たたき台の完了条件を要件の `〜とき、〜になる` にし、QA の方向性に `- 目的の確かめ: R<n>`（目的に届いたかをその要件の QA で確かめる）か `- 目的の確かめ: マージ後（<確かめ方>）` の行を 1 本書く
 3. `CLI lint <dir>` を通す。ERROR は直す
 4. `autopilot-spec-checker` agent を前景で 1 回起動する（`commands/autopilot.md` の B の 3 と同じ。渡すのは spec のディレクトリだけ）。`ng` は直し、直したら `CLI lint <dir>` だけを通し直す（照合役は回し直さない）
