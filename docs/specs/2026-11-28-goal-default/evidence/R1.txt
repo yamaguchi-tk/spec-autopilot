@@ -1,18 +1,15 @@
-- commit: 1333e6897ad66210c7688bd67c4405281827a9d5
+- commit: dc66a58f67d2b686478c50e012ac856d031a35cf
 
-$ python3 -m pytest plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_goal.py -q -n auto
-14 passed in 15.53s
+$ python3 -m pytest .autopilot-qa/test_check_goal_default.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_goal.py -q -p no:cacheprovider -n auto
+22 passed in 3.53s
 
 $ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
-1691 passed in 157.81s (0:02:37)
-
-$ grep -n "lint を通してから示す\|lint が通った後に" plugins/spec-autopilot/commands/autopilot.md
-46:   - **最初の返事から、推奨で埋めた spec の草案を示す**（下の 3・4 で決めたことを、先に B の 1〜3 で書いて lint を通してから示す）。...
-77:   - 大きさと既存の repo かによらず、lint が通った後に `autopilot-spec-checker` agent を前景で 1 回起動する ...
+1693 passed in 135.00s (0:02:14)
 
 $ python3 -m pytest .autopilot-qa/test_check_goal_default.py -q -p no:cacheprovider
-E       AssertionError: R1 fail: 期待 lint が通る（A の 2・B の 4 は lint を通してから示す） 実際 rc=1 ERROR: 大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする（申告 L・数えた大きさ L（変える 7・呼び出し元 1・別の実装 0））
-E       AssertionError: R1 fail: 期待 lint が通る 実際 rc=1 ERROR: 大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする
-FAILED .autopilot-qa/test_check_goal_default.py::test_R1_default_path_lint_passes_for_an_L_goal_spec_existing_repo
-FAILED .autopilot-qa/test_check_goal_default.py::test_R1_default_path_lint_passes_for_an_L_goal_spec_new_repo
-2 failed, 2 passed in 13.02s
+6 passed in 4.19s
+
+$ grep -n "残ってよい ERROR は L の ERROR\|既定は目的の spec にする\|目的の spec を既定にする。A の 3" plugins/spec-autopilot/commands/autopilot.md
+57:   - L の依頼で spec を分けるときの既定は、下の目的の spec（人の承認 1 回）にする。...残ってよい ERROR は L の ERROR（1 本のまま合意しない）だけにする。...
+60:   - 既存の repo では、...新しく作る repo では `- 大きさ: <S|M>` を表で決めて書く（L に当たるなら、上の L の項に従い、既定は目的の spec にする）。...
+80:   - **まとめて承認する**（寝る前に複数の spec を承認し、夜の間に順に回す。L を分けるときは、人が子の spec を全部見てから承認したいと言ったときだけ選び、それ以外は目的の spec を既定にする。A の 3）...
