@@ -1,0 +1,18 @@
+- commit: 8942d9c
+
+$ python3 .autopilot-qa/cds-check.py
+R4 pass (CLI 16 本の終了コード・stdout・stderr が着手の commit と同じ)
+R4 pass (autopilot.<名前> の利用 46 件、8 名前がすべて stages の物と同じ)
+R2 pass (deploy.py・stages.py の文字列・コメントの外に autopilot・importlib・sys.modules・__import__ が 0 件)
+(exit=0)
+
+$ git grep -nE "stages\.(plan|lint|deployed_reqs|approved|check)\(" -- plugins/ | grep -v "^plugins/spec-autopilot/scripts/stages.py"
+plugins/spec-autopilot/scripts/autopilot.py:601:    errors += stages.lint(text, reqs) + __import__("ladder").lint(section(text, "モデル"))
+plugins/spec-autopilot/scripts/deploy.py:127:    deployed = stages.deployed_reqs(text)
+plugins/spec-autopilot/scripts/deploy.py:131:                   for r in deployed if not stages.approved(text, r)]
+plugins/spec-autopilot/scripts/deploy.py:184:    late = stages.deployed_reqs((d / "spec.md").read_text(encoding="utf-8"))
+plugins/spec-autopilot/scripts/deploy.py:232:    return bool(stages.deployed_reqs(text)) or not ROLLBACK_CMD.match((scope_rows(text) or {}).get("デプロイの起動") or "")
+plugins/spec-autopilot/scripts/deploy.py:306:    errors = stages.check(d, rows, parked, max(deployed) if deployed else None, stage,
+plugins/spec-autopilot/scripts/deploy.py:309:        late = stages.deployed_reqs((d / "spec.md").read_text(encoding="utf-8"))
+plugins/spec-autopilot/scripts/deploy.py:338:    if scope_of(d) != FULL or not stages.deployed_reqs(text):
+plugins/spec-autopilot/scripts/deploy.py:436:    return [r for r in stages.deployed_reqs(text) if rows.get(r) == "fail"

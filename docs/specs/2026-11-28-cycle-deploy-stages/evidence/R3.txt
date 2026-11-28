@@ -1,0 +1,13 @@
+- commit: 8942d9c
+
+$ grep -n "^import\|^from" plugins/spec-autopilot/scripts/stages.py
+12:import re
+13:import subprocess
+14:from pathlib import Path
+16:import carry
+
+$ uv run --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base df338ab --json   # report.modules を読んだ
+autopilot.py {'lang': 'py', 'fan_out': 16, 'fan_in': 6, 'lcom4': 4}
+stages.py {'lang': 'py', 'fan_out': 1, 'fan_in': 3, 'lcom4': 2}
+deploy.py {'lang': 'py', 'fan_out': 2, 'fan_in': 6, 'lcom4': 5}
+preflight.py {'lang': 'py', 'fan_out': 1, 'fan_in': 1, 'lcom4': 1}

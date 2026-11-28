@@ -1,0 +1,20 @@
+- commit: 8942d9c
+
+$ uv run --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base df338ab
+前: 関数 317・CC の平均 7.50・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 28・重複の塊 2（0.92%）
+後: 関数 317・CC の平均 7.50・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 15・重複の塊 2（0.92%）
+
+## 悪化（0）
+- なし
+
+## 改善（3）
+- autopilot.py:545 lint の nloc が 65 → 64
+- stages.py:213 check の params が 9 → 8
+- 循環の組が 28 → 15
+(exit=0)
+
+$ uv run --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base df338ab --json   # report.cycles を読んだ
+cycles [['autopilot.py', 'goal.py', 'light.py', 'lineup.py', 'overnight.py', 'runlog.py']]
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_import_layers.py -q
+（回帰テストと合わせて 925 passed。test_deploy_preflight_and_stages_are_outside_the_import_cycle を含む）
