@@ -58,15 +58,18 @@ def origin(d, s):
 
 
 def record(d):
-    """lint が通った spec の中身を残す。ほかのプロセスが書いた state.json を残すため、ロックの中で読み直し、`consent` だけを当てる。
+    """lint が通った spec の中身を残す。lint 同士が同時に書いても互いの記録を落とさないよう、spec のディレクトリの fd に
+    flock を取り（ロック用のファイルは作らない）、その中で state.json を読み直し、`consent` だけを当てる。
+    守るのは lint 同士の書き込みだけで、ほかのコマンドの state.json の書き込みとは排他にならない。
     返すのは利用者に知らせる NOTE の文。"""
     notes = []
     f = d / "state.json"
     if not f.is_file():
         return notes
     digest = content_sha((d / "spec.md").read_text(encoding="utf-8"))
-    with open(d / ".state.json.lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+    fd = os.open(d, os.O_RDONLY)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
         try:
             s = json.loads(f.read_text(encoding="utf-8"))
             phase = s.get("phase")
@@ -85,4 +88,6 @@ def record(d):
         tmp = d / f".state.json.{os.getpid()}"
         tmp.write_text(json.dumps(s, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         os.replace(tmp, f)
+    finally:
+        os.close(fd)
     return notes

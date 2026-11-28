@@ -150,6 +150,7 @@ def test_concurrent_lints_keep_the_other_keys_and_the_first_seen_time(repo):
     assert after["note"] == "別のプロセスが書いた値" and consent.valid(after["consent"])
     lint_ok(repo, d)
     assert state(d)["consent"] == after["consent"]
+    assert not list(d.glob("*.lock")) and not list(d.glob(".state.json*"))  # ロック用のファイルや一時ファイルを spec のディレクトリに残さない
 
 
 # --- R3: --by-advisor の承認し直しと、目的の spec の子の承認も、同じ起点を使う ---
