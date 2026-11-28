@@ -1,4 +1,4 @@
-- commit: b4601aa3bfdda3b11285eca38810f7db8d532e3d
+- commit: c08182d8c09e02b06a38c88240406e26e11d74de
 
 $ python3 .autopilot-qa/check.py  # R3 の部分（下が各コマンドと出力）
 R3 pass
@@ -10,7 +10,7 @@ exit=0
 - 相談: fable-high
 - 検証: fable-high
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r3/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl fable --advisor opus-high
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r3/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl fable --advisor opus-high
 exit=0
 書いた: <worktree>/.autopilot-qa/work/r3/home/sessions/qa-sess-1.models.md
 - 実装: fable
@@ -18,7 +18,7 @@ exit=0
 読み替え（相談）: fable-advisor → spec-autopilot:fable-advisor-opus
 実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r3/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r3/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show
 exit=0
 実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 opus-medium / このセッション fable
 評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 なし / このセッション なし
@@ -28,7 +28,7 @@ exit=0
 設定のファイル: <worktree>/.autopilot-qa/work/r3/home/models.md
 セッションのファイル: <worktree>/.autopilot-qa/work/r3/home/sessions/qa-sess-1.models.md
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r3/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py <<< {"cwd": "<worktree>/.autopilot-qa/work/r3/cwd", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r3/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py  <<< {"cwd": "<worktree>/.autopilot-qa/work/r3/home", "session_id": "qa-sess-1", "source": "compact", "hook_event_name": "SessionStart"}
 exit=0
-additionalContext の設定の段落: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r3/home/models.md）とこのセッションの上書き（<worktree>/.autopilot-qa/work/r3/home/sessions/qa-sess-1.models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-opus、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。
-（相談はセッションの opus-high、検証は手元の設定の fable-high、照合は同梱の既定で読み替え無し）
+additionalContext:
+spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/r3/home/models.md）とこのセッションの上書き（<worktree>/.autopilot-qa/work/r3/home/sessions/qa-sess-1.models.md）で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-opus、advice-checker → spec-autopilot:advice-checker-fable（人が opus-advisor を名指ししたときは今のとおり）。
