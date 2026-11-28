@@ -1,9 +1,9 @@
-- commit: b4601aa3bfdda3b11285eca38810f7db8d532e3d
+- commit: c08182d8c09e02b06a38c88240406e26e11d74de
 
-$ python3 .autopilot-qa/check.py  # R6 の部分。commands/setup.md のコードブロックの ladder.py の行と、本文の `setup --session --reset …` を全部、一時の置き場で打った（<段> は受ける段で埋めた）。setup.md に AskUserQuestion で「既定に書く」と「このセッションだけ」を聞く手順があり、README に「セッションの上書き → 手元の既定（`models.md`）→ 同梱の既定」の順があることも検査した
+$ python3 .autopilot-qa/check.py  # R6 の部分（下が各コマンドと出力）
 R6 pass
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show
 exit=0
 実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 なし / このセッション なし
 評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 なし / このセッション なし
@@ -13,7 +13,7 @@ exit=0
 設定のファイル: <worktree>/.autopilot-qa/work/r6/home/models.md
 セッションのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --impl opus-medium --review opus-xhigh --advisor opus-high --checker fable-high --spec-checker opus-high
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --impl opus-medium --review opus-xhigh --advisor opus-high --checker fable-high --spec-checker opus-high
 exit=0
 書いた: <worktree>/.autopilot-qa/work/r6/home/models.md
 - 実装: opus-medium
@@ -22,7 +22,7 @@ exit=0
 - 検証: fable-high
 - 照合: opus-high
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl opus-medium --review opus-xhigh --advisor opus-high --checker fable-high --spec-checker opus-high
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl opus-medium --review opus-xhigh --advisor opus-high --checker fable-high --spec-checker opus-high
 exit=0
 書いた: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md
 - 実装: opus-medium
@@ -35,26 +35,30 @@ exit=0
 読み替え（照合）: autopilot-spec-checker → spec-autopilot:autopilot-spec-checker-opus
 実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset 実装
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '実装'
 exit=0
 実装が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md）
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset 評価
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '評価'
 exit=0
 評価が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md）
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset 相談
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
 exit=0
 相談が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md）
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset 検証
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '検証'
 exit=0
 検証が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md）
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset 照合
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '照合'
 exit=0
 照合が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md）
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r6/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
 exit=0
 実装・評価・相談・検証・照合が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md）
+
+$ grep -c 'AskUserQuestion' commands/setup.md; grep -F 'セッションの上書き → 手元の既定（`models.md`）→ 同梱の既定' README.md
+4
+あり

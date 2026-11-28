@@ -1,6 +1,6 @@
-- commit: b4601aa3bfdda3b11285eca38810f7db8d532e3d
+- commit: c08182d8c09e02b06a38c88240406e26e11d74de
 
-$ python3 .autopilot-qa/check.py  # R1 の部分（下が各コマンドと出力。models.md のバイト列が打つ前と同じことも検査した）
+$ python3 .autopilot-qa/check.py  # R1 の部分（下が各コマンドと出力）
 R1 pass
 
 $ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high --impl opus-medium
@@ -9,13 +9,13 @@ exit=0
 - 実装: opus-medium
 - 相談: fable-high
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
 exit=0
 書いた: <worktree>/.autopilot-qa/work/r1/home/sessions/qa-sess-1.models.md
 - 相談: opus-high
 読み替え（相談）: fable-advisor → spec-autopilot:fable-advisor-opus
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --review fable --spec-checker opus-high
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r1/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --review fable --spec-checker opus-high
 exit=0
 書いた: <worktree>/.autopilot-qa/work/r1/home/sessions/qa-sess-1.models.md
 - 評価: fable

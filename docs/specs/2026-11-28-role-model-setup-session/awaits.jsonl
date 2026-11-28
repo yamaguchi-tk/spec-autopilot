@@ -1,1 +1,4 @@
 {"kind": "ci", "pr": 126, "sha": "02b44dadda1f2c4ce20e005497b476b50a081b75", "result": "failure", "started_at": 1795855861.934319, "at": 1795856209.077332, "detail": ["spec-autopilot: 失敗（run 46127690828）"]}
+{"kind": "ci", "pr": 129, "sha": "d53e616375ea94dddb944c1b9b8017499a3de98c", "result": "error", "started_at": 1795858680.910469, "at": 1795858681.846539, "detail": ["RuntimeError: gh pr checks 129 --json name,bucket,link が読めない（exit 1）: no checks reported on the 'claude/session-id-stages' branch"]}
+{"kind": "ci", "pr": 129, "sha": "1c4f85c3beb2999df796a086ad28173fcebe50f9", "result": "success", "started_at": 1795858945.349777, "at": 1795859070.5249221, "detail": ["spec-autopilot"]}
+{"kind": "ci", "pr": 130, "sha": "c08182d8c09e02b06a38c88240406e26e11d74de", "result": "success", "started_at": 1795859093.041884, "at": 1795859311.625355, "detail": ["spec-autopilot"]}
