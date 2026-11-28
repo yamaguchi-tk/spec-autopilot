@@ -9,3 +9,4 @@
   - メモ: A → B → 連番を変えた A' の順は履歴が無く見分けられない（評価役も直し方の案で同じと書いた）。ADR の Consequences に限界として書き、朝の報告に出す
 - [x] T5: commands/autopilot.md の B の 3・4 に、spec を人に示す前と、照合役の ng や人の直しの指示で直して示し直す前に、毎回 `CLI lint` を通すと書き、B の 5 の承認の返事の項と揃える。lint(B) を通してから示した中身の連番だけの直しは通り、連番ごと lint(A) の中身へ戻すと断ることをテストにする [R2, R4]
 - [x] T6: 評価役の low を直す。spec のディレクトリに書き込めないとき、lint が `lint: OK` の後に consent.record の tmp の書き込み（write_text・os.replace）で PermissionError の traceback を出して exit 1 になる。record で書き込みの OSError を捕まえ、state.json が読めないときと同じく NOTE を返し、tmp が残らないようにする（lint の終了コードは変えない）。書き込めないディレクトリで lint が NOTE と exit 0 になることをテストにする [R1]
+  - メモ: 3 巡目の評価役の low（spec のディレクトリに読み取り権が無いと consent.record の os.open が try の外で traceback になる）は直さない。通常は起きない権限で、記録は残らず承認は mtime の起点に倒れる（緩む方に行かない）。予算の残りが 22 分で直しの巡が収まらないので、朝の報告に出して別に直す

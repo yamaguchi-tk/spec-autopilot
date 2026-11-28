@@ -1,0 +1,2 @@
+{"kind": "ci", "pr": 111, "sha": "ae1086e7d696d85fd22711e073eddbf39350e00c", "result": "error", "started_at": 1795828963.9910889, "at": 1795828965.074933, "detail": ["RuntimeError: gh pr checks 111 --json name,bucket,link が読めない（exit 1）: no checks reported on the 'claude/fewer-reapprovals' branch"]}
+{"kind": "ci", "pr": 111, "sha": "f3ac76b629cbec7cc57f83281c274a00273f5770", "result": "success", "started_at": 1795829389.662328, "at": 1795829609.366644, "detail": ["spec-autopilot"]}
