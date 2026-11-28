@@ -125,9 +125,9 @@ def test_setup_command_writes_every_role_with_a_flag_ladder_setup_takes_and_rese
     env = {**os.environ, "SPEC_AUTOPILOT_HOME": str(tmp_path)}
     ladder = [sys.executable, str(PLUGIN / "scripts" / "ladder.py")]
     helptext = subprocess.run([*ladder, "setup", "-h"], env=env, capture_output=True, text=True).stdout
-    taken = set(re.findall(r"--(?!reset|help)([a-z-]+)", helptext))
+    taken = set(re.findall(r"--(?!reset|help|session)([a-z-]+)", helptext))
     lines = re.findall(r'^python3 "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ladder\.py" setup ([^\n]+)$', text, re.M)
-    used = {f for ln in lines for f in re.findall(r"--(?!reset)([a-z-]+)", ln)}
+    used = {f for ln in lines for f in re.findall(r"--(?!reset|session)([a-z-]+)", ln)}
     assert taken == {"impl", "review", "advisor", "checker", "spec-checker"}
     assert used == taken, f"setup.md の旗: {sorted(used)} / setup が受ける旗: {sorted(taken)}"
     show = subprocess.run([*ladder, "show"], env=env, capture_output=True, text=True).stdout
