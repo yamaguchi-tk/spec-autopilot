@@ -128,3 +128,51 @@ exit=1
 $ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
 exit=0
 実装・評価・相談・検証・照合が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r2/home/sessions/qa-sess-1.models.md）
+
+- 追記（859c884 で取り直した観測。置き場は R2 だけの一時のもの。打った順に、各コマンドの出力と exit をそのまま残す）
+$ SPEC_AUTOPILOT_HOME=<r2>/home python3 plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high
+書いた: <r2>/home/models.md
+- 相談: fable-high
+exit=0
+$ SPEC_AUTOPILOT_HOME=<r2>/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+書いた: <r2>/home/sessions/qa-sess-1.models.md
+- 相談: opus-high
+読み替え（相談）: fable-advisor → spec-autopilot:fable-advisor-opus
+exit=0
+$ SPEC_AUTOPILOT_HOME=<r2>/home CLAUDE_CODE_SESSION_ID=sess-2 python3 plugins/spec-autopilot/scripts/ladder.py setup --session --impl fable
+書いた: <r2>/home/sessions/sess-2.models.md
+- 実装: fable
+実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
+exit=0
+$ cp <r2>/home/models.md <r2>/models.before; cp <r2>/home/sessions/sess-2.models.md <r2>/sess2.before
+exit=0
+$ ls <r2>/home <r2>/home/sessions
+<r2>/home:
+models.md
+models.md.lock
+sessions
+
+<r2>/home/sessions:
+qa-sess-1.models.md
+qa-sess-1.models.md.lock
+sess-2.models.md
+sess-2.models.md.lock
+exit=0
+$ SPEC_AUTOPILOT_HOME=<r2>/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+実装・評価・相談・検証・照合が既定に戻った（セッションの上書きのファイル: <r2>/home/sessions/qa-sess-1.models.md）
+exit=0
+$ ls <r2>/home <r2>/home/sessions
+<r2>/home:
+models.md
+models.md.lock
+sessions
+
+<r2>/home/sessions:
+qa-sess-1.models.md.lock
+sess-2.models.md
+sess-2.models.md.lock
+exit=0
+$ cmp <r2>/models.before <r2>/home/models.md
+exit=0
+$ cmp <r2>/sess2.before <r2>/home/sessions/sess-2.models.md
+exit=0

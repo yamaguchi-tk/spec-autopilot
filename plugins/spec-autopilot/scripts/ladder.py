@@ -236,7 +236,9 @@ def edit(change, path=None):
             fcntl.flock(lock, fcntl.LOCK_EX)
             return _edit_locked(change, path)
     except OSError as e:
-        sys.exit(f"{path.parent} に書けない（{type(e).__name__}）。{path} は変えていない")
+        block = next((d for d in [path.parent, *path.parent.parents] if os.path.isfile(d)), None)
+        why = f"{block} がファイル" if block else type(e).__name__
+        sys.exit(f"{path.parent} に書けない（{why}）。{path} は変えていない")
 
 
 def _edit_locked(change, path):
@@ -246,7 +248,10 @@ def _edit_locked(change, path):
             sys.exit("; ".join(errors))
         kept = path.with_name(f"{path.name}.bad-{time.time_ns()}-{os.getpid()}")
         kept.write_bytes(raw)
-        print(f"NOTE: {path} に誤りがあった（{'; '.join(errors)}）。元の中身を退避した: {kept}。読めた行だけで続ける", file=sys.stderr)
+        if path.parent.name == "sessions":  # 誤りのあるセッションの上書きは使わない層なので、読めた行も持ち越さない
+            rows = {}
+        print(f"NOTE: {path} に誤りがあった（{'; '.join(errors)}）。元の中身を退避した: {kept}。"
+              + ("読めた行も持ち越さない" if not rows else "読めた行だけで続ける"), file=sys.stderr)
     rows = change(dict(rows))
     if not rows:
         path.unlink(missing_ok=True)
@@ -300,9 +305,13 @@ def cmd_show(a):
     session = os.environ.get("CLAUDE_CODE_SESSION_ID")
     _, base, over, bad = resolve(session)
     unused = any(layer == "セッションの上書き" for layer, _, _ in bad)
+    base_bad = any(layer == "手元の設定" for layer, _, _ in bad)
     for (role, rungs), line in zip(ROLES.items(), accepted_lines()):
         mine = "使わない（誤りがある）" if unused else over.get(CONFIG_KEY[role], "なし")
-        print(f"{line} / 既定 {next(iter(rungs))} / 手元の設定 {base.get(CONFIG_KEY[role], 'なし')} / このセッション {mine}")
+        here = base.get(CONFIG_KEY[role], "なし")
+        if base_bad and CONFIG_KEY[role] in base and CONFIG_KEY[role] in SPEC_KEY.values():
+            here += "（誤りがあるので spec に写さない）"
+        print(f"{line} / 既定 {next(iter(rungs))} / 手元の設定 {here} / このセッション {mine}")
     print(f"設定のファイル: {path}")
     spath = session_path(session)
     if spath:
