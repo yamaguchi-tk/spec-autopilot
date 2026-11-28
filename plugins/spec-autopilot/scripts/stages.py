@@ -23,6 +23,8 @@ QA_ROW4 = re.compile(r"^\|\s*(R\d+)\s*\|[^|]*\|[^|]*\|([^|]*)\|", re.M)  # | 要
 COMMAND = re.compile(r"^\$ \S")
 READ_CAP = 256 * 1024  # Stop hook の時間の上限に収めるため、証拠は頭だけを読む
 REASON_ANY = re.compile(r"^- (手元でできない理由|代役の理由|unverified の承認):.*$", re.M)
+PURPOSE_ANY = re.compile(r"^- 目的の確かめ:.*$", re.M)
+PURPOSE = re.compile(r"^- 目的の確かめ:[ \t]*(?:(R\d+)|マージ後（[^）\s][^）]*）)[ \t]*$")
 NEEDS = {DEPLOYED: "手元でできない理由", STAND_IN: "代役の理由"}
 
 # autopilot.py と deploy.py が借りる spec の文の読み取りと repo の場所（下の層に置き、autopilot.py に依らない）
@@ -113,11 +115,22 @@ def plan(text):
     return stages, reasons, bad
 
 
+def purpose_errors(text, reqs):
+    """目的の確かめの行: QA の方向性にちょうど 1 本、`R<n>`（要件にある番号）か `マージ後（<確かめ方>）`。"""
+    rows = PURPOSE_ANY.findall(COMMENT_BLOCK.sub("", section(text, "QA の方向性") or ""))
+    if len(rows) != 1:
+        return [f"QA の方向性の `- 目的の確かめ:` の行が {len(rows)} 本ある（`- 目的の確かめ: R<n>` か `- 目的の確かめ: マージ後（<確かめ方>）` をちょうど 1 本書く）"]
+    m = PURPOSE.match(rows[0])
+    if not m:
+        return [f"目的の確かめの行の形が読めない（`- 目的の確かめ: R<n>` か `- 目的の確かめ: マージ後（<確かめ方>）`）: {rows[0]}"]
+    return [f"目的の確かめの {m.group(1)} は要件に無い"] if m.group(1) and m.group(1) not in reqs else []
+
+
 def lint(text, reqs):
-    errors = []
+    errors = purpose_errors(text, reqs)
     stages, reasons, bad = plan(text)
     if not stages:
-        return ["「## QA の方向性」の表に段の列が無い（`| 要件 | 段 | 確かめ方 | 合格基準 |`。段は " + "・".join(STAGES) + "）"]
+        return errors + ["「## QA の方向性」の表に段の列が無い（`| 要件 | 段 | 確かめ方 | 合格基準 |`。段は " + "・".join(STAGES) + "）"]
     for rid in reqs:
         stage = stages.get(rid)
         if stage is not None and stage not in STAGES:
