@@ -4,7 +4,7 @@
   "created_at": 1795821439.061122,
   "existing": true,
   "start": "7bc23c1821287f08dbb9716097e51dd93e927e33",
-  "last_active_at": 1795828970.606171,
+  "last_active_at": 1795830578.138728,
   "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
   "queued_at": 1795822313.379647,
   "approved_by": "R1〜R5 の 2 本の子（子 1 を閉じ R3・版数を非目標、示す前の lint と R2 の除外を足す）の推奨のままで OK",
@@ -196,6 +196,11 @@
       "high": [],
       "at": 1795828876.960596,
       "sha": "0fddc89495d0a47bd1b3ccbdde2ec3feb043f190"
+    },
+    {
+      "high": [],
+      "at": 1795830578.138721,
+      "sha": "221bfa7a23f1d7cdffecf6be78c8a47f1e74988d"
     }
   ],
   "fails": {},
@@ -313,6 +318,22 @@
       ],
       "dispatch": 4,
       "at": 1795827553.7606452
+    },
+    {
+      "tip": "f3ac76b629cbec7cc57f83281c274a00273f5770",
+      "tasks": [
+        "T5"
+      ],
+      "dispatch": 4,
+      "at": 1795829377.3779671
+    },
+    {
+      "tip": "221bfa7a23f1d7cdffecf6be78c8a47f1e74988d",
+      "tasks": [
+        "T5"
+      ],
+      "dispatch": 4,
+      "at": 1795830578.012336
     }
   ],
   "raises": [
@@ -326,7 +347,8 @@
     }
   ],
   "review_launches": [
-    1795827564.34241
+    1795827564.34241,
+    1795829389.187053
   ],
   "lenses": [
     {
@@ -335,6 +357,13 @@
       "reproduced": 0,
       "fixed": 0,
       "at": 1795828877.040301
+    },
+    {
+      "name": "権限の境界をまたぐ呼び出し",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795830552.787045
     }
   ]
 }
