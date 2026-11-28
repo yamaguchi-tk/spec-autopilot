@@ -1,14 +1,23 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "refactor-playbook",
   "created_at": 1795827179.0898712,
   "existing": true,
   "start": "256ced70d33e753e1626782643565a9b4492ee02",
-  "last_active_at": 1795827650.707437,
+  "last_active_at": 1795827655.2720692,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795827650.706514,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 25）。人は目的の spec を「承認する」で承認済み",
   "spec_sha256": "3a60c4aad73522fabc5bce2b87e5c793c14179c4610a8c260f74a83765b58fa9",
-  "after": null
+  "after": null,
+  "approved_at": 1795827655.271817,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
