@@ -1,4 +1,5 @@
-- commit: df02a14fcf94968eb26fe3cfc176a53c1d4c9e39
+- commit: e8b515e7f15b5af671e2f6a9041107307f330c4e
+（評価役が動かしたのは df02a14。e8b515e までの差分は spec の置き場だけで、コードは同じ）
 $ SPEC_AUTOPILOT_HOME=<tmp>/ev python3 plugins/spec-autopilot/scripts/ladder.py show
 実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 なし
 評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 なし

@@ -1,4 +1,5 @@
-- commit: df02a14fcf94968eb26fe3cfc176a53c1d4c9e39
+- commit: e8b515e7f15b5af671e2f6a9041107307f330c4e
+（評価役が動かしたのは df02a14。e8b515e までの差分は spec の置き場だけで、コードは同じ）
 $ head -6 plugins/spec-autopilot/agents/advice-checker-fable.md plugins/spec-autopilot/agents/autopilot-spec-checker-opus.md
 ==> advice-checker-fable.md: name: advice-checker-fable / model: fable / effort: high / tools: Read, Grep, Glob / omitClaudeMd: true
 ==> autopilot-spec-checker-opus.md: name: autopilot-spec-checker-opus / model: opus / effort: high / tools: Read, Grep, Glob
