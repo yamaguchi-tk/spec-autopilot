@@ -1,27 +1,10 @@
-- commit: d6129d0ba2989868e29b4274022b9a3b70e786a4
-- 環境: 手元の一時 repo（.autopilot-qa/run/r1・r1-ro に git init）。本物の autopilot.py の CLI を回す（macOS の更新の NOTE の行は略した）
-$ python3 .autopilot-qa/check.py（R1 の段の抜き出し）
-$ git init r1
-$ autopilot.py lint <repo>/docs/specs/2026-11-28-game
-  lint: OK
-  (exit 0)
-# 人の発言（transcript に origin=human の行・UserPromptSubmit hook）
-# spec.md の `- ADR:` を 0007 → 0008 だけ直す
-$ autopilot.py approve <repo>/docs/specs/2026-11-28-game --by OK
-  approved: 予算 30 分。ここから自走する
-  (exit 0)
+- commit: e9cf3d436070160168709e16e854bf08a2fe8ec6
+- 環境: 手元の一時 repo（.autopilot-qa/run/r1・r1-ro に git init）。main の取り込み後の tip の本物の autopilot.py の CLI を回す（lint・人の発言の記録・approve）
+$ python3 .autopilot-qa/check.py（R1 の行の抜き出し）
 R1 lint → 人 → 連番だけ直す → approve が通る: pass
-$ git init r1-ro
-$ chmod 555 <spec のディレクトリ>
-$ autopilot.py lint <repo>/docs/specs/2026-11-28-readonly
-  lint: OK
-  NOTE: state.json の隣に書き込めない（PermissionError）ので、承認の中身の記録は残さない
-  (exit 0)
-$ chmod 755 <spec のディレクトリ>
-R1 書き込めないディレクトリで lint は exit 0・NOTE・traceback なし・tmp なし・state.json は元のまま: pass
-# 人の発言（transcript に origin=human の行・UserPromptSubmit hook）
-# spec.md の `- ADR:` を 0007 → 0008 だけ直す
-$ autopilot.py approve <repo>/docs/specs/2026-11-28-readonly --by OK
-  承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）の後に人の発言が記録されていない。人に示して返事を受けてから実行する
-  (exit 1)
-R1 記録を残せなかった spec は spec.md の最後の変更を起点にして断る（今までどおり）: pass
+R1 書き込めないディレクトリの lint は exit 0・NOTE・tmp なし、approve は mtime の起点で断る: pass
+R1 pass
+（1 本目: lint → 人の発言 → `- ADR:` を 0007→0008 だけ直す → approve は exit 0、phase building。
+ 2 本目: spec のディレクトリを 555 にして lint は exit 0・「lint: OK」と「NOTE:」・Traceback なし・`.state.json.*` なし・state.json は元のバイト列。続けて人の発言 → 連番だけ直す → approve は「人の発言が記録されていない」で exit 1）
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1691 passed in 170.93s (0:02:50)
