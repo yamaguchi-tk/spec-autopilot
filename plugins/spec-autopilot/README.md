@@ -51,19 +51,21 @@ LLM の多段レビューや人への中間確認ではなく、成果物の型�
 
 ## 役ごとのモデルの既定を変える（setup）
 
-実装役・評価役の始めの段は、既定が実装 `sonnet-high`・評価 `opus-high` です。毎回同じ段にしたいときは、1 回だけ次を回します。
+役ごとの model と effort の段は、既定が実装 `sonnet-high`・評価 `opus-high`・相談 `fable-medium`・検証 `opus-high`・照合 `sonnet-high` です。毎回同じ段にしたいときは、1 回だけ次を回します。
 
 ```
 /spec-autopilot:setup
 ```
 
-今の段と受ける段が役ごとに出るので、1 つ選びます（既定に戻す選択もあります）。選んだ段は `SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-autopilot`）の `models.md` に `- 実装: <段>`・`- 評価: <段>` の形で残り、plugin を更新しても消えません。command を使わず、次のように直接打つこともできます（`scripts/ladder.py`）。
+今の段と受ける段が役ごとに出るので、1 つ選びます（既定に戻す選択もあります）。選べる役は、実装・評価・相談（fable-advisor・opus-advisor の役）・検証（advice-checker の役）・照合（autopilot-spec-checker の役）の 5 つです。選んだ段は `SPEC_AUTOPILOT_HOME`（無ければ `~/.claude/spec-autopilot`）の `models.md` に `- 実装: <段>`・`- 評価: <段>`・`- 相談: <段>`・`- 検証: <段>`・`- 照合: <段>` の形で残り、plugin を更新しても消えません。command を使わず、次のように直接打つこともできます（`scripts/ladder.py`）。
 
 - `ladder.py show`: 役ごとの受ける段・既定・手元の設定と、設定のファイルのパスを出す
-- `ladder.py setup --impl <段>` / `--review <段>`: その役の行を書く（受けない段は断り、ファイルを変えない）
-- `ladder.py setup --reset`: 設定を消して既定に戻す。`--reset 実装` か `--reset 評価` なら、その役の行だけを消す
+- `ladder.py setup --impl <段>` / `--review <段>` / `--advisor <段>` / `--checker <段>` / `--spec-checker <段>`: その役の行を書く（受けない段は断り、ファイルを変えない）
+- `ladder.py setup --reset`: 設定を消して既定に戻す。`--reset 実装`・`--reset 評価`・`--reset 相談`・`--reset 検証`・`--reset 照合` なら、その役の行だけを消す
 
-設定が写るのは、`autopilot.py init` が spec.md を作る時点だけです。作った後の spec は変わらないので、直したいときはその spec の `## モデル` を直します。設定が読めないとき（段の名前が変わった、同じ役の行が 2 つある、など）は、init が spec を雛形のまま作り、直し方を NOTE で出します。照合役・相談役のモデルは変わりません。
+実装・評価の段が spec に写るのは、`autopilot.py init` が spec.md を作る時点だけです。作った後の spec は変わらないので、直したいときはその spec の `## モデル` を直します。相談・検証・照合の段は spec には写らず、**次に始めたセッションから**効きます（SessionStart が、main に既定の agent の代わりに選んだ段の agent を使わせます。走っているセッションは変わりません）。照合役の読み替えは指示だけで効き、main が既定の照合役を起動しても機械では止めません。設定が読めないとき（段の名前が変わった、同じ役の行が 2 つある、など）は、init が spec を雛形のまま作り、直し方を NOTE で出します。
+
+注意: 相談と検証を同じ model にすると、検証が相談と同じ見方になり、別の目で見る効きが減ります。相談を `fable-*` にするなら検証は `opus-high`（既定）のまま、検証を `fable-high` にするなら相談は `opus-high` にするなど、model を分けるのがお勧めです。
 
 ## 前提と制限
 

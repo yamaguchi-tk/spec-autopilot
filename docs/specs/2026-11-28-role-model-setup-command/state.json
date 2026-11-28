@@ -1,0 +1,114 @@
+{
+  "phase": "building",
+  "slug": "role-model-setup-command",
+  "created_at": 1795827528.082718,
+  "existing": true,
+  "start": "0de22ca9da1e4a8589dc174379985fa0412e1829",
+  "last_active_at": 1795853540.324994,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795829366.854167,
+  "approved_by": "OK（2 本承認）",
+  "spec_sha256": "68e497f990170738fade6bbb30a1d7dd2deeeb0cdc93cd136e58d955dd26173d",
+  "after": "2026-11-28-role-model-setup-advisors",
+  "approved_at": 1795832235.050157,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "載せ替え前の commit に戻す操作（git reset --hard ORIG_HEAD）が権限の判定で拒まれた。人が戻すか、実装役に作り直させるかを確かめる",
+      "at": 1795832756.7945678
+    }
+  ],
+  "blocked": null,
+  "paused_sec": 19969.472548246384,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795853540.324982,
+      "sha": "e8b515e7f15b5af671e2f6a9041107307f330c4e"
+    }
+  ],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "6c729b70b4c371a2282ae94d511698d75cd92341",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795832242.9491148,
+      "session": "38935b5c-a9c7-4069-b340-0dee0b291583"
+    },
+    {
+      "base": "5152f423934c69ea46491e0993dc1ae63ca0608d",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795832502.373733,
+      "session": "38935b5c-a9c7-4069-b340-0dee0b291583"
+    },
+    {
+      "base": "bf79965f12e08d5456919f228927f73e56401923",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795852735.7804239,
+      "session": "38935b5c-a9c7-4069-b340-0dee0b291583"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "5152f423934c69ea46491e0993dc1ae63ca0608d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795832502.100755
+    },
+    {
+      "tip": "9b465dda9ca049fb82593bc2836ac736ba4407c3",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795852878.631843
+    },
+    {
+      "tip": "df02a14fcf94968eb26fe3cfc176a53c1d4c9e39",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795852946.673922
+    },
+    {
+      "tip": "e8b515e7f15b5af671e2f6a9041107307f330c4e",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795853540.172589
+    }
+  ],
+  "wait": null,
+  "review_launches": [
+    1795852952.474696
+  ]
+}
