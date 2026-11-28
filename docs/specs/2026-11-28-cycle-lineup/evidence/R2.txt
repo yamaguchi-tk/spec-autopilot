@@ -1,0 +1,11 @@
+- commit: effae88
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --base ca48e57
+前: 関数 332・CC の平均 7.45・目安を超えた関数 ccn 71・nloc 4・nesting 1・params 5・循環の組 3・重複の塊 2（0.89%）
+後: 関数 332・CC の平均 7.45・目安を超えた関数 ccn 71・nloc 4・nesting 1・params 5・循環の組 3・重複の塊 2（0.89%）
+## 悪化（1）
+- autopilot.py の fan_out が 18 → 19（高）
+## 改善（0）
+- なし
+$ python3 .autopilot-qa/check.py
+before cycles [['autopilot.py', 'lineup.py', 'overnight.py']] after cycles [['autopilot.py', 'lineup.py', 'overnight.py']]
+R2 pass（輪 [['autopilot.py', 'lineup.py', 'overnight.py']]、autopilot.py の import 先に lineup 無し）

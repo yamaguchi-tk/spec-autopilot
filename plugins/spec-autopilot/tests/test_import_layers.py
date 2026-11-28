@@ -149,8 +149,8 @@ def test_evidence_and_size_note_are_folded_into_autopilot():
     assert {"evidence_items", "size_notes"} <= names
 
 
-def test_autopilot_imports_eighteen_scripts_modules():
-    assert len(imported(tree("autopilot.py")) & MODULES) == 18
+def test_autopilot_imports_nineteen_scripts_modules():
+    assert len(imported(tree("autopilot.py")) & MODULES) == 19
 
 
 def test_autopilot_passes_sys_modules_only_to_premises_and_rootcause():
@@ -233,3 +233,53 @@ def test_light_rules_defines_the_moved_judgements_and_light_imports_them():
 
 def test_autopilot_check_calls_light_rules_errors():
     assert "light_rules" in imported(tree("autopilot.py"))
+
+
+UPPER = {"lineup", "overnight", "autopilot", "light"}
+
+
+def defined_in(name):
+    body = tree(f"{name}.py").body
+    return {n.name for n in body if isinstance(n, ast.FunctionDef)} | {t.id for n in body if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)}
+
+
+def test_autopilot_does_not_import_or_name_lineup_even_inside_functions_or_by_name():
+    t = tree("autopilot.py")
+    assert not {"lineup", "importlib"} & imported(t)
+    assert [ast.unparse(n) for n in ast.walk(t) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "__import__"
+            and not (n.args and isinstance(n.args[0], ast.Constant))] == ["__import__(a.cmd)"]
+    for n in ast.walk(t):
+        assert not (isinstance(n, ast.Name) and n.id == "lineup"), f"autopilot.py:{n.lineno}"
+        assert not (isinstance(n, ast.Constant) and n.value == "lineup"), f"autopilot.py:{n.lineno}"
+    assert module_passes() == (2, {"premises", "rootcause"})
+
+
+def test_autopilot_has_no_import_edge_to_lineup_and_the_cycle_is_the_three_modules():
+    graph = {m: imported(tree(f"{m}.py")) & MODULES - {m} for m in MODULES}
+    assert "lineup" not in graph["autopilot"]
+    assert in_cycle() == {"autopilot", "lineup", "overnight"}
+
+
+def test_after_and_building_import_no_upper_module_even_inside_functions():
+    for name in ("after", "building"):
+        t = tree(f"{name}.py")
+        assert not (UPPER | {"importlib", "<dynamic>"}) & imported(t), name
+        for n in ast.walk(t):
+            assert not (isinstance(n, ast.Name) and n.id in ("autopilot", "ap")), f"{name}.py:{n.lineno}"
+            assert not (isinstance(n, ast.Attribute) and n.attr == "modules" and isinstance(n.value, ast.Name) and n.value.id == "sys"), f"{name}.py:{n.lineno}"
+    assert imported(tree("after.py")) & MODULES == {"stages"}
+    assert imported(tree("building.py")) & MODULES == {"stages", "consent", "deploy", "carry"}
+
+
+def test_after_and_building_define_the_moved_names_and_lineup_and_autopilot_import_them():
+    moved = {"after": {"after_name", "AFTER", "NEXT", "pairs_file", "pairs"}, "building": {"head_and_body", "sha", "begin"}}
+    for name, names in moved.items():
+        assert names <= defined_in(name), name
+    assert {"queue_lint", "enqueue", "queue_minutes", "session_of", "remember"} <= defined_in("autopilot")
+    lineup_imports = {(n.module, a.name) for n in tree("lineup.py").body if isinstance(n, ast.ImportFrom) for a in n.names}
+    assert {("after", "pairs"), ("after", "after_name"), ("after", "NEXT"), ("building", "begin")} <= lineup_imports
+    autopilot_imports = {(n.module, a.name) for n in tree("autopilot.py").body if isinstance(n, ast.ImportFrom) for a in n.names}
+    assert {("building", "head_and_body"), ("building", "sha"), ("building", "begin"), ("after", "after_name"), ("after", "NEXT")} <= autopilot_imports
+    gone = {"after_name", "AFTER", "NEXT", "pairs_file", "pairs", "begin", "queue_lint", "enqueue", "minutes", "session_of", "remember"}
+    assert not gone & defined_in("lineup")
+    assert not {"head_and_body", "sha"} & defined_in("autopilot")

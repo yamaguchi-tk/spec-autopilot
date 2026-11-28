@@ -1,0 +1,5 @@
+- commit: effae88
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --base ca48e57 --json（report.modules を読む）
+after.py {'lang': 'py', 'fan_out': 1, 'fan_in': 2, 'lcom4': 2} building.py {'lang': 'py', 'fan_out': 4, 'fan_in': 2, 'lcom4': 1}
+$ python3 .autopilot-qa/check.py
+R3 pass（after.py の import ['json', 'os', 'pathlib', 're', 'stages'] LCOM4 2、building.py の import ['carry', 'consent', 'deploy', 'hashlib', 'stages', 'time'] LCOM4 1）

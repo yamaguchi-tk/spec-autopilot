@@ -30,7 +30,7 @@ approve と resume は、その時刻が spec.md（block・done の後はその�
 """
 import argparse
 import datetime
-import hashlib
+import fcntl
 import json
 import os
 import re
@@ -41,7 +41,9 @@ import time
 from pathlib import Path
 
 import consent  # noqa: E402
-from consent import ADR_LINE, ADR_NUMBER, numberless  # noqa: E402
+from after import NEXT, after_name, pairs, pairs_file  # noqa: E402（lineup.py から出した下の層）
+from building import begin, head_and_body, sha  # noqa: E402（同上。light.py・lineup.py も使う）
+from consent import ADR_LINE, ADR_NUMBER  # noqa: E402
 import stages  # noqa: E402
 from stages import (  # noqa: E402（deploy.py・stages.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
     BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, SESSION_ID, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section, stated_size,
@@ -114,25 +116,6 @@ EVIDENCE_FORMS = "形が読めない（`<path>::<テスト名>` を `・` で並
 def is_new_repo(s):
     """state.json の existing が bool の False のときだけ新しく作る repo。キーが無い・null・文字列・0 などは既存の repo（止める側に倒す）。"""
     return s.get("existing") is False
-
-
-def head_and_body(text):
-    """spec を、最初の `## ` より前（先頭）と、それ以降（作り方の節を除く本文）に分ける。"""
-    head, _, body = text.partition("\n## ")
-    body = "\n## " + body if body else ""
-    how = section(body, "作り方")
-    if how is not None:
-        body = body.replace(how, "\n", 1)
-    return head, body
-
-
-def sha(d):
-    """承認の対象のハッシュ。作り方の節は、自走中に作り直してよい（ADR に残す）ので外す。
-    先頭の `- ADR:` 行の連番の桁は、並行の branch との番号の取り合いで改番されるので外す（ディレクトリと slug は残す）。
-    本文は正規化しない。本文が自分の連番の ADR を名前・番号で書くのは lint が承認の前に止める。ADR があるかは check が確かめる。"""
-    head, body = head_and_body((d / "spec.md").read_text(encoding="utf-8"))
-
-    return hashlib.sha256((numberless(head) + body).encode("utf-8")).hexdigest()
 
 
 def own_adr_words(text):
@@ -502,7 +485,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     base が None なら、着手の前の依る spec（「## 制約」に `- 依る spec:`）だけ外す。ahead は前に並ぶ spec の分。"""
     text = (d / "spec.md").read_text(encoding="utf-8")
     if base is None:
-        base = not (load_state(d).get("phase") in ("discovery", "queued") and __import__("lineup").after_name(d))
+        base = not (load_state(d).get("phase") in ("discovery", "queued") and after_name(d))
     errors, warnings = [], []
     for name in SECTIONS:
         if section(text, name) is None:
@@ -532,7 +515,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     stated, size_err = stated_size(constraints)
     errors += ([size_err] if size_err else []) + __import__("playbooks").lint(constraints)
     first_agreement = load_state(d).get("phase") in ("discovery", "queued") and not goal  # L を止めるのは初回の合意だけ。目的の spec（--goal）は止めない
-    goal_way = GOAL_WAY if (stated == "L" and load_state(d).get("phase") == "discovery" and not __import__("lineup").after_name(d)
+    goal_way = GOAL_WAY if (stated == "L" and load_state(d).get("phase") == "discovery" and not after_name(d)
                             and not __import__("goal").parent_lines(d)[0]) else ""  # 申告が L より小さいと --goal の lint が申告の小ささで止める
     if not is_new_repo(load_state(d)):
         body = {name: COMMENT_BLOCK.sub("", section(text, name) or "") for name in EXISTING_SECTIONS}
@@ -882,12 +865,73 @@ def cmd_lint(a):
     return code
 
 
+def queue_minutes(d):
+    """承認から夜の終わりまでの見込み（予算とマージ後の予算）。"""
+    import deploy
+
+    budget, post = deploy.budgets((d / "spec.md").read_text(encoding="utf-8"))
+    return budget + post
+
+
+def session_of(d):
+    return os.environ.get("CLAUDE_CODE_SESSION_ID") or last_user_prompt(d)[1]
+
+
+def queue_lint(d):
+    """approve --queue の lint。前に並ぶ spec の予算を足して夜通しの前提を見る。依る spec があれば、
+    init の時点との突き合わせ（前提の path・影響範囲・大きさ）は着手のときに回す。"""
+    ahead = [x for x in recorded_specs(session_of(d)) if x.resolve() != d.resolve()
+             and load_state(x).get("phase") in ("queued", "building")]
+    extra = sum(queue_minutes(x) for x in ahead)
+    name = after_name(d)
+    if name is None:
+        return lint(d, at_approve=True, ahead=extra)
+    errors, warnings = lint(d, at_approve=True, base=False, ahead=extra)
+    if not any(x.name == name for x in recorded_specs(session_of(d))):
+        errors.append(f"依る spec {name} がこのセッションの記録に無い。依る spec を先に承認する")
+    text = COMMENT_BLOCK.sub("", section((d / "spec.md").read_text(encoding="utf-8"), "制約") or "")
+    if stated_size(text)[0] == "S":
+        errors.append("依る spec のある spec は、承認の時点で S の試作を作れない。大きさを M 以上にする")
+    return errors, warnings
+
+
+def remember(d, dep):
+    """後の spec d と依る spec dep の対を足す。ほかのプロセスが足した対を残すため、ロックの中で読み直して足す。
+    壊れていた中身は別の名前に退避し、NOTE を出して空から続ける。"""
+    f = pairs_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    with open(f.with_name(f.name + ".lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            cur = pairs()
+        except (OSError, ValueError) as e:
+            kept = f.with_name(f"{f.name}.broken-{time.time_ns()}")
+            f.replace(kept)
+            print(f"NOTE: {f.name} が読めない（{type(e).__name__}）。元の中身は {kept.name} に残し、空から続ける")
+            cur = {}
+        cur[str(d.resolve())] = str(dep.resolve())
+        tmp = f.with_name(f"{f.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(cur, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        tmp.replace(f)
+
+
+def enqueue(d, s, by, session, warnings):
+    name = after_name(d)
+    deps = [x for x in recorded_specs(session) if x.name == name]
+    if name and len(deps) == 1:  # 依る spec が done・block で記録から外れても引けるよう、承認のときに対を残す
+        remember(d, deps[0])
+    s.update(phase="queued", queued_from=s.get("phase"), queued_at=time.time(), approved_by=by, spec_sha256=sha(d), after=name)  # state.json は commit されるので、パスは書かず名前だけ
+    take_over(d, session, "承認")
+    save_state(d, s)
+    return report([], warnings, f"queued: 承認した。{NEXT} で承認した順に着手する（人の発言は要らない）")
+
+
 def cmd_approve(a):
     d = Path(a.dir)
-    import advisor_approval, goal, lineup  # noqa: E401
+    import advisor_approval, goal  # noqa: E401
     goal.refuse_mix(a)
-    errors, warnings = lineup.queue_lint(d) if a.queue else lint(d, at_approve=True, goal=a.goal)
-    if not a.queue and lineup.after_name(d) and load_state(d).get("phase") == "discovery":
+    errors, warnings = queue_lint(d) if a.queue else lint(d, at_approve=True, goal=a.goal)
+    if not a.queue and after_name(d) and load_state(d).get("phase") == "discovery":
         errors.append("依る spec のある spec は --queue で承認する（着手のときに lineup.py next が依る spec の先端に載せ替える）")
     if errors:
         return report(errors, warnings, "")
@@ -908,8 +952,8 @@ def cmd_approve(a):
     if a.goal: return goal.approve(d, by, scope, warnings)  # noqa: E701
     s["scope_sha256"] = scope  # 次の --by-advisor が「最後の承認のときの節」と突き合わせる（enqueue・begin はそのまま save する）
     if a.queue:
-        return lineup.enqueue(d, s, by, session, warnings)
-    budget = lineup.begin(d, s, by, s.get("phase"))
+        return enqueue(d, s, by, session, warnings)
+    budget = begin(d, s, by, s.get("phase"))
     take_over(d, session, "承認")
     save_state(d, s)
     report([], warnings, f"approved: 予算 {budget} 分。ここから自走する")
