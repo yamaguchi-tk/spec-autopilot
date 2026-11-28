@@ -1,6 +1,6 @@
-- commit: b4601aa3bfdda3b11285eca38810f7db8d532e3d
+- commit: c08182d8c09e02b06a38c88240406e26e11d74de
 
-$ python3 .autopilot-qa/check.py  # R2 の部分。id を無し・空・../evil・-x・a/b・129 字・空白入り・.hidden の 8 通りにして、setup --session --advisor opus-high・--session --reset・--session --reset 相談 の 24 通りを打ち、各回の後に置き場の全ファイルのバイト列を打つ前と比べた（下は抜粋）
+$ python3 .autopilot-qa/check.py  # R2 の部分（下が各コマンドと出力）
 R2 pass
 
 $ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high
@@ -8,13 +8,13 @@ exit=0
 書いた: <worktree>/.autopilot-qa/work/r2/home/models.md
 - 相談: fable-high
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
 exit=0
 書いた: <worktree>/.autopilot-qa/work/r2/home/sessions/qa-sess-1.models.md
 - 相談: opus-high
 読み替え（相談）: fable-advisor → spec-autopilot:fable-advisor-opus
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='sess-2' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl fable
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=sess-2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl fable
 exit=0
 書いた: <worktree>/.autopilot-qa/work/r2/home/sessions/sess-2.models.md
 - 実装: fable
@@ -28,15 +28,67 @@ $ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home (CLAUDE_CODE_SESSION
 exit=1
 今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='../evil' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
 exit=1
 今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='-x' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
 exit=1
 今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='a/b' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset 相談
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=../evil python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=../evil python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=../evil python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=-x python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=-x python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=-x python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=a/b python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=a/b python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=a/b python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
 exit=1
 今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
 
@@ -44,23 +96,35 @@ $ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_
 exit=1
 今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='.hidden' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='a b' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
 exit=1
 今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor nope
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='a b' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=.hidden python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor opus-high
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=.hidden python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=.hidden python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset '相談'
+exit=1
+今のセッションが分からない（CLAUDE_CODE_SESSION_ID が無いか、セッション id の形でない）ので --session は使えない。何も変えていない
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --advisor nope
 exit=1
 受けない段: 相談 の段「nope」
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable
+評価: 受ける段 opus-high・opus-xhigh・fable
+相談: 受ける段 fable-medium・fable-high・opus-high
+検証: 受ける段 opus-high・fable-high
+照合: 受ける段 sonnet-high・opus-high
 
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='sess-2' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset 相談
-exit=0
-相談が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r2/home/sessions/sess-2.models.md）
-
-$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r2/home CLAUDE_CODE_SESSION_ID=qa-sess-1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --reset
 exit=0
 実装・評価・相談・検証・照合が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r2/home/sessions/qa-sess-1.models.md）
-（この後、qa-sess-1.models.md は無く、models.md は打つ前と同じバイト列、sess-2.models.md は `- 実装: fable` のまま残った）
-
-$ git apply .autopilot-qa/mut-R2-2.patch（cmd_setup の `if path is None:` を `if False:` にする変異）して python3 -m pytest plugins/spec-autopilot/tests/test_ladder_setup.py -k test_setup_session_without_a_usable_session_id_fails_and_changes_no_file -q -p no:xdist、後に git apply -R で戻した
-変異の前: 6 passed, 67 deselected
-変異の後: E           AssertionError: 書いた: None ... assert (0 != 0)（assert で落ちた）
