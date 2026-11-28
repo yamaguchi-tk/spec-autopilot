@@ -1,0 +1,55 @@
+{
+  "phase": "building",
+  "slug": "plugin-update-procedure",
+  "created_at": 1795822179.047691,
+  "existing": true,
+  "start": "aff73f4d514344093a38b34dae36343f3bffc4bd",
+  "last_active_at": 1795822854.106045,
+  "dispatches": [
+    {
+      "base": "aff73f4d514344093a38b34dae36343f3bffc4bd",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795822372.909528,
+      "session": "48306b82-3bc4-4265-95f7-afc78133164a"
+    }
+  ],
+  "scope_sha256": "58676828b121b2deb615692cfe754906b3d906b304da66ada561e3e3af72d03b",
+  "approved_at": 1795822691.959761,
+  "approved_by": "OK（推奨のまま承認）",
+  "spec_sha256": "49e45bcc42b66a22a242b74aa06469a2114c4df3029128b701b78c9913c5ad26",
+  "budget_min": 30,
+  "post_budget_min": 30,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795822854.106026,
+      "sha": "4974e51c1901ab6a71e138bc5faecbd269e6365d"
+    }
+  ],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "handoffs": [
+    {
+      "tip": "4974e51c1901ab6a71e138bc5faecbd269e6365d",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795822698.492491
+    }
+  ],
+  "review_launches": [
+    1795822711.0851579
+  ]
+}

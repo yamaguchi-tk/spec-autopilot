@@ -4,7 +4,7 @@
   "created_at": 1795821439.061122,
   "existing": true,
   "start": "7bc23c1821287f08dbb9716097e51dd93e927e33",
-  "last_active_at": 1795828877.040302,
+  "last_active_at": 1795828970.606171,
   "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
   "queued_at": 1795822313.379647,
   "approved_by": "R1〜R5 の 2 本の子（子 1 を閉じ R3・版数を非目標、示す前の lint と R2 の除外を足す）の推奨のままで OK",
