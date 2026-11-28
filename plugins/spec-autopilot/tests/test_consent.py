@@ -124,6 +124,43 @@ def test_approve_asks_for_a_reply_when_only_the_mtime_changed_after_the_reply(re
     assert state(d)["phase"] == "discovery"
 
 
+B_TEXT = NUMBERED.replace("横 1 列がそろったとき", "横 2 列がそろったとき")
+
+
+def linted_a_then_b_shown(repo, slug):
+    """R4 の手順: lint(A) → 照合役の ng か人の直しの指示で B に直す → 示し直す前に lint(B) → 人の発言。"""
+    d = init_spec(repo, slug)
+    numbered_spec(repo, d)
+    lint_ok(repo, d)
+    (d / "spec.md").write_text(B_TEXT, encoding="utf-8")
+    lint_ok(repo, d)
+    user_says(repo)
+    time.sleep(0.02)
+    return d
+
+
+def test_approve_passes_a_renumber_of_the_content_linted_again_before_it_was_shown(repo):
+    d = linted_a_then_b_shown(repo, "relint")
+    renumber(repo, d, B_TEXT)
+    r = approve(repo, d)
+    assert r.returncode == 0, out(r)
+    assert state(d)["phase"] == "building"
+
+
+def test_approve_refuses_going_back_to_the_first_linted_content_after_the_relinted_one_was_shown(repo):
+    for slug, renumbered in (("back", False), ("back-renumbered", True)):  # A そのまま・連番だけ違う A'
+        d = linted_a_then_b_shown(repo, slug)
+        if renumbered:
+            renumber(repo, d)
+        else:
+            (d / "spec.md").write_text(NUMBERED, encoding="utf-8")
+        r = approve(repo, d)
+        assert r.returncode != 0 and "人の発言が記録されていない" in out(r), slug
+        assert state(d)["phase"] == "discovery"
+        if renumbered:
+            (repo / NEW).rename(repo / OLD)
+
+
 def test_approve_asks_for_a_reply_when_the_content_is_fixed_and_linted_again_after_the_reply(repo):
     d = init_spec(repo)
     numbered_spec(repo, d)
