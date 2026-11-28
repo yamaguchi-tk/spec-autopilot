@@ -1,0 +1,16 @@
+- commit: ed0d5fe
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --base 7f28362
+前: 関数 330・CC の平均 7.43・目安を超えた関数 ccn 70・nloc 4・nesting 1・params 5・循環の組 6・重複の塊 2（0.89%）
+後: 関数 330・CC の平均 7.43・目安を超えた関数 ccn 70・nloc 4・nesting 1・params 5・循環の組 3・重複の塊 2（0.89%）
+
+## 悪化（0）
+- なし
+
+## 改善（1）
+- 循環の組が 6 → 3
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py .autopilot-qa/base/plugins/spec-autopilot/scripts --json   （git archive 7f28362 の写し）
+before cycles=[['autopilot.py', 'light.py', 'lineup.py', 'overnight.py']]
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --json
+after cycles=[['autopilot.py', 'lineup.py', 'overnight.py']]
+$ python3 .autopilot-qa/check.py
+R1 pass

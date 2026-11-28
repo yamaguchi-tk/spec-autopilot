@@ -1,0 +1,31 @@
+- commit: ed0d5fe
+$ python3 -m pytest <spec の回帰テストの 18 ファイル> -q -n auto
+1219 passed in 204.86s (0:03:24)
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --base 7f28362 --json  (exit 0)
+{"worsened": [], "improved": ["循環の組が 6 → 3"], "moved_only": false}
+除いた値: autopilot.py の LCOM4 8 → 8、fan-out 18 → 18（light.py: fan-out 3 → 3・LCOM4 1 → 1、light_rules.py: fan-out 2・LCOM4 1）
+$ python3 .autopilot-qa/check.py   （git archive 7f28362 の plugin の写しと tip の plugin で、同じ手順の spec に light.py approve と CLI の check・lint・done を一時の SPEC_AUTOPILOT_HOME で回し、終了コード・stdout・stderr の全文を、パス・sha・時刻を伏せて突き合わせた）
+[scn_light_new_protected] light approve: base rc=0 tip rc=0 same | ['approved（軽量フロー）: 予算 <T>']
+[scn_light_new_protected] check --stage pr: base rc=1 tip rc=1 same | ['ERROR: 保護された path に触れた: terraform/main.tf。軽量フローでは進めない。…']
+[scn_light_new_protected] check: base rc=1 tip rc=1 same
+[scn_light_new_protected] lint: base rc=0 tip rc=0 same | ['lint: OK']
+[scn_light_new_protected] done: base rc=1 tip rc=1 same
+[scn_light_new_protected] check after done: base rc=1 tip rc=1 same
+[scn_light_existing_claude] light approve: base rc=0 tip rc=0 same
+[scn_light_existing_claude] check --stage pr: base rc=1 tip rc=1 same | ['ERROR: 保護された path に触れた: CLAUDE.md。…']
+[scn_light_existing_claude] check: base rc=1 tip rc=1 same
+[scn_light_existing_claude] lint: base rc=1 tip rc=1 same
+[scn_light_existing_claude] done: base rc=1 tip rc=1 same
+[scn_light_existing_claude] check after done: base rc=1 tip rc=1 same
+[scn_light_clean] light approve: base rc=0 tip rc=0 same
+[scn_light_clean] check --stage pr / check / lint / done / check after done: base rc=0 tip rc=0 same | ['check: OK']
+[scn_light_refusals] light approve (protected before): base rc=1 tip rc=1 same | ['保護された path に承認の前から当たっている: docs/guardrails.md。…']
+[scn_light_refusals] light approve (deploy command): base rc=1 tip rc=1 same | ['ERROR: 軽量フローでは `- デプロイの起動:` は「マージで自動」か「なし（マージした commit で QA）」か空だけにする…']
+[scn_light_refusals] lint (deploy command): base rc=0 tip rc=0 same
+[scn_light_refusals] light approve (free text in scope): base rc=1 tip rc=1 same
+[scn_light_bad_config] light approve (invisible char config): base rc=1 tip rc=1 same | ['保護された path を確かめられない（起点の設定の 1 行目に表示できない文字がある）ので承認しない']
+[scn_agreed] approve: base rc=0 tip rc=0 same | ['approved: 予算 <T>。ここから自走する']
+[scn_agreed] check --stage pr / check / lint / done / check after done: base rc=0 tip rc=0 same | ['check: OK']
+R4 pass
+$ git apply .autopilot-qa/mut-R4-1.patch（check の light_errors(d, s) を [] にする）→ python3 -m pytest plugins/spec-autopilot/tests/test_light.py::test_check_stops_on_a_default_protected_path plugins/spec-autopilot/tests/test_light.py::test_check_stops_on_a_staged_agent_rule_file -q → git apply -R
+変異の前: 2 passed / 変異の後: 2 failed（AssertionError: assert 0 != 0、stdout='check: OK'）/ 戻した後 git diff --quiet HEAD -- plugins が通った

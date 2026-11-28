@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "cycle-goal",
   "created_at": 1795862487.713616,
   "existing": true,
   "start": "44cbae8add8147f8b407abef1503f1d5587bffa2",
-  "last_active_at": 1795865048.403038,
+  "last_active_at": 1795865788.217254,
   "consent": {
     "sha256": "d30157c4a3e837af422dbe6a0ba085c218e66d8a7ead93ec87f5eed8f5e635e6",
     "full": "d30157c4a3e837af422dbe6a0ba085c218e66d8a7ead93ec87f5eed8f5e635e6",
@@ -95,5 +95,22 @@
   "review_launches": [
     1795863352.637082,
     1795864507.363392
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 133,
+      "at": 1795865787.600273,
+      "sha": "b264566990fbf8b8a95ee2966d39df37bb6380e6",
+      "head": "31507138ba1f820b86687db586b349c4ebd2d88f"
+    }
+  ],
+  "merged_at": 1795865787.600279,
+  "paused_at_merge": 0.0,
+  "done_at": 1795865788.066058,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }

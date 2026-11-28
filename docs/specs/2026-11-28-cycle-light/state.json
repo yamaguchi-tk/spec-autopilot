@@ -1,0 +1,65 @@
+{
+  "phase": "building",
+  "slug": "cycle-light",
+  "created_at": 1795867707.840078,
+  "existing": true,
+  "start": "6c8d1f6d68f68345bc9746be989e3ccf02d7a610",
+  "last_active_at": 1795869356.474934,
+  "consent": {
+    "sha256": "e83f65dbd446072a46db3d12f7f9ee88ba405edeb0dfaddceb409ae61760844f",
+    "full": "e83f65dbd446072a46db3d12f7f9ee88ba405edeb0dfaddceb409ae61760844f",
+    "at": 1795867896.460743,
+    "mtime": 1795867894.566271
+  },
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795868166.739985,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役「承認: 可」、検証役「反証なし（確かめられない 0 / 15）」",
+  "spec_sha256": "f7ecc77395c1ca1b3910357ea6aae032780e9646853fb53cc926e1e2e04fc253",
+  "after": null,
+  "approved_at": 1795868186.5231302,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795869356.4749188,
+      "sha": "ed0d5fed39a5532652d3eafaf947f2cfb0b1f0c7"
+    }
+  ],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "7f28362bd55e3b5697223c722acc5826f2b5250f",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795868196.630851,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "ed0d5fed39a5532652d3eafaf947f2cfb0b1f0c7",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795868619.506743
+    }
+  ],
+  "review_launches": [
+    1795868627.53041
+  ]
+}

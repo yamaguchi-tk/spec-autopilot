@@ -106,8 +106,8 @@ def test_runlog_has_no_autopilot_reference_or_sys_modules():
         assert not (isinstance(n, ast.Attribute) and n.attr == "modules" and isinstance(n.value, ast.Name) and n.value.id == "sys"), f"runlog.py:{n.lineno}"
 
 
-def test_import_cycle_is_exactly_the_four_modules_without_goal():
-    assert in_cycle() == {"autopilot", "light", "lineup", "overnight"}
+def test_import_cycle_is_exactly_autopilot_lineup_overnight_without_goal_and_light():
+    assert in_cycle() == {"autopilot", "lineup", "overnight"}
 
 
 def test_stages_repo_root_and_git_lines_call_git_through_one_function():
@@ -192,3 +192,44 @@ def test_moved_names_are_defined_in_state_out_session_and_not_redefined_in_autop
     for n in tree("autopilot.py").body:
         defined = {n.name} if isinstance(n, ast.FunctionDef) else {t.id for t in getattr(n, "targets", []) if isinstance(t, ast.Name)}
         assert not defined & all_names, defined
+
+
+def test_light_is_outside_the_import_cycle():
+    assert "light" not in in_cycle()
+    assert "light_rules" not in in_cycle()
+
+
+def test_autopilot_does_not_import_light_even_inside_functions_or_by_name():
+    t = tree("autopilot.py")
+    assert not {"light", "importlib"} & imported(t)
+    dynamic = [n for n in ast.walk(t) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "__import__"
+               and not (n.args and isinstance(n.args[0], ast.Constant))]
+    assert [ast.unparse(n) for n in dynamic] == ["__import__(a.cmd)"]  # 入口の dispatch だけ（後の子で扱う）
+    for n in ast.walk(t):
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            assert n.value != "light", f"autopilot.py:{n.lineno}"
+
+
+def test_light_rules_imports_only_stages_and_deploy_among_scripts():
+    t = tree("light_rules.py")
+    assert imported(t) & MODULES == {"stages", "deploy"}
+    assert not {"autopilot", "importlib", "<dynamic>"} & imported(t)
+    for n in ast.walk(t):
+        assert not (isinstance(n, ast.Name) and n.id in ("autopilot", "ap")), f"light_rules.py:{n.lineno}"
+        assert not (isinstance(n, ast.Attribute) and n.attr == "modules" and isinstance(n.value, ast.Name) and n.value.id == "sys"), f"light_rules.py:{n.lineno}"
+
+
+def test_light_rules_defines_the_moved_judgements_and_light_imports_them():
+    names = {"DEFAULT_PROTECTED", "CONFIG", "EMPTY_TREE", "config_lines", "git", "patterns", "pathspecs", "changed", "hits", "KEYS", "command_errors", "errors"}
+    defined = {n.name for n in tree("light_rules.py").body if isinstance(n, ast.FunctionDef)} | {
+        t.id for n in tree("light_rules.py").body if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)}
+    assert names <= defined
+    light = tree("light.py")
+    assert {"EMPTY_TREE", "command_errors", "hits"} <= {a.name for n in light.body if isinstance(n, ast.ImportFrom) and n.module == "light_rules" for a in n.names}
+    for n in light.body:  # 移した名前を light.py の中で定義し直さない
+        got = {n.name} if isinstance(n, ast.FunctionDef) else {t.id for t in getattr(n, "targets", []) if isinstance(t, ast.Name)}
+        assert not got & names, got
+
+
+def test_autopilot_check_calls_light_rules_errors():
+    assert "light_rules" in imported(tree("autopilot.py"))

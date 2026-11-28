@@ -1,0 +1,12 @@
+- commit: ed0d5fe
+$ grep -nE 'import light|__import__\("light"\)|\blight\.' plugins/spec-autopilot/scripts/autopilot.py
+49:from light_rules import errors as light_errors  # noqa: E402（light.py の判定を下の層に出した。light.py は autopilot.py の上に立つ入口）
+（当たりはコメントの中の語 light.py の 1 行だけで、コードの light の import・呼び出しは 0 件）
+$ grep -n 'light' plugins/spec-autopilot/scripts/autopilot.py
+49:from light_rules import errors as light_errors  # noqa: E402（light.py の判定を下の層に出した。light.py は autopilot.py の上に立つ入口）
+666:    return errors + (deploy.scope_errors(d, s) if stage != "pr" else []) + light_errors(d, s), notes
+$ python3 .autopilot-qa/check.py   （autopilot.py を ast・tokenize で読む: light・importlib の import、定数 "light" の __import__、a.cmd 以外の動的 __import__、__name__ 以外の sys.modules[...]、名前の token の light、文字列の定数 "light"）
+autopilot.py: bad=[] name_tokens_light=[] const_light=[]
+R2 pass
+$ python3 -m pytest plugins/spec-autopilot/tests/test_import_layers.py -q   （回帰テストの一部として回した）
+（回帰テスト 18 ファイル: 1219 passed）
