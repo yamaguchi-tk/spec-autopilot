@@ -351,7 +351,7 @@ def test_show_reports_an_unreadable_session_file_and_keeps_the_good_layers(home)
     r = ladder("show", session="sess-1")
     assert r.returncode == 0
     assert "セッションの上書きの誤り" in r.stdout and "setup --session --reset" in r.stdout
-    assert f"{ADVISOR} / 既定 fable-medium / 手元の設定 なし / このセッション opus-high" in r.stdout.splitlines()
+    assert f"{ADVISOR} / 既定 fable-medium / 手元の設定 なし / このセッション 使わない（誤りがある）" in r.stdout.splitlines()
 
 
 def test_a_broken_session_file_is_kept_aside_each_time_when_setup_session_writes(home):
@@ -443,3 +443,36 @@ def test_session_start_with_a_payload_id_that_is_not_a_session_id_uses_the_defau
     text = start_text(tmp_path, session=sid)
     assert "fable-advisor → spec-autopilot:fable-advisor-high" in text and "fable-advisor-opus" not in text
     assert "読めない" not in text
+
+
+def test_setup_session_with_a_file_in_place_of_the_sessions_dir_fails_without_a_traceback(home):
+    home.mkdir(parents=True)
+    (home / "sessions").write_text("x", encoding="utf-8")
+    r = ladder("setup", "--session", "--advisor", "opus-high", session="sess-1")
+    assert r.returncode != 0
+    assert "Traceback" not in both(r)
+    assert str(home / "sessions") in both(r)
+    assert (home / "sessions").read_text(encoding="utf-8") == "x"
+
+
+def test_show_does_not_list_the_rung_of_a_session_override_that_has_an_error(home):
+    sessions = home / "sessions"
+    sessions.mkdir(parents=True)
+    (sessions / "sess-1.models.md").write_text("- 相談: opus-high\n- 検証: haiku\n", encoding="utf-8")
+    r = ladder("show", session="sess-1")
+    assert r.returncode == 0, both(r)
+    advisor = next(l for l in r.stdout.splitlines() if l.startswith("相談:"))
+    assert "このセッション opus-high" not in advisor
+    assert "このセッション 使わない（誤りがある）" in advisor
+
+
+def test_setup_session_into_a_sessions_dir_it_cannot_write_fails_without_a_traceback(home):
+    assert ladder("setup", "--session", "--advisor", "opus-high", session="sess-1").returncode == 0
+    os.chmod(home / "sessions", 0o500)
+    try:
+        r = ladder("setup", "--session", "--checker", "fable-high", session="sess-1")
+    finally:
+        os.chmod(home / "sessions", 0o700)
+    assert r.returncode != 0
+    assert "Traceback" not in both(r)
+    assert sfile(home).read_text(encoding="utf-8") == "- 相談: opus-high\n"
