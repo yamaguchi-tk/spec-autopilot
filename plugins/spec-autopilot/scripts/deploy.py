@@ -6,9 +6,9 @@ import subprocess
 import time
 from pathlib import Path
 
-import autopilot
 import carry
 import stages
+from stages import BUDGET, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, TEST_PATH, git_lines, repo_root, section
 
 SCOPE_SECTION = "自走の範囲"
 FULL, MERGE, PR = "マージ・デプロイ・QA まで", "マージまで", "PR まで"
@@ -33,7 +33,7 @@ PENDING = ("pending", "queued", "in_progress", "waiting", "requested", "expected
 FLAKE = re.compile(r"Error acquiring the state lock|PreconditionFailed|The runner has received a shutdown signal"
                    r"|lost communication with the server|The hosted runner encountered an error")
 RUN_ID = re.compile(r"/actions/runs/(\d+)")
-MAX_DEPLOY_FIXES = autopilot.MAX_REWORKS  # デプロイの失敗を直す PR は作り直しと同じ回数まで。3 回目の失敗で積む（references/after-pr.md の 3）
+MAX_DEPLOY_FIXES = MAX_REWORKS  # デプロイの失敗を直す PR は作り直しと同じ回数まで。3 回目の失敗で積む（references/after-pr.md の 3）
 DEFAULT_TIMEOUT = {"ci": 90, "deploy": 60, "review": 600}
 GRACE_SEC = 300  # Stop hook が await を生きているとみなす、上限の後の余裕（最後の poll と後始末の分）
 AWAIT_FILE, AWAITS_LOG = "await.json", "awaits.jsonl"
@@ -43,17 +43,17 @@ AWAIT_FILE, AWAITS_LOG = "await.json", "awaits.jsonl"
 
 def scope_rows(text):
     """自走の範囲の節の行を {キー: 値} で返す。節が無ければ None。"""
-    body = autopilot.section(text, SCOPE_SECTION)
+    body = section(text, SCOPE_SECTION)
     if body is None:
         return None
-    return dict(SCOPE_ROW.findall(autopilot.COMMENT_BLOCK.sub("", body)))
+    return dict(SCOPE_ROW.findall(COMMENT_BLOCK.sub("", body)))
 
 
 def budgets(text):
     """(予算, マージ後の予算) を、制約の節からコメントを除いて読む（lint・approve・preflight の読み手はこれだけ）。
     予算が無ければ (None, None)。マージ後の予算が無ければ予算と同じ。"""
-    body = autopilot.COMMENT_BLOCK.sub("", autopilot.section(text, "制約") or "")
-    m, post = autopilot.BUDGET.search(body), POST_BUDGET.search(body)
+    body = COMMENT_BLOCK.sub("", section(text, "制約") or "")
+    m, post = BUDGET.search(body), POST_BUDGET.search(body)
     if not m:
         return None, None
     return int(m.group(1)), int(post.group(1)) if post else int(m.group(1))
@@ -106,7 +106,7 @@ def scope_lint(text, root=None):
     if rows is None:
         return [f"spec.md に「## {SCOPE_SECTION}」の節が無い（{'・'.join(SCOPE_KEYS)} の 6 行）"], []
     errors = [f"自走の範囲に `- {k}:` の行が無い" for k in SCOPE_KEYS if k not in rows]
-    keys = [k for k, _ in SCOPE_ROW.findall(autopilot.COMMENT_BLOCK.sub("", autopilot.section(text, SCOPE_SECTION)))]
+    keys = [k for k, _ in SCOPE_ROW.findall(COMMENT_BLOCK.sub("", section(text, SCOPE_SECTION)))]
     errors += [f"自走の範囲に `- {k}:` が 2 本以上ある（1 本にする）" for k in dict.fromkeys(keys) if keys.count(k) > 1]
     scope = rows.get("範囲")
     if scope is not None and scope not in SCOPES:
@@ -124,11 +124,11 @@ def scope_lint(text, root=None):
     if start == NO_DEPLOY and rows.get("デプロイの確かめ"):
         errors.append(f"デプロイの起動が「{NO_DEPLOY}」なので `- デプロイの確かめ:` は空にする（待つデプロイが無い）")
     warnings = []
-    deployed = stages.deployed_reqs(autopilot, text)
+    deployed = stages.deployed_reqs(text)
     if scope in (PR, MERGE):  # 夜の間に届かないデプロイ後の要件は、承認のときに人が見る
         errors += [f"範囲が「{scope}」なので、デプロイ後の {r} は夜の間に確かめられない。"
                    f"`- unverified の承認: {r}（<理由>）` を書くか、範囲を「{FULL}」にする"
-                   for r in deployed if not stages.approved(autopilot, text, r)]
+                   for r in deployed if not stages.approved(text, r)]
     if scope == FULL:  # デプロイ後の要件が無ければ、マージ後の QA のループを通らない。マージで起きるデプロイの失敗は拾うので、起動と確かめは要る
         need = REQUIRED_FOR_FULL if deployed else ("QA の書き込み先", "デプロイの起動") + (
             () if start and ROLLBACK_CMD.match(start) else ("デプロイの確かめ",))
@@ -164,10 +164,10 @@ def contains(root, ancestor, tip):
 
 def only_tests_and_docs(root, a, b):
     try:
-        changed = autopilot.git_lines(root, "diff", "--name-only", f"{a}..{b}")
+        changed = git_lines(root, "diff", "--name-only", f"{a}..{b}")
     except RuntimeError:
         return False
-    return all(autopilot.TEST_PATH.search(f) or autopilot.NOT_CODE.search(f) for f in changed)
+    return all(TEST_PATH.search(f) or NOT_CODE.search(f) for f in changed)
 
 
 def scope_errors(d, s):
@@ -175,13 +175,13 @@ def scope_errors(d, s):
     scope = scope_of(d)
     if scope not in (FULL, MERGE):
         return []
-    root, parked = autopilot.repo_root(d), exempt_kinds(d, s)
+    root, parked = repo_root(d), exempt_kinds(d, s)
     merges = s.get("merges") or []
     errors = production_errors(d, s)
     if "merge" not in parked and not (merges and (contains(root, head(root), merges[-1].get("head")) or carry.holds_head(root, s, merges[-1].get("head")))):
         errors.append("範囲がマージを含むのに、今の HEAD を含むマージを確かめていない（references/after-pr.md。"
                       "マージしたら overnight.py merged <dir> --pr <n>、できないなら overnight.py park --kind merge）")
-    late = stages.deployed_reqs(autopilot, (d / "spec.md").read_text(encoding="utf-8"))
+    late = stages.deployed_reqs((d / "spec.md").read_text(encoding="utf-8"))
     if no_deploy(d):  # 待つデプロイが無い。マージの後の QA の記録は production_errors（smoke）と stage_errors（証拠の commit）が見る
         return errors
     smoke = [] if not deploy_stage(d) or late or deploy_smoke(d, s) != (True, None) else [
@@ -229,7 +229,7 @@ def deploy_stage(d):
     text = (d / "spec.md").read_text(encoding="utf-8")
     if scope_of(d) != FULL or no_deploy(d):
         return False
-    return bool(stages.deployed_reqs(autopilot, text)) or not ROLLBACK_CMD.match((scope_rows(text) or {}).get("デプロイの起動") or "")
+    return bool(stages.deployed_reqs(text)) or not ROLLBACK_CMD.match((scope_rows(text) or {}).get("デプロイの起動") or "")
 
 
 def deploy_parked(s):
@@ -303,10 +303,10 @@ def stage_errors(d, s, rows, stage="all"):
     parked = {p.get("req") for p in parked_ops(d, s) if p.get("req")}
     deployed = qa_origins(d, s)
     merges = s.get("merges") or []
-    errors = stages.check(autopilot, d, rows, parked, max(deployed) if deployed else None, stage,
+    errors = stages.check(d, rows, parked, max(deployed) if deployed else None, stage,
                           merges[-1].get("sha") if merges else None, s.get("reviews") or [], s.get("approved_at"))
     if going_back(s):
-        late = stages.deployed_reqs(autopilot, (d / "spec.md").read_text(encoding="utf-8"))
+        late = stages.deployed_reqs((d / "spec.md").read_text(encoding="utf-8"))
         errors += [f"{rid} は段がデプロイ後で、本番は spec のマージを戻した後なので pass にしない（unverified にして park で積む）"
                    for rid, (result, _) in rows.items() if result == "pass" and rid in late]
     return errors
@@ -335,7 +335,7 @@ def production(d, s):
       マージは成功したデプロイと同じに扱い（次の smoke の pass で確かめたにする）、壊れたままも壊れた後のマージで抜ける。
     確かめたは、最後に中身を変えた記録が戻し（going_back）なら戻して確かめた。この夜に何も無ければ None。"""
     text = (d / "spec.md").read_text(encoding="utf-8")
-    if scope_of(d) != FULL or not stages.deployed_reqs(autopilot, text):
+    if scope_of(d) != FULL or not stages.deployed_reqs(text):
         return None
     merges = s.get("merges") or []
     at_of = {m.get("sha"): float(m.get("at", 0)) for m in merges if m.get("sha")}
@@ -408,7 +408,7 @@ def production_errors(d, s, done=True):
             "戻しても壊れたままなら block --no-rollback で人に示す）"]
     late = stage_failures(d, s)
     if late:
-        return [f"デプロイ後の {'、'.join(late)} が作り直しを {autopilot.MAX_REWORKS} 回しても通らないか、マージ後の予算を過ぎた。"
+        return [f"デプロイ後の {'、'.join(late)} が作り直しを {MAX_REWORKS} 回しても通らないか、マージ後の予算を過ぎた。"
                 f"直しを続けずにロールバック: {rollback}"]
     if prod == UNKNOWN:
         elapsed, budget, label = budget_view(d, s)
@@ -428,13 +428,13 @@ def stage_failures(d, s):
     rows = {}
     qa = d / "qa.md"
     for line in (qa.read_text(encoding="utf-8") if qa.exists() else "").splitlines():
-        m = autopilot.QA_ROW.match(line)
+        m = QA_ROW.match(line)
         if m:
             rows[m.group(1)] = m.group(2)
     elapsed, budget, label = budget_view(d, s)
     over = label == "マージ後" and elapsed > budget
-    return [r for r in stages.deployed_reqs(autopilot, text) if rows.get(r) == "fail"
-            and (over or len((s.get("reworks") or {}).get(r, [])) >= autopilot.MAX_REWORKS)]
+    return [r for r in stages.deployed_reqs(text) if rows.get(r) == "fail"
+            and (over or len((s.get("reworks") or {}).get(r, [])) >= MAX_REWORKS)]
 
 
 def rollback_error(root, s, head, base):

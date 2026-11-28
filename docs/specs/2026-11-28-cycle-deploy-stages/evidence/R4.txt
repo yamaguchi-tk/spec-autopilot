@@ -1,0 +1,34 @@
+- commit: 8942d9c
+
+$ git archive df338ab plugins/spec-autopilot | tar -x -C .autopilot-qa/cds-base
+$ python3 .autopilot-qa/cds-check.py   # 着手の commit と tip の autopilot.py で lint・check・check --stage pr・status を 4 本の spec（cycle-deploy-stages・refactor-playbook・metrics-refactor-goal・split-modules）に回し、終了コード・stdout・stderr を突き合わせた
+R4 pass (CLI 16 本の終了コード・stdout・stderr が着手の commit と同じ)
+R4 pass (autopilot.<名前> の利用 46 件、8 名前がすべて stages の物と同じ)
+R2 pass (deploy.py・stages.py の文字列・コメントの外に autopilot・importlib・sys.modules・__import__ が 0 件)
+(exit=0)
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py lint docs/specs/2026-11-28-cycle-deploy-stages
+NOTE: 数えた大きさ M（変える 3・呼び出し元 4・別の実装 0）
+NOTE: macOS の更新の自動インストールが有効（AutomaticallyInstallMacOSUpdates = 1）。夜に更新が入ると再起動して自走が止まる。夜通し回す夜は、システム設定のソフトウェアアップデートで自動インストールを切る
+lint: OK
+
+$ python3 plugins/spec-autopilot/scripts/autopilot.py check docs/specs/2026-11-28-refactor-playbook
+ERROR: 最後のレビューの後に、テスト・文書の外のコードが変わった（06de29e7..8942d9ca）。overnight.py handoff を通して評価役を回し直す
+ERROR: 範囲がマージを含むのに、今の HEAD を含むマージを確かめていない（references/after-pr.md。マージしたら overnight.py merged <dir> --pr <n>、できないなら overnight.py park --kind merge）
+
+$ uv run --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base df338ab
+## 悪化（0）
+- なし
+## 改善（3）
+- autopilot.py:545 lint の nloc が 65 → 64
+- stages.py:213 check の params が 9 → 8
+- 循環の組が 28 → 15
+（「複雑さは変わっていない（移しただけ）」の行は出ない。--json の diff.moved_only は False。exit=0）
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_merge_qa.py plugins/spec-autopilot/tests/test_deploy_failure.py plugins/spec-autopilot/tests/test_rollback.py plugins/spec-autopilot/tests/test_carry.py plugins/spec-autopilot/tests/test_light.py plugins/spec-autopilot/tests/test_watch.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_import_layers.py -q -n auto
+925 passed in 134.23s (0:02:14)
+（テストの全量は人の指示で回していない。CI が回す）
+
+$ git diff --stat df338ab..8942d9c -- plugins/spec-autopilot/tests/
+ plugins/spec-autopilot/tests/test_import_layers.py | 93 ++++++++++++++++++++++
+（既存のテストは変えていない。assert の削除・skip の追加は無い）

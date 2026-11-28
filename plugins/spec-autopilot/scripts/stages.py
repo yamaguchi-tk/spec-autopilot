@@ -11,6 +11,7 @@
 """
 import re
 import subprocess
+from pathlib import Path
 
 import carry
 
@@ -24,10 +25,68 @@ READ_CAP = 256 * 1024  # Stop hook の時間の上限に収めるため、証拠
 REASON_ANY = re.compile(r"^- (手元でできない理由|代役の理由|unverified の承認):.*$", re.M)
 NEEDS = {DEPLOYED: "手元でできない理由", STAND_IN: "代役の理由"}
 
+# autopilot.py と deploy.py が借りる spec の文の読み取りと repo の場所（下の層に置き、autopilot.py に依らない）
+TEST_PATH = re.compile(r"(^|/)(tests?|__tests__)/|(^|/)test_[^/]*$|_test\.[^/]+$|\.(test|spec)\.[^/]+$")
+NOT_CODE = re.compile(r"(^|/)docs/|^\.autopilot-qa/")  # テストと docs/ の下は数えない。.md は docs/ の外なら数える（skill・agent など .md が本体の repo があるため）
+REQ = re.compile(r"^- (R\d+):\s*(\S.*)$", re.M)
+BUDGET = re.compile(r"^- 予算:\s*(\d+)\s*分\s*$", re.M)
+COMMENT = re.compile(r"^\s*<!--.*-->\s*$")
+COMMENT_BLOCK = re.compile(r"<!--.*?-->", re.S)
+QA_ROW = re.compile(r"^\|\s*(R\d+)\s*\|\s*(pass|fail|unverified)\s*\|(.*)\|\s*$")  # 証拠の欄は 1 つの (.*) にし、前後の空白は check で除く（空白の分け方で後戻りしない）
+MAX_REWORKS = 2  # references/dead-end.md の段: 作り直しは要件ごとに 2 回
 
-def plan(autopilot, text):
+
+def repo_root(start):
+    try:
+        out = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=start, capture_output=True, text=True)
+    except OSError:
+        return Path(start)
+    return Path(out.stdout.strip()) if out.returncode == 0 else Path(start)
+
+
+def section(text, name):
+    m = re.search(rf"^## {re.escape(name)}\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
+    return m.group(1) if m else None
+
+
+def classify(text, kinds):
+    """全行を、空行・1 行のコメント・kinds（名前→正規表現）のどれか 1 つに分ける。
+    (受けた行の (名前, match) の一覧, 分けられない行の一覧) を返す。読み飛ばしは kinds の宣言だけで決まる。"""
+    kept, bad = [], []
+    for line in text.splitlines():
+        if not line.strip() or COMMENT.match(line):
+            continue
+        for name, pattern in kinds:
+            m = pattern.match(line)
+            if m:
+                kept.append((name, m))
+                break
+        else:
+            bad.append(line.strip())
+    return kept, bad
+
+
+def requirement_lines(text):
+    """要件の節を読み、(要件の (id, 本文) の一覧, 読めない行の一覧) を返す。"""
+    kept, bad = classify(section(text, "要件") or "", [("req", REQ)])
+    return [m.groups() for _, m in kept], bad
+
+
+def requirements(text):
+    return dict(requirement_lines(text)[0])
+
+
+def git_lines(root, *args):
+    """git の出力を NUL 区切りで読む。失敗したら例外を投げる（数えられないまま通さない）。"""
+    out = subprocess.run(["git", "-c", "core.quotePath=false", args[0], "-z", *args[1:]], cwd=root, capture_output=True, text=True)
+    if out.returncode not in (0, 1):
+        raise RuntimeError(out.stderr.strip() or f"git {args[0]} が {out.returncode} で終わった")
+    return [f for f in out.stdout.split("\0") if f]
+
+
+def plan(text):
     """({要件: 段}, {(理由の種類, 要件)}, 形の読めない理由の行)。段の列が無い旧い表は {}。"""
-    body = autopilot.COMMENT_BLOCK.sub("", autopilot.section(text, "QA の方向性") or "")
+    body = COMMENT_BLOCK.sub("", section(text, "QA の方向性") or "")
     header = next((line for line in body.splitlines() if line.startswith("|")), "")
     stages = dict(STAGE_ROW.findall(body)) if re.match(r"^\|\s*要件\s*\|\s*段\s*\|", header) else {}
     reasons = {(m.group(1), m.group(2)) for m in REASON.finditer(body)}
@@ -35,9 +94,9 @@ def plan(autopilot, text):
     return stages, reasons, bad
 
 
-def lint(autopilot, text, reqs):
+def lint(text, reqs):
     errors = []
-    stages, reasons, bad = plan(autopilot, text)
+    stages, reasons, bad = plan(text)
     if not stages:
         return ["「## QA の方向性」の表に段の列が無い（`| 要件 | 段 | 確かめ方 | 合格基準 |`。段は " + "・".join(STAGES) + "）"]
     for rid in reqs:
@@ -46,7 +105,7 @@ def lint(autopilot, text, reqs):
             errors.append(f"{rid} の段が読めない（{'・'.join(STAGES)} のどれか。今は「{stage}」）")
         if stage in NEEDS and (NEEDS[stage], rid) not in reasons:
             errors.append(f"{rid} は段が{stage}なので、QA の方向性に `- {NEEDS[stage]}: {rid}（<理由>）` を書く")
-    body = autopilot.COMMENT_BLOCK.sub("", autopilot.section(text, "QA の方向性") or "")
+    body = COMMENT_BLOCK.sub("", section(text, "QA の方向性") or "")
     errors += [f"{rid} の合格基準が unverified なので、QA の方向性に `- unverified の承認: {rid}（<理由>）` を書く"
                for rid, criteria in QA_ROW4.findall(body) if "unverified（" in criteria and ("unverified の承認", rid) not in reasons]
     errors += [f"理由の行の形が読めない（`- <種類>: R<n>（<理由>）`）: {line}" for line in bad]
@@ -54,10 +113,10 @@ def lint(autopilot, text, reqs):
     return errors
 
 
-def deployed_reqs(autopilot, text):
+def deployed_reqs(text):
     """段がデプロイ後の要件。段の列が無い旧い spec は、全部をデプロイ後として扱う（マージ後の QA を省かない）。"""
-    stages, _, _ = plan(autopilot, text)
-    reqs = autopilot.requirements(text)
+    stages, _, _ = plan(text)
+    reqs = requirements(text)
     return [r for r in reqs if stages.get(r, DEPLOYED) == DEPLOYED] if stages else list(reqs)
 
 
@@ -89,8 +148,8 @@ def head_rows(text):
     return rows
 
 
-def approved(autopilot, text, rid):
-    return ("unverified の承認", rid) in plan(autopilot, text)[1]
+def approved(text, rid):
+    return ("unverified の承認", rid) in plan(text)[1]
 
 
 def declared_for(text, merge_sha):
@@ -151,16 +210,16 @@ def checked_in_review(text, mtime, rid, reviews, approved_at, root):
         return False
 
 
-def check(autopilot, d, rows, parked_reqs, deployed_at, stage="all", merge_sha=None, reviews=(), approved_at=0):
+def check(d, rows, parked_reqs, deployed_at, stage="all", merge_sha=None, reviews=(), approved_at=0):
     """qa.md の行（{要件: (結果, 証拠)}）に段ごとの要求を当てる。deployed_at は最後のマージの commit のデプロイが通った時刻か None。
     stage が pr（PR の前）なら、デプロイ後の要件はまだ確かめられないので unverified を通し、pass を落とす。
     段の列の無い旧い spec には当てない（承認したときの規則のまま）。"""
     text = (d / "spec.md").read_text(encoding="utf-8")
-    stages, reasons, _ = plan(autopilot, text)
+    stages, reasons, _ = plan(text)
     if not stages:
         return []
     errors = []
-    root = autopilot.repo_root(d)
+    root = repo_root(d)
     for rid, (result, _) in rows.items():
         stage_of = stages.get(rid)
         if stage_of == DEPLOYED and stage == "pr":
