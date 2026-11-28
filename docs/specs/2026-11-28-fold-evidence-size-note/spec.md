@@ -65,7 +65,7 @@
 ## QA の方向性
 | 要件 | 段 | 確かめ方 | 合格基準 |
 |---|---|---|---|
-| R1 | 手元で実物 | 着手の commit を前、tip を後にして、指標の前後の比べ方を回し、autopilot.py の fan-out と LCOM4 を読む | fan-out が 14、LCOM4 が 4 以下、悪化 0、「移しただけ」と出ない |
+| R1 | 手元で実物 | 着手の commit を前、tip を後にして、指標の前後の比べ方を回し、autopilot.py の fan-out と LCOM4 を読む | fan-out が 15、LCOM4 が 4 以下、悪化 0、「移しただけ」と出ない |
 | R2 | 手元で実物 | scripts の一覧を読み、autopilot.py を `__import__\("(evidence|size_note)"\)` と `sys.modules\[__name__\]` で grep する | 2 つのファイルが無く、`__import__` が 0 件、`sys.modules[__name__]` が premises と rootcause の 2 行だけ |
 | R3 | 手元で実物 | 回帰テストと足したテストを回し、着手の commit と tip の写しで、大きさが L の spec と M の spec に `check --stage pr` と `done` を一時の SPEC_AUTOPILOT_HOME で回し、証拠の欄の例を区切らせて突き合わせる。全量は PR の CI で回す | 回帰テストと足したテストが通り、出力（時刻を除く）と区切りの結果が同じで、マージの前に CI の全量が通る |
 
