@@ -1,10 +1,10 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "cycle-goal",
   "created_at": 1795862487.713616,
   "existing": true,
   "start": "44cbae8add8147f8b407abef1503f1d5587bffa2",
-  "last_active_at": 1795863018.469915,
+  "last_active_at": 1795863042.783526,
   "consent": {
     "sha256": "d30157c4a3e837af422dbe6a0ba085c218e66d8a7ead93ec87f5eed8f5e635e6",
     "full": "d30157c4a3e837af422dbe6a0ba085c218e66d8a7ead93ec87f5eed8f5e635e6",
@@ -12,9 +12,18 @@
     "mtime": 1795862764.4861934
   },
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795863018.466995,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役「承認: 可」、検証役「反証なし（確かめられない 0 / 13）」",
   "spec_sha256": "4d115991440a2bdee416b5d2bffd82dcb8f9dcbcbdf1de2a0b6932913851cb17",
-  "after": null
+  "after": null,
+  "approved_at": 1795863042.782573,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
