@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "role-model-setup-command",
   "created_at": 1795827528.082718,
   "existing": true,
   "start": "0de22ca9da1e4a8589dc174379985fa0412e1829",
-  "last_active_at": 1795853540.324994,
+  "last_active_at": 1795854003.975252,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795829366.854167,
   "approved_by": "OK（2 本承認）",
@@ -110,5 +110,22 @@
   "wait": null,
   "review_launches": [
     1795852952.474696
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 119,
+      "at": 1795853998.6043,
+      "sha": "5fb245d2c255e110d6d73992e19c9edb98221677",
+      "head": "f7b940cd783feb03a670985b6cd3e4e4252cc64a"
+    }
+  ],
+  "merged_at": 1795853998.6043031,
+  "paused_at_merge": 19969.472548246384,
+  "done_at": 1795854003.9551702,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
