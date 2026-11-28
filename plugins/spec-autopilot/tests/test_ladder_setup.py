@@ -361,7 +361,7 @@ def test_a_broken_session_file_is_kept_aside_each_time_when_setup_session_writes
     r = ladder("setup", "--session", "--impl", "fable", session="sess-1")
     assert r.returncode == 0 and "退避" in r.stderr
     assert [p.read_bytes() for p in (home / "sessions").glob("sess-1.models.md.bad-*")] == [content]
-    assert sfile(home).read_text(encoding="utf-8") == "- 実装: fable\n- 検証: opus-high\n"
+    assert sfile(home).read_text(encoding="utf-8") == "- 実装: fable\n"  # 誤りのあるセッションの上書きの読めた行は持ち越さない（show で使わないと出した段が後で効かない）
     sfile(home).write_bytes(content)
     ladder("setup", "--session", "--impl", "fable", session="sess-1")
     assert len(list((home / "sessions").glob("sess-1.models.md.bad-*"))) == 2
@@ -476,3 +476,48 @@ def test_setup_session_into_a_sessions_dir_it_cannot_write_fails_without_a_trace
     assert r.returncode != 0
     assert "Traceback" not in both(r)
     assert sfile(home).read_text(encoding="utf-8") == "- 相談: opus-high\n"
+
+
+def test_session_start_names_only_the_session_file_when_only_the_session_swaps(home, tmp_path):
+    ladder("setup", "--session", "--advisor", "opus-high", session="sess-1")
+    text = start_text(tmp_path)
+    assert "fable-advisor → spec-autopilot:fable-advisor-opus" in text
+    assert str(sfile(home)) in text and str(home / "models.md") not in text
+
+
+def test_setup_names_the_file_that_blocks_the_home_dir(tmp_path, monkeypatch):
+    blocker = tmp_path / "home"
+    blocker.write_text("x", encoding="utf-8")
+    monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(blocker))
+    r = ladder("setup", "--session", "--advisor", "opus-high", session="sess-1")
+    assert r.returncode != 0 and "Traceback" not in both(r)
+    assert f"{blocker} がファイル" in both(r)
+
+
+def test_show_marks_the_impl_and_review_rows_of_a_broken_models_md_as_not_copied_to_a_spec(home):
+    home.mkdir(parents=True)
+    (home / "models.md").write_text("- 実装: opus-medium\n- 相談: opus-high\n- 検証: haiku\n", encoding="utf-8")
+    r = ladder("show")
+    impl = next(l for l in r.stdout.splitlines() if l.startswith("実装:"))
+    advisor = next(l for l in r.stdout.splitlines() if l.startswith("相談:"))
+    assert "手元の設定 opus-medium（誤りがあるので spec に写さない）" in impl
+    assert "spec に写さない" not in advisor
+
+
+def test_session_start_does_not_name_the_session_file_when_only_the_default_swaps(home, tmp_path):
+    ladder("setup", "--advisor", "fable-high")
+    ladder("setup", "--session", "--impl", "fable", session="sess-1")
+    text = start_text(tmp_path)
+    assert "fable-advisor → spec-autopilot:fable-advisor-high" in text
+    assert str(home / "models.md") in text and str(sfile(home)) not in text
+
+
+def test_a_home_dir_named_sessions_keeps_the_readable_rows_of_a_broken_models_md(tmp_path, monkeypatch):
+    h = tmp_path / "sessions"
+    h.mkdir()
+    monkeypatch.setenv("SPEC_AUTOPILOT_HOME", str(h))
+    (h / "models.md").write_text("- 実装: opus-medium\n- 相談: haiku\n", encoding="utf-8")
+    r = ladder("setup", "--review", "fable")
+    assert r.returncode == 0, both(r)
+    assert (h / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: fable\n"
+    assert "読めた行だけで続ける" in r.stderr

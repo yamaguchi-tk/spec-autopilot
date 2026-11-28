@@ -60,5 +60,5 @@ exit=0
 実装・評価・相談・検証・照合が既定に戻った（セッションの上書きのファイル: <worktree>/.autopilot-qa/work/r6/home/sessions/qa-sess-1.models.md）
 
 $ grep -c 'AskUserQuestion' commands/setup.md; grep -F 'セッションの上書き → 手元の既定（`models.md`）→ 同梱の既定' README.md
-4
-あり
+3
+役ごとの段は、**セッションの上書き → 手元の既定（`models.md`）→ 同梱の既定**の順で決まります。`ladder.py show` は役ごとに、既定の設定の段に加えて「このセッション」の段（無ければ なし）を出します。相談・検証・照合の上書きは、compaction や resume で始まり直したセッションでも、SessionStart の読み替えの指示に同じ段で入ります（上書きのファイルが読めないときは既定の段で作り、直し方を 1 行出します）。実装・評価の上書きは、そのセッションで後から `autopilot.py init` が作る spec の `## モデル` に、既定より優先して写ります（作った後の spec は変わりません）。/clear と fork は新しいセッション id になるので、上書きは切れて既定に戻ります。既定（`models.md`）を変えても、走っているセッションには効きません。

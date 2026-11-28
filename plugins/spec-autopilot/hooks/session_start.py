@@ -69,14 +69,17 @@ def advisor_setting(session=None):
 
     rows, _, over, bad = ladder.resolve(session)
     session_bad = any(layer == "セッションの上書き" for layer, _, _ in bad)
-    swaps = []
+    swaps, layers = [], set()
     for role, rungs in ladder.ADVISORS.items():
-        swap = ladder.swap_line(role, rows[ladder.CONFIG_KEY[role]]) if ladder.CONFIG_KEY[role] in rows else None
+        key = ladder.CONFIG_KEY[role]
+        swap = ladder.swap_line(role, rows[key]) if key in rows else None
         if swap:
             swaps.append(swap)
+            layers.add("session" if key in over and not session_bad else "base")
     out = []
-    if swaps:
-        where = f"手元の設定（{ladder.config_path()}）" + (f"とこのセッションの上書き（{ladder.session_path(session)}）" if over and not session_bad else "")
+    if swaps:  # 読み替えに寄与した層だけを挙げる
+        where = "と".join(name for tag, name in [("base", f"手元の設定（{ladder.config_path()}）"),
+                                                 ("session", f"このセッションの上書き（{ladder.session_path(session)}）")] if tag in layers)
         out.append(f"spec-autopilot の{where}で相談役・検証役・照合役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: "
                    + "、".join(swaps) + "（人が opus-advisor を名指ししたときは今のとおり）。")
     for layer, path, errors in bad:
