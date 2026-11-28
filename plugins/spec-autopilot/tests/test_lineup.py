@@ -475,8 +475,8 @@ def test_stop_hook_says_the_line_cannot_be_read_when_the_state_json_of_the_depen
 
 
 def test_concurrent_queues_keep_every_pair_written_to_the_file_outside_the_repo(repo):
-    code = ("import sys; sys.path.insert(0, sys.argv[1]); import lineup; from pathlib import Path; "
-            "lineup.remember(Path(sys.argv[2]), Path(sys.argv[3]))")
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import autopilot; from pathlib import Path; "
+            "autopilot.remember(Path(sys.argv[2]), Path(sys.argv[3]))")
     procs = [subprocess.Popen([sys.executable, "-c", code, str(PLUGIN / "scripts"), f"/x/later-{i}", f"/y/dep-{i}"])
              for i in range(8)]
     assert [p.wait(timeout=60) for p in procs] == [0] * 8

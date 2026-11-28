@@ -13,10 +13,7 @@
 - レビュー待ちは、GitHub の承認が付き、head が記録と同じなら building に戻す（人の発言の代わりに GitHub の承認を根拠にする）
 """
 import argparse
-import fcntl
-import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -25,124 +22,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import autopilot as ap  # noqa: E402
+from after import NEXT, after_name, pairs  # noqa: E402, F401（autopilot.py から使えるよう下の層に出した。light.py・テストが lineup.<名前> で読む）
+from building import begin  # noqa: E402, F401
 
-AFTER = re.compile(r"^- 依る spec:\s*(\S+)\s*$", re.M)
 WAITING = ("queued", "building", "wait")  # 依る spec がこの phase なら、まだ着手しない
-NEXT = "lineup.py next"
-
-
-def after_name(d):
-    return (AFTER.search(ap.COMMENT_BLOCK.sub("", ap.section((d / "spec.md").read_text(encoding="utf-8"), "制約") or "")) or [None, None])[1]
-
-
-def minutes(d):
-    """承認から夜の終わりまでの見込み（予算とマージ後の予算）。"""
-    import deploy
-
-    budget, post = deploy.budgets((d / "spec.md").read_text(encoding="utf-8"))
-    return budget + post
-
-
-def session_of(d):
-    return os.environ.get("CLAUDE_CODE_SESSION_ID") or ap.last_user_prompt(d)[1]
-
-
-def queue_lint(d):
-    """approve --queue の lint。前に並ぶ spec の予算を足して夜通しの前提を見る。依る spec があれば、
-    init の時点との突き合わせ（前提の path・影響範囲・大きさ）は着手のときに回す。"""
-    ahead = [x for x in ap.recorded_specs(session_of(d)) if x.resolve() != d.resolve()
-             and ap.load_state(x).get("phase") in ("queued", "building")]
-    extra = sum(minutes(x) for x in ahead)
-    name = after_name(d)
-    if name is None:
-        return ap.lint(d, at_approve=True, ahead=extra)
-    errors, warnings = ap.lint(d, at_approve=True, base=False, ahead=extra)
-    if not any(x.name == name for x in ap.recorded_specs(session_of(d))):
-        errors.append(f"依る spec {name} がこのセッションの記録に無い。依る spec を先に承認する")
-    text = ap.COMMENT_BLOCK.sub("", ap.section((d / "spec.md").read_text(encoding="utf-8"), "制約") or "")
-    if ap.stated_size(text)[0] == "S":
-        errors.append("依る spec のある spec は、承認の時点で S の試作を作れない。大きさを M 以上にする")
-    return errors, warnings
-
-
-def pairs_file():
-    return Path(os.environ.get("SPEC_AUTOPILOT_HOME") or Path.home() / ".claude" / "spec-autopilot") / "lineup-after.json"
-
-
-def pairs():
-    """「後の spec の絶対パス → 依る spec の絶対パス」。repo の外に置く（state.json は commit されるので、パスは書けない）。無ければ {}、壊れていれば例外。"""
-    f = pairs_file()
-    if not f.exists():
-        return {}
-    try:
-        v = json.loads(f.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as e:
-        raise ValueError(f"{f.name} が読めない（{type(e).__name__}）") from e  # block の理由は state.json に入るので、パスは書かず名前だけ
-    if not isinstance(v, dict) or not all(isinstance(k, str) and isinstance(x, str) for k, x in v.items()):
-        raise ValueError(f"{f.name} の形が読めない")
-    return v
-
-
-def remember(d, dep):
-    """後の spec d と依る spec dep の対を足す。ほかのプロセスが足した対を残すため、ロックの中で読み直して足す。
-    壊れていた中身は別の名前に退避し、NOTE を出して空から続ける。"""
-    f = pairs_file()
-    f.parent.mkdir(parents=True, exist_ok=True)
-    with open(f.with_name(f.name + ".lock"), "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        try:
-            cur = pairs()
-        except (OSError, ValueError) as e:
-            kept = f.with_name(f"{f.name}.broken-{time.time_ns()}")
-            f.replace(kept)
-            print(f"NOTE: {f.name} が読めない（{type(e).__name__}）。元の中身は {kept.name} に残し、空から続ける")
-            cur = {}
-        cur[str(d.resolve())] = str(dep.resolve())
-        tmp = f.with_name(f"{f.name}.{os.getpid()}.tmp")
-        tmp.write_text(json.dumps(cur, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        tmp.replace(f)
-
-
-def enqueue(d, s, by, session, warnings):
-    name = after_name(d)
-    deps = [x for x in ap.recorded_specs(session) if x.name == name]
-    if name and len(deps) == 1:  # 依る spec が done・block で記録から外れても引けるよう、承認のときに対を残す
-        remember(d, deps[0])
-    s.update(phase="queued", queued_from=s.get("phase"), queued_at=time.time(), approved_by=by, spec_sha256=ap.sha(d), after=name)  # state.json は commit されるので、パスは書かず名前だけ
-    ap.take_over(d, session, "承認")
-    ap.save_state(d, s)
-    return ap.report([], warnings, f"queued: 承認した。{NEXT} で承認した順に着手する（人の発言は要らない）")
-
-
-def begin(d, s, by, prev):
-    """承認した spec を自走中（building）にする。予算の時計はここから。"""
-    import deploy
-
-    budget, post = deploy.budgets((d / "spec.md").read_text(encoding="utf-8"))
-    history = s.get("history", [])
-    kept, note = __import__("carry").plan(ap.repo_root(d), s, prev)  # コードが同じなら、前の巡のマージとデプロイの記録を持ち越す
-    since = s.get("awaits_since") or s.get("approved_at")
-    if prev != "discovery":
-        history.append({**{k: s.get(k) for k in ("approved_at", "approved_by", "blocked", "done_at", "anomalies", "reviews",
-                                                 "fails", "streak", "reworks", "post_budget_min", "paused_sec", "light", *deploy.ROUND_KEYS)}, "phase": prev})
-    ds = s.get("dispatches") or []
-    keep = ("dispatches", "handoffs") if ds and all(x.get("prototype") for x in ds) else ()  # 承認の前の試作の dispatch（印は dispatch が打つ）は、承認の後の handoff で閉じる
-    for x in ds if keep else ():
-        x.pop("prototype")  # 持ち越したら印を外す。次の巡の再承認では history に移す
-    dispatch_kept, dispatch_note = (False, None) if keep else __import__("carry").dispatch_plan(ap.repo_root(d), d, s, prev)  # 閉じた dispatch で spec の外が同じなら、実装役を起こさず handoff から進める
-    keep = ("dispatches", "handoffs") if dispatch_kept else keep
-    for k in (*(("light", "light_base") if prev == "discovery" else ()), "size_by_user", "done_at", "anomalies", "queued_from", "awaits_since", *(k for k in deploy.ROUND_KEYS if k not in keep)):  # 前の巡の記録は history に移した
-        s.pop(k, None)
-    now = time.time()
-    s.update(phase="building", approved_at=now, approved_by=by, spec_sha256=ap.sha(d), budget_min=budget,
-             post_budget_min=post, history=history, blocked=None, paused_sec=0, reviews=[], fails={}, streak={}, reworks={})
-    if kept:
-        s.update(merges=kept, merged_at=now, paused_at_merge=0, awaits_since=since)  # マージ後の予算の時計は自走に戻した時刻から数え直す
-    if note:
-        print(note)
-    if dispatch_note:
-        print(dispatch_note)
-    return budget
 
 
 def block(d, s, reason):
