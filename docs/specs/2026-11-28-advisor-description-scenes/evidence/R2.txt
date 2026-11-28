@@ -1,0 +1,14 @@
+- commit: a43d53c
+$ git diff --numstat d344a42..a43d53c -- plugins
+1	1	plugins/spec-autopilot/agents/fable-advisor.md
+1	1	plugins/spec-autopilot/agents/opus-advisor.md
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R1 pass
+R2 pass
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisors.py -v
+plugins/spec-autopilot/tests/test_advisors.py::test_agent_front_matter[opus-advisor-opus-high] PASSED [ 33%]
+plugins/spec-autopilot/tests/test_advisors.py::test_agent_front_matter[fable-advisor-fable-medium] PASSED [ 66%]
+plugins/spec-autopilot/tests/test_advisors.py::test_agent_front_matter[advice-checker-opus-high] PASSED [100%]
+============================== 3 passed in 0.02s ===============================
