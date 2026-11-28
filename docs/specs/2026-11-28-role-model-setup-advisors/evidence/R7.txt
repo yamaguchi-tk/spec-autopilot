@@ -1,0 +1,26 @@
+- commit: cf01b565f1497e0a60c34a272eff32c997bd60fa
+
+models.md: - 実装: opus-medium / - 相談: opus-high / - 検証: opus-high。cwd は git init した空の repo（<worktree>/.autopilot-qa/work/repo）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h7 CLAUDE_CODE_SESSION_ID=s1 python3 <worktree>/plugins/spec-autopilot/scripts/autopilot.py init game
+<worktree>/.autopilot-qa/work/repo/docs/specs/2026-11-28-game
+NOTE: 手元の設定 <worktree>/.autopilot-qa/work/h7/models.md の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: - 実装: opus-medium
+(exit 0)
+
+$ sed -n '/^## モデル/,/^## /p' <worktree>/.autopilot-qa/work/repo/docs/specs/2026-11-28-game/spec.md
+## モデル
+<!-- … -->
+- 実装: opus-medium
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h7 CLAUDE_CODE_SESSION_ID=s1 python3 <worktree>/plugins/spec-autopilot/scripts/autopilot.py lint <worktree>/.autopilot-qa/work/repo/docs/specs/2026-11-28-game
+ERROR: 要件が無い（「## 要件」に `- R1: ...` の形で書く）
+ERROR: 予算が無い（「## 制約」に `- 予算: <分> 分` の形で書く）
+ERROR: 「## 前提」を書く（目的に届くか・運用・普通のやり方・過去・既存の振る舞いについての前提）
+ERROR: 大きさの行の形が読めない（`- 大きさ: <S|M|L>` だけを書く）: - 大きさ: <S|M>
+ERROR: `- playbook:` の「<名前>[」が読めない。…
+ERROR: `- playbook:` の「<名前>]」が読めない。…
+ERROR: 「## QA の方向性」の表に段の列が無い（…）
+ERROR: 範囲が「マージ・デプロイ・QA まで」なので `- QA の書き込み先:` を書く
+ERROR: 範囲が「マージ・デプロイ・QA まで」なので `- デプロイの確かめ:` を書く
+(exit 1)
+（雛形のままの節の ERROR だけで、`## モデル` の ERROR は 0 件）

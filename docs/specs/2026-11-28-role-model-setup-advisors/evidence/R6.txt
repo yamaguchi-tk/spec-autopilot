@@ -1,0 +1,17 @@
+- commit: cf01b565f1497e0a60c34a272eff32c997bd60fa
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py -q -p no:xdist -k "stage_table or across_the_stage_names or returns_a_blocked_spec_to_building"
+......                                                                   [100%]
+6 passed, 48 deselected in 21.53s
+
+変異 1（.autopilot-qa/mut-R6-2.patch: launches の `if role is None:` の後の `continue` を `role = ADVISOR` にし、段の表に無い名前の記録を相談役として数える）:
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py -k not_in_the_stage_table -q -p no:xdist   （変異の前）
+3 passed, 51 deselected in 4.78s
+$ git apply .autopilot-qa/mut-R6-2.patch && python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py -k not_in_the_stage_table -q -p no:xdist
+FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_does_not_count_an_agent_that_is_not_in_the_stage_table[opus-advisor]
+FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_does_not_count_an_agent_that_is_not_in_the_stage_table[fable-advisor-xhigh]
+FAILED plugins/spec-autopilot/tests/test_advisor_approval.py::test_approve_by_advisor_does_not_count_an_agent_that_is_not_in_the_stage_table[autopilot-reviewer]
+3 failed, 51 deselected in 5.18s
+$ git apply -R .autopilot-qa/mut-R6-2.patch && git diff --quiet HEAD -- plugins/spec-autopilot/scripts/advisor_approval.py
+(exit 0)
+（mut-R6-1.patch は、zsh で pytest の引数が 1 語に渡り 0 件の収集になったので判定できず、別の 1 か所の mut-R6-2 で入れ直した）

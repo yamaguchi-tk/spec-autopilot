@@ -1,0 +1,41 @@
+- commit: cf01b565f1497e0a60c34a272eff32c997bd60fa
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor opus-high --checker opus-high
+書いた: <worktree>/.autopilot-qa/work/h1/models.md
+- 相談: opus-high
+- 検証: opus-high
+(exit 0)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --impl opus-medium
+書いた: <worktree>/.autopilot-qa/work/h1/models.md
+- 実装: opus-medium
+- 相談: opus-high
+- 検証: opus-high
+(exit 0)
+
+$ cat <worktree>/.autopilot-qa/work/h1/models.md
+- 実装: opus-medium
+- 相談: opus-high
+- 検証: opus-high
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h1 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high --review fable
+書いた: <worktree>/.autopilot-qa/work/h1/models.md
+- 実装: opus-medium
+- 評価: fable
+- 相談: fable-high
+- 検証: opus-high
+(exit 0)
+
+$ cat <worktree>/.autopilot-qa/work/h1/models.md
+- 実装: opus-medium
+- 評価: fable
+- 相談: fable-high
+- 検証: opus-high
+
+$ python3 .autopilot-qa/check.py
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass
+R7 pass

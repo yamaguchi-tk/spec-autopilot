@@ -1,0 +1,24 @@
+- commit: cf01b565f1497e0a60c34a272eff32c997bd60fa
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h3 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 なし
+評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 なし
+相談: 受ける段 fable-medium・fable-high・opus-high / 既定 fable-medium / 手元の設定 なし
+検証: 受ける段 opus-high / 既定 opus-high / 手元の設定 なし
+設定のファイル: <worktree>/.autopilot-qa/work/h3/models.md
+(exit 0)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h3 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --review fable --advisor opus-high --checker opus-high
+書いた: <worktree>/.autopilot-qa/work/h3/models.md
+- 評価: fable
+- 相談: opus-high
+- 検証: opus-high
+(exit 0)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h3 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable / 既定 sonnet-high / 手元の設定 なし
+評価: 受ける段 opus-high・opus-xhigh・fable / 既定 opus-high / 手元の設定 fable
+相談: 受ける段 fable-medium・fable-high・opus-high / 既定 fable-medium / 手元の設定 opus-high
+検証: 受ける段 opus-high / 既定 opus-high / 手元の設定 opus-high
+設定のファイル: <worktree>/.autopilot-qa/work/h3/models.md
+(exit 0)
