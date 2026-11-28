@@ -1,0 +1,27 @@
+{
+  "phase": "building",
+  "slug": "spec-command",
+  "created_at": 1795858736.073002,
+  "existing": true,
+  "start": "9e2a102f4f7a69eef23bc90373c7c17d561859b3",
+  "last_active_at": 1795861846.3694541,
+  "consent": {
+    "sha256": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
+    "full": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
+    "at": 1795859174.573513,
+    "mtime": 1795859173.637211
+  },
+  "scope_sha256": "5154ac38ea7ca8613380744f491d20510da0f62451e2b5b1d5683bd0b83c0624",
+  "approved_at": 1795861846.368602,
+  "approved_by": "推奨のまま OK（/spec の壁打ち、R1〜R6）",
+  "spec_sha256": "133d5755598c57b79e34840e2985df215852a880fac9bb43e14156f7024341d1",
+  "budget_min": 90,
+  "post_budget_min": 90,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
+}
