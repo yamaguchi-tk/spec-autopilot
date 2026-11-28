@@ -208,7 +208,7 @@ def read_config(path=None):
 def resolve(session):
     """役ごとの段を決める 1 か所。(決めた行 {役の語: 段}, 手元の設定の行, セッションの上書きの行, 誤りの一覧 [(層の名前, path, [誤り])])。
     順はセッションの上書き → 手元の設定 → 同梱の既定（行が無い役は同梱の既定。呼ぶ側が先頭の段を使う）。session は id（無ければ None）。
-    誤りのあるセッションの上書きは、読める行があっても決めた行に使わない（write_spec が層ごと写さないのと同じ。3 つ目の over は show 用に読めた行を返す）。"""
+    誤りのあるセッションの上書きは、読める行があっても決めた行に使わない（write_spec が層ごと写さないのと同じ）。3 つ目の over は誤りがあっても読めた行を返し、使うかは呼ぶ側が bad で決める。"""
     path = config_path()
     _, base, errors = read_config(path)
     bad = [("手元の設定", path, errors)] if errors else []
@@ -227,31 +227,39 @@ def render(rows):
 
 
 def edit(change, path=None):
-    """ロックの中で読み直し、change(読める行) が返した行だけで書き換える（空なら消す）。壊れていた元の中身は毎回別の名前で残す。"""
+    """ロックの中で読み直し、change(読める行) が返した行だけで書き換える（空なら消す）。壊れていた元の中身は毎回別の名前で残す。
+    置き場に書けない（OSError）ときは traceback で落とさず、0 以外で終わる。"""
     path = path or config_path()
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        lock = open(path.with_name(path.name + ".lock"), "w")
+        with open(path.with_name(path.name + ".lock"), "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            return _edit_locked(change, path)
     except OSError as e:
-        sys.exit(f"{path.parent} に書けない（{type(e).__name__}）。何も変えていない")
-    with lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        raw, rows, errors = read_config(path)
-        if errors:
-            if raw is None:
-                sys.exit("; ".join(errors))
-            kept = path.with_name(f"{path.name}.bad-{time.time_ns()}-{os.getpid()}")
-            kept.write_bytes(raw)
-            print(f"NOTE: {path} に誤りがあった（{'; '.join(errors)}）。元の中身を退避した: {kept}。読めた行だけで続ける", file=sys.stderr)
-        rows = change(dict(rows))
-        if not rows:
-            path.unlink(missing_ok=True)
-            return rows
-        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".tmp")
+        sys.exit(f"{path.parent} に書けない（{type(e).__name__}）。{path} は変えていない")
+
+
+def _edit_locked(change, path):
+    raw, rows, errors = read_config(path)
+    if errors:
+        if raw is None:
+            sys.exit("; ".join(errors))
+        kept = path.with_name(f"{path.name}.bad-{time.time_ns()}-{os.getpid()}")
+        kept.write_bytes(raw)
+        print(f"NOTE: {path} に誤りがあった（{'; '.join(errors)}）。元の中身を退避した: {kept}。読めた行だけで続ける", file=sys.stderr)
+    rows = change(dict(rows))
+    if not rows:
+        path.unlink(missing_ok=True)
+        return rows
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".tmp")
+    try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(render(rows))
         os.replace(tmp, path)
-        return rows
+    except OSError:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+    return rows
 
 
 def write_spec(src, dst):
