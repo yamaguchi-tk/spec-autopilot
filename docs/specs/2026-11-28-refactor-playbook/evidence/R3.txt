@@ -1,0 +1,14 @@
+- commit: 06de29e
+
+$ grep -n '^## ' plugins/spec-autopilot/references/playbooks/refactor.md
+5:## spec を書くとき（A・B）
+13:## 自走のタスク（A の 0 で選んだらすぐ tasks.md の先頭に写す）
+22:## 評価役の観点
+
+$ grep -n -i -E 'lizard|measure\.py|refactor-metrics|/Users|~/' plugins/spec-autopilot/references/playbooks/refactor.md; echo "grep-exit=$?"
+grep-exit=1
+
+$ python3 .autopilot-qa/check_refactor_playbook.py
+  headings=['spec を書くとき（A・B）', '自走のタスク（A の 0 で選んだらすぐ tasks.md の先頭に写す）', '評価役の観点'] bug-fix=['spec を書くとき（A・B）', '自走のタスク（A の 0 で選んだらすぐ tasks.md の先頭に写す）', '評価役の観点']
+  checks={'3 節が bug-fix と同じ': True, '前提に測ったコマンドと結果': True, '合格基準の形': True, '観点が移しただけ': True} banned-hits=[] path-like=[]
+R3 pass

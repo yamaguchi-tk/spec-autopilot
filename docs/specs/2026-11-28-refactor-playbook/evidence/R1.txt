@@ -1,0 +1,12 @@
+- commit: 06de29e
+
+$ python3 -m pytest "plugins/spec-autopilot/tests/test_playbooks.py::test_lint_accepts_known_names_or_none_with_a_reason[refactor]" plugins/spec-autopilot/tests/test_playbooks.py::test_the_playbooks_are_the_files_in_the_folder plugins/spec-autopilot/tests/test_playbook_sources.py -q
+....                                                                     [100%]
+4 passed in 2.80s
+
+$ python3 .autopilot-qa/check_refactor_playbook.py
+  lint refactor: rc=0 playbook-lines=[]
+  lint refactr: rc=1 out=['ERROR: `- playbook:` の refactr が無い（ある名前: bug-fix・external-service・feature・iac・refactor）']
+R1 pass
+  lint refactor+premise example: rc=0 out='lint: OK'
+R1-example pass

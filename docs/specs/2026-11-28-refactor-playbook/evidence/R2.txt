@@ -1,0 +1,8 @@
+- commit: 06de29e
+
+$ grep -n -F '| `refactor`' plugins/spec-autopilot/commands/autopilot.md
+41:     | `refactor` | 挙動を変えずに構造（結合度・凝集度・複雑さ）を直すリファクタ |
+
+$ python3 .autopilot-qa/check_refactor_playbook.py
+  autopilot.md refactor rows=['| `refactor` | 挙動を変えずに構造（結合度・凝集度・複雑さ）を直すリファクタ |']
+R2 pass

@@ -2,7 +2,7 @@
 
 - 1 PR 1 課題にする。追加が +1,000 行を超えそうなら、先に分割を相談する
 - 実装は TDD で進める（テストを先に書き、失敗を確かめてから実装する）
-- テストは、repo の root で `python3 -m venv .venv` を回し、`source .venv/bin/activate` で有効にし（POSIX のシェルの書き方。fish や Windows では読み替える）、`.github/workflows/test.yml` の `pip install` の行を回して道具を入れてから、`python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto` で回す。CI は venv を作らず、同じ `pip install` の行とテストのコマンドを回す。venv の外の `pip install` は、PEP 668 で守られた python3 では拒まれる（版は workflow の 1 か所にだけ書く）
+- テストは、repo の root で `python3 -m venv .venv` を回し、`source .venv/bin/activate` で有効にし（POSIX のシェルの書き方。fish や Windows では読み替える）、`.github/workflows/test.yml` の `pip install` の行を回して道具を入れてから、`python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto` で回す。CI は venv を作らず、同じ `pip install` の行とテストのコマンドを回す。venv の外の `pip install` は、PEP 668 で守られた python3 では拒まれる（版は workflow の 1 か所にだけ書く）。このコマンドは全量で、締め（PR を作る前）に回し、落ちたら直して回し直す（`/autopilot` では手元で回さず、CI が回す。commands/autopilot.md の C の 5）。実装の途中は全量を回さず、spec の `- 回帰テスト:` のコマンド（spec の無い直しでは、変えるファイルを読むテスト）と、足したテストと、レビューや CI が名指ししたテストを回す
 - 文書（command・reference・agent 定義・README など）に語や文があるかだけを assert するテストは書かない。コードが読む値と文書を突き合わせるテストは書いてよい
 - 実装中に見つけた別の問題は、この PR が変えたファイルの中なら直す（要るリファクタリングは、挙動を変えずに別の commit にする）。変えていないファイルの問題は、再現手順を添えて Issue にする
 - 版数は `plugins/spec-autopilot/.claude-plugin/plugin.json` の `version` で上げる。`.claude-plugin/marketplace.json` の `description` は plugin.json と同じにする（テストが突き合わせる）。spec の要件・前提・影響範囲には、版数と版数のテストの名前を書かない（ほかの PR が先に版を上げると、影響範囲に書いたテストの名前は依る spec の先端への着手で lint に止められ、要件・前提の版数は spec の直しと承認し直しが要る）。版数は、機能の PR のマージの後に、下の 1 段目で上げる

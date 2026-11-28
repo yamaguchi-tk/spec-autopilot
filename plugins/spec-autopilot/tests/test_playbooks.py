@@ -13,7 +13,7 @@ def with_playbook(*lines):
 
 def test_the_playbooks_are_the_files_in_the_folder():
     assert sorted(p.stem for p in (PLUGIN / "references" / "playbooks").glob("*.md")) == [
-        "bug-fix", "external-service", "feature", "iac"]
+        "bug-fix", "external-service", "feature", "iac", "refactor"]
 
 
 def test_lint_requires_the_playbook_line(repo):
@@ -21,14 +21,14 @@ def test_lint_requires_the_playbook_line(repo):
     assert r.returncode == 1 and "playbook" in r.stdout
 
 
-@pytest.mark.parametrize("value", ["feature", "feature、external-service", "bug-fix、iac", "なし（依存の更新だけ）"])
+@pytest.mark.parametrize("value", ["feature", "feature、external-service", "bug-fix、iac", "refactor", "なし（依存の更新だけ）"])
 def test_lint_accepts_known_names_or_none_with_a_reason(repo, value):
     r = lint(repo, with_playbook(f"- playbook: {value}"))
     assert r.returncode == 0, r.stdout
 
 
 @pytest.mark.parametrize("value, word", [
-    ("refactor", "refactor"),  # ファイルの無い名前
+    ("rewrite", "rewrite"),  # ファイルの無い名前
     ("small-prototype", "small-prototype"),  # 大きさ S で読むもので、playbook の名前ではない
     ("../after-pr", "../after-pr"),  # パスでファイルの有無の確かめを抜けない
     ("Feature", "Feature"),
