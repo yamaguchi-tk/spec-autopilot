@@ -208,7 +208,7 @@ def read_config(path=None):
 def resolve(session):
     """役ごとの段を決める 1 か所。(決めた行 {役の語: 段}, 手元の設定の行, セッションの上書きの行, 誤りの一覧 [(層の名前, path, [誤り])])。
     順はセッションの上書き → 手元の設定 → 同梱の既定（行が無い役は同梱の既定。呼ぶ側が先頭の段を使う）。session は id（無ければ None）。
-    誤りのあるセッションの上書きは、読める行があっても決めた行に使わない（write_spec が層ごと写さないのと同じ。3 つ目の over は show 用に読めた行を返す）。"""
+    誤りのあるセッションの上書きは、読める行があっても決めた行に使わない（write_spec が層ごと写さないのと同じ。3 つ目の over は読めた行のままだが、誤りのある層の over は show・write_spec・SessionStart のどれも使わない）。"""
     path = config_path()
     _, base, errors = read_config(path)
     bad = [("手元の設定", path, errors)] if errors else []
