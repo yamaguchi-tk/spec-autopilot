@@ -4,7 +4,7 @@
   "created_at": 1795826385.546604,
   "existing": true,
   "start": "06a73a81766790739ac8b0e354d36016b772e10f",
-  "last_active_at": 1795827830.4496472,
+  "last_active_at": 1795829370.5228841,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "approved_at": 1795827830.433163,
   "approved_by": "OK（承認）: 相談役は承認の門・名指し・IaC の初回だけ、ほかは main の案を検証役に repo の事実があるときだけ当てる",
@@ -14,8 +14,77 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795829370.368377,
+      "sha": "b4c33db99ea2244a89b16f3c91e893fbf9ade1f1"
+    }
+  ],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "399e00f2cb0c1d9e853804c6df7363630098f19b",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795827873.552044,
+      "session": "9daa0137-3b45-4a96-8aca-cafef7e13876"
+    },
+    {
+      "base": "84c2ef3891af6824db63d4867889d498b64bcbc4",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795828203.7895622,
+      "session": "9daa0137-3b45-4a96-8aca-cafef7e13876"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "84c2ef3891af6824db63d4867889d498b64bcbc4",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795828203.626744
+    },
+    {
+      "tip": "b4c33db99ea2244a89b16f3c91e893fbf9ade1f1",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 1,
+      "at": 1795828553.318911
+    }
+  ],
+  "review_launches": [
+    1795828558.6839948
+  ],
+  "lenses": [
+    {
+      "name": "なし",
+      "found": 2,
+      "reproduced": 0,
+      "fixed": 0,
+      "at": 1795829370.522882
+    }
+  ]
 }
