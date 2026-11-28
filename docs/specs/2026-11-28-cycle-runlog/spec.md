@@ -13,7 +13,7 @@
 - R1: plugins/spec-autopilot/scripts を測ったとき、runlog.py は import の輪に入らず、輪は autopilot.py・goal.py・light.py・lineup.py・overnight.py の 5 つの 1 つだけで、循環の組は 15 から 10 に減る。
 - R2: runlog.py を読んだとき、autopilot を import する文（関数の中の import と `__import__` を含む）と `autopilot.<名前>`・`ap.<名前>` の参照を持たず、輪を `importlib`・変数で名前を渡す `__import__`・`sys.modules` に替えて道具に見えなくする形も無い（文字列の中の `autopilot` の語は数えない）。
 - R3: 測ったとき、stated_size を置く下の層のモジュールは、scripts のモジュールを carry.py のほかに import せず、LCOM4 が 2 以下になり、autopilot.py の fan-out は 16 を超えず、autopilot.py の LCOM4 は 4 を超えない。
-- R4: 回帰テストと足したテストが通り、CLI の lint・check・status と、done・block が runs.jsonl に書く行を、変える前と後で同じ spec に回した出力が同じで、指標の前後の比べ方（着手の commit を前にする）で悪化が無く、「移しただけ」と出ない。テストは名前の向け先だけを変え、期待は変えない。
+- R4: テストの全量が通り、CLI の lint・check・status と、done・block が runs.jsonl に書く行を、変える前と後で同じ spec に回した出力が同じで、指標の前後の比べ方（着手の commit を前にする）で悪化が無く、「移しただけ」と出ない。テストは名前の向け先だけを変え、期待は変えない。
 
 ## 非目標
 - goal・light・lineup・overnight・watch・hooks を autopilot.py から外すこと（後の子で扱う。それらは stated_size などを autopilot.py を通して使い続ける）
@@ -35,10 +35,11 @@
   - メモ: ap.stated_size を使う。lineup.py は変えない（ほかに light.py:167・overnight.py:324・size_note.py:12）
 - 手本: plugins/spec-autopilot/scripts/carry.py:1-21（ほかの scripts を import しない小さいモジュール）
 - 同じ入力: なし
-- 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/test_import_layers.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_runlog.py plugins/spec-autopilot/tests/test_goal_done.py plugins/spec-autopilot/tests/test_light.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_watch.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_qa_evidence.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_advisor_approval.py -q -n auto
-  - メモ: 移す名前（stated_size・SIZE_LINE・SIZE_ANY・repo_root・git_lines）と stages・runlog・runs.jsonl を参照するテストと、autopilot を直接 import して autopilot.<名前> を使うテストのファイル。全量は CI が回す
+- 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+  - メモ: autopilot.py は CLI の入口で、tests/ の大半が import か CLI で通るので全量にする（親の spec と同じ）。CLAUDE.md:5 のとおり /autopilot では手元で全量を回さず、PR の CI が回す（マージは CI が通った後）。実装の途中と評価役は、移す名前・stages・runlog・runs.jsonl を読むテスト（test_import_layers・test_stages・test_size・test_runlog・test_main_progress・test_goal_done・test_goal_command・test_light・test_lineup・test_watch）と足したテストを手元で回す
 
 ## 変えない挙動
+- テストの全量: plugins/spec-autopilot/tests/
 - QA の段の判定: plugins/spec-autopilot/tests/test_stages.py
 - 大きさの数え方: plugins/spec-autopilot/tests/test_size.py
 - runs.jsonl の記録: plugins/spec-autopilot/tests/test_runlog.py
@@ -68,7 +69,7 @@
 | R1 | 手元で実物 | 着手の commit を前、tip を後にして、指標の前後の比べ方を回し、輪と循環の組を読む | 輪が 5 モジュールの 1 つで、runlog が入らず、循環の組が 10 |
 | R2 | 手元で実物 | runlog.py を `import autopilot`・`autopilot\.[A-Za-z_]`・`ap\.[A-Za-z_]`・`importlib`・`sys.modules`・`__import__` で grep する | grep が 0 件（文字列の中の語は除く） |
 | R3 | 手元で実物 | stated_size を置いたモジュールの import を読み、指標の前後の比べ方でそのモジュールの LCOM4 と autopilot.py の fan-out・LCOM4 を読む | carry.py のほかに scripts を import せず、LCOM4 が 2 以下、autopilot.py の fan-out が 16 以下、LCOM4 が 4 以下 |
-| R4 | 手元で実物 | 回帰テストと足したテストを回し、着手の commit と tip で同じ spec に CLI の lint・check・status を回し、一時の SPEC_AUTOPILOT_HOME で done・block の runs.jsonl の行を書かせて突き合わせ、指標の前後の比べ方を回す | 全部通り、出力と行が同じ（時刻を除く）で、悪化 0、「移しただけ」と出ない |
+| R4 | 手元で実物 | 回帰テストのメモの手元のテストと足したテストを回し、着手の commit と tip で同じ spec に CLI の lint・check・status を回し、一時の SPEC_AUTOPILOT_HOME で done・block の runs.jsonl の行を書かせて突き合わせ、指標の前後の比べ方を回す。全量は PR の CI で回す | 手元のテストが通り、出力と行が同じ（時刻を除く）で、悪化 0、「移しただけ」と出ず、マージの前に CI の全量が通る |
 
 ## 制約
 - 予算: 45 分
