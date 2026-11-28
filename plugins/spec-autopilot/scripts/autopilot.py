@@ -498,8 +498,8 @@ def counted_size(d, text, tip=None):
 
 # L の ERROR の文。範囲: 文だけを変え、出す条件は変えない。想定する脅威: なし（案内の文）。やらないこと: 目的の spec の道で ERROR を消すこと
 SPLIT_L = "大きさ L の spec は 1 本のまま合意しない。呼び出しの関係でまとまるファイルの塊ごとに spec を分け、それぞれを S か M にする"
-GOAL_WAY = ("。目的の spec にするなら、ほかの ERROR を 0 にし、/autopilot の A の 3 の目的の spec の項のとおり照合役を回して 1 本のまま示し、"
-            "`approve <dir> --by \"<返事の要約>\" --goal` で承認する（子へ分けるのは承認の後）")  # --goal が通る spec（discovery で依る spec が無い）にだけ足す
+GOAL_WAY = ("。目的の spec にするなら、ほかの ERROR を 0 にし、/autopilot の A の 3 の L の項のとおり照合役を回して 1 本のまま示し、"
+            "`approve <dir> --by \"<返事の要約>\" --goal` で承認する（子へ分けるのは承認の後）")  # --goal で人が承認する spec（discovery で、依る spec も親 spec も無い）にだけ足す
 SPLIT_PR = "大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける"
 
 
@@ -572,7 +572,8 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
     stated, size_err = stated_size(constraints)
     errors += ([size_err] if size_err else []) + __import__("playbooks").lint(constraints)
     first_agreement = load_state(d).get("phase") in ("discovery", "queued") and not goal  # L を止めるのは初回の合意だけ。目的の spec（--goal）は止めない
-    split_l = SPLIT_L + (GOAL_WAY if load_state(d).get("phase") == "discovery" and not __import__("lineup").after_name(d) else "")
+    split_l = SPLIT_L + (GOAL_WAY if load_state(d).get("phase") == "discovery" and not __import__("lineup").after_name(d)
+                                   and not __import__("goal").parent_lines(d)[0] else "")
     if not is_new_repo(load_state(d)):
         body = {name: COMMENT_BLOCK.sub("", section(text, name) or "") for name in EXISTING_SECTIONS}
         for name in EXISTING_SECTIONS:
