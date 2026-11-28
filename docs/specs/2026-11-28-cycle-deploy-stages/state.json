@@ -1,0 +1,59 @@
+{
+  "phase": "building",
+  "slug": "cycle-deploy-stages",
+  "created_at": 1795830426.555039,
+  "existing": true,
+  "start": "d344a42d56461646e907b8a59304c39f747844cd",
+  "last_active_at": 1795831993.3253372,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795831162.756602,
+  "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 16）。人は目的の spec を「承認する」で承認済み",
+  "spec_sha256": "740e7256f78bb7891069707539296b72c956e607aabd93e00acb8e19404964d7",
+  "after": null,
+  "approved_at": 1795831164.080501,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795831993.3253272,
+      "sha": "8942d9cafb529e043254ccc534b564c11167d986"
+    }
+  ],
+  "fails": {},
+  "streak": {},
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "df338abd9d623e51a69dc035c3b2309d4c8e3dad",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795831164.4379761,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "8942d9cafb529e043254ccc534b564c11167d986",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795831589.4937038
+    }
+  ],
+  "review_launches": [
+    1795831600.2500632
+  ]
+}

@@ -1,0 +1,88 @@
+- commit: cf01b565f1497e0a60c34a272eff32c997bd60fa
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --impl opus-medium --advisor fable-high --checker opus-high
+書いた: <worktree>/.autopilot-qa/work/h2/models.md
+- 実装: opus-medium
+- 相談: fable-high
+- 検証: opus-high
+(exit 0)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor sonnet-high
+受けない段: 相談 の段「sonnet-high」
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable
+評価: 受ける段 opus-high・opus-xhigh・fable
+相談: 受ける段 fable-medium・fable-high・opus-high
+検証: 受ける段 opus-high
+(exit 1)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --checker fable-high
+受けない段: 検証 の段「fable-high」
+実装: 受ける段 sonnet-high・opus-medium・opus-xhigh・fable
+評価: 受ける段 opus-high・opus-xhigh・fable
+相談: 受ける段 fable-medium・fable-high・opus-high
+検証: 受ける段 opus-high
+(exit 1)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor Fable-High
+受けない段: 相談 の段「Fable-High」
+（受ける段の 4 行は上と同じ）
+(exit 1)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor ''
+受けない段: 相談 の段「」
+（受ける段の 4 行は上と同じ）
+(exit 1)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --impl fable --advisor haiku
+受けない段: 相談 の段「haiku」
+（受ける段の 4 行は上と同じ）
+(exit 1)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --reset 相談 --advisor opus-high
+--reset は単独で、役は「実装」「評価」「相談」「検証」だけを渡す
+(exit 1)
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --reset advisor
+--reset は単独で、役は「実装」「評価」「相談」「検証」だけを渡す
+(exit 1)
+
+（上の 0 以外の 7 回のどれの後も、models.md のバイト列は最初の setup の後と同じ。check.py が比べた）
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --reset 相談
+相談が既定に戻った（設定のファイル: <worktree>/.autopilot-qa/work/h2/models.md）
+(exit 0)
+
+$ cat <worktree>/.autopilot-qa/work/h2/models.md
+- 実装: opus-medium
+- 検証: opus-high
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --reset 検証
+検証が既定に戻った（設定のファイル: <worktree>/.autopilot-qa/work/h2/models.md）
+(exit 0)
+
+$ cat <worktree>/.autopilot-qa/work/h2/models.md
+- 実装: opus-medium
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2 python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --reset
+実装・評価・相談・検証が既定に戻った（設定のファイル: <worktree>/.autopilot-qa/work/h2/models.md）
+(exit 0)
+（models.md は消えた）
+
+壊れた設定（`- 相談: haiku` / `- 実装: fable` / `- 検証: opus-high` / `ごみ`）を置いて書き込む:
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h2b python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --advisor fable-high
+書いた: <worktree>/.autopilot-qa/work/h2b/models.md
+- 実装: fable
+- 相談: fable-high
+- 検証: opus-high
+NOTE: <worktree>/.autopilot-qa/work/h2b/models.md に誤りがあった（モデルの節の行を読めない（`- 実装: <段>` か `- 評価: <段>` か `- 相談: <段>` か `- 検証: <段>` だけを書く）: ごみ; モデルの節の `- 相談:` は「fable-medium」「fable-high」「opus-high」のどれか（今は「haiku」））。元の中身を退避した: <worktree>/.autopilot-qa/work/h2b/models.md.bad-<時刻>-<pid>。読めた行だけで続ける
+(exit 0)
+
+$ cat <worktree>/.autopilot-qa/work/h2b/models.md.bad-*
+- 相談: haiku
+- 実装: fable
+- 検証: opus-high
+ごみ
+
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ladder_setup.py -k refuses_an_advisor -q -p no:xdist   （変異 .autopilot-qa/mut-R2-1.patch: 受けない段の検査を RUNGS の役だけにする）
+7 failed, 30 deselected   （変異の前は 7 passed。戻した後 git diff --quiet HEAD -- plugins/spec-autopilot/scripts/ladder.py が通った）

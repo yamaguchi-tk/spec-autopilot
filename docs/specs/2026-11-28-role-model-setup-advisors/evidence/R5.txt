@@ -1,0 +1,30 @@
+- commit: cf01b565f1497e0a60c34a272eff32c997bd60fa
+
+各回とも、cwd は git init した空の repo（<worktree>/.autopilot-qa/work/cwd）、stdin は {"cwd": "<cwd>", "session_id": "s1", "source": "startup", "hook_event_name": "SessionStart"}。出力の additionalContext を JSON で読み、段落（"\n\n" で区切る）を見た。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5a python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md なし）
+(exit 0) 段落 1 個（相談役の規則だけ）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5b python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md: - 実装: opus-medium / - 相談: fable-medium / - 検証: opus-high）
+(exit 0) 段落 1 個。additionalContext は設定なしのときと 1 字も違わない。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5cfable-high python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md: - 相談: fable-high）
+(exit 0) 段落 2 個。2 個目: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/h5cfable-high/models.md）で相談役・検証役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-high（人が opus-advisor を名指ししたときは今のとおり）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5copus-high python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md: - 相談: opus-high）
+(exit 0) 段落 2 個。2 個目: spec-autopilot の手元の設定（<worktree>/.autopilot-qa/work/h5copus-high/models.md）で相談役・検証役の段が既定でない。上の規則と /autopilot の本文の名前を次のように読み替えて起動する: fable-advisor → spec-autopilot:fable-advisor-opus（人が opus-advisor を名指ししたときは今のとおり）。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5d0 python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md: バイト列 \xff\xfe）
+(exit 0) 段落 2 個。1 個目は設定なしと同じ。2 個目: spec-autopilot: 手元の設定 <worktree>/.autopilot-qa/work/h5d0/models.md に読めない行がある（<worktree>/.autopilot-qa/work/h5d0/models.md が UTF-8 で読めない）。読める行だけを使う。`python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show` で見て、`setup` で書き直すか `setup --reset` で消す。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5d1 python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md: - 相談: sonnet-high）
+(exit 0) 段落 2 個。2 個目: spec-autopilot: 手元の設定 <worktree>/.autopilot-qa/work/h5d1/models.md に読めない行がある（モデルの節の `- 相談:` は「fable-medium」「fable-high」「opus-high」のどれか（今は「sonnet-high」））。読める行だけを使う。`python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py show` で見て、`setup` で書き直すか `setup --reset` で消す。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5d2 python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md: - 相談: opus-high / - 相談: fable-high）
+(exit 0) 段落 2 個。2 個目: 読み替え（fable-advisor → spec-autopilot:fable-advisor-opus）の文と、「モデルの節に `- 相談:` が 2 本以上ある」の直し方の文。
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/h5e python3 <worktree>/plugins/spec-autopilot/hooks/session_start.py   （models.md がディレクトリ）
+(exit 0) 段落 2 個。2 個目: spec-autopilot: 手元の設定 <worktree>/.autopilot-qa/work/h5e/models.md に読めない行がある（<worktree>/.autopilot-qa/work/h5e/models.md を読めない（IsADirectoryError））。読める行だけを使う。…
+
+$ python3 .autopilot-qa/check.py
+R5 pass

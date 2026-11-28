@@ -211,6 +211,23 @@ def test_every_rung_has_an_agent_with_the_declared_model_and_the_same_body():
             assert body == base, agent
 
 
+def test_every_advisor_rung_has_an_agent_with_the_declared_model_effort_and_the_fable_advisor_body():
+    import sys
+    sys.path.insert(0, str(AGENTS.parent / "scripts"))
+    import ladder
+    assert set(ladder.ADVISORS) == {"advisor", "checker"} and not set(ladder.ADVISORS) & set(ladder.RUNGS)
+    assert list(ladder.ADVISORS["advisor"]) == ["fable-medium", "fable-high", "opus-high"] and list(ladder.ADVISORS["checker"]) == ["opus-high"]
+    base = (AGENTS / "fable-advisor.md").read_text(encoding="utf-8").split("\n---\n", 1)[1]
+    assert "承認:" in base
+    for role, rungs in ladder.ADVISORS.items():
+        for rung, (agent, model, effort) in rungs.items():
+            head, body = (AGENTS / f"{agent}.md").read_text(encoding="utf-8").split("\n---\n", 1)
+            assert f"\nname: {agent}\n" in "\n" + head + "\n" and f"\nmodel: {model}\n" in head + "\n" and f"\neffort: {effort}\n" in head + "\n", agent
+            assert "\ntools: Read, Grep, Glob\n" in head + "\n" and "\nomitClaudeMd: true\n" in head + "\n", agent
+            if role == "advisor":
+                assert body == base, agent
+
+
 def test_park_names_only_the_requirement_past_the_top_and_the_rest_goes_on(repo):
     d = done_spec(repo, "- [x] T1: 規則 [R1, R2]\n")
     raise_rounds(repo, d, 5, "R1")

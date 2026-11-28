@@ -42,6 +42,10 @@ from pathlib import Path
 
 import consent  # noqa: E402
 from consent import ADR_LINE, ADR_NUMBER, numberless  # noqa: E402
+import stages  # noqa: E402
+from stages import (  # noqa: E402（deploy.py・stages.py が autopilot に依らないよう下の層に移した名前。ほかのモジュールは autopilot.<名前> で使い続ける）
+    BUDGET, COMMENT, COMMENT_BLOCK, MAX_REWORKS, NOT_CODE, QA_ROW, REQ, TEST_PATH, classify, git_lines, repo_root, requirement_lines, requirements, section,
+)
 from transcript import _iso_epoch, anomalies, anomaly_line, transcript_lines  # noqa: E402
 
 TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
@@ -82,27 +86,20 @@ PREMISE_KINDS = [  # 前提の節の行の文法（許可リスト）。合わ�
 ]
 HOW_PATH = re.compile(_HOW_ITEM)
 NAME_IN = re.compile(r"[A-Za-z_$][\w$]*(?:[.#][A-Za-z_$][\w$]*)*")
-TEST_PATH = re.compile(r"(^|/)(tests?|__tests__)/|(^|/)test_[^/]*$|_test\.[^/]+$|\.(test|spec)\.[^/]+$")
 SPEC_FILES = re.compile(r"^docs/(?:specs|adr)/|^\.autopilot-qa/")
-NOT_CODE = re.compile(r"(^|/)docs/|^\.autopilot-qa/")  # テストと docs/ の下は数えない。.md は docs/ の外なら数える（skill・agent など .md が本体の repo があるため）
 SIZES = "SML"
 VAGUE = ("適切", "正しく", "十分", "なるべく", "柔軟", "いい感じ", "使いやすい", "appropriately", "properly")
 
-REQ = re.compile(r"^- (R\d+):\s*(\S.*)$", re.M)
 QA_PLAN_ROW = re.compile(r"^\|\s*(R\d+)\s*\|", re.M)
-BUDGET = re.compile(r"^- 予算:\s*(\d+)\s*分\s*$", re.M)
 TASK = re.compile(r"^- \[( |x|X)\] (T\d+):(?:.*\])?[^\[\]]*\[([^\]]*)\]\s*$")  # 最後の ] の前の [ ... ] を、行の長さに比例して読む
 TASK_NOTE = re.compile(r"^\s+- メモ:")
 HEADING = re.compile(r"^#{1,6}\s")
 QA_HEAD = re.compile(r"^\|\s*要件\s*\|\s*結果\s*\|\s*証拠\s*\|\s*$")
 QA_SEP = re.compile(r"^\|[\s|:-]+\|\s*$")
-COMMENT = re.compile(r"^\s*<!--.*-->\s*$")
-COMMENT_BLOCK = re.compile(r"<!--.*?-->", re.S)
-LADDER_INVESTIGATE, LADDER_REWORK, MAX_REWORKS = 2, 3, 2  # references/dead-end.md の段（2 回で調べ、3 回で作り方へ、作り直しは要件ごとに 2 回）
+LADDER_INVESTIGATE, LADDER_REWORK = 2, 3  # references/dead-end.md の段（2 回で調べ、3 回で作り方へ。作り直しの回数 MAX_REWORKS は stages.py）
 FAIL_SOURCES = ("impl", "qa", "review")
 PROMPT_FILE = "spec-autopilot-last-user-prompt"
 SESSION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}")  # 先頭は英数字（見回り役が claude の引数に置くので、option と読まれない形だけを受ける）
-QA_ROW = re.compile(r"^\|\s*(R\d+)\s*\|\s*(pass|fail|unverified)\s*\|(.*)\|\s*$")  # 証拠の欄は 1 つの (.*) にし、前後の空白は check で除く（空白の分け方で後戻りしない）
 # pass の証拠の欄の文法（許可リスト。agents/autopilot-reviewer.md の出力の節と同じ形）:
 #   <テスト>[<区切り><テスト>...][ と cmd: ...][。<文>][（注記）]  か  cmd: ...  か  manual: ...
 #   末尾の 1 組の（…）は注記、最初の 。から後ろは文として読まない（文の中に :: があれば落とす）
@@ -111,14 +108,6 @@ EVIDENCE_FREE = re.compile(r"(?:^|(?<=[\s・、,。]))(?:cmd|manual):")  # こ�
 EVIDENCE_SEP = re.compile(r"[・、,](?=\s*`?[^\s・、,:（）`]*::)")  # 直後がテストのときだけ区切る（jest の名前の中の 、では区切らない）
 EVIDENCE_PARAM = re.compile(r"\[[^\]]*\]$")  # pytest の parametrize の id
 EVIDENCE_FORMS = "形が読めない（`<path>::<テスト名>` を `・` で並べ、続けて ` と cmd: ...` か、`cmd: ...`・`manual: ...`）"
-
-
-def repo_root(start):
-    try:
-        out = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=start, capture_output=True, text=True)
-    except OSError:
-        return Path(start)
-    return Path(out.stdout.strip()) if out.returncode == 0 else Path(start)
 
 
 def is_new_repo(s):
@@ -365,46 +354,6 @@ def take_over(d, session, what):
         sys.exit(f"{what}したセッションが分からない（CLAUDE_CODE_SESSION_ID も発言の記録の session_id も無い）ので{what}しない")
 
 
-def section(text, name):
-    m = re.search(rf"^## {re.escape(name)}\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
-    return m.group(1) if m else None
-
-
-def classify(text, kinds):
-    """全行を、空行・1 行のコメント・kinds（名前→正規表現）のどれか 1 つに分ける。
-    (受けた行の (名前, match) の一覧, 分けられない行の一覧) を返す。読み飛ばしは kinds の宣言だけで決まる。"""
-    kept, bad = [], []
-    for line in text.splitlines():
-        if not line.strip() or COMMENT.match(line):
-            continue
-        for name, pattern in kinds:
-            m = pattern.match(line)
-            if m:
-                kept.append((name, m))
-                break
-        else:
-            bad.append(line.strip())
-    return kept, bad
-
-
-def requirement_lines(text):
-    """要件の節を読み、(要件の (id, 本文) の一覧, 読めない行の一覧) を返す。"""
-    kept, bad = classify(section(text, "要件") or "", [("req", REQ)])
-    return [m.groups() for _, m in kept], bad
-
-
-def requirements(text):
-    return dict(requirement_lines(text)[0])
-
-
-def git_lines(root, *args):
-    """git の出力を NUL 区切りで読む。失敗したら例外を投げる（数えられないまま通さない）。"""
-    out = subprocess.run(["git", "-c", "core.quotePath=false", args[0], "-z", *args[1:]], cwd=root, capture_output=True, text=True)
-    if out.returncode not in (0, 1):
-        raise RuntimeError(out.stderr.strip() or f"git {args[0]} が {out.returncode} で終わった")
-    return [f for f in out.stdout.split("\0") if f]
-
-
 def counted(path):
     return not TEST_PATH.search(path) and not NOT_CODE.search(path)
 
@@ -499,6 +448,15 @@ def main_only(root, start, tip):
     return out
 
 
+def grep(root, tip, words):
+    """words のどれかを含むファイル（tip があればその commit の中、なければ作業ツリー）。"""
+    hits = set()
+    for word in sorted(words):
+        found = git_lines(root, "grep", "-l", "-w", "-F", "-e", word, *([tip] if tip else []))
+        hits |= {f.split(":", 1)[1] if tip else f for f in found}
+    return hits
+
+
 def diff_size(root, start, tip, decl):
     """init の時点（start）からの差分で (大きさ, 数の dict, 差分のファイルの数) を返す。統合先だけが変えたファイル（main_only）は数えない。tip が無ければ作業ツリーと、git がまだ追っていないファイルまでを数える。
     変えたファイルには影響範囲の変える・新規のパス（テストと docs/ の下を除く）を、呼び出し元には、変える関数の名前を含むファイルと、
@@ -512,14 +470,8 @@ def diff_size(root, start, tip, decl):
                  + git_lines(root, "ls-files", "--others", "--exclude-standard"))
     diffed = {f for f in files if not SPEC_FILES.search(f) and (counted(f) or f in decl["paths"])}  # 試作の有無は、数えるファイルか、影響範囲に書いたパスの差分で決める
     changed = {f for f in diffed | decl["paths"] if counted(f)}
-    def grep(words):
-        hits = set()
-        for word in sorted(words):
-            found = git_lines(root, "grep", "-l", "-w", "-F", "-e", word, *([tip] if tip else []))
-            hits |= {f.split(":", 1)[1] if tip else f for f in found}
-        return hits
-    callers = {f for f in grep(decl["names"]) if f not in changed and counted(f)} | (decl["callers"] - changed)
-    others = ({f for f in grep(decl["inputs"]) if counted(f)} | decl["others"]) - changed - callers
+    callers = {f for f in grep(root, tip, decl["names"]) if f not in changed and counted(f)} | (decl["callers"] - changed)
+    others = ({f for f in grep(root, tip, decl["inputs"]) if counted(f)} | decl["others"]) - changed - callers
     counts = {"変える": len(changed), "呼び出し元": len(callers), "別の実装": len(others)}
     if counts["変える"] >= 6:
         size = "L"
@@ -638,8 +590,7 @@ def lint(d, at_approve=False, preflight=False, base=None, ahead=0, goal=False):
         errors.append(f"本文が自分の ADR を「{word}」で指している。ADR の番号は並行の branch と取り合って改番されるので、"
                       "本文では「この spec の ADR」と書く（作り方の節では書いてよい）")
     import deploy  # 範囲と段の規則は PR の後のループと一緒に置く（このファイルの行の予算のため）
-    import stages
-    errors += stages.lint(sys.modules[__name__], text, reqs) + __import__("ladder").lint(section(text, "モデル"))
+    errors += stages.lint(text, reqs) + __import__("ladder").lint(section(text, "モデル"))
     more_err, more_warn = deploy.scope_lint(text, repo_root(d))
     pre_err, pre_warn = __import__("preflight").check(text, time.time() + ahead * 60, goal=goal) if at_approve or preflight else ([], [])  # 夜通しの前提は人がいる lint と承認のとき
     errors += more_err + pre_err + (__import__("rootcause").consent(sys.modules[__name__], d, text, warnings) if first_agreement else [])  # 合意の ADR の段の行（初回の合意だけ）

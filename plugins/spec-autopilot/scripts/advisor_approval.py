@@ -19,7 +19,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ADVISOR, CHECKER = "fable-advisor", "advice-checker"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ladder  # noqa: E402
+
+ADVISOR, CHECKER = "fable-advisor", "advice-checker"  # 既定の名前（BY_PREFIX・エラーの文言の呼び名）
+# 数える記録の名前は、相談・検証の段の表（ladder.ADVISORS）の agent の名前だけ
+NAMES = {label: {agent for agent, _, _ in ladder.ADVISORS[role].values()} for label, role in ((ADVISOR, "advisor"), (CHECKER, "checker"))}
 BY_PREFIX = f"相談役（{ADVISOR}・{CHECKER} 反証なし）: "
 COMMENT_BLOCK = re.compile(r"<!--.*?-->", re.S)
 READ_ERRORS = (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError)
@@ -79,7 +84,7 @@ def _written_since(path, since):
 
 
 def launches(session, since):
-    """session で since 以後に起動した fable-advisor・advice-checker の [(名前, 起動の時刻, 最後の返答)]。
+    """session で since 以後に起動した相談役・検証役（段の表の名前）の [(ADVISOR か CHECKER, 起動の時刻, 最後の返答)]。
     記録は overnight.launches と同じ <config>/projects/*/<session>/subagents/。形が読めない記録は、since の後に
     書かれたなら ValueError（照合できないまま通さない）、前なら読み飛ばす。"""
     home = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
@@ -91,14 +96,15 @@ def launches(session, since):
             if _written_since(meta, since):
                 raise ValueError(f"{meta.name} の記録が読めない") from None
             continue
-        if name not in (ADVISOR, CHECKER):
+        role = next((r for r, names in NAMES.items() if name in names), None)  # 段の表に無い名前は数えない
+        if role is None:
             continue
         log = meta.with_name(meta.name[: -len(".meta.json")] + ".jsonl")
         try:
             rows = [json.loads(x) for x in log.read_bytes().decode("utf-8").split("\n") if x.strip()]  # "\n" だけで割る（本文の U+2028 で割らない）
             start = datetime.fromisoformat(rows[0]["timestamp"].replace("Z", "+00:00")).timestamp()
             if start >= since:
-                out.append((name, start, reply_of(rows)))
+                out.append((role, start, reply_of(rows)))
         except READ_ERRORS:
             if _written_since(log if log.exists() else meta, since):
                 raise ValueError(f"{log.stem} の記録が読めない") from None
