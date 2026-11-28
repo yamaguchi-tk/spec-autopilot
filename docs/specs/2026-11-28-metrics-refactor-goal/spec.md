@@ -24,7 +24,7 @@
 
 ## 影響範囲
 - 変える: plugins/spec-autopilot/scripts/autopilot.py（全体）
-  - メモ: R2 の lint（593）・impact（429）・check（690）・evidence_problem（805）、R4 の関数の中の import 10 か所。子を作る時点の行番号で書き直す
+  - メモ: R2 の lint（593）・impact（429）・check（690）・evidence_problem（805）、R4 の関数の中の import（`import` と `__import__("…")` の 15 行と、970 の `import advisor_approval, goal, lineup`）。子を作る時点の行番号で書き直す
 - 変える: plugins/spec-autopilot/scripts/overnight.py（全体）
   - メモ: R2 の report（711）・cmd_await（247）・input_kinds（59）・cmd_handoff（507）・launch_errors（432）・impl_name（782）・cmd_rolled_back（657）
 - 変える: plugins/spec-autopilot/scripts/deploy.py（全体）
@@ -42,6 +42,20 @@
 - 新規: plugins/spec-autopilot/references/playbooks/refactor.md
 - 変える: plugins/spec-autopilot/tests/test_playbooks.py（全体）
   - メモ: R1。期待するファイルの一覧に refactor を足し、「ファイルの無い名前」の例の refactor を別の名前に替える
+- 変える: plugins/spec-autopilot/scripts/lineup.py（全体）
+  - メモ: R3・R4。40・119・149・283・332-333 で deploy・overnight を関数の中で import する
+- 変える: plugins/spec-autopilot/scripts/light.py（全体）
+  - メモ: R3・R4。115・154 で deploy・lineup を関数の中で import する
+- 変える: plugins/spec-autopilot/scripts/preflight.py（全体）
+  - メモ: R3・R4。53・132 で deploy を関数の中で import する
+- 変える: plugins/spec-autopilot/scripts/goal.py（全体）
+  - メモ: R4。21 で autopilot を import する
+- 変える: plugins/spec-autopilot/scripts/runlog.py（全体）
+  - メモ: R4。37 で autopilot を関数の中で import する
+- 新規: plugins/spec-autopilot/scripts/common.py
+  - メモ: R4 で、輪の中のモジュールが autopilot.py から使う名前を出す下の層の候補。名前と置き場は子 3 で確定する。R3 で deploy.py から分けるモジュールも子 4 で確定する
+- 呼び出し元: plugins/spec-autopilot/scripts/watch.py:250
+  - メモ: tick_one が deploy を引数で受ける。R3 で名前の置き場が変わるなら向け直す
 - 呼び出し元: plugins/spec-autopilot/hooks/stop.py:73
 - 呼び出し元: plugins/spec-autopilot/hooks/stop.py:213
 - 呼び出し元: plugins/spec-autopilot/hooks/stop.py:417-428
@@ -50,6 +64,7 @@
 - 手本: plugins/spec-autopilot/scripts/carry.py:1-21（ほかの scripts を import しない小さいモジュール）
 - 同じ入力: なし
 - 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+  - メモ: tests/ の 36 本は、どれも変えるモジュール（autopilot・overnight・deploy・transcript・ladder・watch・stages・playbooks・lineup・light・preflight・goal・runlog）のどれかを参照するので、全量を回す
 
 ## 変えない挙動
 - テストの全量: plugins/spec-autopilot/tests/
@@ -58,7 +73,7 @@
 - マージ・デプロイ・QA の段の判定: plugins/spec-autopilot/tests/test_merge_qa.py
 
 ## 前提
-- 目的に届く: R2〜R4 で、行を足す改善の多くが当たる関数（lint・check・report）と、import の輪の中心の autopilot.py が軽くなる。複雑度 20 以下の 51 本の警告の関数は残る
+- 目的に届く: R2〜R4 で、行を足す改善の多くが当たる関数（lint・check・report）と、import の輪の中心の autopilot.py が軽くなる。複雑度 20 以下の 51 本の警告の関数は残る。LCOM4 は deploy.py だけを直し、autopilot.py・advisor_approval.py・ladder.py の 4 と overnight.py の 3 は残す（autopilot.py は R4 で名前を下の層に出すと塊が変わるので、R4 の後に測り直して、要るなら別の spec にする）
 - 運用: 指標は repo の外の測る道具（lizard を土台にした refactor-metrics の skill）で測る。道具は repo に入れない。評価役は、手元にある道具で前と後を測る。道具の無い人は、R1 の playbook の合格基準を、lizard などで同じ形に測る
 - 普通のやり方: 複雑度の高い関数は、早期 return と条件の塊の抽出で下げる。LCOM4 の高いモジュールは、つながりの塊ごとに分ける。import の輪は、共通の部分を下の層に出し、依存の向きを 1 つにそろえる
   - メモ: lizard（https://github.com/terryyin/lizard）の README の指標の説明と、測る skill の直し方の表
@@ -68,15 +83,16 @@
   - コマンド: `uv run --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts` → 上の値（main の 06a73a8 で測った）
 - 前提: LCOM4 は deploy.py が 5、autopilot.py・advisor_approval.py・ladder.py が 4、overnight.py が 3
   - コマンド: `uv run --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --json` → modules の lcom4
-- 前提: import の輪は autopilot.py・deploy.py・goal.py・light.py・lineup.py・overnight.py・preflight.py・runlog.py の 8 つで、autopilot.py が関数の中で 10 か所、輪の中のモジュールを import している
-  - コマンド: `grep -n "^\s\+import \(deploy\|goal\|light\|lineup\|overnight\|preflight\|runlog\)" plugins/spec-autopilot/scripts/autopilot.py` → 10 件
+- 前提: import の輪は autopilot.py・deploy.py・goal.py・light.py・lineup.py・overnight.py・preflight.py・runlog.py の 8 つで、autopilot.py が関数の中で、輪の中のモジュールを `import` か `__import__("…")` で 16 か所 import している
+  - コマンド: `grep -nE '^\s+import (deploy|goal|light|lineup|overnight|preflight|runlog)\b|__import__\("(deploy|goal|light|lineup|overnight|preflight|runlog)"\)' plugins/spec-autopilot/scripts/autopilot.py` → 15 行（ほかに 970 の `import advisor_approval, goal, lineup`）
 - 前提: refactor の playbook はまだ無い
   - path: plugins/spec-autopilot/references/playbooks/feature.md（ほかに bug-fix・external-service・iac だけ）
 
 ## 作り方
 この spec の ADR のとおり、目的の spec として 1 回承認し、要件ごとに子を 1 本ずつ、R1 → R2 → R4 → R3 の順に回す。R5 は R2〜R4 の子の全部が受け持つ。子は main から順にブランチを切り、前の子のマージの後に、その時点の行番号で書く。子の承認は相談役と検証役の経路（`approve --queue --by-advisor`）で通す。
 
-- 子 1（R1）: playbook の refactor.md を足し、索引と test_playbooks.py を直す。playbook には道具の名前もパスも書かない
+- 子 1（R1）: playbook の refactor.md を、既存の playbook と同じ 3 節（spec を書くとき・自走のタスク・評価役の観点）で足し、索引と test_playbooks.py を直す。playbook には道具の名前もパスも書かない
+- 普通のやり方の項目ごとの扱い: 複雑度の早期 return・条件の塊の抽出・分岐の表（dict）への置き換えは子 2 で扱う。関数の長さ（nloc）と引数の数（params）は、複雑度を下げる抽出で一緒に下がる分だけを扱い、目標にしない。LCOM4 の塊ごとの分割は子 4 で deploy.py だけを扱う。import の輪の、共通の部分を下の層に出す・依存の向きをそろえる・呼び出しを引数で渡すは子 3 で扱う。重複（塊 2・0.92%）は範囲外
 - 子 2（R2）: 複雑度の高い順に、早期 return・条件の塊の抽出・分岐の表で下げる。M に収まらなければ子を 2 本に分ける（autopilot.py と、ほかのファイル）
 - 子 3（R4）: 輪の中で autopilot.py が使う名前を下の層のモジュールに出し、autopilot.py の関数の中の import を無くすか、向きを 1 つにそろえる。R3 より先に回す（deploy.py の分け方が import の向きで決まるため）
 - 子 4（R3）: deploy.py のつながりの塊ごとにモジュールを分ける。分けた先の LCOM4 と輪が悪化しないことも確かめる
