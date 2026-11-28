@@ -1,0 +1,11 @@
+- commit: b4c33db
+
+$ grep -n "main が選んだ案\|main の案が渡された\|新しい案を出すことではない" plugins/spec-autopilot/agents/advice-checker.md
+8:  相談の案の検証役（Opus・high）。…確かめる案は 2 種類で、(1) 1 段目の相談役（fable-advisor、または人が名指ししたときの opus-advisor）の推奨、(2) 価値観で残る案が複数のとき（人に戻るときの選択肢・レビュー指摘の直し方を含む）の main が選んだ案（相談役は回さず、根拠に repo の事実があるときだけ）。…役は、案の根拠を repo の事実に当てて反証を探すことで、新しい案を出すことではない。…
+24:- main の案が渡されたときも、案の `推奨:`・`理由:`・`引いた決定:` を、推奨と同じに扱う（以下の「推奨」は main の案を含む）
+
+$ grep -n "^| \`advice-checker\`" plugins/spec-autopilot/README.md
+44:| `advice-checker` | 相談の検証役（Opus・high）。1 段目の推奨か、main が価値観で選んだ案の根拠を repo の事実に当てて反証を探します。新しい案は出しません |
+
+$ python3 .autopilot-qa/check.py
+R4 pass

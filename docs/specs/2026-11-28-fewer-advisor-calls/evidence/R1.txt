@@ -1,0 +1,22 @@
+- commit: b4c33db
+
+$ python3 .autopilot-qa/check.py
+（.autopilot-qa/tmp-repo の spec の無い git repo を cwd に、SPEC_AUTOPILOT_HOME=.autopilot-qa/home で hooks/session_start.py を source=startup で起動し、additionalContext を読んだ）
+hook: (1) 価値観で案が 1 つに絞れたときは、相談役も検証役も回さずに進む。
+hook: (2) 価値観で残る案が 2 つ以上のとき・人に戻るときの選択肢・レビュー指摘の直し方では、相談役を回さず、main が価値観で選んだ案の `推奨:`・`理由:`・`引いた決定:` の欄を spec-autopilot:advice-checker に 1 本だけ渡して反証を探させる（依頼の原文と材料の場所も渡す）。根拠に repo の事実（path
+hook: (3) 1 段目の相談役（spec-autopilot:fable-advisor）を回すのは、目的の spec の子の承認（`approve --queue --by-advisor`）、block の後の承認し直し（`approve --by-advisor`）、人が相談役を名指ししたとき、IaC の初回の apply を含む spec の 4 つだけ。この 4 つは次の 2 段の相談で決める。相談役は main の代わりに選ぶ
+R1 pass
+R2 pass
+R3 pass
+R4 pass
+R5 pass
+R5 pytest: 71 passed in 193.61s (0:03:13)
+
+$ grep -n -o "1 段目の相談役は、SessionStart の相談役の規則の 4 つの場面のうち[^。]*。" plugins/spec-autopilot/commands/autopilot.md
+75:1 段目の相談役は、SessionStart の相談役の規則の 4 つの場面のうち、承認の前に当たる次の 2 つのときだけ回し、ほかの迷いは回さない（価値観で案が 1 つなら何も回さず、残る案が複数なら main の案を repo の事実があるときだけ検証役 1 本で確かめる）。
+
+$ git grep -n "相談役の規則の 2 段で確かめ\|相談役の推奨が同じで" -- plugins/spec-autopilot/commands/autopilot.md
+（出力なし: A の 2・C の冒頭・人に戻るときに、4 つの場面の外で 2 段を回させる旧い文は残っていない）
+
+$ python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_autopilot.py -k "advisor_rule or points_at_advisor_rule"
+14 passed, 481 deselected in 29.31s

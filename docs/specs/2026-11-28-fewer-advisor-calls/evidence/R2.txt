@@ -1,0 +1,15 @@
+- commit: b4c33db
+
+$ python3 .autopilot-qa/check.py
+hook: (2) 価値観で残る案が 2 つ以上のとき・人に戻るときの選択肢・レビュー指摘の直し方では、相談役を回さず、main が価値観で選んだ案の `推奨:`・`理由:`・`引いた決定:` の欄を spec-autopilot:advice-checker に 1 本だけ渡して反証を探させる（依頼の原文と材料の場所も渡す）。根拠に repo の事実（path
+R2 pass
+（hook の出力に「根拠に repo の事実（path:行・コード・引いた決定）があるときだけで、無ければ回さずに進む」と「反証ありなら、自走中（…）は当たる要件だけ park に積んで他を続け、自走していないときは反証（判定と根拠）と自分の案を添えて人に問う」があり、autopilot.md の A の 2・C の冒頭・選択肢・人に戻るときの 4 行に advice-checker と repo の事実の条件があることを確かめた）
+
+$ grep -n -o "残る案が複数なら、main が価値観で選んだ案の[^。]*。" plugins/spec-autopilot/commands/autopilot.md
+85:残る案が複数なら、main が価値観で選んだ案の `推奨:`・`理由:`・`引いた決定:` の欄を、根拠に repo の事実（path:行・コード・引いた決定）があるときだけ `spec-autopilot:advice-checker` に 1 本で渡して反証を探させ（相談役は回さない。
+
+$ grep -n -o "それ以外の迷いは、人に問わず[^。]*。反証ありなら[^。]*。" plugins/spec-autopilot/commands/autopilot.md
+152:それ以外の迷いは、人に問わず、価値観で案が 1 つに絞れたら何も回さずに進み、2 つ以上残るときは main が選んだ案を、根拠に repo の事実があるときだけ advice-checker 1 本で確かめ（無ければ回さずに進む）、反証なしなら進む。反証ありなら、自走中は当たる要件だけ park に積んで他を続け、自走していないときは反証（判定と根拠）と自分の案を添えて人に問う。
+
+$ python3 -m pytest -q -p no:cacheprovider plugins/spec-autopilot/tests/test_autopilot.py -k "advisor_rule or points_at_advisor_rule"
+14 passed, 481 deselected in 29.31s
