@@ -3,7 +3,7 @@
 
 - 受けるのは、人が一度承認した spec が block した後の承認し直しだけ（phase=blocked で、最後の承認のときの
   `## 自走の範囲` の節と今の節が同じ）。初回の承認（discovery・queued）と、範囲を変える承認し直しは人の返事が要る
-- 条件は、spec.md の最後の変更（block の後ならその時刻）より後に、このセッションで fable-advisor が起動し、その後に
+- 条件は、承認の起点（consent.origin。lint が通した中身なら lint が初めて見た時刻、でなければ spec.md の最後の変更。block の後ならその時刻）より後に、このセッションで fable-advisor が起動し、その後に
   advice-checker が起動していて、fable-advisor の最後の返答に `承認: 可`、advice-checker の最後の返答に
   `判定: 反証なし（確かめられない 0 / <n>）` の行が、行の先頭が `承認:`・`判定:` の行のうち
   ちょうど 1 本としてあること。許可の形はこの 1 つだけで、ほかは全部止める
@@ -30,9 +30,9 @@ COMMENT_BLOCK = re.compile(r"<!--.*?-->", re.S)
 READ_ERRORS = (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError)
 
 
-def since_of(s, spec_mtime):
-    """承認の門が「いつより後」を見るか。(時刻, 何の後か)。spec.md の最後の変更を、block・done の時刻が超えればそれ。"""
-    since, what = spec_mtime, "spec.md の最後の変更"
+def since_of(s, spec_mtime):  # spec_mtime は承認の起点（consent.origin）
+    """承認の門が「いつより後」を見るか。(時刻, 何の後か)。承認の起点（consent.origin）を、block・done の時刻が超えればそれ。"""
+    since, what = spec_mtime, "承認の起点（lint が中身を初めて見た時刻か、lint を通していなければ spec.md の最後の変更）"
     if s.get("phase") == "blocked" and float((s.get("blocked") or {}).get("at", 0)) > since:
         since, what = float(s["blocked"]["at"]), "block"
     if s.get("phase") == "done":  # done の前の発言では戻さない。done の時刻が読めなければ戻さない
@@ -125,7 +125,7 @@ def reply_errors(session, since):
     except ValueError as e:
         return [str(e)]
     last = {n: max((x for x in found if x[0] == n), key=lambda x: x[1], default=None) for n in (ADVISOR, CHECKER)}
-    errors = [f"{n} の起動の記録が、spec.md の最後の変更（block の後なら block）より後に無い" for n in (ADVISOR, CHECKER) if not last[n]]
+    errors = [f"{n} の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い" for n in (ADVISOR, CHECKER) if not last[n]]
     if all(last.values()) and last[CHECKER][1] <= last[ADVISOR][1]:
         errors.append(f"{CHECKER} の起動が {ADVISOR} の起動より前（{ADVISOR} の推奨を {CHECKER} が検証した順になっていない）")
     if last[ADVISOR]:

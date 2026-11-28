@@ -1,0 +1,27 @@
+- commit: e9cf3d436070160168709e16e854bf08a2fe8ec6
+- 環境: 手元の一時 repo（.autopilot-qa/run/r3-*）。相談役 2 本の記録は一時の CLAUDE_CONFIG_DIR の subagents/ に作る。main の取り込みで相談役として数える名前が段の表（fable-advisor・fable-advisor-high・fable-advisor-opus）に広がったので、その名前でも回す
+$ python3 .autopilot-qa/check.py（R3 の行の抜き出し）
+R3 block → 相談役（fable-advisor）→ 連番だけ → --by-advisor が通る: pass
+R3 block → 相談役（fable-advisor-high）→ 連番だけ → --by-advisor が通る: pass
+R3 block → 相談役 → 要件の文を変える → --by-advisor が断る: pass
+R3 block → 相談役（fable-advisor-opus）→ 要件の文を変える → --by-advisor が断る: pass
+R3 lint せずに承認した spec の block → 連番だけ → --by-advisor が断る: pass
+R3 子: lint → 相談役 → 連番だけ → --queue --by-advisor が通る: pass
+R3 子: lint → 相談役（fable-advisor-opus）→ 連番だけ → --queue --by-advisor が通る: pass
+R3 子: lint → 相談役 → 要件の文を変える → 断る: pass
+R3 子: lint せず → 相談役 → 連番だけ → 断る: pass
+R3 pass
+$ git apply .autopilot-qa/mut-R3-2.patch（consent.origin の中身の照合を外し、記録があれば常に lint の時刻を起点にする）
+$ python3 -m pytest -q -p no:xdist plugins/spec-autopilot/tests/test_consent.py::test_by_advisor_reapproval_refuses_a_text_change_or_an_unlinted_spec plugins/spec-autopilot/tests/test_consent.py::test_child_queue_by_advisor_refuses_a_text_change_or_an_unlinted_spec
+（変異の前）2 passed in 15.08s
+（変異の後）
+E       AssertionError: dispatch を引き継がなかった: 前の巡に dispatch が無い
+E       assert (0 == 1)
+plugins/spec-autopilot/tests/test_consent.py:266: AssertionError
+E       AssertionError: queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+E       assert (0 == 1)
+plugins/spec-autopilot/tests/test_consent.py:307: AssertionError
+2 failed in 2.66s
+$ git apply -R .autopilot-qa/mut-R3-2.patch
+戻した: yes
+（mut-R3-1 は pytest の引数が分かれず「no tests ran」で判定できなかったので、同じ変異を mut-R3-2 で入れ直した）

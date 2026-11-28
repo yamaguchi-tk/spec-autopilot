@@ -1,0 +1,11 @@
+- commit: e9cf3d436070160168709e16e854bf08a2fe8ec6
+- 環境: 手元の一時 repo（.autopilot-qa/run/r4-*）。main の取り込み後の tip の commands/autopilot.md と本物の autopilot.py の CLI
+$ python3 .autopilot-qa/check.py（R4 の行の抜き出し）
+R4 commands/autopilot.md に示す前・示し直す前の lint がある: pass
+R4 lint(A) → B → lint(B) → 人 → 連番だけ → 通る: pass
+R4 lint(A) → B → lint(B) → 人 → A に戻す → 断る: pass
+R4 lint(A) → B → lint(B) → 人 → 連番ごと A' に戻す → 断る: pass
+R4 pass
+$ git diff --stat 688d6a1 e9cf3d4 -- plugins/spec-autopilot/commands/autopilot.md
+（出力なし。取り込みで commands/autopilot.md は変わっていない）
+（autopilot.md の 75 行目〔B の 3〕「照合役の `ng` や人の直しの指示で直して示し直す前には、毎回 `CLI lint <dir>` を通してから示す」、76 行目〔照合役の項〕「返った `ng` を直したら、`CLI lint` を通し直してから 4 で示す」、77 行目〔B の 4〕「3 のとおり `CLI lint <dir>` を通してから示し直す」、78 行目〔B の 5〕「連番だけの直しなら、人の発言を求め直さない」があり、食い違わない）

@@ -1,0 +1,12 @@
+- commit: e9cf3d436070160168709e16e854bf08a2fe8ec6
+- 環境: 手元の一時 repo（.autopilot-qa/run/r2-*）。main の取り込み後の tip の本物の autopilot.py の CLI を回す
+$ python3 .autopilot-qa/check.py（R2 の行の抜き出し）
+R2 人の後に要件の文を変える → 断る: pass
+R2 人の後に作り方の節を変える → 断る: pass
+R2 人の後に ADR 行の slug を変える → 断る: pass
+R2 lint せずに人 → 連番だけ直す → 断る: pass
+R2 lint(A) → B → 人 → A に戻す → 断る: pass
+R2 人の後に直して lint し直す → 断る: pass
+R2 記録の後の block → block の後の人を求める: pass
+R2 pass
+（断るものはどれも approve が「人の発言が記録されていない」（block のときは「blockの後に人の発言が記録されていない」）で exit 1、phase は discovery のまま。consent.py は取り込みで変わっていない〔git diff 688d6a1 e9cf3d4 -- plugins/spec-autopilot/scripts/consent.py は空〕ので、前の巡の変異 mut-R2-5 の結果を引き継ぐ）

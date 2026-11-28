@@ -1,0 +1,10 @@
+- commit: e9cf3d436070160168709e16e854bf08a2fe8ec6
+- 環境: 手元の一時 repo（.autopilot-qa/run/r1・r1-ro に git init）。main の取り込み後の tip の本物の autopilot.py の CLI を回す（lint・人の発言の記録・approve）
+$ python3 .autopilot-qa/check.py（R1 の行の抜き出し）
+R1 lint → 人 → 連番だけ直す → approve が通る: pass
+R1 書き込めないディレクトリの lint は exit 0・NOTE・tmp なし、approve は mtime の起点で断る: pass
+R1 pass
+（1 本目: lint → 人の発言 → `- ADR:` を 0007→0008 だけ直す → approve は exit 0、phase building。
+ 2 本目: spec のディレクトリを 555 にして lint は exit 0・「lint: OK」と「NOTE:」・Traceback なし・`.state.json.*` なし・state.json は元のバイト列。続けて人の発言 → 連番だけ直す → approve は「人の発言が記録されていない」で exit 1）
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1691 passed in 170.93s (0:02:50)
