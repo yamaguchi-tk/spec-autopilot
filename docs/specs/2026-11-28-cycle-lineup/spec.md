@@ -56,7 +56,7 @@
 - 前提: 今の輪は autopilot・lineup・overnight の 3 つで、autopilot.py の fan-out は 18・LCOM4 は 8、lineup.py の fan-out は 5・LCOM4 は 1
   - コマンド: `uv run --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --json` → 上の値（main の 33058e5 の上で測った）
 - 前提: autopilot.py が lineup.py を使うのは、after_name（505・535・890）・queue_lint（889）・enqueue（911）・begin（912）で、import は 505・535 の `__import__("lineup")` と 887 の関数の中の import
-  - コマンド: `grep -nE 'lineup' plugins/spec-autopilot/scripts/autopilot.py` → 505・535・887・889・890・891・911・912・1055・1256 の行（1055・1256・891 は文字列の中の語）
+  - コマンド: `grep -nE 'lineup' plugins/spec-autopilot/scripts/autopilot.py` → 505・535・887・889・890・891・911・912・985・1055・1256 の行（891・985・1055・1256 は文字列の中の語）
 - 前提: after_name は stages の section・COMMENT_BLOCK だけを、begin は deploy・carry と stages の repo_root と autopilot.py の sha だけを使い、sha は head_and_body と consent の numberless と stages の section だけを使う
   - path: plugins/spec-autopilot/scripts/lineup.py:34（after_name。begin は 117-145）
   - path: plugins/spec-autopilot/scripts/autopilot.py:119（head_and_body。sha は 129-135）
@@ -64,6 +64,9 @@
   - コマンド: `grep -nE 'session_of|minutes\(|remember\(|pairs\(|pairs_file|NEXT' plugins/spec-autopilot/scripts/lineup.py` → 上の行
 - 前提: テストは lineup.remember・lineup.pairs を読む（test_lineup.py:479・486）ので、lineup.py が after から import し直せば変えずに通る
   - path: plugins/spec-autopilot/tests/test_lineup.py:479（remember を別のプロセスで呼ぶ）
+- 前提: lineup.py の fan-out は、begin の carry が building に移り、after・building が増えて 5 から 6 に上がる（deploy は cmd_hold、runlog は block が使い続ける）。指標の道具は、後の値が警告の目安（fan-out 10）を超え、かつ前より大きいときだけ悪化に数えるので、6 は悪化にならない
+  - path: plugins/spec-autopilot/scripts/lineup.py:332（cmd_hold の deploy。block の runlog は 158）
+  - コマンド: `grep -n THRESHOLDS <refactor-metrics の skill>/scripts/measure.py` → fan_out の目安は (10, 15)
 - 前提: after.py の LCOM4 は 2（after_name と、pairs_file・pairs・remember の 2 つの塊）、building.py の LCOM4 は 1（begin が sha を呼び、sha が head_and_body を呼ぶ）、autopilot.py の fan-out は lineup が after・building に替わって 19
   - 未確認: 移した後に道具で測る値で、着手の前の repo の中では確かめられない
 
