@@ -4,7 +4,7 @@
   "created_at": 1795827528.082718,
   "existing": true,
   "start": "0de22ca9da1e4a8589dc174379985fa0412e1829",
-  "last_active_at": 1795832510.044822,
+  "last_active_at": 1795852726.267797,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795829366.854167,
   "approved_by": "OK（2 本承認）",
@@ -13,9 +13,15 @@
   "approved_at": 1795832235.050157,
   "budget_min": 60,
   "post_budget_min": 60,
-  "history": [],
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "載せ替え前の commit に戻す操作（git reset --hard ORIG_HEAD）が権限の判定で拒まれた。人が戻すか、実装役に作り直させるかを確かめる",
+      "at": 1795832756.7945678
+    }
+  ],
   "blocked": null,
-  "paused_sec": 0,
+  "paused_sec": 19969.472548246384,
   "reviews": [],
   "fails": {},
   "streak": {},
@@ -58,5 +64,6 @@
       "dispatch": 0,
       "at": 1795832502.100755
     }
-  ]
+  ],
+  "wait": null
 }
