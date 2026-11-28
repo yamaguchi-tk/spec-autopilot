@@ -1686,9 +1686,31 @@ def test_session_start_advisor_rule_asks_the_human_only_about_facts_permissions_
     text = context(session_start(tmp_path))
     assert "人に問うのは (a) 答えを人しか持たない事実、(b) 利用者の規則が 1 操作ごとに求める操作の許可" in text
     assert "(c) 目的を変える決定（要件を落とす・狭める・非目標を広げる。" in text and "の 3 つだけ" in text
-    # それ以外の迷いは、同じで反証なしなら進み、違うか反証ありなら自走中は park・自走していないときは人に問う
+
+
+def test_session_start_advisor_rule_runs_the_first_stage_advisor_in_the_four_scenes_only(tmp_path):
+    text = context(session_start(tmp_path))
+    assert ("1 段目の相談役（spec-autopilot:fable-advisor）を回すのは、目的の spec の子の承認（`approve --queue --by-advisor`）、"
+            "block の後の承認し直し（`approve --by-advisor`）、人が相談役を名指ししたとき、IaC の初回の apply を含む spec の 4 つだけ") in text
+    assert text.count("1 段目は spec-autopilot:fable-advisor を 1 本") == 1  # 4 つの場面の 2 段の手順は 1 か所
+    # 2 段の相談の指し先（autopilot.md の承認し直しが名指しする語）
+    assert "2 段の相談" in text and "2 段目は、その推奨の `推奨:`・`理由:`・`引いた決定:` の欄だけ" in text
     assert "main の案と相談役の推奨が同じで advice-checker が `判定: 反証なし` なら人に問わず進む" in text
     assert "当たる要件だけ park に積んで他を続け" in text and "自走していないときは食い違い（推奨・反証の判定と根拠・自分の案）を添えて人に問う" in text
+
+
+def test_session_start_advisor_rule_checks_mains_option_with_one_advice_checker_only_when_a_repo_fact_backs_it(tmp_path):
+    text = context(session_start(tmp_path))
+    assert ("価値観で残る案が 2 つ以上のとき・人に戻るときの選択肢・レビュー指摘の直し方では、相談役を回さず、main が価値観で選んだ案の"
+            " `推奨:`・`理由:`・`引いた決定:` の欄を spec-autopilot:advice-checker に 1 本だけ渡して反証を探させる") in text
+    assert "根拠に repo の事実（path:行・コード・引いた決定）があるときだけで、無ければ回さずに進む" in text
+    # 反証ありの扱い: 自走中は park、自走していないときは反証を添えて人に問う
+    assert "反証ありなら、自走中（spec の phase が building でこのセッションが引き受けている。状態の行で分かる）は当たる要件だけ park に積んで他を続け、自走していないときは反証（判定と根拠）と自分の案を添えて人に問う" in text
+
+
+def test_session_start_advisor_rule_runs_nothing_when_values_leave_one_option(tmp_path):
+    text = context(session_start(tmp_path))
+    assert "価値観で案が 1 つに絞れたときは、相談役も検証役も回さずに進む" in text
 
 
 def test_session_start_advisor_rule_reads_values_first_and_proceeds_when_one_option_is_left(tmp_path):
