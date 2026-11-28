@@ -41,6 +41,24 @@ def test_approve_goal_records_the_goal_and_keeps_discovery_for_a_large_spec(repo
     assert not {"approved_at", "approved_by", "budget_min"} & set(s)
 
 
+def lint_errors(repo, d):
+    """CLI lint の ERROR の行だけ。"""
+    r = run(repo, "lint", str(d))
+    return [ln for ln in r.stdout.splitlines() if ln.startswith("ERROR")]
+
+
+def test_lint_of_a_large_goal_spec_in_an_existing_repo_leaves_only_the_split_l_error(repo):
+    errors = lint_errors(repo, large_goal(repo))
+    assert len(errors) == 1 and "大きさ L の spec は 1 本のまま合意しない" in errors[0], errors
+
+
+def test_lint_of_a_declared_large_goal_spec_in_a_new_repo_leaves_only_the_split_l_error(repo):
+    d = init_spec(repo)
+    (d / "spec.md").write_text(GOOD_SPEC.replace("- 大きさ: S", "- 大きさ: L"), encoding="utf-8")
+    errors = lint_errors(repo, d)
+    assert len(errors) == 1 and "大きさ L の spec は 1 本のまま合意しない" in errors[0], errors
+
+
 def test_approve_without_goal_still_stops_a_large_spec(repo):
     d = large_goal(repo)
     user_says(repo)

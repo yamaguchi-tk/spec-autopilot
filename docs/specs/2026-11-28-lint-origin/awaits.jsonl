@@ -3,3 +3,4 @@
 {"kind": "ci", "pr": 111, "sha": "d7cd4c72ae3cb458c39b0f7dedf87d317c0a8bd4", "result": "success", "started_at": 1795831895.4064488, "at": 1795832238.475668, "detail": ["spec-autopilot"]}
 {"kind": "ci", "pr": 111, "sha": "688d6a12843638d9a1dc786b740eea4fa31e8e19", "result": "success", "started_at": 1795832314.92992, "at": 1795832534.426429, "detail": ["spec-autopilot"]}
 {"kind": "ci", "pr": 111, "sha": "e9cf3d436070160168709e16e854bf08a2fe8ec6", "result": "success", "started_at": 1795832695.331837, "at": 1795832914.457068, "detail": ["spec-autopilot"]}
+{"kind": "ci", "pr": 111, "sha": "5d111e2a4f578d35a05549bfc2f5700e06bd993c", "result": "success", "started_at": 1795833261.8270772, "at": 1795833604.958376, "detail": ["spec-autopilot"]}

@@ -1,0 +1,15 @@
+- commit: dc66a58f67d2b686478c50e012ac856d031a35cf
+
+$ python3 -m pytest .autopilot-qa/test_check_goal_default.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_goal.py -q -p no:cacheprovider -n auto
+22 passed in 3.53s
+
+$ python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
+1693 passed in 135.00s (0:02:14)
+
+$ python3 -m pytest .autopilot-qa/test_check_goal_default.py -q -p no:cacheprovider
+6 passed in 4.19s
+
+$ grep -n "残ってよい ERROR は L の ERROR\|既定は目的の spec にする\|目的の spec を既定にする。A の 3" plugins/spec-autopilot/commands/autopilot.md
+57:   - L の依頼で spec を分けるときの既定は、下の目的の spec（人の承認 1 回）にする。...残ってよい ERROR は L の ERROR（1 本のまま合意しない）だけにする。...
+60:   - 既存の repo では、...新しく作る repo では `- 大きさ: <S|M>` を表で決めて書く（L に当たるなら、上の L の項に従い、既定は目的の spec にする）。...
+80:   - **まとめて承認する**（寝る前に複数の spec を承認し、夜の間に順に回す。L を分けるときは、人が子の spec を全部見てから承認したいと言ったときだけ選び、それ以外は目的の spec を既定にする。A の 3）...
