@@ -443,3 +443,24 @@ def test_session_start_with_a_payload_id_that_is_not_a_session_id_uses_the_defau
     text = start_text(tmp_path, session=sid)
     assert "fable-advisor → spec-autopilot:fable-advisor-high" in text and "fable-advisor-opus" not in text
     assert "読めない" not in text
+
+
+def test_setup_session_with_a_file_in_place_of_the_sessions_dir_fails_without_a_traceback(home):
+    home.mkdir(parents=True)
+    (home / "sessions").write_text("x", encoding="utf-8")
+    r = ladder("setup", "--session", "--advisor", "opus-high", session="sess-1")
+    assert r.returncode != 0
+    assert "Traceback" not in both(r)
+    assert str(home / "sessions") in both(r)
+    assert (home / "sessions").read_text(encoding="utf-8") == "x"
+
+
+def test_show_does_not_list_the_rung_of_a_session_override_that_has_an_error(home):
+    sessions = home / "sessions"
+    sessions.mkdir(parents=True)
+    (sessions / "sess-1.models.md").write_text("- 相談: opus-high\n- 検証: haiku\n", encoding="utf-8")
+    r = ladder("show", session="sess-1")
+    assert r.returncode == 0, both(r)
+    advisor = next(l for l in r.stdout.splitlines() if l.startswith("相談:"))
+    assert "このセッション opus-high" not in advisor
+    assert "このセッション 使わない（誤りがある）" in advisor
