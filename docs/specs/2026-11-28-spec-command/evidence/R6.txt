@@ -1,5 +1,5 @@
-- commit: 8d770a8bf9775a6262371bf814f5ce2d29749bfb
-$ python3 -m pytest plugins/spec-autopilot/tests/test_stages.py::test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check plugins/spec-autopilot/tests/test_stages.py::test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge -v
+- commit: ed18f3ecf71cfd4aeedb64a946b90a1baa86a242
+$ python3 -m pytest plugins/spec-autopilot/tests/test_stages.py::test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check plugins/spec-autopilot/tests/test_stages.py::test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge -v -p no:xdist
 test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines0] PASSED
 test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines1] PASSED
 test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines2] PASSED
@@ -7,6 +7,20 @@ test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines3] 
 test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check[lines4] PASSED
 test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge[- 目的の確かめ: R1] PASSED
 test_lint_accepts_a_purpose_check_on_a_requirement_or_after_the_merge[- 目的の確かめ: マージ後（5 本の run の transcript を数え直す）] PASSED
-7 passed in 44.64s
-$ python3 .autopilot-qa/check.py   （R6 の部: 一時 repo .autopilot-qa/tmp/r6/repo で CLI init → spec.md を差し替え → CLI lint。R1・マージ後は通る、無い・2 本・R9・制約の節にだけある・コメントの中にだけある・R10 は ERROR と期待）
+7 passed in 6.23s
+$ python3 .autopilot-qa/check.py r6   （一時 repo .autopilot-qa/tmp/r6/repo で CLI init → spec.md を差し替え → CLI lint）
+  R6 R1: rc=0
+  R6 マージ後: rc=0
+  R6 無い: rc=1
+  R6 2 本: rc=1
+  R6 R9: rc=1
+  R6 R10（R1 の接頭）: rc=1
+  R6 マージ後（）: rc=1
+  R6 形が違う: rc=1
+  R6 制約の節にだけある: rc=1
+  R6 コメントの中にだけある: rc=1
 R6 pass
+$ git apply .autopilot-qa/mut-R6-1.patch && python3 -m pytest plugins/spec-autopilot/tests/test_stages.py::test_lint_rejects_a_missing_doubled_unknown_or_unreadable_purpose_check -q -p no:xdist   （変異: 要件に無い R<n> の ERROR を外す。後に git apply -R で戻した）
+E       AssertionError: lint: OK
+E       assert (0 == 1)
+1 failed, 4 passed in 10.78s

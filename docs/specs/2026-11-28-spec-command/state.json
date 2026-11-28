@@ -4,7 +4,7 @@
   "created_at": 1795858736.073002,
   "existing": true,
   "start": "9e2a102f4f7a69eef23bc90373c7c17d561859b3",
-  "last_active_at": 1795867027.357507,
+  "last_active_at": 1795867451.2157838,
   "consent": {
     "sha256": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
     "full": "fdca85a51413e9412fcf3938aab8d70f3951ef60cb1535a3a28a287ad2782650",
@@ -263,9 +263,68 @@
   ],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
+  "reviews": [
+    {
+      "high": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "at": 1795867449.886763,
+      "sha": "ed18f3ecf71cfd4aeedb64a946b90a1baa86a242"
+    },
+    {
+      "high": [],
+      "at": 1795867451.215769,
+      "sha": "ed18f3ecf71cfd4aeedb64a946b90a1baa86a242"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795867449.886754
+      }
+    ],
+    "R2": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795867449.88676
+      }
+    ],
+    "R3": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795867449.886762
+      }
+    ],
+    "R4": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795867449.886762
+      }
+    ],
+    "R5": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795867449.886762
+      }
+    ]
+  },
+  "streak": {
+    "R1": 1,
+    "R2": 1,
+    "R3": 1,
+    "R4": 1,
+    "R5": 1
+  },
   "reworks": {},
   "dispatches": [
     {
@@ -343,6 +402,14 @@
       ],
       "dispatch": 2,
       "at": 1795867027.357505
+    },
+    {
+      "tip": "ed18f3ecf71cfd4aeedb64a946b90a1baa86a242",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 2,
+      "at": 1795867074.6245
     }
   ],
   "raises": [
@@ -387,5 +454,50 @@
       "to": "autopilot-implementer-opus"
     }
   ],
-  "wait": null
+  "wait": null,
+  "review_launches": [
+    1795867079.994066
+  ],
+  "parked": [
+    {
+      "kind": "qa",
+      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/check.py all を回し、headless の claude で R1 を実物で確かめ直す",
+      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+      "req": "R1",
+      "merges": 0,
+      "at": 1795867450.0518541
+    },
+    {
+      "kind": "qa",
+      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/check.py all を回し、headless の claude で R2 を実物で確かめ直す",
+      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+      "req": "R2",
+      "merges": 0,
+      "at": 1795867450.229047
+    },
+    {
+      "kind": "qa",
+      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/check.py all を回し、headless の claude で R3 を実物で確かめ直す",
+      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+      "req": "R3",
+      "merges": 0,
+      "at": 1795867450.39046
+    },
+    {
+      "kind": "qa",
+      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/check.py all を回し、headless の claude で R4 を実物で確かめ直す",
+      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+      "req": "R4",
+      "merges": 0,
+      "at": 1795867450.5664158
+    },
+    {
+      "kind": "qa",
+      "op": "11/29 21:00 JST の後に python3 .autopilot-qa/check.py all を回し、headless の claude で R5 を実物で確かめ直す",
+      "reason": "週の利用上限で headless の claude が返事を返さない（差分の外。11/29 21:00 JST に戻る）",
+      "req": "R5",
+      "merges": 0,
+      "at": 1795867450.735511
+    }
+  ]
 }
