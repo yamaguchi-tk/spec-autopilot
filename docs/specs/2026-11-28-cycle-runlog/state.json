@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "cycle-runlog",
   "created_at": 1795832464.529783,
   "existing": true,
   "start": "8eb6d94d089e8f30386522db542c08414318e38d",
-  "last_active_at": 1795853989.66253,
+  "last_active_at": 1795854542.2253828,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795852772.262323,
   "approved_by": "人が「人が承認する」と返した（相談役は可、検証役は反証なし・確かめられない 1 / 20〔道具の fan-out の数え方〕を見たうえで）",
@@ -63,5 +63,22 @@
   ],
   "review_launches": [
     1795853313.009056
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 123,
+      "at": 1795854541.5288,
+      "sha": "bd0430ab4c1f5a5b8fc10596119191aa69c4d86f",
+      "head": "bc55b557bf0f74d0931462dcfb53e5988beec2a3"
+    }
+  ],
+  "merged_at": 1795854541.528804,
+  "paused_at_merge": 0.0,
+  "done_at": 1795854542.1168158,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
