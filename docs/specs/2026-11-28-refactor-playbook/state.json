@@ -1,10 +1,10 @@
 {
-  "phase": "building",
+  "phase": "done",
   "slug": "refactor-playbook",
   "created_at": 1795827179.0898712,
   "existing": true,
   "start": "256ced70d33e753e1626782643565a9b4492ee02",
-  "last_active_at": 1795829418.133814,
+  "last_active_at": 1795829926.654051,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
   "queued_at": 1795827650.706514,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 25）。人は目的の spec を「承認する」で承認済み",
@@ -54,5 +54,22 @@
   ],
   "review_launches": [
     1795829114.104674
-  ]
+  ],
+  "merges": [
+    {
+      "pr": 113,
+      "at": 1795829924.41761,
+      "sha": "d344a42d56461646e907b8a59304c39f747844cd",
+      "head": "5453070dd5fcdcfddfa42e521ead5c141c3bf05f"
+    }
+  ],
+  "merged_at": 1795829924.417614,
+  "paused_at_merge": 0.0,
+  "done_at": 1795829925.894078,
+  "anomalies": {
+    "空の turn の block": 0,
+    "裏で走った agent": 0,
+    "承認後に人へ問い": 0,
+    "待ちの poll": 0
+  }
 }
