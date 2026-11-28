@@ -1,0 +1,15 @@
+- commit: effae88
+$ python3 -m pytest <spec の回帰テストの 29 ファイル> -q -n auto
+1564 passed in 372.33s (0:06:12)
+$ uv run -q --with lizard python <refactor-metrics の skill>/scripts/measure.py plugins/spec-autopilot/scripts --base ca48e57
+前: 関数 332・CC の平均 7.45・目安を超えた関数 ccn 71・nloc 4・nesting 1・params 5・循環の組 3・重複の塊 2（0.89%）
+後: 関数 332・CC の平均 7.45・目安を超えた関数 ccn 71・nloc 4・nesting 1・params 5・循環の組 3・重複の塊 2（0.89%）
+## 悪化（1）
+- autopilot.py の fan_out が 18 → 19（高）
+## 改善（0）
+- なし
+$ python3 .autopilot-qa/check.py（ca48e57 と effae88 の plugin を git archive で .autopilot-qa に写し、同じ spec に lint・approve（--queue・依る spec・壊れた lineup-after.json）・lineup.py next・check・done・approve・light.py approve を一時の SPEC_AUTOPILOT_HOME で回し、時刻・パス・sha を伏せて突き合わせた）
+autopilot.py before {'lang': 'py', 'fan_out': 18, 'fan_in': 4, 'lcom4': 8} after {'lang': 'py', 'fan_out': 19, 'fan_in': 4, 'lcom4': 8}
+lineup.py before {'lang': 'py', 'fan_out': 5, 'fan_in': 3, 'lcom4': 1} after {'lang': 'py', 'fan_out': 6, 'fan_in': 2, 'lcom4': 1}
+悪化 ['autopilot.py の fan_out が 18 → 19（高）'] 移しただけ False
+R4 pass（CLI 31 段の出力が前後で同じ=True、除いた 2 つのほかの悪化 []、移しただけ False）

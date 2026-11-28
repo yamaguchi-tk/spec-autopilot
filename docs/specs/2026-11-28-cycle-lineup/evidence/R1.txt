@@ -1,0 +1,12 @@
+- commit: effae88
+$ grep -nE '\blineup\b' plugins/spec-autopilot/scripts/autopilot.py | cut -c1-160
+44:from after import NEXT, after_name, pairs, pairs_file  # noqa: E402（lineup.py から出した下の層）
+45:from building import begin, head_and_body, sha  # noqa: E402（同上。light.py・lineup.py も使う）
+935:        errors.append("依る spec のある spec は --queue で承認する（着手のときに lineup.py next が依る spec の先端に載せ替える
+1029:    print(f"blocked: {a.req}。" + ("人に示す前に、spec を直し、fable-advisor → advice-checker を起動して `approve --by-advisor` で承認し直すのを試す（数えられるのは spec を直した後に起動した相談役だけ）。通らなければ `lineup.py next` で次に進み、...
+1099:        lines.append("承認済みで着手待ち: lineup.py next で承認した順に着手する（人の発言は要らない）")
+1300:    ap.add_argument("--queue", action="store_true")  # 承認だけして着手は lineup.py next に回す
+$ python3 -m pytest plugins/spec-autopilot/tests/test_import_layers.py -q
+28 passed in 2.31s
+$ python3 .autopilot-qa/check.py
+R1 pass（import 先 lineup 無し、grep の当たり 6 行はどれも文字列の lineup.py、動的 __import__ ['__import__(a.cmd)']、sys.modules ['sys.modules[__name__]']）

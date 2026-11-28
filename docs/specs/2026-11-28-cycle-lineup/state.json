@@ -4,7 +4,7 @@
   "created_at": 1795870280.143713,
   "existing": true,
   "start": "e364ad8add4411cfce7d2b3efb492216b6755742",
-  "last_active_at": 1795874141.094343,
+  "last_active_at": 1795875229.282594,
   "consent": {
     "sha256": "f07b2896ca5f255c2f76d34626ffb320eca608485379b7682e72600204f23ddb",
     "full": "f07b2896ca5f255c2f76d34626ffb320eca608485379b7682e72600204f23ddb",
@@ -22,8 +22,44 @@
   "history": [],
   "blocked": null,
   "paused_sec": 0,
-  "reviews": [],
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795875229.2825758,
+      "sha": "effae8828932b3c5633cdb8c8b20bdb1e8c5a4af"
+    }
+  ],
   "fails": {},
   "streak": {},
-  "reworks": {}
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "ca48e5778d34592e04002aef882653acb24cebe4",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795874141.278933,
+      "session": "eb082a6f-343e-4088-a8a7-ca4c97f0906c"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "effae8828932b3c5633cdb8c8b20bdb1e8c5a4af",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795874535.380425
+    }
+  ],
+  "review_launches": [
+    1795874541.6605718
+  ]
 }
