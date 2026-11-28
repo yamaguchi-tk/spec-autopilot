@@ -69,7 +69,7 @@
 | R1 | 手元で実物 | 着手の commit を前、tip を後にして、指標の前後の比べ方を回し、輪と循環の組を読む | 輪が 5 モジュールの 1 つで、runlog が入らず、循環の組が 10 |
 | R2 | 手元で実物 | runlog.py を `import autopilot`・`autopilot\.[A-Za-z_]`・`ap\.[A-Za-z_]`・`importlib`・`sys.modules`・`__import__` で grep する | grep が 0 件（文字列の中の語は除く） |
 | R3 | 手元で実物 | stated_size を置いたモジュールの import を読み、指標の前後の比べ方でそのモジュールの LCOM4 と autopilot.py の fan-out・LCOM4 を読む | carry.py のほかに scripts を import せず、LCOM4 が 2 以下、autopilot.py の fan-out が 16 以下、LCOM4 が 4 以下 |
-| R4 | 手元で実物 | 回帰テストのメモの手元のテストと足したテストを回し、着手の commit と tip で同じ spec に CLI の lint・check・status を回し、一時の SPEC_AUTOPILOT_HOME で done・block の runs.jsonl の行を書かせて突き合わせ、指標の前後の比べ方を回す。全量は PR の CI で回す | 手元のテストが通り、出力と行が同じ（時刻を除く）で、悪化 0、「移しただけ」と出ず、マージの前に CI の全量が通る |
+| R4 | 手元で実物 | 回帰テストと足したテストを回し、着手の commit と tip で同じ spec に CLI の lint・check・status を回し、一時の SPEC_AUTOPILOT_HOME で done・block の runs.jsonl の行を書かせて突き合わせ、指標の前後の比べ方を回す。全量は PR の CI で回す | 回帰テストと足したテストが通り、出力と行が同じ（時刻を除く）で、悪化 0、「移しただけ」と出ず、マージの前に CI の全量が通る |
 
 ## 制約
 - 予算: 45 分
