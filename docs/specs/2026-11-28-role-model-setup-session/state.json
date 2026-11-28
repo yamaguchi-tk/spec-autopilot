@@ -1,14 +1,23 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "role-model-setup-session",
   "created_at": 1795829840.5669959,
   "existing": true,
-  "start": "25f0a09cc197782d40c1c9b0d84ab2f46ee1852f",
-  "last_active_at": 1795830278.880033,
+  "start": "5fb245d2c255e110d6d73992e19c9edb98221677",
+  "last_active_at": 1795854014.637299,
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795830278.876441,
   "approved_by": "OK（3 本目承認）",
   "spec_sha256": "6683015b722d69bad10ee50490aef89b4c8a0f5218c2269de2bf71be7c5cdb2a",
-  "after": "2026-11-28-role-model-setup-command"
+  "after": "2026-11-28-role-model-setup-command",
+  "approved_at": 1795854014.6366699,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
