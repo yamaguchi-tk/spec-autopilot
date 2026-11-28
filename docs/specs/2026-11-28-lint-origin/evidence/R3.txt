@@ -1,0 +1,71 @@
+- commit: 00b6d0a08012ab3388e57bea70f0f2a1d45bdbe6
+- 環境: 手元の一時 repo（.autopilot-qa/run/r3 に git init）。本物の autopilot.py の CLI を回す。相談役 2 本の記録は一時の CLAUDE_CONFIG_DIR の transcript に作る
+$ python3 .autopilot-qa/check.py（R3 の段の抜き出し。各 spec は lint → 人の発言 → approve → block の後）
+$ git init r3
+# adv-num: lint → 人 → approve → block → 相談役 2 本 → `- ADR:` を 0007 → 0008 だけ直す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-adv-num --by 直した --by-advisor
+  dispatch を引き継がなかった: 前の巡に dispatch が無い
+  approved: 予算 30 分。ここから自走する
+  (exit 0)
+R3 --by-advisor adv-num は通る: pass
+# adv-req: 同じ手順で、連番に加えて「横 1 列がそろったとき」→「横 2 列がそろったとき」
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-adv-req --by 直した --by-advisor
+  ERROR: fable-advisor の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  ERROR: advice-checker の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  (exit 1)
+R3 --by-advisor adv-req は断る: pass
+# adv-how: 同じ手順で、連番に加えて作り方の節「規則を純粋な JS に分け」→「規則を純粋な TS に分け」
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-adv-how --by 直した --by-advisor
+  ERROR: fable-advisor の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  ERROR: advice-checker の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  (exit 1)
+R3 --by-advisor adv-how は断る: pass
+# adv-nolint: lint を回さずに人 → approve → block → 相談役 2 本 → 連番だけ直す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-adv-nolint --by 直した --by-advisor
+  ERROR: fable-advisor の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  ERROR: advice-checker の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  (exit 1)
+R3 --by-advisor adv-nolint は断る: pass
+# adv-before-block: lint → 人 → approve → 相談役 2 本 → block → 連番だけ直す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-adv-before-block --by 直した --by-advisor
+  ERROR: fable-advisor の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  ERROR: advice-checker の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  (exit 1)
+R3 block より前の相談役の記録は数えない: pass
+# 親（目的の spec）を人が 1 回承認する
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-parent --by 目的 OK --goal
+  goal: 目的として承認した（phase は discovery のまま。子の spec は main が分けて --queue で承認する）
+  (exit 0)
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-child-num
+  lint: OK
+  (exit 0)
+# 相談役 2 本 → `- ADR:` を 0007 → 0008 だけ直す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-child-num --by 子 OK --queue --by-advisor
+  queued: 承認した。lineup.py next で承認した順に着手する（人の発言は要らない）
+  (exit 0)
+R3 子 child-num は通る: pass
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-child-req
+  lint: OK
+  (exit 0)
+# 相談役 2 本 → 連番に加えて「横 1 列がそろったとき」→「横 2 列がそろったとき」
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-child-req --by 子 OK --queue --by-advisor
+  ERROR: fable-advisor の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  ERROR: advice-checker の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  (exit 1)
+R3 子 child-req は断る: pass
+$ autopilot.py lint <repo>/docs/specs/2026-11-28-child-how
+  lint: OK
+  (exit 0)
+# 相談役 2 本 → 連番に加えて作り方の節「規則を純粋な JS に分け」→「規則を純粋な TS に分け」
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-child-how --by 子 OK --queue --by-advisor
+  ERROR: fable-advisor の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  ERROR: advice-checker の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  (exit 1)
+R3 子 child-how は断る: pass
+# child-nolint: lint を回さずに相談役 2 本 → 連番だけ直す
+$ autopilot.py approve <repo>/docs/specs/2026-11-28-child-nolint --by 子 OK --queue --by-advisor
+  ERROR: fable-advisor の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  ERROR: advice-checker の起動の記録が、承認の起点（lint が中身を初めて見た時刻か spec.md の最後の変更。block の後なら block）より後に無い
+  (exit 1)
+R3 子 child-nolint は断る: pass
+R3 pass
