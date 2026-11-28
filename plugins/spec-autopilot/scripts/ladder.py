@@ -229,6 +229,7 @@ def render(rows):
 def edit(change, path=None):
     """ロックの中で読み直し、change(読める行) が返した行だけで書き換える（空なら消す）。壊れていた元の中身は毎回別の名前で残す。"""
     path = path or config_path()
+    # 範囲: 置き場を作れないときの終わり方だけを変える。想定する脅威: 事故（置き場の名前のファイル）だけ。やらないこと: 置き場の作り直し・退避
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
     except OSError as e:
