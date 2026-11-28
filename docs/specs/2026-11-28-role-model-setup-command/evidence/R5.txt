@@ -1,0 +1,7 @@
+- commit: e8b515e7f15b5af671e2f6a9041107307f330c4e
+（評価役が動かしたのは df02a14。e8b515e までの差分は spec の置き場だけで、コードは同じ）
+$ python3 .autopilot-qa/check.py <worktree>
+R5 pass
+（commands/setup.md の `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ladder.py" ...` の行を全部、<段> を受ける段に置いて一時の SPEC_AUTOPILOT_HOME で実行: 全部 exit 0、models.md が 5 つの役の行になる。setup.md の `setup --reset 実装|評価|相談|検証|照合` を全部打つと各行が消え、最後に models.md が消える。setup.md に「1 回目に実装・評価・相談・検証の 4 問、2 回目に照合の 1 問」がある。README の setup の節に 相談・検証・照合・「次に始めたセッションから」・「別の目で見る効きが減り」がある）
+$ python3 -m pytest plugins/spec-autopilot/tests/test_spec_autopilot_wiring.py (回帰テストの全量の中で)
+663 passed in 135.25s (0:02:15)

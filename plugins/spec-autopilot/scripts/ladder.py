@@ -6,7 +6,7 @@ Opus xhigh で 2 回落ちたら、Fable を 1 回だけ試す。Fable でも落
 
 手元の設定は SPEC_AUTOPILOT_HOME（無ければ ~/.claude/spec-autopilot）の models.md に、spec の `## モデル` と同じ形の行で置く。
 `ladder.py setup`・`show` で書く・見る。init が spec.md を作るときに、実装・評価の行を `## モデル` に写す（梯子は spec の節だけを読む）。
-相談役・検証役は梯子に入れず（`ADVISORS`）、models.md の `- 相談:`・`- 検証:` の行を SessionStart が読んで使う agent を示す。
+相談役・検証役・照合役は梯子に入れず（`ADVISORS`）、models.md の `- 相談:`・`- 検証:`・`- 照合:` の行を SessionStart が読んで使う agent を示す。
 """
 import argparse
 import fcntl
@@ -31,7 +31,7 @@ RUNGS = {
         "fable": ("autopilot-reviewer-fable", "fable", "high"),
     },
 }
-# 相談役・検証役の段（RUNGS と別で、overnight.py raise --role の選択肢に入れない）。役 → 段の名前 → (agent の名前, model, effort)。順は安い順で、先頭が既定
+# 相談役・検証役・照合役の段（RUNGS と別で、overnight.py raise --role の選択肢に入れない）。役 → 段の名前 → (agent の名前, model, effort)。順は安い順で、先頭が既定
 ADVISORS = {
     "advisor": {
         "fable-medium": ("fable-advisor", "fable", "medium"),
@@ -40,17 +40,22 @@ ADVISORS = {
     },
     "checker": {
         "opus-high": ("advice-checker", "opus", "high"),
+        "fable-high": ("advice-checker-fable", "fable", "high"),
+    },
+    "spec_checker": {
+        "sonnet-high": ("autopilot-spec-checker", "claude-sonnet-5-5", "high"),
+        "opus-high": ("autopilot-spec-checker-opus", "opus", "high"),
     },
 }
 # 評価役の段を手で上げる合図（判断を含むので機械では検出しない）。実装役は review の巡で自動で上げる
 REVIEW_REASON = "判定が決まらない"
 SPEC_KEY = {"impl": "実装", "review": "評価"}
-CONFIG_KEY = {**SPEC_KEY, "advisor": "相談", "checker": "検証"}  # 手元の設定の行の語（spec の `## モデル` は実装・評価だけ）
+CONFIG_KEY = {**SPEC_KEY, "advisor": "相談", "checker": "検証", "spec_checker": "照合"}  # 手元の設定の行の語（spec の `## モデル` は実装・評価だけ）
 ROLES = {**RUNGS, **ADVISORS}
 TABLE = {CONFIG_KEY[role]: rungs for role, rungs in ROLES.items()}
 TRIES_BEFORE_FABLE = 2
 ROW = re.compile(r"^- (実装|評価):[ \t]*(\S+)[ \t]*$")
-CONFIG_ROW = re.compile(r"^- (実装|評価|相談|検証):[ \t]*(\S+)[ \t]*$")
+CONFIG_ROW = re.compile(r"^- (実装|評価|相談|検証|照合):[ \t]*(\S+)[ \t]*$")
 COMMENT = re.compile(r"<!--.*?-->", re.S)
 
 
@@ -166,7 +171,7 @@ def config_path():
 
 
 def read_config(path=None):
-    """手元の設定を読む。(元のバイト列 or None, 読める行 {実装|評価|相談|検証: 段}, 誤りの一覧)。無ければ (None, {}, [])。
+    """手元の設定を読む。(元のバイト列 or None, 読める行 {実装|評価|相談|検証|照合: 段}, 誤りの一覧)。無ければ (None, {}, [])。
     読める行は、受ける段で、同じ役の 1 本目だけ。"""
     path = path or config_path()
     try:
@@ -215,7 +220,7 @@ def edit(change):
 
 
 def write_spec(src, dst):
-    """init が spec.md を作る。手元の設定の実装・評価の行を、雛形の `## モデル` のコメントの後に写す（相談・検証の行は写さない。読めない設定は写さず NOTE で直し方を出す）。"""
+    """init が spec.md を作る。手元の設定の実装・評価の行を、雛形の `## モデル` のコメントの後に写す（相談・検証・照合の行は写さない。読めない設定は写さず NOTE で直し方を出す）。"""
     text = Path(src).read_text(encoding="utf-8")
     path = config_path()
     raw, _, errors = read_config(path)
@@ -257,7 +262,7 @@ def cmd_setup(a):
         return 0
     bad = [f"{CONFIG_KEY[r]} の段「{v}」" for r in ROLES for v in [getattr(a, r)] if v is not None and v not in ROLES[r]]
     if not given or bad:
-        sys.exit(("受けない段: " + "、".join(bad) + "\n" if bad else "--impl か --review か --advisor か --checker か --reset を渡す\n") + "\n".join(accepted_lines()))
+        sys.exit(("受けない段: " + "、".join(bad) + "\n" if bad else "--impl か --review か --advisor か --checker か --spec-checker か --reset を渡す\n") + "\n".join(accepted_lines()))
     rows = edit(lambda cur: {**cur, **given})
     print(f"書いた: {path}\n{render(rows)}", end="")
     return 0
@@ -269,7 +274,7 @@ def main(argv=None):
     sub.add_parser("show")
     sp = sub.add_parser("setup")
     for role in ROLES:
-        sp.add_argument(f"--{role}")
+        sp.add_argument("--" + role.replace("_", "-"))
     sp.add_argument("--reset", nargs="?", const="all")
     a = p.parse_args(argv)
     return {"show": cmd_show, "setup": cmd_setup}[a.cmd](a)

@@ -1,0 +1,10 @@
+- commit: e8b515e7f15b5af671e2f6a9041107307f330c4e
+（評価役が動かしたのは df02a14。e8b515e までの差分は spec の置き場だけで、コードは同じ）
+$ head -6 plugins/spec-autopilot/agents/advice-checker-fable.md plugins/spec-autopilot/agents/autopilot-spec-checker-opus.md
+==> advice-checker-fable.md: name: advice-checker-fable / model: fable / effort: high / tools: Read, Grep, Glob / omitClaudeMd: true
+==> autopilot-spec-checker-opus.md: name: autopilot-spec-checker-opus / model: opus / effort: high / tools: Read, Grep, Glob
+$ python3 -m pytest plugins/spec-autopilot/tests/test_ladder.py ... (spec の回帰テスト 7 ファイル) -q -n auto
+663 passed in 135.25s (0:02:15)
+$ python3 .autopilot-qa/check.py <worktree>
+R3 pass
+（本文が既定の advice-checker・autopilot-spec-checker と同一、name・model・effort が段の表のとおり、tools・omitClaudeMd が既定と同じ）

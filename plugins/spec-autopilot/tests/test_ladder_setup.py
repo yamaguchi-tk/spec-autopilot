@@ -85,7 +85,7 @@ def test_reset_of_one_role_removes_only_its_row_and_the_file_when_no_row_is_left
     assert ladder("setup", "--reset", "実装").returncode == 0  # 無くても 0
 
 
-@pytest.mark.parametrize("args", [["--reset", "照合"], ["--reset", "実装", "--impl", "fable"], ["--reset", "--review", "fable"]])
+@pytest.mark.parametrize("args", [["--reset", "合意"], ["--reset", "実装", "--impl", "fable"], ["--reset", "--review", "fable"]])
 def test_reset_refuses_an_unknown_role_or_a_mix_with_setting(home, args):
     ladder("setup", "--impl", "opus-medium")
     r = ladder("setup", *args)
@@ -118,7 +118,8 @@ def test_concurrent_setups_of_the_two_roles_both_stay(home):
 
 
 ADVISOR = "相談: 受ける段 fable-medium・fable-high・opus-high"
-CHECKER = "検証: 受ける段 opus-high"
+CHECKER = "検証: 受ける段 opus-high・fable-high"
+SPEC_CHECKER = "照合: 受ける段 sonnet-high・opus-high"
 
 
 def test_setup_writes_the_advisor_and_checker_rows_with_the_others_and_prints_path_and_content(home):
@@ -132,14 +133,14 @@ def test_setup_writes_the_advisor_and_checker_rows_with_the_others_and_prints_pa
     assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: fable\n- 相談: fable-high\n- 検証: opus-high\n"
 
 
-@pytest.mark.parametrize("args", [["--advisor", "sonnet-high"], ["--advisor", "opus-medium"], ["--advisor", "fable"], ["--checker", "fable-high"],
-                                  ["--checker", "fable-medium"], ["--advisor", "fable-high", "--checker", "haiku"], ["--impl", "fable", "--advisor", "haiku"]])
+@pytest.mark.parametrize("args", [["--advisor", "sonnet-high"], ["--advisor", "opus-medium"], ["--advisor", "fable"], ["--checker", "fable-medium"], ["--checker", "fable"],
+                                  ["--spec-checker", "fable"], ["--spec-checker", "fable-high"], ["--spec-checker", "opus-medium"], ["--advisor", "fable-high", "--checker", "haiku"], ["--impl", "fable", "--advisor", "haiku"]])
 def test_setup_refuses_an_advisor_or_checker_rung_it_does_not_take_and_lists_each_role(home, args):
     assert ladder("setup", "--advisor", "fable-high", "--impl", "opus-medium").returncode == 0
     before = (home / "models.md").read_bytes()
     r = ladder("setup", *args)
     assert r.returncode != 0
-    for line in (IMPL, REVIEW, ADVISOR, CHECKER):
+    for line in (IMPL, REVIEW, ADVISOR, CHECKER, SPEC_CHECKER):
         assert line in both(r), line
     assert (home / "models.md").read_bytes() == before
 
@@ -162,11 +163,16 @@ def test_show_lists_the_advisor_and_checker_rungs_default_and_setting_then_the_p
     lines = r.stdout.splitlines()
     assert lines == [f"{IMPL} / 既定 sonnet-high / 手元の設定 なし", f"{REVIEW} / 既定 opus-high / 手元の設定 なし",
                      f"{ADVISOR} / 既定 fable-medium / 手元の設定 なし", f"{CHECKER} / 既定 opus-high / 手元の設定 なし",
+                     f"{SPEC_CHECKER} / 既定 sonnet-high / 手元の設定 なし",
                      f"設定のファイル: {home / 'models.md'}"]
     ladder("setup", "--advisor", "opus-high", "--checker", "opus-high")
     lines = ladder("show").stdout.splitlines()
     assert f"{ADVISOR} / 既定 fable-medium / 手元の設定 opus-high" in lines
     assert f"{CHECKER} / 既定 opus-high / 手元の設定 opus-high" in lines
+    ladder("setup", "--spec-checker", "opus-high", "--checker", "fable-high")
+    lines = ladder("show").stdout.splitlines()
+    assert f"{SPEC_CHECKER} / 既定 sonnet-high / 手元の設定 opus-high" in lines
+    assert f"{CHECKER} / 既定 opus-high / 手元の設定 fable-high" in lines
 
 
 def test_a_models_md_with_an_unknown_advisor_rung_is_kept_aside_and_the_good_rows_stay(home):
@@ -212,10 +218,55 @@ def test_session_start_is_unchanged_when_the_rows_are_absent_or_the_default_stag
     assert start_context(tmp_path) == base
 
 
-@pytest.mark.parametrize("content", [b"\xff\xfe", "- 相談: sonnet-high\n".encode(), "- 相談: opus-high\n- 検証: fable-high\n".encode()])
+@pytest.mark.parametrize("content", [b"\xff\xfe", "- 相談: sonnet-high\n".encode(), "- 相談: opus-high\n- 検証: fable\n".encode(), "- 照合: fable\n".encode()])
 def test_session_start_adds_how_to_fix_an_unreadable_setting(home, tmp_path, content):
     base = start_context(tmp_path)
     home.mkdir(exist_ok=True)
     (home / "models.md").write_bytes(content)
     text = start_context(tmp_path)
     assert "setup --reset" in text and str(LADDER) in text and text.startswith(base.split("\n")[0])
+
+
+# --- 照合役の段と検証の fable-high（2 本目: R1・R2・R4）---
+
+def test_setup_writes_the_spec_checker_row_and_the_fable_checker_row_after_the_other_rows(home):
+    r = ladder("setup", "--spec-checker", "opus-high", "--checker", "fable-high", "--impl", "opus-medium")
+    assert r.returncode == 0, both(r)
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 検証: fable-high\n- 照合: opus-high\n"
+    assert "- 照合: opus-high" in r.stdout and str(home / "models.md") in r.stdout
+    assert ladder("setup", "--spec-checker", "sonnet-high").returncode == 0
+    assert "- 照合: sonnet-high\n" in (home / "models.md").read_text(encoding="utf-8")
+
+
+def test_reset_of_the_spec_checker_removes_only_its_row(home):
+    ladder("setup", "--spec-checker", "opus-high", "--checker", "fable-high")
+    r = ladder("setup", "--reset", "照合")
+    assert r.returncode == 0 and "照合" in r.stdout and "既定に戻" in r.stdout
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 検証: fable-high\n"
+
+
+def test_a_models_md_with_an_unknown_spec_checker_rung_is_kept_aside_and_the_good_rows_stay(home):
+    home.mkdir()
+    content = "- 照合: fable\n- 実装: fable\n".encode()
+    (home / "models.md").write_bytes(content)
+    r = ladder("setup", "--spec-checker", "opus-high")
+    assert r.returncode == 0, both(r)
+    assert [p.read_bytes() for p in home.glob("models.md.bad-*")] == [content]
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: fable\n- 照合: opus-high\n"
+
+
+def test_concurrent_setups_of_the_five_roles_all_stay(home):
+    flags = [("--impl", "opus-medium"), ("--review", "opus-xhigh"), ("--advisor", "opus-high"), ("--checker", "fable-high"), ("--spec-checker", "opus-high")]
+    procs = [subprocess.Popen([sys.executable, str(LADDER), "setup", flag, rung], stdout=subprocess.DEVNULL) for flag, rung in flags * 5]
+    assert [p.wait() for p in procs] == [0] * 25
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: opus-xhigh\n- 相談: opus-high\n- 検証: fable-high\n- 照合: opus-high\n"
+
+
+def test_session_start_names_the_spec_checker_and_fable_checker_agents_of_a_non_default_stage(home, tmp_path):
+    home.mkdir(exist_ok=True)
+    (home / "models.md").write_text("- 検証: fable-high\n- 照合: opus-high\n", encoding="utf-8")
+    text = start_context(tmp_path)
+    assert "autopilot-spec-checker → spec-autopilot:autopilot-spec-checker-opus" in text
+    assert "advice-checker → spec-autopilot:advice-checker-fable" in text and "読み替え" in text
+    (home / "models.md").write_text("- 照合: sonnet-high\n- 検証: opus-high\n", encoding="utf-8")
+    assert "読み替え" not in start_context(tmp_path)
