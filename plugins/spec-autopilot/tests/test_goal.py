@@ -59,6 +59,12 @@ def test_lint_of_a_declared_large_goal_spec_in_a_new_repo_leaves_only_the_split_
     assert len(errors) == 1 and "大きさ L の spec は 1 本のまま合意しない" in errors[0], errors
 
 
+def test_lint_l_error_names_the_goal_approval_as_the_way_to_keep_one_spec(repo):
+    """L の ERROR は、分けるほかに、目的の spec として 1 本のまま `--goal` で承認する道も示す。"""
+    errors = lint_errors(repo, large_goal(repo))
+    assert len(errors) == 1 and "--goal" in errors[0], errors
+
+
 def test_approve_without_goal_still_stops_a_large_spec(repo):
     d = large_goal(repo)
     user_says(repo)
