@@ -1,0 +1,26 @@
+- commit: ee642d85bcf01a7e5264faae1ba62f26670f091e
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_import_layers.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_qa_evidence.py plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_stop_bounds.py -q -n auto
+874 passed in 185.18s (0:03:05)
+$ python3 .autopilot-qa/check.py  （git archive で 8d7cc900 と HEAD の plugins/spec-autopilot を .autopilot-qa/r3/{base,tip}/copy に出し、一時の SPEC_AUTOPILOT_HOME（.autopilot-qa/r3/<版>/work/home）で、申告 M・数えた L・申告 L・大きさの行が読めない・新しい repo の L・承認前の spec に check --stage pr と done を回し、証拠の欄 15 例を区切らせて、時刻・sha・作業のパスを伏せて突き合わせた）
+R1 pass
+R2 pass
+R3 pass
+$ cmp .autopilot-qa/r3/base.json .autopilot-qa/r3/tip.json && echo identical
+identical
+$ （tip の出力のうち NOTE・ERROR の行）
+M check pr 0 []
+M done 0 []
+L counted check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））']
+L counted done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））']
+L declared check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
+L declared done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
+unreadable check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
+unreadable done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
+new S done 0 []
+new L check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えていない）']
+new L done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えていない）']
+unapproved check pr 1 ['ERROR: 承認されていない（phase=discovery）']
+$ git diff 8d7cc900..HEAD -- plugins/spec-autopilot/scripts | grep -E '^[-+] ' | sed -E 's/autopilot\.//g; s/^([-+])\s+/\1/' | sort | uniq -c  （移した 2 つの関数の本体）
+- と + の本体の行は、`autopilot.` の前置きを外し、`sep.finditer` が `EVIDENCE_SEP.finditer` になったほかは 1 行ずつ同じ（違うのは docstring と呼ぶ側の 3 行だけ）
+$ git status --short
+ M docs/specs/2026-11-28-fold-evidence-size-note/state.json
