@@ -1,17 +1,23 @@
-- commit: ee642d85bcf01a7e5264faae1ba62f26670f091e
+- commit: a57bd57777a03c980e90d7ebe7024834e1ab79ba
 $ ls plugins/spec-autopilot/scripts/*.py | xargs -n1 basename | grep -E '^(evidence|size_note)\.py$'; echo "ls-hit=$?"
 ls-hit=1
-$ grep -cE '__import__\("(evidence|size_note)"\)' plugins/spec-autopilot/scripts/autopilot.py
-0
 $ grep -nE '__import__\("(evidence|size_note)"\)|sys\.modules\[__name__\]' plugins/spec-autopilot/scripts/autopilot.py
-572:        errors += __import__("premises").check(sys.modules[__name__], repo_root(d), load_state(d).get("start"), premise_text, commit=base)
-601:    errors += more_err + pre_err + (__import__("rootcause").consent(sys.modules[__name__], d, text, warnings) if first_agreement else [])  # 合意の ADR の段の行（初回の合意だけ）
-$ for m in $(ls plugins/spec-autopilot/scripts/*.py | xargs -n1 basename | sed 's/\.py$//'); do grep -qE "^\s*(import|from) $m\b|__import__\(\"$m\"\)|^\s*import .*\b$m\b" plugins/spec-autopilot/scripts/autopilot.py && echo $m; done | wc -l
-15
+575:        errors += __import__("premises").check(sys.modules[__name__], repo_root(d), load_state(d).get("start"), premise_text, commit=base)
+606:    errors += more_err + pre_err + (__import__("rootcause").consent(sys.modules[__name__], d, text, warnings) if first_agreement else [])  # 合意の ADR の段の行（初回の合意だけ）
+$ for m in $(ls plugins/spec-autopilot/scripts/*.py | xargs -n1 basename | sed 's/\.py$//'); do grep -qE "^\s*(import|from) $m\b|__import__\(\"$m\"\)|^\s*import .*\b$m\b" plugins/spec-autopilot/scripts/autopilot.py && echo $m; done | tr '\n' ' '
+advisor_approval consent deploy goal ladder light lineup overnight playbooks preflight premises rootcause runlog stages transcript
+（15 個）
+$ grep -n 'goal_way' plugins/spec-autopilot/scripts/autopilot.py  （main 側の取り込みの確かめ）
+524:def size_errors(d, impact_text, stated, first_agreement, at_approve, goal_way=""):
+535:        return [f"{SPLIT_L}（申告 {stated}・{detail}）{goal_way}"], []
+580:    goal_way = GOAL_WAY if (stated == "L" and load_state(d).get("phase") == "discovery" and not __import__("lineup").after_name(d)
+590:            more_err, size_warn = size_errors(d, body["影響範囲"], stated, first_agreement, at_approve, goal_way)
+596:            errors += [SPLIT_L + goal_way] if first_agreement and stated == "L" else []
+598:        errors.append(SPLIT_L + goal_way)
 $ python3 -m pytest plugins/spec-autopilot/tests/test_import_layers.py -q -p no:cacheprovider
-14 passed in 0.52s
-$ python3 -m pytest .autopilot-qa/r3/base/copy/plugins/spec-autopilot/tests/test_import_layers.py -q -p no:cacheprovider  （着手の commit の写しに tip のテストを置いた）
-FAILED ...::test_evidence_and_size_note_are_folded_into_autopilot
-FAILED ...::test_autopilot_imports_fifteen_scripts_modules
-FAILED ...::test_autopilot_passes_sys_modules_only_to_premises_and_rootcause
-3 failed, 11 passed in 1.81s
+14 passed in 0.30s
+$ python3 -m pytest .autopilot-qa/r3/base/copy/plugins/spec-autopilot/tests/test_import_layers.py -q -p no:cacheprovider  （ff5b3e2 の写しに tip のテストを置いた）
+FAILED ...::test_import_layers.py::test_evidence_and_size_note_are_folded_into_autopilot
+FAILED ...::test_import_layers.py::test_autopilot_imports_fifteen_scripts_modules
+FAILED ...::test_import_layers.py::test_autopilot_passes_sys_modules_only_to_premises_and_rootcause
+3 failed, 11 passed in 0.29s

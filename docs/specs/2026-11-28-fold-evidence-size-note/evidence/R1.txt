@@ -1,17 +1,17 @@
-- commit: ee642d85bcf01a7e5264faae1ba62f26670f091e
-$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 8d7cc900
-前: 関数 326・CC の平均 7.40・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 10・重複の塊 2（0.9%）
-後: 関数 326・CC の平均 7.40・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 4・循環の組 10・重複の塊 2（0.9%）
+- commit: a57bd57777a03c980e90d7ebe7024834e1ab79ba
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base ff5b3e2
+前: 関数 326・CC の平均 7.42・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 5・循環の組 10・重複の塊 2（0.9%）
+後: 関数 326・CC の平均 7.42・目安を超えた関数 ccn 69・nloc 4・nesting 1・params 5・循環の組 10・重複の塊 2（0.9%）
 
 ## 悪化（0）
 - なし
 
 ## 改善（1）
 - autopilot.py の fan_out が 17 → 15
-$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base 8d7cc900 --json  （diff の欄）
+$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --base ff5b3e2 --json  （diff の欄）
 {"worsened": [], "improved": ["autopilot.py の fan_out が 17 → 15"], "moved_only": false}
-$ uv run -q --with lizard python ~/.claude/skills/refactor-metrics/scripts/measure.py plugins/spec-autopilot/scripts --json  （report.modules の autopilot.py）
-"autopilot.py": {"lang": "py", "fan_out": 15, "fan_in": 5, "lcom4": 4}
+$ （同じ --json の report.modules の autopilot.py）
+{"lang": "py", "fan_out": 15, "fan_in": 5, "lcom4": 4}
 $ python3 .autopilot-qa/check.py
 R1 pass
 R2 pass

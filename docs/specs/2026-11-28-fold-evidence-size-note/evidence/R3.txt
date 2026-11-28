@@ -1,26 +1,32 @@
-- commit: ee642d85bcf01a7e5264faae1ba62f26670f091e
-$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_import_layers.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_qa_evidence.py plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_stop_bounds.py -q -n auto
-874 passed in 185.18s (0:03:05)
-$ python3 .autopilot-qa/check.py  （git archive で 8d7cc900 と HEAD の plugins/spec-autopilot を .autopilot-qa/r3/{base,tip}/copy に出し、一時の SPEC_AUTOPILOT_HOME（.autopilot-qa/r3/<版>/work/home）で、申告 M・数えた L・申告 L・大きさの行が読めない・新しい repo の L・承認前の spec に check --stage pr と done を回し、証拠の欄 15 例を区切らせて、時刻・sha・作業のパスを伏せて突き合わせた）
+- commit: a57bd57777a03c980e90d7ebe7024834e1ab79ba
+$ python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_import_layers.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_qa_evidence.py plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_goal.py -q -n auto -p no:cacheprovider
+894 passed in 184.16s (0:03:04)
+$ python3 .autopilot-qa/check.py  （git archive で ff5b3e2 と HEAD の plugins/spec-autopilot を .autopilot-qa/r3/{base,tip}/copy に出し、一時の SPEC_AUTOPILOT_HOME（.autopilot-qa/r3/<版>/work/home）と CLAUDE_CONFIG_DIR で、申告 M・数えた L・申告 L・大きさの行が読めない・数えられない（start が無い）・新しい repo の S と L・承認前の 8 つの spec に check --stage pr と done を回し、証拠の欄 18 例を区切らせて evidence_problem に読ませ、時刻・sha・作業のパスを伏せて突き合わせた）
 R1 pass
 R2 pass
 R3 pass
+  L counted | check pr | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））']
+  L counted | done | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））']
+  L declared | check pr | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
+  L declared | done | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
+  M | check pr | rc=0 | []
+  M | done | rc=0 | []
+  new L | check pr | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えていない）']
+  new L | done | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えていない）']
+  new S | check pr | rc=0 | []
+  new S | done | rc=0 | []
+  no start (cannot count) | check pr | rc=0 | ['NOTE: 大きさを数えられない（init の時点の commit が state.json に無い（init し直す））。PR の大きさは差分を見て決める']
+  no start (cannot count) | done | rc=0 | ['NOTE: 大きさを数えられない（init の時点の commit が state.json に無い（init し直す））。PR の大きさは差分を見て決める']
+  unapproved | check pr | rc=1 | ['ERROR: 承認されていない（phase=discovery）']
+  unreadable | check pr | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
+  unreadable | done | rc=0 | ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
 $ cmp .autopilot-qa/r3/base.json .autopilot-qa/r3/tip.json && echo identical
 identical
-$ （tip の出力のうち NOTE・ERROR の行）
-M check pr 0 []
-M done 0 []
-L counted check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））']
-L counted done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 M・数えた大きさ L（変える 8・呼び出し元 0・別の実装 0））']
-L declared check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
-L declared done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
-unreadable check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
-unreadable done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えた大きさ M（変える 2・呼び出し元 0・別の実装 0））']
-new S done 0 []
-new L check pr 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えていない）']
-new L done 0 ['NOTE: 大きさが L になった。PR は 1 本にせず、呼び出しの関係でまとまるファイルの塊ごとに stacked PR に分ける（申告 L・数えていない）']
-unapproved check pr 1 ['ERROR: 承認されていない（phase=discovery）']
-$ git diff 8d7cc900..HEAD -- plugins/spec-autopilot/scripts | grep -E '^[-+] ' | sed -E 's/autopilot\.//g; s/^([-+])\s+/\1/' | sort | uniq -c  （移した 2 つの関数の本体）
-- と + の本体の行は、`autopilot.` の前置きを外し、`sep.finditer` が `EVIDENCE_SEP.finditer` になったほかは 1 行ずつ同じ（違うのは docstring と呼ぶ側の 3 行だけ）
+$ ls .autopilot-qa/r3/base/copy/plugins/spec-autopilot/scripts/ | grep -E 'evidence|size_note'  （base の写しは分けた 2 つのファイルで回った）
+evidence.py
+size_note.py
+$ diff <(git diff 8d7cc90 ee642d8 -- plugins/spec-autopilot/scripts plugins/spec-autopilot/tests | grep -E '^[-+]' | grep -vE '^(\+\+\+|---)') <(git diff ff5b3e2 a57bd57 -- plugins/spec-autopilot/scripts plugins/spec-autopilot/tests | grep -E '^[-+]' | grep -vE '^(\+\+\+|---)'); echo "linediff=$?"  （取り込みの前と後で、子の変更の +・- の行が同じ）
+linediff=0
 $ git status --short
+ M docs/specs/2026-11-28-fold-evidence-size-note/awaits.jsonl
  M docs/specs/2026-11-28-fold-evidence-size-note/state.json
