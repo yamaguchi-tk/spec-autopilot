@@ -35,8 +35,8 @@
   - メモ: ap.stated_size を使う。lineup.py は変えない（ほかに light.py:167・overnight.py:324・size_note.py:12）
 - 手本: plugins/spec-autopilot/scripts/carry.py:1-21（ほかの scripts を import しない小さいモジュール）
 - 同じ入力: なし
-- 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/ -q -n auto
-  - メモ: autopilot.py は CLI の入口で、tests/ の大半が import か CLI で通るので全量にする（親の spec と同じ）。CLAUDE.md:5 のとおり /autopilot では手元で全量を回さず、PR の CI が回す（マージは CI が通った後）。実装の途中と評価役は、移す名前・stages・runlog・runs.jsonl を読むテスト（test_import_layers・test_stages・test_size・test_runlog・test_main_progress・test_goal_done・test_goal_command・test_light・test_lineup・test_watch）と足したテストを手元で回す
+- 回帰テスト: python3 -m pytest plugins/spec-autopilot/tests/test_advisor_approval.py plugins/spec-autopilot/tests/test_autopilot.py plugins/spec-autopilot/tests/test_goal_command.py plugins/spec-autopilot/tests/test_goal_done.py plugins/spec-autopilot/tests/test_import_layers.py plugins/spec-autopilot/tests/test_light.py plugins/spec-autopilot/tests/test_overnight.py plugins/spec-autopilot/tests/test_qa_evidence.py plugins/spec-autopilot/tests/test_runlog.py plugins/spec-autopilot/tests/test_size.py plugins/spec-autopilot/tests/test_stages.py plugins/spec-autopilot/tests/test_stop_bounds.py plugins/spec-autopilot/tests/test_main_progress.py plugins/spec-autopilot/tests/test_lineup.py plugins/spec-autopilot/tests/test_watch.py -q -n auto
+  - メモ: 移す名前（stated_size・SIZE_LINE・SIZE_ANY）とまとめる repo_root・git_lines、stages・runlog・runs.jsonl を参照するテストと、autopilot を直接 import するテストのファイルと、CLI で大きさの判定を通す test_main_progress・SPEC_AUTOPILOT_HOME の下に runs.jsonl を書かせる test_lineup・test_watch（`grep -lE 'repo_root|git_lines|stated_size|runlog|runs\.jsonl|import autopilot|autopilot as ap|\bstages\b' plugins/spec-autopilot/tests/*.py`）。全量は PR の CI が回す（CLAUDE.md:5）
 
 ## 変えない挙動
 - テストの全量: plugins/spec-autopilot/tests/
