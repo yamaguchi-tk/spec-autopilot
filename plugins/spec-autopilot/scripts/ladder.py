@@ -229,8 +229,12 @@ def render(rows):
 def edit(change, path=None):
     """ロックの中で読み直し、change(読める行) が返した行だけで書き換える（空なら消す）。壊れていた元の中身は毎回別の名前で残す。"""
     path = path or config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path.with_name(path.name + ".lock"), "w") as lock:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lock = open(path.with_name(path.name + ".lock"), "w")
+    except OSError as e:
+        sys.exit(f"{path.parent} に書けない（{type(e).__name__}）。何も変えていない")
+    with lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         raw, rows, errors = read_config(path)
         if errors:
@@ -287,8 +291,10 @@ def cmd_show(a):
     path = config_path()
     session = os.environ.get("CLAUDE_CODE_SESSION_ID")
     _, base, over, bad = resolve(session)
+    unused = any(layer == "セッションの上書き" for layer, _, _ in bad)
     for (role, rungs), line in zip(ROLES.items(), accepted_lines()):
-        print(f"{line} / 既定 {next(iter(rungs))} / 手元の設定 {base.get(CONFIG_KEY[role], 'なし')} / このセッション {over.get(CONFIG_KEY[role], 'なし')}")
+        mine = "使わない（誤りがある）" if unused else over.get(CONFIG_KEY[role], "なし")
+        print(f"{line} / 既定 {next(iter(rungs))} / 手元の設定 {base.get(CONFIG_KEY[role], 'なし')} / このセッション {mine}")
     print(f"設定のファイル: {path}")
     spath = session_path(session)
     if spath:

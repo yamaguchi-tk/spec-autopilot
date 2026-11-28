@@ -21,4 +21,4 @@
 
 ## Consequences
 - 終わったセッションのファイルが置き場に残る
-- resume・/clear で id が変わると上書きが切れる
+- fork・/clear で id が変わると上書きが切れる（compaction・resume では同じ id のまま効く）
