@@ -4,7 +4,7 @@
   "created_at": 1795821439.206259,
   "existing": true,
   "start": "1b775b8c0578ebfb98b8848348197ec72081931f",
-  "last_active_at": 1795833653.7166479,
+  "last_active_at": 1795834369.605749,
   "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26",
   "queued_at": 1795827227.6273851,
   "approved_by": "R1〜R5 の 2 本の子（子 1 を閉じ R3・版数を非目標、示す前の lint と R2 の除外を足す）の推奨のままで OK",
@@ -47,8 +47,62 @@
     }
   ],
   "paused_sec": 0,
-  "reviews": [],
-  "fails": {},
-  "streak": {},
-  "reworks": {}
+  "reviews": [
+    {
+      "high": [
+        "R1"
+      ],
+      "at": 1795834369.527267,
+      "sha": "1333e6897ad66210c7688bd67c4405281827a9d5"
+    }
+  ],
+  "fails": {
+    "R1": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795834369.527265
+      }
+    ]
+  },
+  "streak": {
+    "R1": 1
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "5f2e1e98cbf14cf15e53ff6f1cec174bfe593fbd",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795833676.683153,
+      "session": "1458e274-2131-47de-a981-b796d5011d85"
+    }
+  ],
+  "handoffs": [
+    {
+      "tip": "1333e6897ad66210c7688bd67c4405281827a9d5",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 0,
+      "at": 1795833976.246209
+    }
+  ],
+  "review_launches": [
+    1795833980.638072
+  ],
+  "lenses": [
+    {
+      "name": "権限の境界をまたぐ呼び出し",
+      "found": 1,
+      "reproduced": 1,
+      "fixed": 0,
+      "at": 1795834369.605748
+    }
+  ]
 }
