@@ -1,13 +1,14 @@
 {
-  "phase": "discovery",
+  "phase": "done",
   "slug": "fewer-reapprovals",
   "created_at": 1795793310.8498502,
   "existing": true,
   "start": "c69e8d87ae1eafbf6032192a10ee2a4b99f4952f",
-  "last_active_at": 1795827226.136945,
+  "last_active_at": 1795835386.794473,
   "goal": {
     "at": 1795827226.136944,
     "by": "R1〜R5 の 2 本の子（子 1 を閉じ R3・版数を非目標、示す前の lint と R2 の除外を足す）の推奨のままで OK",
     "scope_sha256": "0b8330263d370fae927da67eb35c11f03423e71ffa77b2dc14947a4f554f5b26"
-  }
+  },
+  "done_at": 1795835386.7944698
 }
