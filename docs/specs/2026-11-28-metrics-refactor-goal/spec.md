@@ -13,7 +13,7 @@
 - R1: リファクタの spec を書くとき、/autopilot の playbook に refactor があり、それを選んだ spec は、変える前の指標の値を前提に書き、QA の方向性の合格基準を「指標の前後の比べ方で悪化が無く、狙った指標が目標の値に届き、移しただけでない」にする。
 - R2: plugins/spec-autopilot/scripts を測ったとき、循環的複雑度が 20 を超える関数は 0 本になり、変える前に 20 を超えていた関数で値が上がったものは無い。
 - R3: plugins/spec-autopilot/scripts を測ったとき、変える前に LCOM4 が 4 以上だったモジュール（deploy.py・advisor_approval.py・ladder.py と、R4 の子のマージの後に測り直して 4 以上の autopilot.py）と、それを分けた先のモジュールの LCOM4 は 2 以下になる。
-- R4: plugins/spec-autopilot/scripts を測ったとき、互いに import し合うモジュールの輪は無く、依存の向きは autopilot.py（CLI の入口）→ 各モジュール → 下の層の 1 つになる。輪を `importlib`・変数で名前を渡す `__import__`・モジュールごとを渡す引数（`sys.modules[__name__]` など）に替えて道具に見えなくする形と、下の層に出した名前を autopilot.py 経由で使い続ける出し直し（re-export）は無い。
+- R4: plugins/spec-autopilot/scripts を測ったとき、互いに import し合うモジュールの輪は無く、依存の向きは CLI の入口（autopilot.py と、直接打つコマンドの light.py・lineup.py・overnight.py）→ 各モジュール → 下の層の 1 つになり、autopilot.py はほかの入口を import しない（入口の間の import は light・lineup・overnight から autopilot.py への向きと、輪にならない入口どうしの向きだけ）。輪を `importlib`・変数で名前を渡す `__import__`・モジュールごとを渡す引数（`sys.modules[__name__]` など）に替えて道具に見えなくする形と、下の層に出した名前を autopilot.py 経由で使い続ける出し直し（re-export）は無い。
 - R5: R2〜R4 のどの子をマージした後も、テストの全量が通り、CLI の出力とエラー文は変わらず、指標の前後の比べ方で悪化は無く、「移しただけ」と出ない。テストは名前の向け先だけを変え、期待は変えない。ただし R4 の子では、autopilot.py の LCOM4 と fan-out の悪化は数えない（autopilot.py の LCOM4 は R3 の子で 2 以下にする。除いた値は子の証拠に前と後を書く）。tests/test_import_layers.py の輪と import 先の数の期待は、R4 の子が輪と import 先を変えるのと同時に新しい値に直してよい。
 
 ## 非目標
@@ -99,6 +99,9 @@
   - コマンド: `grep -c "ap\.\(report\|refuse\|release\|load_state\|save_state\)" plugins/spec-autopilot/scripts/goal.py` → 17
   - path: plugins/spec-autopilot/scripts/autopilot.py:292（session_file。recorded_specs は 300）
   - 未確認: 塊の 70 と LCOM4 の 9 は、main の 9e2a102 の写しで 5 つの補助と session_file・recorded_specs の 7 つを state.py・out.py に移して道具で測った値で、repo の中では確かめられない
+- 前提: autopilot.py は light・lineup・overnight の関数を、check（light.errors・overnight.review_errors）・approve（lineup.queue_lint・enqueue・begin・after_name）・done と block（overnight.report・notify）・status（overnight.review_gate）で呼び、light・lineup・overnight は autopilot.py の lint・take_over などを呼ぶので輪になる。light・lineup・overnight は、それぞれ `light.py approve`・`lineup.py next`・`overnight.py dispatch` などで直接打つ CLI の入口
+  - コマンド: `grep -nE '__import__\("(light|lineup|overnight)"\)|\b(lineup|overnight)\.[a-z_]+\(' plugins/spec-autopilot/scripts/autopilot.py` → 504・534・663・665・888-911・959-961・985・1158 の行
+  - path: plugins/spec-autopilot/scripts/light.py:27（`import autopilot as ap`。lineup.py も 27、overnight.py は 44）
 - 前提: lint は走っている scripts の隣の references/playbooks/ を読むので、R1 のマージの後も、手元の plugin を人が更新するまでは子の spec に `- playbook: refactor` を書けない
   - path: plugins/spec-autopilot/scripts/playbooks.py:5
   - path: CLAUDE.md:19（手元の checkout の pull は人が頼んだときだけ）
@@ -111,7 +114,7 @@
 
 - 子 1（R1）: playbook の refactor.md を、既存の playbook と同じ 3 節（spec を書くとき・自走のタスク・評価役の観点）で足し、索引と test_playbooks.py を直す。playbook には道具の名前もパスも書かない
 - 普通のやり方の項目ごとの扱い: 複雑度の早期 return・条件の塊の抽出・分岐の表（dict）への置き換えは子 3 で扱う。関数の長さ（nloc）と引数の数（params）は、複雑度を下げる抽出で一緒に下がる分だけを扱い、目標にしない。LCOM4 の塊ごとの分割は子 4 で扱う。import の輪の、共通の部分を下の層に出す・依存の向きをそろえる・呼び出しを引数で渡すは子 2 で扱う。重複（塊 2・0.92%）は範囲外
-- 子 2（R4）: 輪の中のモジュールが autopilot.py から借りている補助（spec の文の読み取り・state・repo の場所など）を、役ごとの下の層のモジュールに出し、各モジュールはそこを直接 import する。autopilot.py の関数の中の import と `sys.modules[__name__]`（親の着手の時点で 5 か所、main の 9e2a102 で 2 か所）は、下の層の import に直す。呼び出しを引数で渡すのは関数を渡す場合に限る。下の層に出したモジュールの LCOM4 を測り、2 を超えるなら役ごとに分ける。autopilot.py の LCOM4 と fan-out が上がるのは、R5 のただし書きのとおり悪化に数えない。`ap.`・`autopilot.` の参照は scripts の 17 ファイルに 212 か所（main の 9e2a102 で 15 ファイルに 188 か所）あり、M に収まらなければ子を分ける。分けた途中の子では、下の層に出した名前を autopilot.py 経由で使う出し直しを残してよく、出し直しの 0 件は R4 の最後の子で判定する。R2 より先に回す（autopilot.py の lint は関数の中の import を 9 か所持ち、R2 と同じ行を書き換えるため。autopilot.py は 1500 行の目安まで 114 行しかない）
+- 子 2（R4）: 輪の中のモジュールが autopilot.py から借りている補助（spec の文の読み取り・state・repo の場所など）を、役ごとの下の層のモジュールに出し、各モジュールはそこを直接 import する。autopilot.py の関数の中の import と `sys.modules[__name__]`（親の着手の時点で 5 か所、main の 9e2a102 で 2 か所）は、下の層の import に直す。呼び出しを引数で渡すのは関数を渡す場合に限る。下の層に出したモジュールの LCOM4 を測り、2 を超えるなら役ごとに分ける。autopilot.py の LCOM4 と fan-out が上がるのは、R5 のただし書きのとおり悪化に数えない。`ap.`・`autopilot.` の参照は scripts の 17 ファイルに 212 か所（main の 9e2a102 で 15 ファイルに 188 か所）あり、M に収まらなければ子を分ける。分けた途中の子では、下の層に出した名前を autopilot.py 経由で使う出し直しを残してよく、出し直しの 0 件は R4 の最後の子で判定する。light・lineup・overnight は入口として扱い、autopilot.py が呼ぶそれらの関数のうち、autopilot.py に依らないもの（lineup.after_name・begin、light.errors、overnight.review_errors・review_gate・report・notify）は下の層のモジュールに出し、承認の道で autopilot.py の lint・take_over を使うもの（lineup.queue_lint・enqueue）は autopilot.py に移す。入口 1 つにつき子を 1 本にする目安で、M に収まらなければ分ける。R2 より先に回す（autopilot.py の lint は関数の中の import を 9 か所持ち、R2 と同じ行を書き換えるため。autopilot.py は 1500 行の目安まで 114 行しかない）
 - 子 3（R2）: 子の spec の要件は関数を名指しして書く。複雑度の高い順に、早期 return・条件の塊の抽出・分岐の表で下げる。M に収まらなければ子を 2 本に分ける（autopilot.py と、ほかのファイル）
 - 子 4（R3）: R4 の後に LCOM4 を測り直し、4 以上のモジュール（R4 で上がった autopilot.py を含む）を、つながりの塊ごとに分ける。塊が 1 つの関数だけなら、分けずに置き場を移す。分けた先の LCOM4 と輪が悪化しないことも確かめる
 
