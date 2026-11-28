@@ -1,14 +1,20 @@
 {
-  "phase": "discovery",
+  "phase": "queued",
   "slug": "cycle-lineup",
   "created_at": 1795870280.143713,
   "existing": true,
   "start": "e364ad8add4411cfce7d2b3efb492216b6755742",
-  "last_active_at": 1795870280.1820002,
+  "last_active_at": 1795874140.232325,
   "consent": {
     "sha256": "f07b2896ca5f255c2f76d34626ffb320eca608485379b7682e72600204f23ddb",
     "full": "f07b2896ca5f255c2f76d34626ffb320eca608485379b7682e72600204f23ddb",
     "at": 1795870871.857025,
     "mtime": 1795870871.0640306
-  }
+  },
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_from": "discovery",
+  "queued_at": 1795874140.231683,
+  "approved_by": "人「人として承認する」",
+  "spec_sha256": "793dbbbbe2d3595780ff438f00486713441bbad90e5bfe4dcae8718e61d9933a",
+  "after": null
 }
