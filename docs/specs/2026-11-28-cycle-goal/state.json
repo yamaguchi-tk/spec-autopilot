@@ -1,0 +1,14 @@
+{
+  "phase": "discovery",
+  "slug": "cycle-goal",
+  "created_at": 1795862487.713616,
+  "existing": true,
+  "start": "44cbae8add8147f8b407abef1503f1d5587bffa2",
+  "last_active_at": 1795862487.760486,
+  "consent": {
+    "sha256": "5bde6ad8d342a1d80baab8d141dac2fc1d13dec5f0465d3af4bbeb53fa5a875d",
+    "full": "5bde6ad8d342a1d80baab8d141dac2fc1d13dec5f0465d3af4bbeb53fa5a875d",
+    "at": 1795862602.267848,
+    "mtime": 1795862600.0172346
+  }
+}
