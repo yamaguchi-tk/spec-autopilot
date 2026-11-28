@@ -1,0 +1,43 @@
+- commit: b4601aa3bfdda3b11285eca38810f7db8d532e3d
+
+$ python3 .autopilot-qa/check.py  # R5 の部分（一時の git repo .autopilot-qa/work/r5/repo で init。下が各コマンドと出力）
+R5 pass
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home (CLAUDE_CODE_SESSION_ID なし) python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --impl opus-medium --review opus-xhigh
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r5/home/models.md
+- 実装: opus-medium
+- 評価: opus-xhigh
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl fable
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r5/home/sessions/qa-sess-1.models.md
+- 実装: fable
+実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/autopilot.py init a
+exit=0
+<worktree>/.autopilot-qa/work/r5/repo/docs/specs/2026-11-28-a
+NOTE: 手元の設定・セッションの上書きの行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: - 実装: fable / - 評価: opus-xhigh
+
+$ sed -n '/^## モデル/,/^## 自走/p' <worktree>/.autopilot-qa/work/r5/repo/docs/specs/2026-11-28-a/spec.md
+<!-- 書かなければ既定（実装 sonnet-high・評価 opus-high）。始めから上げる役だけ書く。実装: sonnet-high・opus-medium・opus-xhigh・fable、評価: opus-high・opus-xhigh・fable（評価は既定より下げない） -->
+- 実装: fable
+- 評価: opus-xhigh
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID='qa-sess-1' python3 <worktree>/plugins/spec-autopilot/scripts/ladder.py setup --session --impl opus-xhigh
+exit=0
+書いた: <worktree>/.autopilot-qa/work/r5/home/sessions/qa-sess-1.models.md
+- 実装: opus-xhigh
+実装・評価の上書きは、このセッションで後から init する spec にだけ効く（作った spec は変わらない）
+（この後も 2026-11-28-a/spec.md は `- 実装: fable` のままだった）
+
+$ SPEC_AUTOPILOT_HOME=<worktree>/.autopilot-qa/work/r5/home CLAUDE_CODE_SESSION_ID='other-sess' python3 <worktree>/plugins/spec-autopilot/scripts/autopilot.py init b
+exit=0
+<worktree>/.autopilot-qa/work/r5/repo/docs/specs/2026-11-28-b
+NOTE: 手元の設定の行を spec の `## モデル` に写した（作った後の spec は設定を変えても変わらない）: - 実装: opus-medium / - 評価: opus-xhigh
+
+$ sed -n '/^## モデル/,/^## 自走/p' <worktree>/.autopilot-qa/work/r5/repo/docs/specs/2026-11-28-b/spec.md
+<!-- 書かなければ既定（実装 sonnet-high・評価 opus-high）。始めから上げる役だけ書く。実装: sonnet-high・opus-medium・opus-xhigh・fable、評価: opus-high・opus-xhigh・fable（評価は既定より下げない） -->
+- 実装: opus-medium
+- 評価: opus-xhigh

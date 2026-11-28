@@ -123,6 +123,11 @@ def test_stages_repo_root_and_git_lines_call_git_through_one_function():
         assert "run_git" in {c.func.id for c in calls(funcs[name])}, name
 
 
+def test_session_id_is_defined_only_in_stages_and_the_other_scripts_import_it():
+    defined = [m for m in sorted(MODULES) if any(isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "SESSION_ID" for t in n.targets) for n in ast.walk(tree(f"{m}.py")))]
+    assert defined == ["stages"]
+
+
 def module_passes():
     """autopilot.py の `sys.modules[__name__]` の出る場所の数と、それを引数に渡している `__import__("x")` の x。"""
     t = tree("autopilot.py")

@@ -1,0 +1,175 @@
+{
+  "phase": "building",
+  "slug": "role-model-setup-session",
+  "created_at": 1795829840.5669959,
+  "existing": true,
+  "start": "5fb245d2c255e110d6d73992e19c9edb98221677",
+  "last_active_at": 1795857841.577847,
+  "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
+  "queued_at": 1795830278.876441,
+  "approved_by": "OK（3 本目承認）",
+  "spec_sha256": "6683015b722d69bad10ee50490aef89b4c8a0f5218c2269de2bf71be7c5cdb2a",
+  "after": "2026-11-28-role-model-setup-command",
+  "approved_at": 1795854014.6366699,
+  "budget_min": 60,
+  "post_budget_min": 60,
+  "history": [
+    {
+      "phase": "wait",
+      "reason": "実装役が別の worktree への Write を hook に拒まれた。3 本目をその worktree のセッションで回すかを人に確かめる",
+      "at": 1795854199.690541
+    }
+  ],
+  "blocked": null,
+  "paused_sec": 86.0673279762268,
+  "reviews": [
+    {
+      "high": [],
+      "at": 1795855599.860766,
+      "sha": "61573e56be90d11e83844bb56b9a4a2020f5974d"
+    },
+    {
+      "high": [
+        "R4"
+      ],
+      "at": 1795857115.105807,
+      "sha": "b4601aa3bfdda3b11285eca38810f7db8d532e3d"
+    },
+    {
+      "high": [],
+      "at": 1795857841.577835,
+      "sha": "095babd1217d6fc456bb8cc51907b2147475a257"
+    }
+  ],
+  "fails": {
+    "R4": [
+      {
+        "from": "review",
+        "evidence": "最後のレビューの high",
+        "at": 1795857115.1058052
+      }
+    ]
+  },
+  "streak": {
+    "R4": 1
+  },
+  "reworks": {},
+  "dispatches": [
+    {
+      "base": "c80b4bbe7edd2ee8f068c8dd755f91b8828b512a",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795854036.469291,
+      "session": "38935b5c-a9c7-4069-b340-0dee0b291583"
+    },
+    {
+      "base": "c80b4bbe7edd2ee8f068c8dd755f91b8828b512a",
+      "tasks": [
+        "T1"
+      ],
+      "reqs": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795854342.5866618,
+      "session": "3c2cb42e-8b63-4d5a-828f-ff2317eaae4c"
+    },
+    {
+      "base": "ab50e63a00cd2f4c4cac087a4feafd9fc0a00603",
+      "tasks": [
+        "T2"
+      ],
+      "reqs": [
+        "R6"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795854749.4224498,
+      "session": "3c2cb42e-8b63-4d5a-828f-ff2317eaae4c"
+    },
+    {
+      "base": "1f2fcfb8ec05dcc29b61c078003ed6bceb0f7f3f",
+      "tasks": [
+        "T3"
+      ],
+      "reqs": [
+        "R2"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795856271.917403,
+      "session": "3c2cb42e-8b63-4d5a-828f-ff2317eaae4c"
+    },
+    {
+      "base": "141bd67799f5c9291f6a0a3262df70d6a72e539d",
+      "tasks": [
+        "T4"
+      ],
+      "reqs": [
+        "R4"
+      ],
+      "agent": "autopilot-implementer",
+      "at": 1795857115.330271,
+      "session": "3c2cb42e-8b63-4d5a-828f-ff2317eaae4c"
+    }
+  ],
+  "wait": null,
+  "handoffs": [
+    {
+      "tip": "ab50e63a00cd2f4c4cac087a4feafd9fc0a00603",
+      "tasks": [
+        "T1"
+      ],
+      "dispatch": 1,
+      "at": 1795854749.274122
+    },
+    {
+      "tip": "61573e56be90d11e83844bb56b9a4a2020f5974d",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795855026.232239
+    },
+    {
+      "tip": "52a6bb425b0d8f4251d758961cb6ecab14a585d2",
+      "tasks": [
+        "T2"
+      ],
+      "dispatch": 2,
+      "at": 1795856271.754499
+    },
+    {
+      "tip": "b4601aa3bfdda3b11285eca38810f7db8d532e3d",
+      "tasks": [
+        "T3"
+      ],
+      "dispatch": 3,
+      "at": 1795856478.727026
+    },
+    {
+      "tip": "095babd1217d6fc456bb8cc51907b2147475a257",
+      "tasks": [
+        "T4"
+      ],
+      "dispatch": 4,
+      "at": 1795857395.614249
+    }
+  ],
+  "review_launches": [
+    1795855032.5110688,
+    1795856485.486306,
+    1795857400.5885582
+  ]
+}
