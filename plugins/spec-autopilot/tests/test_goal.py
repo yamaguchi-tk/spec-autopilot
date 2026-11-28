@@ -65,6 +65,26 @@ def test_lint_l_error_names_the_goal_approval_as_the_way_to_keep_one_spec(repo):
     assert len(errors) == 1 and "--goal" in errors[0], errors
 
 
+def test_lint_l_error_does_not_name_the_goal_approval_for_a_spec_with_a_dependency(repo):
+    """依る spec のある spec は --goal で承認できないので、L の ERROR は --goal を案内しない。"""
+    d = large_goal(repo)
+    spec = d / "spec.md"
+    spec.write_text(spec.read_text(encoding="utf-8").replace("- 大きさ: L", "- 大きさ: L\n- 依る spec: 2026-11-28-earlier"), encoding="utf-8")
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
+
+
+def test_lint_l_error_does_not_name_the_goal_approval_for_a_queued_spec(repo):
+    """queued の spec（着手のときの数え直しも同じ）は --goal で承認できないので、L の ERROR は --goal を案内しない。"""
+    d = large_goal(repo)
+    f = d / "state.json"
+    s = json.loads(f.read_text(encoding="utf-8"))
+    s["phase"] = "queued"
+    f.write_text(json.dumps(s), encoding="utf-8")
+    errors = [e for e in lint_errors(repo, d) if "大きさ L の spec は 1 本のまま合意しない" in e]
+    assert len(errors) == 1 and "--goal" not in errors[0], errors
+
+
 def test_approve_without_goal_still_stops_a_large_spec(repo):
     d = large_goal(repo)
     user_says(repo)
