@@ -18,6 +18,8 @@ import tempfile
 import time
 from pathlib import Path
 
+import stages
+
 # 役 → 段の名前 → (agent の名前, model, effort)。順は安い順で、先頭が既定
 RUNGS = {
     "impl": {
@@ -176,10 +178,8 @@ def config_path():
 
 
 def session_path(session):
-    """セッションの上書きのファイル。id が無いか、セッション id の形（autopilot.SESSION_ID）でなければ None。"""
-    import autopilot
-
-    if not isinstance(session, str) or not autopilot.SESSION_ID.fullmatch(session):
+    """セッションの上書きのファイル。id が無いか、セッション id の形（stages.SESSION_ID）でなければ None。"""
+    if not isinstance(session, str) or not stages.SESSION_ID.fullmatch(session):
         return None
     return home_path() / "sessions" / f"{session}.models.md"
 
