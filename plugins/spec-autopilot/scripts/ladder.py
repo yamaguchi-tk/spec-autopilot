@@ -5,7 +5,8 @@
 Opus xhigh で 2 回落ちたら、Fable を 1 回だけ試す。Fable でも落ちたら、その要件を park に積む。
 
 手元の設定は SPEC_AUTOPILOT_HOME（無ければ ~/.claude/spec-autopilot）の models.md に、spec の `## モデル` と同じ形の行で置く。
-`ladder.py setup`・`show` で書く・見る。init が spec.md を作るときに、その行を `## モデル` に写す（梯子は spec の節だけを読む）。
+`ladder.py setup`・`show` で書く・見る。init が spec.md を作るときに、実装・評価の行を `## モデル` に写す（梯子は spec の節だけを読む）。
+相談役・検証役は梯子に入れず（`ADVISORS`）、models.md の `- 相談:`・`- 検証:` の行を SessionStart が読んで使う agent を示す。
 """
 import argparse
 import fcntl
@@ -30,20 +31,34 @@ RUNGS = {
         "fable": ("autopilot-reviewer-fable", "fable", "high"),
     },
 }
+# 相談役・検証役の段（RUNGS と別で、overnight.py raise --role の選択肢に入れない）。役 → 段の名前 → (agent の名前, model, effort)。順は安い順で、先頭が既定
+ADVISORS = {
+    "advisor": {
+        "fable-medium": ("fable-advisor", "fable", "medium"),
+        "fable-high": ("fable-advisor-high", "fable", "high"),
+        "opus-high": ("fable-advisor-opus", "opus", "high"),
+    },
+    "checker": {
+        "opus-high": ("advice-checker", "opus", "high"),
+    },
+}
 # 評価役の段を手で上げる合図（判断を含むので機械では検出しない）。実装役は review の巡で自動で上げる
 REVIEW_REASON = "判定が決まらない"
 SPEC_KEY = {"impl": "実装", "review": "評価"}
-ROLE_OF = {v: k for k, v in SPEC_KEY.items()}
+CONFIG_KEY = {**SPEC_KEY, "advisor": "相談", "checker": "検証"}  # 手元の設定の行の語（spec の `## モデル` は実装・評価だけ）
+ROLES = {**RUNGS, **ADVISORS}
+TABLE = {CONFIG_KEY[role]: rungs for role, rungs in ROLES.items()}
 TRIES_BEFORE_FABLE = 2
 ROW = re.compile(r"^- (実装|評価):[ \t]*(\S+)[ \t]*$")
+CONFIG_ROW = re.compile(r"^- (実装|評価|相談|検証):[ \t]*(\S+)[ \t]*$")
 COMMENT = re.compile(r"<!--.*?-->", re.S)
 
 
-def parse(section_text):
+def parse(section_text, row=ROW):
     """コメントを消した節の行を読む。(行の一覧 [(役の語, 段)], 読めない行の一覧)。"""
     rows, bad = [], []
     for line in COMMENT.sub("", section_text or "").splitlines():
-        m = ROW.match(line)
+        m = row.match(line)
         if m:
             rows.append(m.groups())
         elif line.strip():
@@ -55,16 +70,19 @@ def spec_rows(section_text):
     return dict(parse(section_text)[0])
 
 
-def lint(section_text):
-    """spec の `## モデル` の節の誤り。書かなければ既定。行は `- 実装: <段>` と `- 評価: <段>` だけを 1 本ずつ受ける。"""
-    parsed, bad = parse(section_text)
-    errors = [f"モデルの節の行を読めない（`- 実装: <段>` か `- 評価: <段>` だけを書く）: {x}" for x in bad]
+def lint(section_text, config=False):
+    """spec の `## モデル` の節の誤り。書かなければ既定。行は `- 実装: <段>` と `- 評価: <段>` だけを 1 本ずつ受ける。
+    config なら手元の設定 models.md の読み方で、`- 相談: <段>`・`- 検証: <段>` も受ける。"""
+    row, words = (CONFIG_ROW, CONFIG_KEY) if config else (ROW, SPEC_KEY)
+    parsed, bad = parse(section_text, row)
+    allowed = "` か `".join(f"- {k}: <段>" for k in words.values())
+    errors = [f"モデルの節の行を読めない（`{allowed}` だけを書く）: {x}" for x in bad]
     keys = [k for k, _ in parsed]
     errors += [f"モデルの節に `- {k}:` が 2 本以上ある" for k in sorted(set(keys)) if keys.count(k) > 1]
     rows = dict(parsed)
-    for role, key in SPEC_KEY.items():
-        if key in rows and rows[key] not in RUNGS[role]:
-            errors.append(f"モデルの節の `- {key}:` は「{'」「'.join(RUNGS[role])}」のどれか（今は「{rows[key]}」）")
+    for key in words.values():
+        if key in rows and rows[key] not in TABLE[key]:
+            errors.append(f"モデルの節の `- {key}:` は「{'」「'.join(TABLE[key])}」のどれか（今は「{rows[key]}」）")
     return errors
 
 
@@ -148,7 +166,7 @@ def config_path():
 
 
 def read_config(path=None):
-    """手元の設定を読む。(元のバイト列 or None, 読める行 {実装|評価: 段}, 誤りの一覧)。無ければ (None, {}, [])。
+    """手元の設定を読む。(元のバイト列 or None, 読める行 {実装|評価|相談|検証: 段}, 誤りの一覧)。無ければ (None, {}, [])。
     読める行は、受ける段で、同じ役の 1 本目だけ。"""
     path = path or config_path()
     try:
@@ -162,14 +180,14 @@ def read_config(path=None):
     except UnicodeDecodeError:
         return raw, {}, [f"{path} が UTF-8 で読めない"]
     rows = {}
-    for key, rung in parse(text)[0]:
-        if rung in RUNGS[ROLE_OF[key]]:
+    for key, rung in parse(text, CONFIG_ROW)[0]:
+        if rung in TABLE[key]:
             rows.setdefault(key, rung)
-    return raw, rows, lint(text)
+    return raw, rows, lint(text, config=True)
 
 
 def render(rows):
-    return "".join(f"- {k}: {rows[k]}\n" for k in SPEC_KEY.values() if k in rows)
+    return "".join(f"- {k}: {rows[k]}\n" for k in CONFIG_KEY.values() if k in rows)
 
 
 def edit(change):
@@ -197,7 +215,7 @@ def edit(change):
 
 
 def write_spec(src, dst):
-    """init が spec.md を作る。手元の設定の行を、雛形の `## モデル` のコメントの後に写す（読めない設定は写さず NOTE で直し方を出す）。"""
+    """init が spec.md を作る。手元の設定の実装・評価の行を、雛形の `## モデル` のコメントの後に写す（相談・検証の行は写さない。読めない設定は写さず NOTE で直し方を出す）。"""
     text = Path(src).read_text(encoding="utf-8")
     path = config_path()
     raw, _, errors = read_config(path)
@@ -213,14 +231,14 @@ def write_spec(src, dst):
 
 
 def accepted_lines():
-    return [f"{SPEC_KEY[role]}: 受ける段 {'・'.join(rungs)}" for role, rungs in RUNGS.items()]
+    return [f"{CONFIG_KEY[role]}: 受ける段 {'・'.join(rungs)}" for role, rungs in ROLES.items()]
 
 
 def cmd_show(a):
     path = config_path()
     _, rows, errors = read_config(path)
-    for role, line in zip(RUNGS, accepted_lines()):
-        print(f"{line} / 既定 {next(iter(RUNGS[role]))} / 手元の設定 {rows.get(SPEC_KEY[role], 'なし')}")
+    for (role, rungs), line in zip(ROLES.items(), accepted_lines()):
+        print(f"{line} / 既定 {next(iter(rungs))} / 手元の設定 {rows.get(CONFIG_KEY[role], 'なし')}")
     print(f"設定のファイル: {path}")
     for e in errors:
         print(f"設定の誤り: {e}（`ladder.py setup` か `ladder.py setup --reset` で直す）")
@@ -229,17 +247,17 @@ def cmd_show(a):
 
 def cmd_setup(a):
     path = config_path()
+    given = {CONFIG_KEY[r]: v for r in ROLES for v in [getattr(a, r)] if v is not None}
     if a.reset is not None:
-        if a.reset != "all" and a.reset not in ROLE_OF or a.impl or a.review:
-            sys.exit("--reset は単独で、役は「実装」か「評価」だけを渡す")
-        keys = list(SPEC_KEY.values()) if a.reset == "all" else [a.reset]
+        if a.reset != "all" and a.reset not in TABLE or given:
+            sys.exit(f"--reset は単独で、役は「{'」「'.join(TABLE)}」だけを渡す")
+        keys = list(TABLE) if a.reset == "all" else [a.reset]
         edit(lambda rows: {k: v for k, v in rows.items() if k not in keys})
-        print(f"{'実装・評価' if a.reset == 'all' else a.reset}が既定に戻った（設定のファイル: {path}）")
+        print(f"{'・'.join(TABLE) if a.reset == 'all' else a.reset}が既定に戻った（設定のファイル: {path}）")
         return 0
-    given = {SPEC_KEY[r]: v for r, v in (("impl", a.impl), ("review", a.review)) if v is not None}
-    bad = [f"{SPEC_KEY[r]} の段「{v}」" for r in RUNGS for v in [getattr(a, r)] if v is not None and v not in RUNGS[r]]
+    bad = [f"{CONFIG_KEY[r]} の段「{v}」" for r in ROLES for v in [getattr(a, r)] if v is not None and v not in ROLES[r]]
     if not given or bad:
-        sys.exit(("受けない段: " + "、".join(bad) + "\n" if bad else "--impl か --review か --reset を渡す\n") + "\n".join(accepted_lines()))
+        sys.exit(("受けない段: " + "、".join(bad) + "\n" if bad else "--impl か --review か --advisor か --checker か --reset を渡す\n") + "\n".join(accepted_lines()))
     rows = edit(lambda cur: {**cur, **given})
     print(f"書いた: {path}\n{render(rows)}", end="")
     return 0
@@ -250,8 +268,8 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("show")
     sp = sub.add_parser("setup")
-    sp.add_argument("--impl")
-    sp.add_argument("--review")
+    for role in ROLES:
+        sp.add_argument(f"--{role}")
     sp.add_argument("--reset", nargs="?", const="all")
     a = p.parse_args(argv)
     return {"show": cmd_show, "setup": cmd_setup}[a.cmd](a)

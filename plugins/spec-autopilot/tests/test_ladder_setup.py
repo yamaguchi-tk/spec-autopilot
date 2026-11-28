@@ -115,3 +115,73 @@ def test_concurrent_setups_of_the_two_roles_both_stay(home):
              for flag, rung in [("--impl", "opus-medium"), ("--review", "opus-xhigh")] * 8]
     assert [p.wait() for p in procs] == [0] * 16
     assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: opus-xhigh\n"
+
+
+ADVISOR = "相談: 受ける段 fable-medium・fable-high・opus-high"
+CHECKER = "検証: 受ける段 opus-high"
+
+
+def test_setup_writes_the_advisor_and_checker_rows_with_the_others_and_prints_path_and_content(home):
+    r = ladder("setup", "--advisor", "opus-high", "--checker", "opus-high")
+    assert r.returncode == 0, both(r)
+    assert str(home / "models.md") in r.stdout and "- 相談: opus-high" in r.stdout and "- 検証: opus-high" in r.stdout
+    r = ladder("setup", "--impl", "opus-medium")
+    assert r.returncode == 0, both(r)
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 相談: opus-high\n- 検証: opus-high\n"
+    assert ladder("setup", "--advisor", "fable-high", "--review", "fable").returncode == 0
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: fable\n- 相談: fable-high\n- 検証: opus-high\n"
+
+
+@pytest.mark.parametrize("args", [["--advisor", "sonnet-high"], ["--advisor", "opus-medium"], ["--advisor", "fable"], ["--checker", "fable-high"],
+                                  ["--checker", "fable-medium"], ["--advisor", "fable-high", "--checker", "haiku"], ["--impl", "fable", "--advisor", "haiku"]])
+def test_setup_refuses_an_advisor_or_checker_rung_it_does_not_take_and_lists_each_role(home, args):
+    assert ladder("setup", "--advisor", "fable-high", "--impl", "opus-medium").returncode == 0
+    before = (home / "models.md").read_bytes()
+    r = ladder("setup", *args)
+    assert r.returncode != 0
+    for line in (IMPL, REVIEW, ADVISOR, CHECKER):
+        assert line in both(r), line
+    assert (home / "models.md").read_bytes() == before
+
+
+def test_reset_of_the_advisor_or_checker_removes_only_that_row_and_reset_removes_all(home):
+    ladder("setup", "--impl", "opus-medium", "--advisor", "opus-high", "--checker", "opus-high")
+    r = ladder("setup", "--reset", "相談")
+    assert r.returncode == 0 and "相談" in r.stdout and "既定に戻" in r.stdout
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 検証: opus-high\n"
+    assert ladder("setup", "--reset", "検証").returncode == 0
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n"
+    ladder("setup", "--advisor", "fable-high", "--checker", "opus-high")
+    assert ladder("setup", "--reset").returncode == 0
+    assert not (home / "models.md").exists()
+
+
+def test_show_lists_the_advisor_and_checker_rungs_default_and_setting_then_the_path_last(home):
+    r = ladder("show")
+    assert r.returncode == 0, both(r)
+    lines = r.stdout.splitlines()
+    assert lines == [f"{IMPL} / 既定 sonnet-high / 手元の設定 なし", f"{REVIEW} / 既定 opus-high / 手元の設定 なし",
+                     f"{ADVISOR} / 既定 fable-medium / 手元の設定 なし", f"{CHECKER} / 既定 opus-high / 手元の設定 なし",
+                     f"設定のファイル: {home / 'models.md'}"]
+    ladder("setup", "--advisor", "opus-high", "--checker", "opus-high")
+    lines = ladder("show").stdout.splitlines()
+    assert f"{ADVISOR} / 既定 fable-medium / 手元の設定 opus-high" in lines
+    assert f"{CHECKER} / 既定 opus-high / 手元の設定 opus-high" in lines
+
+
+def test_a_models_md_with_an_unknown_advisor_rung_is_kept_aside_and_the_good_rows_stay(home):
+    home.mkdir()
+    content = "- 相談: haiku\n- 検証: opus-high\n- 実装: fable\n".encode()
+    (home / "models.md").write_bytes(content)
+    r = ladder("setup", "--review", "fable")
+    assert r.returncode == 0, both(r)
+    assert "退避" in r.stderr and [p.read_bytes() for p in home.glob("models.md.bad-*")] == [content]
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: fable\n- 評価: fable\n- 検証: opus-high\n"
+
+
+def test_concurrent_setups_of_the_four_roles_all_stay(home):
+    env = dict(os.environ)
+    flags = [("--impl", "opus-medium"), ("--review", "opus-xhigh"), ("--advisor", "opus-high"), ("--checker", "opus-high")]
+    procs = [subprocess.Popen([sys.executable, str(LADDER), "setup", flag, rung], env=env, stdout=subprocess.DEVNULL) for flag, rung in flags * 6]
+    assert [p.wait() for p in procs] == [0] * 24
+    assert (home / "models.md").read_text(encoding="utf-8") == "- 実装: opus-medium\n- 評価: opus-xhigh\n- 相談: opus-high\n- 検証: opus-high\n"
