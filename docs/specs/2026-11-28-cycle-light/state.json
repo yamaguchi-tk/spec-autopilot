@@ -1,10 +1,10 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "cycle-light",
   "created_at": 1795867707.840078,
   "existing": true,
   "start": "6c8d1f6d68f68345bc9746be989e3ccf02d7a610",
-  "last_active_at": 1795868166.741917,
+  "last_active_at": 1795868186.525419,
   "consent": {
     "sha256": "e83f65dbd446072a46db3d12f7f9ee88ba405edeb0dfaddceb409ae61760844f",
     "full": "e83f65dbd446072a46db3d12f7f9ee88ba405edeb0dfaddceb409ae61760844f",
@@ -12,9 +12,18 @@
     "mtime": 1795867894.566271
   },
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795868166.739985,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役「承認: 可」、検証役「反証なし（確かめられない 0 / 15）」",
   "spec_sha256": "f7ecc77395c1ca1b3910357ea6aae032780e9646853fb53cc926e1e2e04fc253",
-  "after": null
+  "after": null,
+  "approved_at": 1795868186.5231302,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
