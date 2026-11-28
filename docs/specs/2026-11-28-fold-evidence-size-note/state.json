@@ -1,10 +1,10 @@
 {
-  "phase": "queued",
+  "phase": "building",
   "slug": "fold-evidence-size-note",
   "created_at": 1795855095.28001,
   "existing": true,
   "start": "22c69e633cb6d9486ba206a3e51130760b326ad6",
-  "last_active_at": 1795855771.398753,
+  "last_active_at": 1795855772.794825,
   "consent": {
     "sha256": "c3d8ae752f5ccde926ed9b94a1a9a0cc5d23b00a87df2b229c7d16f312f4fe57",
     "full": "c3d8ae752f5ccde926ed9b94a1a9a0cc5d23b00a87df2b229c7d16f312f4fe57",
@@ -12,9 +12,18 @@
     "mtime": 1795855500.8851953
   },
   "scope_sha256": "1a9c028a687024056a498af0a42e9744633c44fbccccd24a2a9929cd4d7d3d1e",
-  "queued_from": "discovery",
   "queued_at": 1795855771.3973088,
   "approved_by": "相談役（fable-advisor・advice-checker 反証なし）: 相談役が承認: 可、検証役が反証なし（確かめられない 0 / 13）。人は目的の spec を「承認する」で承認済みで、「次の子へ進む」と返した",
   "spec_sha256": "d12a13ec2fae235ebaaea0ec8b2c47ffa4272a4074bb2f3316f3311716c3012d",
-  "after": null
+  "after": null,
+  "approved_at": 1795855772.79315,
+  "budget_min": 45,
+  "post_budget_min": 45,
+  "history": [],
+  "blocked": null,
+  "paused_sec": 0,
+  "reviews": [],
+  "fails": {},
+  "streak": {},
+  "reworks": {}
 }
