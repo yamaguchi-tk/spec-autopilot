@@ -11,7 +11,7 @@
 
 ## 要件
 - R1: plugins/spec-autopilot/scripts を測ったとき、light.py は import の輪に入らず、輪は autopilot.py・lineup.py・overnight.py の 3 つの 1 つだけになる。
-- R2: autopilot.py を読んだとき、light を import する文（関数の中の import と、名前を文字列で渡す `__import__` を含む）が無く、light.py の判定は下の層のモジュールから呼ぶ。輪を `importlib`・変数で名前を渡す `__import__`・`sys.modules` に替えて道具に見えなくする形も無い。
+- R2: autopilot.py を読んだとき、light を import する文（関数の中の import と、名前を文字列で渡す `__import__` を含む）が無く、light.py の判定は下の層のモジュールから呼ぶ。light の呼び出しを `importlib`・変数で名前を渡す `__import__`・`sys.modules` に替えて道具に見えなくした形も無い（autopilot.py に今ある入口の dispatch の `__import__(a.cmd)` と、premises・rootcause に渡す `sys.modules[__name__]` は後の子で扱う）。
 - R3: 測ったとき、light.py から出した判定を置く下の層のモジュールは、scripts のモジュールを stages.py と deploy.py のほかに import せず、LCOM4 が 2 以下になる。
 - R4: テストの全量が通り、`light.py approve` と CLI の check・lint・done の出力を、変える前と後で同じ spec（保護 path に触れる軽量フローの spec と、合意ありの spec）に回した出力が同じで、指標の前後の比べ方（着手の commit を前にする）で、親の R5 のただし書きの autopilot.py の LCOM4 と fan-out を除いて悪化が無く、「移しただけ」と出ない。除いた 2 つの値は前と後を証拠に書く。テストは名前の向け先だけを変え、期待は変えない（tests/test_import_layers.py の輪の期待は、親の R5 のとおり新しい値に直す）。
 
@@ -58,7 +58,11 @@
 - 前提: light.py の 30-149 が使う autopilot.py の名前は section・COMMENT_BLOCK・classify・repo_root の 4 つで、どれも stages.py にあり、ほかに deploy.py の名前を使う
   - コマンド: `sed -n 30,149p plugins/spec-autopilot/scripts/light.py | grep -oE 'ap\.[A-Za-z_]+' | sort -u` → 上の 4 つ
   - path: plugins/spec-autopilot/scripts/autopilot.py:46（stages から import する名前の並び）
-- 前提: light.py の判定を light_rules.py に移すと、輪は autopilot・lineup・overnight の 3 つ、light_rules.py の fan-out は 2・LCOM4 は 1、autopilot.py の fan-out は 18・LCOM4 は 8 のまま
+- 前提: light.py の判定を light_rules.py に移すと、light_rules.py が import する scripts は stages と deploy の 2 つで、deploy は carry・stages だけを import するので autopilot に戻らず、autopilot.py の import 先の数は light が light_rules に替わるだけで 18 のまま。light.py を import する scripts は無いので、輪は autopilot・lineup・overnight の 3 つになる
+  - path: plugins/spec-autopilot/scripts/light.py:115（判定の中の `import deploy`。ほかは 99-122）
+  - path: plugins/spec-autopilot/scripts/deploy.py:9（carry・stages の import。10 も）
+  - path: plugins/spec-autopilot/tests/test_import_layers.py:153（autopilot.py の import 先の数の期待）
+- 前提: light_rules.py の LCOM4 は 1、autopilot.py の LCOM4 は 8 のまま
   - 未確認: main の b264566 の上の写しで移して道具で測った値で、repo の中では確かめられない
 
 ## 作り方
